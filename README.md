@@ -10,11 +10,18 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 - **High availability.** Apiary runs as several replicas across nodes. Losing a replica or a node must not drop traffic or lose certificates, and no replica is a single point of failure.
 - **Automatic certificates.** Apiary obtains and renews certificates with the [ACME protocol](https://datatracker.ietf.org/doc/html/rfc8555) and shares them across all replicas, without manual steps.
 
+## Technology
+
+- **Backend:** [.NET 10](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview) (LTS, supported until November 2028), with ASP.NET Core.
+- **Admin interface:** [Angular 22](https://angular.dev/reference/releases). Each Angular major version is supported for about 18 months, so plan to upgrade once a year.
+
+Move to the next .NET LTS or Angular major version before the current one leaves support.
+
 ## Open design decisions
 
 These need to be settled, and recorded here, before or during the first implementation work.
 
-1. **Language and runtime.** What Apiary is written in, and whether it wraps an existing proxy engine or implements the proxying itself.
+1. **Proxy engine.** Whether Apiary builds on an existing .NET proxy library (e.g. [YARP](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/yarp/yarp-overview)) or implements the proxying itself.
 2. **Route configuration.** The label schema services use to declare hostnames, paths, ports and TLS options.
 3. **Shared state.** Where certificates, ACME account keys and challenge tokens live so every replica sees them: an external store (e.g. etcd, Consul), a store embedded in Apiary with its own consensus, or something else. [Swarm secrets](https://docs.docker.com/engine/swarm/secrets/) can't be updated in place, so they don't suit certificates that renew.
 4. **ACME coordination.** Only one replica should request or renew a given certificate at a time (e.g. via a lock or leader election), so replicas don't race each other into [Let's Encrypt's rate limits](https://letsencrypt.org/docs/rate-limits/).
