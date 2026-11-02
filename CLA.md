@@ -1,7 +1,5 @@
 # Contributor License Agreement
 
-> **Draft.** This agreement has not yet been reviewed by a lawyer. Don't ask contributors to sign it until it has.
-
 Thank you for contributing to Apiary. This agreement explains the rights you give Datapoint - Sistemas de Informação, Lda. (NIPC 514296631, https://datapoint.software/) ("Datapoint") over your contributions. You keep the copyright in your contributions; you give Datapoint a licence to use them.
 
 Datapoint asks for this so it can keep Apiary open source and also offer it under other terms, such as commercial licences for organisations that can't accept the AGPL. Without it, each contribution would only be available under the AGPL, and Datapoint couldn't do that.
@@ -59,4 +57,4 @@ Datapoint employees contributing as part of their work don't need to sign: their
 
 ---
 
-Version 1.0, draft of 2026-11-02.
+Version 1.0, 2026-11-02.
