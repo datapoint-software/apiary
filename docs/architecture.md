@@ -73,9 +73,11 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 
 ### Weighted and canary routing
 
-- A route can send traffic to several target groups by weight (e.g. 90% to `shop-v1`, 10% to `shop-v2`), so a new version can be released gradually. YARP has no weighted policy built in, so Apiary adds one.
-- A route can also pick a target group by request header or cookie (e.g. `X-Canary: true`), so testers reach the new version on purpose.
-- With weights, a sticky cookie keeps each client on the group it first got (YARP's session affinity), so users don't switch between versions mid-session. Each replica applies the weights on its own, so the split is statistical, not exact.
+By default a route has a single target group, and none of the following applies. Each feature is opt-in and configured per route, independently of the others:
+
+- **Weights.** A route can send traffic to several target groups by weight (e.g. 90% to `shop-v1`, 10% to `shop-v2`), so a new version can be released gradually. YARP has no weighted policy built in, so Apiary adds one. Each replica applies the weights on its own, so the split is statistical, not exact.
+- **Header or cookie selection.** A route can pick a target group by request header or cookie (e.g. `X-Canary: true`), so testers reach the new version on purpose. The header or cookie name and value are set per route.
+- **Sticky sessions.** A route can set a cookie that keeps each client on the group it first got (YARP's session affinity), so users don't switch between versions mid-session. The cookie's name and lifetime are set per route.
 
 ### Compression and caching
 
