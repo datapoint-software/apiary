@@ -12,10 +12,26 @@ How Apiary is built and deployed. Decisions not yet made are in [open-decisions.
 
 Move to the next .NET LTS or Angular major version before the current one leaves support.
 
+## Deployment modes
+
+The same image runs in three ways. The mode is selected by configuration, in the compose file.
+
+| Mode | Replicas | High availability | Cluster secret |
+| --- | --- | --- | --- |
+| Swarm | 3 or more | Yes | Required |
+| One-node Swarm | 1 | No | Required |
+| Docker Compose, no Swarm | 1 | No | Generated if missing |
+
+- **One-node Swarm** works like the Swarm mode with `replicas: 1`: a Raft cluster of one, which is its own majority. It can grow to 3 replicas later by adding edge nodes and raising `replicas:`, with no data migration.
+- **Docker Compose** (`docker compose up`) runs a single instance, also a Raft cluster of one, with no membership, scaling or Swarm DNS. If no cluster secret is mounted, Apiary generates one on first start (see [Cluster trust](#cluster-trust)). Moving to a Swarm means exporting a backup and restoring it into the new cluster.
+- 2 replicas are not supported: they tolerate no more failures than 1, and writes stop if either is down.
+
+The rest of this document describes the Swarm mode, and notes where the other modes differ.
+
 ## Deployment
 
 - Apiary is deployed, upgraded and scaled with `docker stack deploy` and a compose file. The only step outside it is creating the cluster secret once, before the first deploy (see [Cluster trust](#cluster-trust)).
-- Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. There must be **at least 3 replicas**, and at least as many labelled edge nodes as replicas.
+- Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. High availability needs **at least 3 replicas**, and there must be at least as many labelled edge nodes as replicas.
 - Rolling updates replace one replica at a time (`parallelism: 1`, `order: stop-first`, since host-mode ports can't be shared on a node) and roll back on failure (`failure_action: rollback`).
 
   ```yaml
@@ -38,8 +54,9 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
 ## Routing
 
-- Routes (hostname and path to target service and port) are defined **only in the admin UI** and stored in the replicated state. Apiary doesn't read service labels.
-- Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name.
+- Routes (hostname and path to a target) are defined **only in the admin UI** and stored in the replicated state. Apiary doesn't read service labels.
+- A target is any hostname or IP address and port: a Swarm service name, a container name on a shared Docker network, or an application on the host or elsewhere. The same model works in every mode.
+- In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
 - First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects. Raw TCP/UDP proxying is out of scope.
 
@@ -65,7 +82,8 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
   The bundle goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.
 - Swarm mounts the secret into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
-- The encryption key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own keys on first start.
+- The encryption key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own keys in Swarm, even on one node.
+- **With Docker Compose**, operators can mount a secret made with `secrets init` through a Compose `secrets: file:` entry. If none is mounted, Apiary generates one on first start into its own directory, separate from the state volume, and logs a warning.
 - How the secret is rotated is still open (see [open-decisions.md](open-decisions.md)).
 
 ## Certificates
