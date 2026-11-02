@@ -238,7 +238,7 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 
 - IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognises network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
 - The audit log, which Apiary does store, has a configurable retention period.
-- **Both defaults are pending sign-off** by someone with authority, such as the data protection officer (see [risks.md](risks.md)).
+- **Signed off** by the data protection officer on 2026-11-02: full IP addresses by default, on the grounds of network and information security. The audit log's default retention period is still to be set.
 
 ### Health checks
 
