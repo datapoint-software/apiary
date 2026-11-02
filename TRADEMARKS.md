@@ -6,8 +6,10 @@ Apiary's [license](LICENSE) lets you use, change and share the software. It does
 
 ## What this policy covers
 
-- The name **"Datapoint"**.
-- The **Datapoint logo**, as provided in the `branding` directory.
+- The names **"Datapoint"** and **"Datapoint Software"**, and the brand **"datapoint.software"**, used by Datapoint - Sistemas de Informação, Lda. (NIPC 514296631).
+- The **Datapoint logo**, as provided in [`branding/datapoint-logo.svg`](branding/datapoint-logo.svg).
+
+In the rest of this policy, "the Datapoint name" means any of these names.
 
 ## What you can do without asking
 
@@ -20,12 +22,12 @@ Apiary's [license](LICENSE) lets you use, change and share the software. It does
 
 - Use the Datapoint name or logo as the name or logo of **your own product, fork or service**.
 - Suggest that Datapoint **made, endorses or supports** your product, fork or service when it doesn't.
-- Use the Datapoint name or logo in a **domain name, company name or social media account**.
+- Use the Datapoint name or logo in a **domain name, company name or social media account**, including names that could be confused with "datapoint.software".
 - **Change** the Datapoint logo, or combine it with other logos, except to resize it.
 
 ## Modified versions
 
-If you share a modified version, mark it as modified, as term 2 in [NOTICE](NOTICE) requires, and give it a name of its own, so users don't mistake it for Datapoint's. For example, "Acme Proxy, based on Apiary" is fine. Calling it plain "Apiary", or "Datapoint Apiary", isn't.
+If you share a modified version, mark it as modified, as term 2 in [NOTICE](NOTICE) requires, and give it a name of its own, so users don't mistake it for Datapoint's. For example, "Acme Proxy, based on Apiary" is fine. Calling it plain "Apiary", "Datapoint Apiary" or "Apiary by datapoint.software" isn't.
 
 The required attribution stays in the admin interface either way: credit for the original work, not a claim that Datapoint made your version.
 
