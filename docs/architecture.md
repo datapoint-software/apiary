@@ -104,7 +104,7 @@ By default a route has a single target group, and none of the following applies.
 - **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads.
 - The state holds routes, admin users and their roles, OAuth clients and tokens, the audit log, automatic and uploaded certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
 - **Replicas leave cleanly.** When Swarm stops a replica (scale-down, rolling update or node drain), it hands off leadership if it leads, and a voter steps down so a follower can be promoted, within `stop_grace_period`. Apiary refuses to step down a voter if that would leave fewer voters than a majority needs.
-- **Healthy means caught up.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update.
+- **Healthy means caught up, once.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update. After that it stays healthy as long as the process responds, even if it falls behind for a while (see [Observability](#observability)).
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
 - **Backups are on demand.** Admins export an encrypted snapshot of the state through the UI or MCP. A restore rebuilds a new cluster from it.
 
@@ -205,3 +205,31 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
 - The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period and can also be sent to the logs.
 - **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
+
+## Observability
+
+Apiary reports what it's doing; alerting is left to the monitoring system that receives it. Apiary only shows warnings in its own UI.
+
+### Metrics and traces
+
+- [OpenTelemetry](https://opentelemetry.io/), the vendor-neutral standard, which Datapoint.Mediator already emits. Apiary exports over OTLP to a configured endpoint, and also offers a Prometheus `/metrics` endpoint on the admin port. Both are configurable.
+- Key metrics: requests per route and status code, latency, target health, days until each certificate expires, failed renewals, each replica's Raft role and how far behind it is, and failed writes.
+
+### Access logs
+
+- One JSON line per request, written to standard output, where Docker's logging drivers collect it. Exporting over OTLP is optional.
+- Each line holds the time, client IP address, method, host, path, status, response size, duration, route, target and user agent.
+- **Query strings are left out by default**, since they often carry tokens or personal data (e.g. `?token=…`). Headers, cookies and request bodies are never logged.
+- Apiary doesn't store access logs, so their retention is set by the log pipeline that collects them.
+
+### Personal data
+
+- IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognises network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
+- The audit log, which Apiary does store, has a configurable retention period.
+- **Both defaults are pending sign-off** by someone with authority, such as the data protection officer (see [risks.md](risks.md)).
+
+### Health checks
+
+- **The Docker health check** passes once a replica has first caught up with the cluster, then stays healthy as long as the process responds. Swarm replaces tasks whose health check fails, so failing a replica that falls briefly behind under load would weaken the cluster when it's busiest. Falling behind shows in the metrics instead.
+- **The admin port** offers `/health/live` (the process responds) and `/health/ready` (caught up, with routes and certificates loaded) for monitoring tools.
+- **The public ports** have no health endpoint by default. A load balancer in front can check TCP port 443, or a path admins enable.
