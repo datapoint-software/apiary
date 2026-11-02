@@ -18,7 +18,7 @@ What happens to Apiary when replicas, nodes or the network fail, or when the clu
 | [Rolling update](#rolling-update) | ✅ | ✅, with brief pauses | None |
 | [One node fails](#one-node-fails) (3 replicas) | ✅ | ✅ | Replace the node |
 | [Leader fails](#the-leader-fails) | ✅ | Pause during election | None |
-| [Majority of voters fails](#a-majority-of-voters-fails) | ✅ | ❌ until they return | Bring them back, or restore |
+| [Majority of voters fails](#a-majority-of-voters-fails) | ✅ | ❌ until they return | Bring them back, restore, or force a recovery |
 | [Network partition](#network-partition) | ✅, possibly stale on one side | Majority side only | Fix the network |
 | [Single instance fails](#single-instance-modes) | ❌ until restarted | ❌ | None, Swarm or Docker restarts it |
 
@@ -80,7 +80,7 @@ E.g. 2 of 3 voters are down:
 - The remaining replicas keep proxying with the last known routes and certificates.
 - Writes stop: no route or user changes, no renewals, and no audit entries, so changes are refused rather than made unrecorded.
 - When enough voters return, writes resume on their own.
-- If they are lost for good, writes never resume. Restore the last backup into a new cluster. Whether Apiary also offers a forced recovery from a surviving replica is an [open decision](open-decisions.md).
+- If they are lost for good, writes never resume on their own. Either restore the last backup into a new cluster, or run a [forced recovery](architecture.md#forced-recovery) on the most up-to-date survivor, which may lose its last few changes and signs everyone out. Then add replicas back as in a [scale-up](#scaling-up).
 
 ## Network partition
 

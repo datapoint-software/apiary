@@ -107,6 +107,17 @@ By default a route has a single target group, and none of the following applies.
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
 - **Backups are on demand.** Admins export an encrypted snapshot of the state through the UI or MCP. A restore rebuilds a new cluster from it.
 
+### Forced recovery
+
+If most voters are lost for good, writes can never resume. A forced recovery makes a surviving replica the only voter of a new cluster, like Swarm's `docker swarm init --force-new-cluster`. The survivor may lack the last few changes, which only a majority had. That is mostly harmless (a route to redo, a certificate renewed again), except for removed users, downgraded roles and revoked tokens: losing one of those gives back access that was taken away. The safeguards are built around that:
+
+1. **Never automatic.** An admin runs a one-time command inside a surviving container (e.g. `docker exec <container> apiary recover --force`), offered through Datapoint.Mediator's command-line host. It's a command, not a configuration setting, so it can't be left on by mistake and repeated on every restart. Running `docker exec` already requires control of the host, so it grants no new power.
+2. **The most up-to-date survivor.** If several replicas survive, the command shows how far behind each one is and recovers from the most recent.
+3. **What may be lost is shown first.** The command shows the time of the survivor's last change and asks for confirmation.
+4. **All sign-ins and tokens are revoked.** Every session and OAuth token is invalidated, so nobody keeps access through a lost revocation without signing in again. The command also lists users and roles for review.
+5. **Old replicas are kept out.** The recovered cluster gets a new identity. A lost replica that comes back with its old state is refused, and must start empty and rejoin.
+6. **It's audited.** The recovery is the first audit entry of the new cluster.
+
 ## Cluster trust
 
 - Operators create one Swarm secret, once, before the first deploy. It's a bundle that Apiary itself generates, holding a certificate authority (CA) that replicas use to authenticate each other over mutual TLS, and the key that encrypts the state at rest:
