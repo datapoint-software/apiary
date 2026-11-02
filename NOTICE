@@ -1,0 +1,44 @@
+Apiary
+Copyright (C) 2026 Datapoint - Sistemas de Informação, Lda. (https://datapoint.software/)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, version 3, with the additional terms below. The full text
+of the license is in the LICENSE file.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+
+Additional terms under section 7 of the GNU Affero General Public License
+-------------------------------------------------------------------------
+
+1. Attribution (section 7, paragraph b).
+
+   Any work that contains this program, or a modified version of it, must
+   preserve the following author attribution in the Appropriate Legal Notices
+   displayed by its administration interface:
+
+   a) the text "Based on Apiary by Datapoint - Sistemas de Informação, Lda.",
+      with a link to https://datapoint.software/; and
+
+   b) the Datapoint logo, as provided in the "branding" directory of this
+      program, displayed legibly next to that text.
+
+   The attribution is required only in the administration interface. It is
+   not required in content that the program forwards to or from the websites
+   and services it routes traffic for.
+
+2. Modified versions (section 7, paragraph c).
+
+   Modified versions must not be presented as the original program, and must
+   be marked in reasonable ways as different from it, for example by stating
+   in the Appropriate Legal Notices that they have been modified.
+
+3. Trademarks (section 7, paragraph e).
+
+   This license grants no rights under trademark law to the name "Datapoint"
+   or to the Datapoint logo, except as needed to preserve the attribution
+   required by term 1.
