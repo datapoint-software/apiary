@@ -14,10 +14,11 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
 ## Deployment
 
-- Apiary runs as a single Swarm service in `global` mode, constrained to **3 edge nodes** marked with a node label. One task per edge node gives 3 replicas.
+- Apiary runs as a single Swarm service in `global` mode, constrained to edge nodes marked with a node label. One task per edge node; there must be **at least 3 edge nodes**. Scaling out means labelling more nodes.
 - Ports 80 and 443 (TCP, plus UDP 443 for HTTP/3) are published in [`host` mode](https://docs.docker.com/engine/swarm/services/#publish-a-services-ports-directly-on-the-swarm-node) on the edge nodes, so Apiary sees real client IP addresses. DNS or a load balancer outside the cluster spreads traffic across the edge nodes.
 - Each replica stores its copy of the state on a local volume on its node.
 - One image contains the proxy, the admin API and the built Angular UI.
+- Cluster credentials (see [Cluster trust](#cluster-trust)) are provided as [Swarm secrets](https://docs.docker.com/engine/swarm/secrets/).
 
 ## Routing
 
@@ -28,9 +29,18 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
 ## Replicated state
 
-- The 3 replicas form a Raft cluster, finding each other through Swarm's DNS (`tasks.<service>`). Raft needs a majority (2 of 3) to accept writes, so the cluster tolerates one replica down.
-- The state holds routes, admin users, certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
+- Replicas form a Raft cluster, finding each other through Swarm's DNS (`tasks.<service>`).
+- **Voters and followers.** A fixed, odd number of replicas (3 or 5, configurable) vote. Raft needs a majority of voters to accept writes, so 3 voters tolerate one down and 5 tolerate two. Any further replicas join as non-voting followers: they receive the state and serve traffic, but don't slow down writes. When a voter is lost, a follower is promoted.
+- **Membership is configurable.** In *automatic* mode, replicas that appear in Swarm DNS join, and ones that disappear are removed, so the cluster scales with the edge nodes. In *manual* mode, new replicas wait until an admin approves them (UI or MCP), and admins remove dead ones. In both modes a replica must prove it's genuine (see [Cluster trust](#cluster-trust)) before it can join.
+- **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads.
+- The state holds routes, admin users, OAuth clients and tokens, certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
+- **Backups are on demand.** Admins export an encrypted snapshot of the state through the UI or MCP. A restore rebuilds a new cluster from it.
+
+## Cluster trust
+
+- Operators create the cluster's credentials once, as Swarm secrets: the key that encrypts the state at rest, and what replicas use to authenticate each other over mutual TLS. Swarm mounts them into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
+- What exactly the secrets contain, and how they are rotated, is still open (see [open-decisions.md](open-decisions.md)).
 
 ## Certificates
 
@@ -46,3 +56,4 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - Authorization is denied by default: every action needs an authorizer. An agent acts as the user who connected it and gets no more permissions than that user.
 - The UI, its HTTP API and the MCP endpoint are all served on the admin port, which is **not published on the public edge**. Reach them through a VPN or the internal network.
 - Local user accounts, stored in the replicated state. Single sign-on through OIDC is planned for later.
+- **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
