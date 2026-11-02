@@ -77,7 +77,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - **Voters and followers.** A fixed, odd number of replicas (3 or 5, configurable) vote. Raft needs a majority of voters to accept writes, so 3 voters tolerate one down and 5 tolerate two. Any further replicas join as non-voting followers: they receive the state and serve traffic, but don't slow down writes. When a voter is lost, a follower is promoted.
 - **Membership is configurable.** In *automatic* mode, replicas that appear in Swarm DNS join, and ones that disappear are removed, so the cluster scales with the edge nodes. In *manual* mode, new replicas wait until an admin approves them (UI or MCP), and admins remove dead ones. In both modes a replica must prove it's genuine (see [Cluster trust](#cluster-trust)) before it can join.
 - **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads.
-- The state holds routes, admin users, OAuth clients and tokens, certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
+- The state holds routes, admin users and their roles, OAuth clients and tokens, the audit log, automatic and uploaded certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
 - **Replicas leave cleanly.** When Swarm stops a replica (scale-down, rolling update or node drain), it hands off leadership if it leads, and a voter steps down so a follower can be promoted, within `stop_grace_period`. Apiary refuses to step down a voter if that would leave fewer voters than a majority needs.
 - **Healthy means caught up.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update.
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
@@ -101,7 +101,9 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 
 - [HTTP-01 challenges](https://letsencrypt.org/docs/challenge-types/#http-01-challenge) only, for now. A challenge request can arrive at any edge node, so every replica answers it from the replicated state. No wildcard certificates; DNS-01 may be added later.
 - One replica at a time requests or renews a given certificate, holding a lock in the replicated state, so replicas don't race into [Let's Encrypt's rate limits](https://letsencrypt.org/docs/rate-limits/).
-- Kestrel picks the certificate for each connection by hostname (SNI).
+- **Uploaded certificates.** Admins can also upload their own certificates (a PEM certificate chain and private key), e.g. wildcard certificates or certificates from an internal CA. Apiary checks that the key matches the certificate, that the chain is complete and that it hasn't expired, and stores the private key encrypted like any other. Uploaded certificates aren't renewed automatically, so Apiary warns before they expire.
+- Each route either uses an automatic certificate or names an uploaded one. An uploaded certificate covering a hostname doesn't silently replace an automatic one; the route says which it uses.
+- Kestrel picks the certificate for each connection by hostname (SNI), from the routes' choices.
 
 ## Management
 
@@ -116,4 +118,15 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - With Docker Compose, the admin port can also be bound to one interface (e.g. `"10.0.0.5:9443:9443"`).
 - A stricter alternative is not publishing the admin port at all, and reaching it through a VPN container (e.g. WireGuard) on Apiary's network. It costs one more service to run.
 - Local user accounts, stored in the replicated state. Single sign-on through OIDC is planned for later.
+- **Roles.** Every user has one role, and every authorizer checks it:
+
+  | Role | Can |
+  | --- | --- |
+  | Viewer | Read everything except secrets: routes, certificates (without private keys), cluster status, audit log. |
+  | Operator | Everything a Viewer can, plus create, change and delete routes and certificates. |
+  | Administrator | Everything, including users, roles, cluster membership, backups and restores. |
+
+- **Uploading private keys is UI only.** The certificate upload action isn't offered as an MCP tool, so private keys never pass through an AI agent or its model provider.
+- **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
+- The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period and can also be sent to the logs.
 - **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
