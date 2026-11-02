@@ -16,21 +16,21 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
 The same image runs in three ways. The mode is selected by configuration, in the compose file.
 
-| Mode | Replicas | High availability | Cluster secret |
+| Mode | Replicas | High availability | Root key |
 | --- | --- | --- | --- |
 | Swarm | 3 or more | Yes | Required |
 | One-node Swarm | 1 | No | Required |
 | Docker Compose, no Swarm | 1 | No | Generated if missing |
 
 - **One-node Swarm** works like the Swarm mode with `replicas: 1`: a Raft cluster of one, which is its own majority. It can grow to 3 replicas later by adding edge nodes and raising `replicas:`, with no data migration.
-- **Docker Compose** (`docker compose up`) runs a single instance, also a Raft cluster of one, with no membership, scaling or Swarm DNS. If no cluster secret is mounted, Apiary generates one on first start (see [Cluster trust](#cluster-trust)). Moving to a Swarm means exporting a backup and restoring it into the new cluster.
+- **Docker Compose** (`docker compose up`) runs a single instance, also a Raft cluster of one, with no membership, scaling or Swarm DNS. If no root key is mounted, Apiary generates one on first start (see [Cluster trust](#cluster-trust)). Moving to a Swarm means exporting a backup and restoring it into the new cluster.
 - 2 replicas are not supported: they tolerate no more failures than 1, and writes stop if either is down.
 
 The rest of this document describes the Swarm mode, and notes where the other modes differ.
 
 ## Deployment
 
-- Apiary is deployed, upgraded and scaled with `docker stack deploy` and a compose file. The only step outside it is creating the cluster secret once, before the first deploy (see [Cluster trust](#cluster-trust)).
+- Apiary is deployed, upgraded and scaled with `docker stack deploy` and a compose file. The only step outside it is creating the root key secret once, before the first deploy (see [Cluster trust](#cluster-trust)).
 - Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. High availability needs **at least 3 replicas**, and there must be at least as many labelled edge nodes as replicas.
 - Rolling updates replace one replica at a time (`parallelism: 1`, `order: stop-first`, since host-mode ports can't be shared on a node) and roll back on failure (`failure_action: rollback`).
 
@@ -54,7 +54,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - The Raft port is never published. Replicas reach each other over the overlay network.
 - Each replica stores its copy of the state on a local volume on its node.
 - One image contains the proxy, the admin API and the built Angular UI.
-- Cluster credentials (see [Cluster trust](#cluster-trust)) are provided as [Swarm secrets](https://docs.docker.com/engine/swarm/secrets/).
+- The root key (see [Cluster trust](#cluster-trust)) is provided as a [Swarm secret](https://docs.docker.com/engine/swarm/secrets/).
 
 ## Routing
 
@@ -120,17 +120,41 @@ If most voters are lost for good, writes can never resume. A forced recovery mak
 
 ## Cluster trust
 
-- Operators create one Swarm secret, once, before the first deploy. It's a bundle that Apiary itself generates, holding a certificate authority (CA) that replicas use to authenticate each other over mutual TLS, and the key that encrypts the state at rest:
+Security steps that admins have to remember get skipped, so Apiary rotates everything it can by itself, and leaves admins a single, familiar step for the rest.
+
+### The root key
+
+- Operators create one Swarm secret, once, before the first deploy: the **root key**, a random value that Apiary generates:
 
   ```bash
-  docker run --rm datapoint/apiary:<version> secrets init | docker secret create apiary_cluster -
+  docker run --rm datapoint/apiary:<version> secrets init | docker secret create apiary_root_key_1 -
   ```
 
-  The bundle goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.
+  The key goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.
+- From the root key, Apiary derives the key that protects the state at rest, and the credential a brand-new replica uses to prove it's genuine when it first joins.
 - Swarm mounts the secret into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
-- The encryption key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own keys in Swarm, even on one node.
-- **With Docker Compose**, operators can mount a secret made with `secrets init` through a Compose `secrets: file:` entry. If none is mounted, Apiary generates one on first start into its own directory, separate from the state volume, and logs a warning.
-- How the secret is rotated is still open (see [open-decisions.md](open-decisions.md)).
+- The root key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own root key in Swarm, even on one node.
+- **With Docker Compose**, operators can mount a root key made with `secrets init` through a Compose `secrets: file:` entry. If none is mounted, Apiary generates one on first start into its own directory, separate from the state volume, and logs a warning.
+
+### What rotates automatically
+
+| What | When | Who |
+| --- | --- | --- |
+| Replica certificates | Every time a replica starts | Apiary |
+| The cluster certificate authority (CA) | Well before it expires | Apiary |
+| Data encryption keys | On a schedule | Apiary |
+| The root key | Only after a suspected compromise | An admin, in one deploy |
+
+- **The cluster CA lives in the replicated state**, encrypted, not in the Swarm secret. Replicas authenticate each other over mutual TLS with short-lived certificates from it. When the CA nears expiry, the leader creates a new one; replicas trust both until every replica has a certificate from the new one, then the old one is dropped.
+- **Envelope encryption.** The state is encrypted with data keys, and only the data keys are encrypted with the key derived from the root key. Replacing a data key or the root key then re-encrypts a few small keys, not the whole state.
+
+### Rotating the root key
+
+One step, with nothing to remember in between:
+
+1. Create a new secret with `secrets init` (e.g. `apiary_root_key_2`), change the secret's name in the compose file, and run `docker stack deploy`.
+
+During the rolling update, each restarted replica rejoins with the certificate it already has, so it doesn't need the old root key. It re-protects its data with the new key and reports that to the cluster, which then also accepts the new key from brand-new replicas. Once every replica runs the new key, Apiary forgets the old one by itself. The admin UI shows the progress (e.g. "2 of 3 replicas on the new key") and warns if it stalls. Remove the old Swarm secret afterwards.
 
 ## Certificates
 

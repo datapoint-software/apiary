@@ -46,8 +46,8 @@ The result is a cluster of one, with no high availability, as in a one-node Swar
 
 Raising `replicas:` and redeploying, with enough labelled edge nodes:
 
-1. Swarm starts a replica on a new edge node and mounts the cluster secret.
-2. The replica finds the others through Swarm DNS and proves it's genuine with the cluster CA.
+1. Swarm starts a replica on a new edge node and mounts the root key.
+2. The replica finds the others through Swarm DNS and proves it has the root key.
 3. In automatic mode it joins; in manual mode it waits until an admin approves it.
 4. It receives the state, then reports healthy. Only then does Swarm count it as running.
 5. If the voter count is below its target, the replica is promoted to voter.
