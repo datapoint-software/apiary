@@ -49,7 +49,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 
 - Ports 80 and 443 (TCP, plus UDP 443 for HTTP/3) are published in [`host` mode](https://docs.docker.com/engine/swarm/services/#publish-a-services-ports-directly-on-the-swarm-node) on the edge nodes, so Apiary sees real client IP addresses. DNS or a load balancer outside the cluster spreads traffic across the edge nodes.
 - The admin port is also published in `host` mode, so it opens only on edge nodes and Apiary sees the admin's real IP. Swarm can't bind a published port to one interface, so it is kept off the internet by the layers described in [Management](#management).
-- Apiary uses host publishing mode, not host network mode (`network_mode: host`): the containers stay on the overlay network, so Apiary can still reach services by name.
+- Apiary uses host publishing mode, not host network mode (`network_mode: host`): the containers stay on the overlay network, so Apiary can still reach services by name. Host network mode isn't supported in any mode (see [Routing](#routing)).
 - The Raft port is never published. Replicas reach each other over the overlay network.
 - Each replica stores its copy of the state on a local volume on its node.
 - One image contains the proxy, the admin API and the built Angular UI.
@@ -60,6 +60,12 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - Routes (hostname and path to a target) are defined **only in the admin UI** and stored in the replicated state. Apiary doesn't read service labels.
 - A target is any hostname or IP address and port: a Swarm service name, a container name on a shared Docker network, or an application on the host or elsewhere. The same model works in every mode.
 - Apiary refuses routes that would reach itself or internal endpoints: its own ports (on its own addresses, the host gateway and the host's addresses), loopback and link-local addresses (e.g. the cloud metadata endpoint `169.254.169.254`). It checks the IP address each connection actually goes to, not only the route's hostname, so a DNS name that later resolves to one of these is refused too (DNS rebinding).
+- **Loopback is always blocked, and host network mode isn't supported.** In a normal container, loopback is the container itself, so blocking it costs nothing. Only with `network_mode: host` would loopback be the server, where software that listens only on `localhost` (databases, admin panels, debug endpoints, sometimes a Docker daemon on TCP) relies on staying private. A single wrong route would make it public. We left it out of the first version because:
+  - Adding it later, as an opt-in setting, is a backwards-compatible change. Removing it once deployments depend on it would be a breaking change.
+  - Host network mode isn't needed for anything else: host publishing mode already gives Apiary the real client IP, and host network mode would stop Apiary from reaching containers by name.
+  - Apps on the host can still be routed, as below, or run in a container on the shared network.
+
+  The cost is that an app that listens only on `127.0.0.1`, and can't be reconfigured or containerised, can't be routed. If that need comes up, revisit this as an opt-in.
 - Apps on the same host are reached through the host's address on the Docker network, e.g. `host.docker.internal` (on Linux, add `extra_hosts: ["host.docker.internal:host-gateway"]`). They must listen on an address the container can reach, not only on `127.0.0.1`.
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
