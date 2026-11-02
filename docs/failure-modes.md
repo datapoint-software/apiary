@@ -71,7 +71,7 @@ A node crashes or loses power, so its replica gets no chance to leave:
 
 ## The leader fails
 
-The remaining voters elect a new leader. Writes pause during the election and resume on their own. A write that was in progress when the leader failed may or may not have been applied; how callers retry it safely is an [open decision](open-decisions.md).
+The remaining voters elect a new leader. Writes pause during the election and resume on their own. A command that was in progress when the leader failed is retried against the new leader with the same request ID, so it is applied exactly once (see [Writes](architecture.md#writes)). Callers only see an unknown outcome if no leader is elected before the timeout.
 
 ## A majority of voters fails
 

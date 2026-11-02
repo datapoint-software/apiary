@@ -101,12 +101,23 @@ By default a route has a single target group, and none of the following applies.
 - **Replica identity.** A replica generates a random member ID the first time it starts with an empty volume, and stores it next to the state. The ID is part of the data: a replica whose volume is lost or wiped always joins as a new member, never under its old ID. This rules out a known Raft pitfall, where a member that lost its data but kept its ID helps form a majority that lacks committed changes, and those changes are lost. The UI and logs show each member's node name next to its ID (e.g. `edge-2 (a3f9…)`).
 - **Replacing voters.** When a voter leaves (it was stopped, or it has been missing longer than a configurable timeout), a follower is promoted in its place if there is one. A voter that is briefly unreachable, e.g. during a network blip, isn't replaced, so membership doesn't churn. A missing member is removed straight away, without waiting for the timeout, when a new member starts on the same node: Swarm runs at most one replica per node, so the old one can't still be running there.
 - **Membership is configurable.** In *automatic* mode, replicas that appear in Swarm DNS join, and ones that leave or stay missing past the timeout are removed, so the cluster scales with the edge nodes. In *manual* mode, new replicas wait until an admin approves them (UI or MCP), and admins remove dead ones. In both modes a replica must prove it's genuine (see [Cluster trust](#cluster-trust)) before it can join.
-- **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads.
+- **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads (see [Writes](#writes)).
 - The state holds routes, admin users and their roles, OAuth clients and tokens, the audit log, automatic and uploaded certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
 - **Replicas leave cleanly.** When Swarm stops a replica (scale-down, rolling update or node drain), it hands off leadership if it leads, and a voter steps down so a follower can be promoted, within `stop_grace_period`. Apiary refuses to step down a voter if that would leave fewer voters than a majority needs.
 - **Healthy means caught up, once.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update. After that it stays healthy as long as the process responds, even if it falls behind for a while (see [Observability](#observability)).
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
 - **Backups are on demand.** Admins export an encrypted snapshot of the state through the UI or MCP. A restore rebuilds a new cluster from it.
+
+### Writes
+
+Every change is a Datapoint.Mediator command, applied through a transaction behaviour in Apiary that implements the library's `ITransactionContext`. The library needs no changes: its abstractions don't depend on EF Core.
+
+- **Commands are forwarded, not HTTP requests.** On a follower, the behaviour sends the action name, its JSON arguments, the signed-in user and their IP address to the leader over the replicas' mutual TLS. Forwarding the HTTP request instead would hide the admin's IP address from the allowlist and audit log, and break MCP sessions on every leadership change.
+- **The leader decides.** It runs authorization, validation and the handler against the latest state, so a user who was just demoted is refused.
+- **One entry per command.** The command's changes and its audit entry are appended as a single Raft entry, so a change is never saved without its audit record. The caller gets its result once the entry is saved by a majority.
+- **Queries run locally**, on whichever replica receives them.
+- **Safe retries.** Each forwarded command carries a unique request ID. The leader remembers recently applied IDs and their results. When a leader fails before replying, the follower retries with the same ID against the new leader, which returns the stored result if the command was already applied, instead of applying it twice. Callers see "unknown" only if no leader returns before a timeout.
+- **It lives in Apiary.** Leader forwarding is specific to Apiary's design. Reusable parts, such as request-ID deduplication, can move into Datapoint.Mediator if another project needs them.
 
 ### Forced recovery
 
