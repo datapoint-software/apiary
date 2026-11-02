@@ -69,7 +69,26 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - Apps on the same host are reached through the host's address on the Docker network, e.g. `host.docker.internal` (on Linux, add `extra_hosts: ["host.docker.internal:host-gateway"]`). They must listen on an address the container can reach, not only on `127.0.0.1`.
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
-- First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects. Raw TCP/UDP proxying is out of scope.
+- First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects, plus raw TCP and UDP (see [TCP and UDP](#tcp-and-udp)).
+
+### Weighted and canary routing
+
+- A route can send traffic to several target groups by weight (e.g. 90% to `shop-v1`, 10% to `shop-v2`), so a new version can be released gradually. YARP has no weighted policy built in, so Apiary adds one.
+- A route can also pick a target group by request header or cookie (e.g. `X-Canary: true`), so testers reach the new version on purpose.
+- With weights, a sticky cookie keeps each client on the group it first got (YARP's session affinity), so users don't switch between versions mid-session. Each replica applies the weights on its own, so the split is statistical, not exact.
+
+### Compression and caching
+
+- **Compression** (Brotli and gzip) is set per route and **off by default**. Compressing HTTPS responses that mix secrets with text an attacker can influence allows the [BREACH attack](https://www.breachattack.com/), which is why ASP.NET Core disables it for HTTPS unless enabled. Responses that are already compressed (images, archives) are skipped.
+- **Caching** is set per route and **off by default**. Apiary caches only what the target allows through `Cache-Control`, and never responses to requests with `Authorization` or cookies, or responses that set cookies, unless the target explicitly marks them `public`.
+- Each replica keeps its own cache in memory. Admins can purge a route's cache, which clears it on every replica.
+
+### TCP and UDP
+
+- A stream route forwards raw TCP or UDP from a port on the edge nodes to a target host and port, for traffic that isn't HTTP (e.g. databases, SMTP, MQTT, game servers). YARP doesn't do this, so it's Apiary's own code.
+- Swarm ports can only be published in the compose file, not at runtime. So the compose file publishes a **range of ports** in `host` mode for stream routes (e.g. `10000-10099`, TCP and UDP), and each stream route takes a port from that range. Widening the range means redeploying.
+- TCP routes are chosen by port. A TCP route can also choose by TLS server name (SNI) without decrypting (TLS passthrough), so several TLS services can share one port. UDP routes are chosen by port only, with a configurable idle timeout for each client's session.
+- An open TCP connection or UDP session stays on the replica that accepted it. If that replica stops, the client must reconnect.
 
 ## Replicated state
 
@@ -117,7 +136,10 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
   3. **Authentication**, for users and agents alike.
 - With Docker Compose, the admin port can also be bound to one interface (e.g. `"10.0.0.5:9443:9443"`).
 - A stricter alternative is not publishing the admin port at all, and reaching it through a VPN container (e.g. WireGuard) on Apiary's network. It costs one more service to run.
-- Local user accounts, stored in the replicated state. Single sign-on through OIDC is planned for later.
+- **Sign-in.** Admins sign in either with a local account, stored in the replicated state, or through single sign-on with an OpenID Connect (OIDC) identity provider such as Entra ID or Keycloak.
+  - Roles can be mapped from the identity provider's groups, so access is managed there and removed when people leave.
+  - Local accounts stay available as a break-glass way in, for when the identity provider is down. That matters because the identity provider may itself be routed through Apiary.
+  - For MCP, Apiary stays the OAuth authorization server, and sends users to the identity provider to sign in.
 - **Roles.** Every user has one role, and every authorizer checks it:
 
   | Role | Can |
@@ -129,4 +151,4 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Uploading private keys is UI only.** The certificate upload action isn't offered as an MCP tool, so private keys never pass through an AI agent or its model provider.
 - **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
 - The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period and can also be sent to the logs.
-- **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
+- **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
