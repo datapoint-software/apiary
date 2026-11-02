@@ -181,6 +181,13 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
   - Roles can be mapped from the identity provider's groups, so access is managed there and removed when people leave.
   - Local accounts stay available as a break-glass way in, for when the identity provider is down. That matters because the identity provider may itself be routed through Apiary.
   - For MCP, Apiary stays the OAuth authorization server, and sends users to the identity provider to sign in.
+- **First admin.** A new cluster has no users, so the first person to open the admin UI creates the first Administrator. To keep the window before that small:
+  1. Setup is offered only for 15 minutes after Apiary starts with no users. After that it closes, and restarting Apiary reopens it, which already requires control of the deployment.
+  2. Completing setup sets a permanent flag in the state, so setup never reopens, even if users are deleted later. Apiary refuses to delete or demote the last Administrator.
+  3. Setup is only reachable on the admin port, with its firewall and allowlist, and is the first entry in the audit log, with the source IP address.
+  4. On start, Apiary logs where and until when setup is open (e.g. "Waiting for setup at https://edge-1:9443 until 14:35").
+
+  If every Administrator is locked out, `docker exec <container> apiary users create-admin --name <name>` prints a one-time link, valid for about 15 minutes, where the new Administrator sets their password in the browser. Running `docker exec` already requires control of the host, and the action is audited.
 - **Roles.** Every user has one role, and every authorizer checks it:
 
   | Role | Can |
