@@ -48,6 +48,9 @@ The rest of this document describes the Swarm mode, and notes where the other mo
   ```
 
 - Ports 80 and 443 (TCP, plus UDP 443 for HTTP/3) are published in [`host` mode](https://docs.docker.com/engine/swarm/services/#publish-a-services-ports-directly-on-the-swarm-node) on the edge nodes, so Apiary sees real client IP addresses. DNS or a load balancer outside the cluster spreads traffic across the edge nodes.
+- The admin port is also published in `host` mode, so it opens only on edge nodes and Apiary sees the admin's real IP. Swarm can't bind a published port to one interface, so it is kept off the internet by the layers described in [Management](#management).
+- Apiary uses host publishing mode, not host network mode (`network_mode: host`): the containers stay on the overlay network, so Apiary can still reach services by name.
+- The Raft port is never published. Replicas reach each other over the overlay network.
 - Each replica stores its copy of the state on a local volume on its node.
 - One image contains the proxy, the admin API and the built Angular UI.
 - Cluster credentials (see [Cluster trust](#cluster-trust)) are provided as [Swarm secrets](https://docs.docker.com/engine/swarm/secrets/).
@@ -56,6 +59,8 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 
 - Routes (hostname and path to a target) are defined **only in the admin UI** and stored in the replicated state. Apiary doesn't read service labels.
 - A target is any hostname or IP address and port: a Swarm service name, a container name on a shared Docker network, or an application on the host or elsewhere. The same model works in every mode.
+- Apiary refuses routes that would reach itself or internal endpoints: its own ports (on its own addresses, the host gateway and the host's addresses), loopback and link-local addresses (e.g. the cloud metadata endpoint `169.254.169.254`). It checks the IP address each connection actually goes to, not only the route's hostname, so a DNS name that later resolves to one of these is refused too (DNS rebinding).
+- Apps on the same host are reached through the host's address on the Docker network, e.g. `host.docker.internal` (on Linux, add `extra_hosts: ["host.docker.internal:host-gateway"]`). They must listen on an address the container can reach, not only on `127.0.0.1`.
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
 - First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects. Raw TCP/UDP proxying is out of scope.
@@ -98,6 +103,11 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 
 - Every management operation (e.g. create a route, list certificates) is a Datapoint.Mediator command or query, named with `[Action]`. The same action is mapped as an HTTP endpoint for the UI (`Datapoint.Mediator.AspNetCore`) and as an MCP tool for agents (`Datapoint.Mediator.ModelContextProtocol`), so both get the same validation and authorization.
 - Authorization is denied by default: every action needs an authorizer. An agent acts as the user who connected it and gets no more permissions than that user.
-- The UI, its HTTP API and the MCP endpoint are all served on the admin port, which is **not published on the public edge**. Reach them through a VPN or the internal network.
+- The UI, its HTTP API and the MCP endpoint are all served on the admin port, which must **never be reachable from the internet**. Every replica serves it, so admins can use any edge node. It's protected by three independent layers (defence in depth), so it stays safe if one fails:
+  1. **A network firewall outside the hosts** (e.g. a cloud security group or the network's firewall) allows the admin port only from the VPN or internal address ranges. This is the main layer: Docker's iptables rules can't bypass it. Rules in Docker's [`DOCKER-USER` chain](https://docs.docker.com/engine/network/packet-filtering-firewalls/) on each node can add to it, but aren't relied on.
+  2. **An allowlist inside Apiary.** The admin listener accepts connections only from configured address ranges, by default the private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` and `fc00::/7`. It checks the connection's own source address and never `X-Forwarded-For` or similar headers, which clients can set to anything.
+  3. **Authentication**, for users and agents alike.
+- With Docker Compose, the admin port can also be bound to one interface (e.g. `"10.0.0.5:9443:9443"`).
+- A stricter alternative is not publishing the admin port at all, and reaching it through a VPN container (e.g. WireGuard) on Apiary's network. It costs one more service to run.
 - Local user accounts, stored in the replicated state. Single sign-on through OIDC is planned for later.
 - **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
