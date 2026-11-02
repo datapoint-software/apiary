@@ -215,7 +215,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 
 - **Uploading private keys is UI only.** The certificate upload action isn't offered as an MCP tool, so private keys never pass through an AI agent or its model provider.
 - **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
-- The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period and can also be sent to the logs.
+- The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period, 1 year by default, and can also be sent to the logs.
 - **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
 
 ## Observability
@@ -237,8 +237,8 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 ### Personal data
 
 - IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognises network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
-- The audit log, which Apiary does store, has a configurable retention period.
-- **Signed off** by the data protection officer on 2026-11-02: full IP addresses by default, on the grounds of network and information security. The audit log's default retention period is still to be set.
+- The audit log, which Apiary does store, keeps entries for a configurable period, 1 year by default. Older entries are deleted automatically.
+- **Signed off** by the data protection officer on 2026-11-02: full IP addresses by default, on the grounds of network and information security, and a default audit log retention of 1 year, long enough to investigate incidents found months later.
 
 ### Health checks
 
