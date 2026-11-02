@@ -14,7 +14,23 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 
 ## Deployment
 
-- Apiary runs as a single Swarm service in `global` mode, constrained to edge nodes marked with a node label. One task per edge node; there must be **at least 3 edge nodes**. Scaling out means labelling more nodes.
+- Apiary is deployed, upgraded and scaled with `docker stack deploy` and a compose file. The only step outside it is creating the cluster secret once, before the first deploy (see [Cluster trust](#cluster-trust)).
+- Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. There must be **at least 3 replicas**, and at least as many labelled edge nodes as replicas.
+- Rolling updates replace one replica at a time (`parallelism: 1`, `order: stop-first`, since host-mode ports can't be shared on a node) and roll back on failure (`failure_action: rollback`).
+
+  ```yaml
+  deploy:
+    mode: replicated
+    replicas: 3
+    placement:
+      max_replicas_per_node: 1
+      constraints: [node.labels.apiary.edge == true]
+    update_config:
+      parallelism: 1
+      order: stop-first
+      failure_action: rollback
+  ```
+
 - Ports 80 and 443 (TCP, plus UDP 443 for HTTP/3) are published in [`host` mode](https://docs.docker.com/engine/swarm/services/#publish-a-services-ports-directly-on-the-swarm-node) on the edge nodes, so Apiary sees real client IP addresses. DNS or a load balancer outside the cluster spreads traffic across the edge nodes.
 - Each replica stores its copy of the state on a local volume on its node.
 - One image contains the proxy, the admin API and the built Angular UI.
@@ -34,13 +50,23 @@ Move to the next .NET LTS or Angular major version before the current one leaves
 - **Membership is configurable.** In *automatic* mode, replicas that appear in Swarm DNS join, and ones that disappear are removed, so the cluster scales with the edge nodes. In *manual* mode, new replicas wait until an admin approves them (UI or MCP), and admins remove dead ones. In both modes a replica must prove it's genuine (see [Cluster trust](#cluster-trust)) before it can join.
 - **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads.
 - The state holds routes, admin users, OAuth clients and tokens, certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
+- **Replicas leave cleanly.** When Swarm stops a replica (scale-down, rolling update or node drain), it hands off leadership if it leads, and a voter steps down so a follower can be promoted, within `stop_grace_period`. Apiary refuses to step down a voter if that would leave fewer voters than a majority needs.
+- **Healthy means caught up.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update.
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
 - **Backups are on demand.** Admins export an encrypted snapshot of the state through the UI or MCP. A restore rebuilds a new cluster from it.
 
 ## Cluster trust
 
-- Operators create the cluster's credentials once, as Swarm secrets: the key that encrypts the state at rest, and what replicas use to authenticate each other over mutual TLS. Swarm mounts them into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
-- What exactly the secrets contain, and how they are rotated, is still open (see [open-decisions.md](open-decisions.md)).
+- Operators create one Swarm secret, once, before the first deploy. It's a bundle that Apiary itself generates, holding a certificate authority (CA) that replicas use to authenticate each other over mutual TLS, and the key that encrypts the state at rest:
+
+  ```bash
+  docker run --rm datapoint/apiary:<version> secrets init | docker secret create apiary_cluster -
+  ```
+
+  The bundle goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.
+- Swarm mounts the secret into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
+- The encryption key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own keys on first start.
+- How the secret is rotated is still open (see [open-decisions.md](open-decisions.md)).
 
 ## Certificates
 
