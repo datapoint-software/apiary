@@ -12,7 +12,7 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 
 ## Documentation
 
-- [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and the admin interface.
+- [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and management (admin UI and MCP).
 - [Open decisions](docs/open-decisions.md): design questions still to be settled.
 - [Risks and considerations](docs/risks.md): security, privacy and operational risks. Read it before changing how Apiary stores state, handles secrets or is exposed to the network.
 
