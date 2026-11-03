@@ -64,6 +64,8 @@ export interface StreamRouteView {
   readonly targetPort: number;
   readonly serverNames: readonly string[];
   readonly idleTimeoutSeconds: number;
+  readonly disabled: boolean;
+  readonly allowedAddresses: readonly string[];
   readonly connections: number;
   readonly changedAt: string;
   readonly changedBy?: string;

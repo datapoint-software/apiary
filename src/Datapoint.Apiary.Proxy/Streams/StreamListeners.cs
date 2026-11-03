@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.Routing;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
@@ -11,6 +12,7 @@ namespace Datapoint.Apiary.Proxy.Streams;
 public sealed partial class StreamListeners(
     IClusterState cluster,
     TargetConnector connector,
+    AddressAllowlists allowlists,
     StreamConnections connections,
     TimeProvider time,
     ILogger<StreamListeners> logger) : BackgroundService
@@ -54,6 +56,7 @@ public sealed partial class StreamListeners(
     private async Task ReconcileAsync(ApiaryState state)
     {
         var wanted = state.StreamRoutes.Values
+            .Where(s => !s.Disabled)
             .GroupBy(s => (s.Protocol, s.ListenPort))
             .ToDictionary(g => g.Key, g => (IReadOnlyList<StreamRoute>)[.. g.OrderBy(s => s.Id)]);
         foreach (var key in _listeners.Keys.Where(key => !wanted.ContainsKey(key)).ToList())
@@ -82,8 +85,8 @@ public sealed partial class StreamListeners(
         try
         {
             _listeners[key] = key.Protocol is StreamProtocol.Tcp
-                ? new TcpStreamListener(key.Port, routes, connector, connections, logger)
-                : new UdpStreamListener(key.Port, routes[0], connector, connections, time, logger);
+                ? new TcpStreamListener(key.Port, routes, connector, allowlists, connections, logger)
+                : new UdpStreamListener(key.Port, routes[0], connector, allowlists, connections, time, logger);
             if (_failed.Remove(key))
             {
                 LogListening(logger, key.Protocol, key.Port);

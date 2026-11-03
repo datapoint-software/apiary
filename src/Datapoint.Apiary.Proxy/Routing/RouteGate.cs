@@ -14,7 +14,7 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
             return next(context);
         }
 
-        if (!allowlists.Allows(route, context.Connection.RemoteIpAddress))
+        if (!allowlists.Allows(route.AllowedAddresses, context.Connection.RemoteIpAddress))
         {
             return PublicPages.Forbidden().ExecuteAsync(context);
         }

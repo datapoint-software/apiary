@@ -29,6 +29,7 @@
             <th scope="col">Listens on</th>
             <th scope="col">Target</th>
             <th scope="col">Project</th>
+            <th scope="col">Status</th>
             <th scope="col" class="ap-num">Connections</th>
             <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
           </tr>
@@ -47,6 +48,16 @@
               <td><span class="ap-data">{{ stream.listenPort }}</span> <span class="ap-tag">{{ stream.protocol.toUpperCase() }}</span></td>
               <td class="ap-data ap-muted">{{ stream.targetHost }}:{{ stream.targetPort }}</td>
               <td class="ap-muted">{{ projectNames().get(stream.projectId) }}</td>
+              <td>
+                @if (stream.disabled) {
+                  <ap-status tone="off">Disabled</ap-status>
+                } @else {
+                  <ap-status tone="ok">Active</ap-status>
+                }
+                @if (stream.allowedAddresses.length) {
+                  <span class="ap-caption" style="display: block">Allowlist</span>
+                }
+              </td>
               <td class="ap-num">{{ stream.connections }}</td>
               <td class="ap-col-actions">
                 @if (auth.canOperate()) {
@@ -54,6 +65,15 @@
                     <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit ' + stream.name" (click)="edit(stream)">
                       <ap-icon [icon]="icons.edit" />
                     </button>
+                    @if (stream.disabled) {
+                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Enable ' + stream.name" (click)="enable(stream)">
+                        <ap-icon [icon]="icons.enable" />
+                      </button>
+                    } @else {
+                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Disable ' + stream.name" (click)="disable(stream)">
+                        <ap-icon [icon]="icons.disable" />
+                      </button>
+                    }
                     <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + stream.name" (click)="delete(stream)">
                       <ap-icon [icon]="icons.delete" />
                     </button>

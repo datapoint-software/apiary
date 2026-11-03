@@ -2,7 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormField, applyWhen, form, hidden, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorSummary, Field, Form, ipRanges, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { ProjectView, StreamProtocol, StreamRouteView } from '../api/models';
 import { CopyText } from '../auth/copy-text';
@@ -21,6 +21,7 @@ interface StreamModel {
   targetPort: number | null;
   serverNames: string;
   idleTimeoutSeconds: number | null;
+  allowedAddresses: string;
 }
 
 const serverNamePattern = /^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -38,6 +39,7 @@ const emptyStream: StreamModel = {
   targetPort: null,
   serverNames: '',
   idleTimeoutSeconds: 60,
+  allowedAddresses: '',
 };
 
 function streamModel(stream: StreamRouteView | null): StreamModel {
@@ -45,7 +47,17 @@ function streamModel(stream: StreamRouteView | null): StreamModel {
     return emptyStream;
   }
   const { projectId, name, protocol, listenPort, targetHost, targetPort, idleTimeoutSeconds } = stream;
-  return { projectId, name, protocol, listenPort, targetHost, targetPort, idleTimeoutSeconds, serverNames: stream.serverNames.join('\n') };
+  return {
+    projectId,
+    name,
+    protocol,
+    listenPort,
+    targetHost,
+    targetPort,
+    idleTimeoutSeconds,
+    serverNames: stream.serverNames.join('\n'),
+    allowedAddresses: stream.allowedAddresses.join('\n'),
+  };
 }
 
 @Component({
@@ -71,6 +83,7 @@ export class StreamDialog {
     validate(s.serverNames, ({ value }) => (lines(value()).every((name) => serverNamePattern.test(name)) ? undefined : { kind: 'hostname.invalid' }));
     hidden(s.idleTimeoutSeconds, ({ valueOf }) => valueOf(s.protocol) !== 'udp');
     applyWhen(s.idleTimeoutSeconds, ({ valueOf }) => valueOf(s.protocol) === 'udp', (timeout) => wholeNumber(timeout, 1, 3600));
+    ipRanges(s.allowedAddresses);
   });
   protected readonly published = signal<StreamModel | null>(null);
   protected readonly portLine = computed(() => {
@@ -122,6 +135,7 @@ export class StreamDialog {
       targetPort: value.targetPort,
       serverNames: value.protocol === 'tcp' ? lines(value.serverNames) : [],
       idleTimeoutSeconds: value.protocol === 'udp' ? value.idleTimeoutSeconds : 60,
+      allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
     };
     await (this.existing ? this.api.send('streams.update', { id: this.existing.id, ...body }) : this.api.send<string>('streams.create', body));
   }

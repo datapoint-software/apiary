@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.Routing;
 using Microsoft.Extensions.Logging;
 
 namespace Datapoint.Apiary.Proxy.Streams;
@@ -15,17 +16,19 @@ public sealed partial class TcpStreamListener : IStreamListener
 
     private readonly Socket _socket;
     private readonly TargetConnector _connector;
+    private readonly AddressAllowlists _allowlists;
     private readonly StreamConnections _connections;
     private readonly ILogger _logger;
     private readonly CancellationTokenSource _stopping = new();
-    private readonly ConcurrentDictionary<TcpStreamConnection, StreamRoute> _open = new();
+    private readonly ConcurrentDictionary<TcpStreamConnection, (StreamRoute Route, IPAddress? Client)> _open = new();
     private readonly Task _accepting;
     private IReadOnlyList<StreamRoute> _routes;
 
-    public TcpStreamListener(int port, IReadOnlyList<StreamRoute> routes, TargetConnector connector, StreamConnections connections, ILogger logger)
+    public TcpStreamListener(int port, IReadOnlyList<StreamRoute> routes, TargetConnector connector, AddressAllowlists allowlists, StreamConnections connections, ILogger logger)
     {
         _routes = routes;
         _connector = connector;
+        _allowlists = allowlists;
         _connections = connections;
         _logger = logger;
         _socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp) { DualMode = true };
@@ -46,9 +49,10 @@ public sealed partial class TcpStreamListener : IStreamListener
     public void Update(IReadOnlyList<StreamRoute> routes)
     {
         _routes = routes;
-        foreach (var (connection, route) in _open)
+        foreach (var (connection, (route, client)) in _open)
         {
-            if (!routes.Any(r => r.Id == route.Id && StreamMatch.SameTarget(r, route)))
+            var current = routes.FirstOrDefault(r => r.Id == route.Id);
+            if (current is null || !StreamMatch.SameTarget(current, route) || !_allowlists.Allows(current.AllowedAddresses, client))
             {
                 connection.Close();
             }
@@ -97,8 +101,9 @@ public sealed partial class TcpStreamListener : IStreamListener
     {
         client.NoDelay = true;
         using var stream = new NetworkStream(client, ownsSocket: true);
+        var address = (client.RemoteEndPoint as IPEndPoint)?.Address;
         var (route, prefix) = await ChooseAsync(stream);
-        if (route is null)
+        if (route is null || !_allowlists.Allows(route.AllowedAddresses, address))
         {
             return;
         }
@@ -110,7 +115,7 @@ public sealed partial class TcpStreamListener : IStreamListener
         }
 
         using var connection = new TcpStreamConnection(stream, new NetworkStream(target, ownsSocket: true), _stopping.Token);
-        _open[connection] = route;
+        _open[connection] = (route, address);
         _connections.Opened(route.Id);
         try
         {

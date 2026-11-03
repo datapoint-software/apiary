@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Cluster.Streams;
+using Datapoint.Apiary.Management.Routes;
 
 namespace Datapoint.Apiary.Management.Streams;
 
@@ -19,5 +20,6 @@ public static class StreamNormalization
         TargetPort = fields.TargetPort,
         ServerNames = ServerNames(fields),
         IdleTimeoutSeconds = fields.Protocol is StreamProtocol.Udp ? fields.IdleTimeoutSeconds : StreamRules.DefaultIdleTimeoutSeconds,
+        AllowedAddresses = RouteNormalization.Addresses(fields.AllowedAddresses),
     };
 }

@@ -1,8 +1,8 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Banner, Button, Confirmer, EmptyState, Icon, PageHead, Toaster } from '@datapoint/apiary-ui';
-import { Pencil, Plus, Trash2 } from 'lucide';
+import { ApiProblem, Banner, Button, Confirmer, EmptyState, ErrorMessages, Icon, PageHead, Status, Toaster } from '@datapoint/apiary-ui';
+import { Pencil, Play, Plus, Power, Trash2 } from 'lucide';
 import { Api } from '../api/api';
 import { reloadEvery } from '../api/reload-every';
 import { ProjectView, StreamRouteView } from '../api/models';
@@ -13,7 +13,7 @@ import { SavedStream, StreamDialog } from './stream-dialog';
 
 @Component({
   selector: 'ap-stream-list',
-  imports: [WriteLock, PageHead, Banner, EmptyState, Icon, Button],
+  imports: [WriteLock, PageHead, Banner, EmptyState, Icon, Button, Status],
   templateUrl: './stream-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -22,8 +22,9 @@ export class StreamList {
   private readonly dialog = inject(Dialog);
   private readonly confirmer = inject(Confirmer);
   private readonly toaster = inject(Toaster);
+  private readonly messages = inject(ErrorMessages);
   protected readonly auth = inject(Auth);
-  protected readonly icons = { add: Plus, edit: Pencil, delete: Trash2 };
+  protected readonly icons = { add: Plus, edit: Pencil, delete: Trash2, disable: Power, enable: Play };
   protected readonly streams = httpResource<StreamRouteView[]>(() => this.api.query('streams.list'), { defaultValue: [] });
   private readonly refresh = reloadEvery(this.streams);
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
@@ -35,6 +36,28 @@ export class StreamList {
     if (saved) {
       this.streams.reload();
       this.toaster.show(saved.added ? `${saved.name} is ready on every replica.` : `${saved.name} saved.`);
+    }
+  }
+
+  protected async disable(stream: StreamRouteView): Promise<void> {
+    const disabled = await this.confirmer.confirm({
+      heading: `Disable ${stream.name}?`,
+      text: `Every replica stops listening on port ${stream.listenPort}/${stream.protocol.toUpperCase()} and closes open connections until you enable it again. Its settings are kept.`,
+      confirm: 'Disable stream route',
+      busy: 'Disabling…',
+      action: () => this.api.send('streams.disable', { id: stream.id }),
+    });
+    if (disabled) {
+      this.toaster.show(`${stream.name} disabled.`, { action: { label: 'Undo', run: () => void this.enable(stream) } });
+    }
+  }
+
+  protected async enable(stream: StreamRouteView): Promise<void> {
+    try {
+      await this.api.send('streams.enable', { id: stream.id });
+      this.toaster.show(`${stream.name} enabled. Traffic flows again.`);
+    } catch (problem) {
+      this.toaster.show(this.messages.describe((problem as ApiProblem).code), { tone: 'error' });
     }
   }
 

@@ -70,6 +70,14 @@
           </ap-field>
         </div>
       }
+      <ap-field
+        label="Allowed addresses"
+        [field]="stream.allowedAddresses"
+        [optional]="true"
+        help="One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; connections from anywhere else are closed. Needs the port published in host mode."
+      >
+        <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="stream.allowedAddresses"></textarea>
+      </ap-field>
     </div>
     <div class="ap-dialog-foot">
       <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>

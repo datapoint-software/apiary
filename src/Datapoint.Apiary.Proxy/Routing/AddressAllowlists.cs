@@ -1,16 +1,15 @@
 using System.Net;
 using System.Runtime.CompilerServices;
-using Datapoint.Apiary.Cluster.Routes;
 
 namespace Datapoint.Apiary.Proxy.Routing;
 
 public sealed class AddressAllowlists
 {
-    private readonly ConditionalWeakTable<Route, IPNetwork[]> _networks = [];
+    private readonly ConditionalWeakTable<IReadOnlyList<string>, IPNetwork[]> _networks = [];
 
-    public bool Allows(Route route, IPAddress? address)
+    public bool Allows(IReadOnlyList<string>? allowed, IPAddress? address)
     {
-        if (route.AllowedAddresses is not { Count: > 0 } allowed)
+        if (allowed is not { Count: > 0 })
         {
             return true;
         }
@@ -25,7 +24,7 @@ public sealed class AddressAllowlists
             address = address.MapToIPv4();
         }
 
-        foreach (var network in _networks.GetValue(route, _ => Parse(allowed)))
+        foreach (var network in _networks.GetValue(allowed, Parse))
         {
             if (network.Contains(address))
             {

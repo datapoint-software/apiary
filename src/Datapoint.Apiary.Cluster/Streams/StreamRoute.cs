@@ -11,4 +11,9 @@ public sealed record StreamRoute(
     IReadOnlyList<string> ServerNames,
     int IdleTimeoutSeconds,
     DateTimeOffset ChangedAt,
-    string? ChangedBy);
+    string? ChangedBy)
+{
+    public bool Disabled { get; init; }
+
+    public IReadOnlyList<string>? AllowedAddresses { get; init; }
+}

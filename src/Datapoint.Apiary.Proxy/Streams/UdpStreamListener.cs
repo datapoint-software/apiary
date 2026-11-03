@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.Routing;
 using Microsoft.Extensions.Logging;
 
 namespace Datapoint.Apiary.Proxy.Streams;
@@ -15,6 +16,7 @@ public sealed partial class UdpStreamListener : IStreamListener
 
     private readonly Socket _socket;
     private readonly TargetConnector _connector;
+    private readonly AddressAllowlists _allowlists;
     private readonly StreamConnections _connections;
     private readonly TimeProvider _time;
     private readonly ILogger _logger;
@@ -24,10 +26,11 @@ public sealed partial class UdpStreamListener : IStreamListener
     private readonly Task _sweeping;
     private StreamRoute? _route;
 
-    public UdpStreamListener(int port, StreamRoute route, TargetConnector connector, StreamConnections connections, TimeProvider time, ILogger logger)
+    public UdpStreamListener(int port, StreamRoute route, TargetConnector connector, AddressAllowlists allowlists, StreamConnections connections, TimeProvider time, ILogger logger)
     {
         _route = route;
         _connector = connector;
+        _allowlists = allowlists;
         _connections = connections;
         _time = time;
         _logger = logger;
@@ -51,7 +54,7 @@ public sealed partial class UdpStreamListener : IStreamListener
         _route = routes.Count > 0 ? routes[0] : null;
         foreach (var session in _sessions.Values)
         {
-            if (_route is null || session.Route.Id != _route.Id || !StreamMatch.SameTarget(_route, session.Route))
+            if (_route is null || session.Route.Id != _route.Id || !StreamMatch.SameTarget(_route, session.Route) || !Allows(_route, session.Client))
             {
                 End(session);
             }
@@ -116,7 +119,7 @@ public sealed partial class UdpStreamListener : IStreamListener
 
     private async Task<UdpStreamSession?> OpenAsync(EndPoint client)
     {
-        if (_route is not { } route || _sessions.Count >= MaximumSessions)
+        if (_route is not { } route || _sessions.Count >= MaximumSessions || !Allows(route, client))
         {
             return null;
         }
@@ -145,6 +148,8 @@ public sealed partial class UdpStreamListener : IStreamListener
         _ = ReplyAsync(session);
         return session;
     }
+
+    private bool Allows(StreamRoute route, EndPoint client) => _allowlists.Allows(route.AllowedAddresses, (client as IPEndPoint)?.Address);
 
     private async Task ReplyAsync(UdpStreamSession session)
     {

@@ -12,6 +12,8 @@ const labels: Record<string, string> = {
   'streams.create': 'added a stream route',
   'streams.update': 'changed a stream route',
   'streams.delete': 'deleted a stream route',
+  'streams.disable': 'disabled a stream route',
+  'streams.enable': 'enabled a stream route',
   'redirects.create': 'added a redirect',
   'redirects.delete': 'deleted a redirect',
   'certificates.issue': 'requested a certificate',

@@ -17,5 +17,6 @@ public sealed record UpdateStreamRoute(
     [property: Description("The target's hostname or IP address on the shared network, such as mqtt. Loopback and link-local addresses are refused.")] string TargetHost,
     [property: Description("The target's port.")] int TargetPort,
     [property: Description("TCP only: TLS server names (SNI) this route answers, such as mqtt.example.com or *.example.com. Leave it empty to take every connection on the port.")] IReadOnlyList<string>? ServerNames = null,
-    [property: Description("UDP only: seconds without traffic before a client's session ends, from 1 to 3600.")] int IdleTimeoutSeconds = StreamRules.DefaultIdleTimeoutSeconds)
+    [property: Description("UDP only: seconds without traffic before a client's session ends, from 1 to 3600.")] int IdleTimeoutSeconds = StreamRules.DefaultIdleTimeoutSeconds,
+    [property: Description("The addresses and ranges allowed to connect, such as 10.0.0.0/8 or 2001:db8::/32. Connections from anywhere else are closed. Leave it empty to allow everyone. Only works when the port is published in host mode, since Swarm's ingress hides the client's address.")] IReadOnlyList<string>? AllowedAddresses = null)
     : ICommand, IStreamFields;

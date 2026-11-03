@@ -100,6 +100,7 @@ By default a route has a single target group, and none of the following applies.
 - TCP routes are chosen by port. A TCP route can also choose by TLS server name (SNI) without decrypting (TLS passthrough), so several TLS services can share one port. UDP routes are chosen by port only, with a configurable idle timeout for each client's session.
 - An open TCP connection or UDP session stays on the replica that accepted it. If that replica stops, the client must reconnect.
 - In the first version, any port other than Apiary's own can be used, and the Stream routes page shows the line to add to the stack file for each new port.
+- Like HTTP routes, a stream route can be limited to allowed addresses, checked against each connection's own source address, and disabled without deleting it.
 
 ## Replicated state
 

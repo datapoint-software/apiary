@@ -12,6 +12,8 @@ public sealed record StreamRouteView(
     int TargetPort,
     IReadOnlyList<string> ServerNames,
     int IdleTimeoutSeconds,
+    bool Disabled,
+    IReadOnlyList<string> AllowedAddresses,
     long Connections,
     DateTimeOffset ChangedAt,
     string? ChangedBy)
@@ -26,6 +28,8 @@ public sealed record StreamRouteView(
         stream.TargetPort,
         stream.ServerNames,
         stream.IdleTimeoutSeconds,
+        stream.Disabled,
+        stream.AllowedAddresses ?? [],
         connections,
         stream.ChangedAt,
         stream.ChangedBy);

@@ -19,4 +19,6 @@ public interface IStreamFields
     IReadOnlyList<string>? ServerNames { get; }
 
     int IdleTimeoutSeconds { get; }
+
+    IReadOnlyList<string>? AllowedAddresses { get; }
 }

@@ -1,6 +1,7 @@
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.Validation;
 using FluentValidation;
 
@@ -34,6 +35,9 @@ public static class StreamRules
         validator.RuleForEach(s => s.ServerNames).Must(IsServerName).WithErrorCode(ErrorCodes.HostnameInvalid);
         validator.RuleFor(s => s.IdleTimeoutSeconds)
             .InclusiveBetween(1, MaximumIdleTimeoutSeconds).When(s => s.Protocol is StreamProtocol.Udp).WithErrorCode(ErrorCodes.Range);
+        validator.RuleFor(s => s.AllowedAddresses).Cascade(CascadeMode.Stop)
+            .Must(a => RouteNormalization.Addresses(a) is not { Count: > RouteRules.MaximumAllowedAddresses }).WithErrorCode(ErrorCodes.IpRangeTooMany)
+            .Must(a => RouteNormalization.Addresses(a)?.All(RuleExtensions.IsIpRange) ?? true).WithErrorCode(ErrorCodes.IpRangeInvalid);
     }
 
     public static bool IsServerName(string name)
