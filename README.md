@@ -59,6 +59,8 @@ APIARY_VERSION=dev docker stack deploy -c deploy/stack.yaml apiary
 
 For development without Docker, run `dotnet run --project src/Datapoint.Apiary` and, in `src/web`, `npm start`, which serves the UI on `http://localhost:4200`.
 
+On macOS, use .NET runtime 10.0.14 or later (`dotnet --list-runtimes`). Even then, Kestrel may log `The encryption operation failed` with `Bad address` when a client drops a TLS connection; it's harmless and doesn't happen in the Linux containers.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and management (admin UI and MCP).

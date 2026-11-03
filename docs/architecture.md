@@ -178,6 +178,8 @@ One step, with nothing to remember in between:
 
 During the rolling update, each restarted replica rejoins with the certificate it already has, so it doesn't need the old root key. It re-protects its data with the new key and reports that to the cluster, which then also accepts the new key from brand-new replicas. Once every replica runs the new key, Apiary forgets the old one by itself. The admin UI shows the progress (e.g. "2 of 3 replicas on the new key") and warns if it stalls. Remove the old Swarm secret afterwards.
 
+Connected agents must connect again, during the update or after it: their client registrations, codes and tokens are sealed with a key derived from the root key, so a replica on the other key refuses them. The same goes for a restore into a cluster with another root key.
+
 ## Certificates
 
 - [HTTP-01 challenges](https://letsencrypt.org/docs/challenge-types/#http-01-challenge) only, for now. A challenge request can arrive at any edge node (Let's Encrypt validates from several places at once), so every replica answers it from the replicated state. A replica that doesn't have the token yet, e.g. because it's catching up, asks the leader before answering, so a lagging replica doesn't fail the validation. No wildcard certificates; DNS-01 may be added later.
