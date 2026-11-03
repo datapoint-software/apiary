@@ -14,13 +14,13 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 
 ## Try it
 
-Apiary is in development, and the admin port has no sign-in yet, so run it on your own machine only. With Docker:
+Apiary is in development, and the admin port is plain HTTP until certificates are added, so run it on your own machine only. With Docker:
 
 ```bash
 docker compose -f deploy/compose.yaml up --build
 ```
 
-- `http://localhost:9443` is the admin UI, bound to your machine only.
+- `http://localhost:9443` is the admin UI, bound to your machine only. The first visit creates the first administrator, with an authenticator app.
 - Add a route from `whoami.localhost` to `whoami`, port 80, then open `http://whoami.localhost`.
 - `docker compose -f deploy/compose.yaml logs -f apiary` shows the access log.
 
@@ -33,6 +33,7 @@ For development without Docker, run `dotnet run --project src/Datapoint.Apiary` 
 - [Failure modes](docs/failure-modes.md): what happens when replicas, nodes or the network fail, and when the cluster is scaled.
 - [Implementation plan](docs/implementation-plan.md): the order features are built in, and how to try each milestone.
 - [Open decisions](docs/open-decisions.md): design questions still to be settled.
+- [Review notes](docs/review-notes.md): decisions and findings from building the milestones, waiting for review.
 - [Risks and considerations](docs/risks.md): security, privacy and operational risks. Read it before changing how Apiary stores state, handles secrets or is exposed to the network.
 
 ## Contributing
