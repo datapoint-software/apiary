@@ -2,6 +2,8 @@
 
 This file tells you how to work in this repository: the conventions for branches, commits, merge requests and versions, and how to work with contributors. It is about how we work, not what the project is. For that, start with [README.md](README.md), which describes the project and contains or links to its functional and technical documentation. Read it and the relevant files it links to before making changes, paying attention to any documented risks (e.g. what deploys to production, and when).
 
+Before writing or reviewing code, read [docs/engineering.md](docs/engineering.md) and follow it: the repository layout, the dependency rules, and the .NET and Angular conventions, including readability, validation and error codes. Where it differs from a habit or a generic best practice, it wins. If a rule seems wrong for a case, say so and propose a change to the document; don't quietly work around it.
+
 ## Branches, commits and merge requests
 
 Sections that follow a specification summarize it, so there is no need to fetch it. Some rules deliberately narrow a specification, e.g. which branch types we use; follow them. Otherwise, where a summary and its specification disagree, the specification wins.
