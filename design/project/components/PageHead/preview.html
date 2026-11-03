@@ -1,0 +1,27 @@
+<!-- @dsCard group="Layout" height=170 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PageHead — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-stack" style="gap:4px">
+  <nav class="ap-crumbs" aria-label="Breadcrumb"><a href="#">Routes</a><span aria-hidden="true">/</span><span aria-current="page">shop.example.com</span></nav>
+  <div class="ap-page-head">
+    <div style="min-width:0"><h1 class="ap-h ap-h-1">shop.example.com</h1><p class="ap-sub">Shop · 2 targets · changed 2 h ago by ana@example.com</p></div>
+    <div class="ap-row" style="gap:12px"><button class="ap-btn" type="button"><i data-lucide="eraser" class="ap-icon" aria-hidden="true"></i>Purge cache</button><button class="ap-btn ap-btn-primary" type="button"><i data-lucide="plus" class="ap-icon" aria-hidden="true"></i>New route</button></div>
+  </div>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

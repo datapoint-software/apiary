@@ -26,6 +26,10 @@ body { background: var(--ground); }
   <button class="ap-btn" type="button" disabled>Renew now</button>
   <span class="ap-caption">Renewal is paused while the cluster has no majority.</span>
 </div>
+<div class="ap-row">
+  <button class="ap-btn ap-btn-primary" type="button" disabled aria-busy="true">Saving…</button>
+  <button class="ap-btn ap-btn-danger" type="button">Start recovery…</button>
+</div>
 </div>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script>if (window.lucide) lucide.createIcons();</script>

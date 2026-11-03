@@ -4,8 +4,8 @@ A project card summarizes one project: its health, how many routes it has, and i
 
 - A project groups routes, stream routes, redirects and uploaded certificates for organizing and filtering. It is not an access boundary: roles apply to the whole cluster.
 - Head: a Lucide icon chosen for the project on a `sunken` tile, and the project's worst status as a Status ("1 route down").
-- Name in `title-3`, a one-line description, then the counts in `ink`.
+- Name in `title-3`, a one-line description, then the counts in `ink`: routes, traffic, and redirects when there are any.
 - The whole card is the link; it lifts slightly on hover.
 - Cards sit in a grid (`ap-projects`) that fills the width with cards at least 260px wide.
 
-**The consumer provides:** name, icon, worst status, description, route count and traffic.
+**The consumer provides:** name, icon, worst status, description, route and redirect counts, and traffic.

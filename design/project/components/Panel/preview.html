@@ -1,0 +1,33 @@
+<!-- @dsCard group="Layout" height=470 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Panel — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-stack" style="gap:16px">
+<section class="ap-panel" aria-labelledby="pn1">
+  <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pn1">Signing out</h2><p class="ap-panel-desc">People are signed out after this long without activity.</p></div></div>
+  <div class="ap-panel-body"><div class="ap-field" style="max-width:220px"><label class="ap-label" for="pn2">Idle timeout</label><div class="ap-affix"><input class="ap-input ap-data" id="pn2" value="60" inputmode="numeric"><span class="ap-affix-text">minutes</span></div><span class="ap-help">5 to 720 minutes.</span></div></div>
+  <div class="ap-panel-foot"><div class="ap-row" style="justify-content:flex-end"><button class="ap-btn ap-btn-primary" type="button">Save</button></div></div>
+</section>
+<section class="ap-panel ap-panel-danger" aria-labelledby="pn3">
+  <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pn3">Danger zone</h2></div></div>
+  <div class="ap-panel-body ap-list">
+    <div class="ap-list-row"><div class="ap-list-text"><strong>Recover from a lost majority</strong><span class="ap-muted">Only when most voters are gone for good. This replica becomes the only voter, and anything only the lost voters had is lost.</span></div><button class="ap-btn ap-btn-danger" type="button">Start recovery…</button></div>
+  </div>
+</section>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

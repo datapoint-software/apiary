@@ -1,4 +1,4 @@
-<!-- @dsCard group="Actions" height=230 -->
+<!-- @dsCard group="Actions" height=280 -->
 <!doctype html>
 <html>
 <head>
@@ -14,14 +14,21 @@ body { background: var(--ground); }
 <body class="ap">
 <div class="pv">
 <div class="ap-row" style="align-items:flex-start;gap:24px">
+  <div class="ap-menu" role="menu" aria-label="Account" style="min-width:240px">
+    <div class="ap-menu-head"><span class="ap-avatar ap-avatar-lg" aria-hidden="true">AS</span><span><strong>Ana Silva</strong><span class="ap-secondary">ana@example.com</span><span class="ap-secondary">Administrator</span></span></div>
+    <div class="ap-menu-sep" role="separator"></div>
+    <a class="ap-menu-item" role="menuitem" href="#"><i data-lucide="user-round" class="ap-icon" aria-hidden="true"></i>Your account</a>
+    <a class="ap-menu-item" role="menuitem" href="#"><i data-lucide="shield-check" class="ap-icon" aria-hidden="true"></i>Security</a>
+    <a class="ap-menu-item" role="menuitem" href="#"><i data-lucide="monitor-smartphone" class="ap-icon" aria-hidden="true"></i>Active sessions</a>
+    <div class="ap-menu-sep" role="separator"></div>
+    <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="log-out" class="ap-icon" aria-hidden="true"></i>Sign out</button>
+  </div>
   <div class="ap-menu" role="menu" aria-label="Route actions">
     <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="pencil" class="ap-icon" aria-hidden="true"></i>Edit route</button>
-    <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="copy" class="ap-icon" aria-hidden="true"></i>Duplicate</button>
     <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="eraser" class="ap-icon" aria-hidden="true"></i>Purge cache<span class="ap-kbd">P</span></button>
     <div class="ap-menu-sep" role="separator"></div>
     <button class="ap-menu-item ap-menu-danger" role="menuitem" type="button"><i data-lucide="trash-2" class="ap-icon" aria-hidden="true"></i>Delete route…</button>
   </div>
-  <span class="ap-tooltip" role="tooltip">Writes are paused: 1 of 3 voters is reachable</span>
 </div>
 </div>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

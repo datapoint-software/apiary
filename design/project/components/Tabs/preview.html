@@ -1,4 +1,4 @@
-<!-- @dsCard group="Navigation" height=110 -->
+<!-- @dsCard group="Navigation" height=150 -->
 <!doctype html>
 <html>
 <head>
@@ -13,11 +13,14 @@ body { background: var(--ground); }
 </head>
 <body class="ap">
 <div class="pv">
-<div class="ap-tabs" role="tablist" aria-label="Route sections">
-  <button class="ap-tab" role="tab" aria-selected="true" type="button">Targets</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Traffic rules</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Certificate</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Access <span class="ap-count">3</span></button>
+<nav class="ap-tabs" aria-label="Account">
+  <a class="ap-tab" href="#" aria-current="page">Profile</a>
+  <a class="ap-tab" href="#">Security</a>
+  <a class="ap-tab" href="#">Active sessions</a>
+</nav>
+<div class="ap-tabs" role="tablist" aria-label="Certificate" style="margin-top:16px">
+  <button class="ap-tab" role="tab" aria-selected="true" type="button">Details</button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">Routes <span class="ap-count">3</span></button>
   <button class="ap-tab" role="tab" aria-selected="false" type="button">History</button>
 </div>
 </div>

@@ -1,0 +1,22 @@
+<!-- @dsCard group="Status" height=150 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Loading — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-panel" style="padding:24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width:60%;height:14px"></span><span class="ap-skel" style="width:40%;height:14px;margin-top:10px"></span></div>
+<div class="ap-row" style="gap:16px;margin-top:16px"><button class="ap-btn ap-btn-primary" type="button" disabled aria-busy="true">Saving…</button><span class="ap-row ap-muted" style="gap:8px"><span class="ap-spinner" aria-hidden="true"></span>Restoring the backup…</span></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

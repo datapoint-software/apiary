@@ -1,4 +1,4 @@
-<!-- @dsCard group="Apiary" height=140 -->
+<!-- @dsCard group="Forms" height=250 -->
 <!doctype html>
 <html>
 <head>
@@ -14,9 +14,15 @@ body { background: var(--ground); }
 <body class="ap">
 <div class="pv">
 <div class="ap-field">
-  <span class="ap-label">Create the root key on a manager node</span>
-  <div class="ap-copy"><code>docker run --rm hub.datapoint.software/datapoint/apiary:0.4.0 secrets init | docker secret create apiary_root_key_2 -</code><button class="ap-btn ap-btn-sm" type="button"><i data-lucide="copy" class="ap-icon" aria-hidden="true"></i>Copy</button></div>
-  <span class="ap-help">The key goes straight into Swarm's encrypted store and never touches disk.</span>
+  <span class="ap-label">Create the new key on a manager node</span>
+  <div class="ap-copy"><code>(umask 077 &amp;&amp; docker run --rm hub.datapoint.software/datapoint/apiary:0.1.0 secrets init &gt; apiary_root_key_2) &amp;&amp; docker secret create apiary_root_key_2 apiary_root_key_2</code><button class="ap-btn ap-btn-sm" type="button"><i data-lucide="copy" class="ap-icon" aria-hidden="true"></i><span>Copy</span></button></div>
+  <span class="ap-help">Then copy the file's content into your secret store, and delete the file.</span>
+</div>
+<div class="ap-field">
+  <span class="ap-label">Recovery codes</span>
+  <div class="ap-copy" style="align-items:flex-start"><code style="white-space:pre;line-height:1.6">7KQ2-M9XD
+P4TR-8WCN
+H3JF-Q6ZB</code><button class="ap-btn ap-btn-sm" type="button"><i data-lucide="check" class="ap-icon" aria-hidden="true"></i><span>Copied</span></button></div>
 </div>
 </div>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

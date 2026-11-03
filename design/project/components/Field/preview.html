@@ -41,6 +41,16 @@ body { background: var(--ground); }
     <input class="ap-input ap-data" id="f6" value="edge-2" disabled>
     <span class="ap-help">Set by Swarm. Change the placement in the compose file.</span>
   </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f7">Password</label>
+    <div class="ap-affix"><input class="ap-input" id="f7" type="password" value="amber-orchid-river"><span class="ap-affix-text"><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></div>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f8">Allowed addresses <span class="ap-optional">(optional)</span></label>
+    <textarea class="ap-textarea ap-data" id="f8" rows="3">10.0.0.0/8
+2001:db8::/32</textarea>
+    <span class="ap-help">One address or range per line. Anyone else gets a 403.</span>
+  </div>
 </div>
 </div>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

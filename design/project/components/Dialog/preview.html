@@ -13,13 +13,13 @@ body { background: var(--ground); }
 </head>
 <body class="ap">
 <div class="pv">
-<div class="ap-dialog" role="dialog" aria-modal="true" aria-labelledby="dt" style="margin:0 auto">
-  <div class="ap-dialog-head"><h2 class="ap-h ap-h-2" id="dt">Delete route shop.example.com?</h2></div>
-  <div class="ap-dialog-body">
-    <p style="margin:0">Requests to <span class="ap-code">shop.example.com</span> will get a 404 on all 3 replicas as soon as you confirm. Its automatic certificate is kept for 30 days in case you add the route again.</p>
-    <div class="ap-field"><label class="ap-label" for="cf">Type the hostname to confirm</label><input class="ap-input ap-data" id="cf" placeholder="shop.example.com"></div>
+<div class="ap-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dt" aria-describedby="dd" style="margin:0 auto">
+  <div class="ap-dialog-head"><span class="ap-dialog-mark ap-dialog-mark-critical"><i data-lucide="trash-2" class="ap-icon" aria-hidden="true"></i></span><h2 class="ap-h ap-h-2" id="dt">Delete route shop.example.com?</h2></div>
+  <div class="ap-dialog-body" id="dd">
+    <p style="margin:0">Requests to <span class="ap-code">shop.example.com</span> will get a 404 on every replica as soon as you confirm. Its automatic certificate is kept, in case you add the route again.</p>
+    <div class="ap-field"><label class="ap-label" for="cf">Type <span class="ap-data">shop.example.com</span> to confirm</label><input class="ap-input ap-data" id="cf" autocomplete="off" spellcheck="false"></div>
   </div>
-  <div class="ap-dialog-foot"><button class="ap-btn ap-btn-ghost" type="button">Keep route</button><button class="ap-btn ap-btn-danger" type="button">Delete route</button></div>
+  <div class="ap-dialog-foot"><button class="ap-btn ap-btn-ghost" type="button">Cancel</button><button class="ap-btn ap-btn-danger" type="button" disabled>Delete route</button></div>
 </div>
 </div>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

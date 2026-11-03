@@ -56,6 +56,10 @@ C["Button"] = ("Actions", 150, f"""
   <button class="ap-btn" type="button" disabled>Renew now</button>
   <span class="ap-caption">Renewal is paused while the cluster has no majority.</span>
 </div>
+<div class="ap-row">
+  <button class="ap-btn ap-btn-primary" type="button" disabled aria-busy="true">Saving…</button>
+  <button class="ap-btn ap-btn-danger" type="button">Start recovery…</button>
+</div>
 """, """# Button
 
 Buttons start an action; their label says exactly what happens.
@@ -64,37 +68,49 @@ Buttons start an action; their label says exactly what happens.
 - **Primary** (`ap-btn ap-btn-primary`): honey fill, `on-honey` text. At most one per view: the action the page exists for (**Add route**, **Save changes**).
 - **Secondary** (`ap-btn`): a `sunken` fill, for everything else that changes something.
 - **Ghost** (`ap-btn ap-btn-ghost`): text in `honey-text` with no fill, for Cancel, Close and links that act; icon-only toolbar buttons.
-- **Danger** (`ap-btn ap-btn-danger`): only inside a confirmation dialog, for the destructive action itself.
-- **Sizes:** `ap-btn-sm` (28px) in tables and filter bars, default 36px, `ap-btn-lg` (44px) on setup screens and touch layouts.
+- **Danger** (`ap-btn ap-btn-danger`): the destructive action itself, in a confirmation dialog, or a button in a danger zone that opens one ("Start recovery…", ending in "…").
+- **Sizes:** `ap-btn-sm` (28px) in tables and filter bars, default 36px, `ap-btn-lg` (44px) on sign-in and setup screens.
 - **Icon only** (`ap-btn-icon`): needs `aria-label` and a tooltip.
+- **Busy:** while its action runs, a button is disabled with `aria-busy="true"` and its label says what is happening: "Saving…", "Working…", "Checking…".
 
 **Copy:** verb plus object, sentence case: **Add route**, **Rotate root key**, **Delete route**. Never "OK", "Submit" or "Yes" on their own.
 
 **Disabled:** use `disabled` and always explain why in a caption or tooltip next to it.
 
+**In the library:** the `apButton` directive on a `<button>` or `<a>`: `apButton="primary"`, `"ghost"` or `"danger"`, and `size="small"`. Large buttons add `ap-btn-lg` themselves.
+
 **The consumer provides:** the label, an optional Lucide icon placed before it, and the handler.
 """)
 
-C["Menu"] = ("Actions", 230, f"""
+C["Menu"] = ("Actions", 280, f"""
 <div class="ap-row" style="align-items:flex-start;gap:24px">
+  <div class="ap-menu" role="menu" aria-label="Account" style="min-width:240px">
+    <div class="ap-menu-head"><span class="ap-avatar ap-avatar-lg" aria-hidden="true">AS</span><span><strong>Ana Silva</strong><span class="ap-secondary">ana@example.com</span><span class="ap-secondary">Administrator</span></span></div>
+    <div class="ap-menu-sep" role="separator"></div>
+    <a class="ap-menu-item" role="menuitem" href="#">{icon("user-round")}Your account</a>
+    <a class="ap-menu-item" role="menuitem" href="#">{icon("shield-check")}Security</a>
+    <a class="ap-menu-item" role="menuitem" href="#">{icon("monitor-smartphone")}Active sessions</a>
+    <div class="ap-menu-sep" role="separator"></div>
+    <button class="ap-menu-item" role="menuitem" type="button">{icon("log-out")}Sign out</button>
+  </div>
   <div class="ap-menu" role="menu" aria-label="Route actions">
     <button class="ap-menu-item" role="menuitem" type="button">{icon("pencil")}Edit route</button>
-    <button class="ap-menu-item" role="menuitem" type="button">{icon("copy")}Duplicate</button>
     <button class="ap-menu-item" role="menuitem" type="button">{icon("eraser")}Purge cache<span class="ap-kbd">P</span></button>
     <div class="ap-menu-sep" role="separator"></div>
     <button class="ap-menu-item ap-menu-danger" role="menuitem" type="button">{icon("trash-2")}Delete route…</button>
   </div>
-  <span class="ap-tooltip" role="tooltip">Writes are paused: 1 of 3 voters is reachable</span>
 </div>
 """, """# Menu
 
-A menu lists actions on one object, opened from a row's ⋯ button; the tooltip explains a control in one sentence.
+A menu lists actions or places, opened from a button: in the app, the account menu behind the avatar in the top bar.
 
 - Menus (`ap-menu`) are a solid `surface` with `shadow-float`: they float above content, and nothing shows through. The highlighted item fills with honey, like a macOS menu.
-- Order items by frequency; destructive items go last, after a separator, in `ap-menu-danger`, and end with "…" because they open a confirmation.
-- Show a keyboard shortcut with `ap-kbd` only when one exists.
-- Menus close on Escape, on selection and on a click outside; arrow keys move between items.
-- **Tooltip** (`ap-tooltip`): for icon-only buttons and disabled controls. One sentence, no actions inside, never the only place important information lives.
+- The account menu starts with a head (`ap-menu-head`): a large avatar, the name, the email and the role.
+- Items are links when they go somewhere (`a.ap-menu-item`) and buttons when they act. Order by frequency; Sign out goes last, after a separator.
+- Destructive items go last, after a separator, in `ap-menu-danger`, and end with "…" because they open a confirmation.
+- Menus close on Escape, on selection and on a click outside; arrow keys move between items. The app uses the Angular CDK menu (`cdkMenu`, `cdkMenuItem`).
+- The search results in the top bar reuse `ap-menu` as a `listbox`.
+- **Not used in the app yet:** a ⋯ menu per row (tables use inline icon buttons), keyboard shortcuts (`ap-kbd`) and the tooltip (`ap-tooltip`).
 
 **The consumer provides:** the items, their handlers, and the anchor button with `aria-haspopup="menu"`.
 """)
@@ -128,6 +144,16 @@ C["Field"] = ("Forms", 330, f"""
     <input class="ap-input ap-data" id="f6" value="edge-2" disabled>
     <span class="ap-help">Set by Swarm. Change the placement in the compose file.</span>
   </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f7">Password</label>
+    <div class="ap-affix"><input class="ap-input" id="f7" type="password" value="amber-orchid-river"><span class="ap-affix-text"><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></div>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f8">Allowed addresses <span class="ap-optional">(optional)</span></label>
+    <textarea class="ap-textarea ap-data" id="f8" rows="3">10.0.0.0/8
+2001:db8::/32</textarea>
+    <span class="ap-help">One address or range per line. Anyone else gets a 403.</span>
+  </div>
 </div>
 """, """# Field
 
@@ -136,12 +162,15 @@ A field is a label, a control and, when needed, help or an error, stacked in tha
 - The label (`ap-label`) is always visible above the control. A placeholder never replaces it.
 - Mark optional fields with `<span class="ap-optional">(optional)</span>`; required fields get no asterisk.
 - Technical values (hostnames, IPs, ports, paths) use `ap-input ap-data` so they render in the data face.
-- Prefixes and suffixes (`ap-affix`) show fixed parts of a value, such as a scheme or a port.
-- Validate when the field loses focus, never while typing. The error (`ap-error`) goes below the control, says what is wrong and how to fix it, and the input gets `aria-invalid="true"` and `aria-describedby`.
+- Prefixes and suffixes (`ap-affix`) show fixed parts of a value, such as a scheme, a port or a unit ("a minute"). A small ghost button can sit in a suffix, such as a password's **Show** (`ap-password-reveal`, `aria-pressed`).
+- Lists of values, one per line, use `ap-textarea` with the data face.
+- Errors follow Validation: shown once you've left the field, then updated as you type. The error (`ap-error`) goes below the help, says what is wrong and how to fix it, and the input gets `aria-invalid="true"` and `aria-describedby`.
 - Disabled fields explain why in their help text.
 - One field per row under 640px; two columns at most on wider screens, only for natural pairs.
 
-**The consumer provides:** a unique `id` linking label and control, the value, and the validation message.
+**In the library:** `<ap-field label help optional summaryLabel [field]>` wraps one control. It generates the ids, links label, help and error, shows "Checking…" while a server check runs, and gives the error summary its label (`summaryLabel`, when the visible label is ambiguous).
+
+**The consumer provides:** the label, the control, its help text and the form field it binds to.
 """)
 
 C["Choice"] = ("Forms", 170, f"""
@@ -213,9 +242,11 @@ C["Status"] = ("Status", 120, """
 A status is a small dot and a word.
 
 - Always both: the dot for scanning, the word for meaning. `ok` and `critical` have similar lightness, so color alone is never enough.
-- Tones: `ap-status-ok` (Healthy, Valid, Approved), `ap-status-warn` (Degraded, Expires in N days), `ap-status-critical` (Down, Failed, Refused), `ap-status-info` (Catching up, Follower), `ap-status-off` (Disabled, Not configured), `ap-status-honey` (Leader only).
-- A ring (`ap-dot-ring`) instead of a dot means not yet in effect: pending approval, draft, waiting for a deploy.
+- Tones: `ap-status-ok` (Healthy, Valid, Approved), `ap-status-warn` (Degraded, Expires in N days, In maintenance), `ap-status-critical` (Down, Failed, Refused), `ap-status-info` (Catching up, Joining), `ap-status-off` (Disabled, Not configured).
 - Words describe the state from the user's side: "Expires in 9 days", not "WARN".
+- **Not used in the app yet:** `ap-status-honey` (for the leader) and the ring (`ap-dot-ring`, not yet in effect: pending approval, waiting for a deploy). The styles exist; the `<ap-status>` component's tones don't include them.
+
+**In the library:** `<ap-status tone="ok">Healthy</ap-status>`, with the tones `ok`, `info`, `warn`, `critical` and `off`.
 
 **The consumer provides:** the tone and the word.
 """)
@@ -241,7 +272,7 @@ Tags list short facts about an object, such as a route's protocols or enabled fe
 """)
 
 C["Banner"] = ("Status", 330, f"""
-<div class="ap-banner ap-banner-critical" role="alert">{icon("octagon-alert")}<div class="ap-banner-body"><span class="ap-banner-title">Writes are paused</span><span>Only 1 of 3 voters is reachable, so route, user and certificate changes can't be saved. Traffic keeps flowing with the last known routes.</span><div class="ap-banner-actions"><a href="#">What to do when the majority is lost</a></div></div></div>
+<div class="ap-banner ap-banner-critical" role="alert">{icon("circle-alert")}<div class="ap-banner-body"><span class="ap-banner-title">Writes are paused</span><span>Only 1 of 3 voters is reachable, so route, user and certificate changes can't be saved. Traffic keeps flowing with the last known routes.</span><div class="ap-banner-actions"><a href="#">What to do when the majority is lost</a></div></div></div>
 <div class="ap-banner ap-banner-warn">{icon("triangle-alert")}<div class="ap-banner-body"><span class="ap-banner-title">2 certificates expire in less than 14 days</span><span>Automatic renewal failed for <span class="ap-code">legacy.example.com</span>: the HTTP-01 challenge got a 404.</span></div></div>
 <div class="ap-banner ap-banner-info">{icon("info")}<div class="ap-banner-body"><span>Rotating the root key: 2 of 3 replicas run the new key.</span></div></div>
 <div class="ap-banner ap-banner-ok">{icon("circle-check")}<div class="ap-banner-body"><span>Backup exported. It contains private keys: store it encrypted.</span></div></div>
@@ -249,14 +280,17 @@ C["Banner"] = ("Status", 330, f"""
 
 A banner reports a condition that affects the whole page or cluster and stays until the condition ends.
 
-- **Critical:** something is not working (writes paused, a replica down). Use `role="alert"`.
+- **Critical:** something is not working (writes paused, a replica down, an action that failed). Give it `role="alert"` when it appears after the page loaded, so screen readers announce it.
 - **Warn:** something will stop working unless someone acts (certificates expiring, rotation stalled).
 - **Info:** a process is running (rotation in progress, an update rolling out).
 - **Ok:** a lasting confirmation that needs a follow-up, such as how to store a backup. A short confirmation is a Toast instead.
 - Title says what is happening; the body says the consequence and what still works; an optional link says what to do.
-- At most two banners per page, most severe first. Banners never stack inside panels.
+- At most two banners per page, most severe first. Inside a dialog, a critical banner reports why its action failed.
+- The icon follows the tone: Lucide `circle-alert`, `triangle-alert`, `info` and `circle-check`.
 
-**The consumer provides:** the tone, an icon (Lucide `octagon-alert`, `triangle-alert`, `info`, `circle-check`), the title, body and optional actions.
+**In the library:** `<ap-banner tone heading role>` picks the icon; actions go in an element marked `bannerActions`.
+
+**The consumer provides:** the tone, the title, body, optional actions and, when it should be announced, the role.
 """)
 
 C["Toast"] = ("Status", 200, f"""
@@ -270,7 +304,7 @@ A toast reports the result of an action that didn't open a form or dialog: a sav
 - **Success** (`ap-toast-ok`) repeats the verb in the past tense ("Route saved") and adds the fact that matters in a cluster: how many replicas applied it. Closes after 5 seconds, 8 with an action.
 - **Info** (`ap-toast-info`) for neutral news, often with **Undo** for a reversible change.
 - **Error** (`ap-toast-error`, `role="alert"`) only for quick actions that failed. It stays until dismissed and offers **Try again**. Errors in a form appear in the form instead, so what was typed is kept next to the problem.
-- At most one action, and always a close button. Hovering or focusing a toast pauses its timer.
+- At most one action, and always a close button. Hovering or focusing a toast pauses its timer. (In the library, moving focus out of a toast doesn't restart the timer yet: a known bug.)
 - Stack bottom-right in `ap-toasts`, newest last, inside a polite live region.
 
 **The consumer provides:** the tone, an optional title, the message and an optional action.
@@ -339,79 +373,82 @@ A stat shows one current number, what it is compared with, and its recent trend.
 """)
 
 ROUTES = [
-    ("Shop", "shopping-bag", [
-        ("shop.example.com", "/", "shop-v1 90% · shop-v2 10%", ["HTTP/2", "HTTP/3"], "ok", "Healthy", "Automatic", "1 284"),
-        ("checkout.example.com", "/", "checkout:8080", ["HTTP/2"], "ok", "Healthy", "Automatic", "6 921")]),
-    ("Internal tools", "wrench", [
-        ("grafana.internal.example.com", "/", "grafana:3000", ["HTTP/2"], "warn", "1 of 2 targets down", "*.internal (uploaded)", "312"),
-        ("mqtt.example.com", "TCP 10022", "mosquitto:1883", ["TCP"], "ok", "Healthy", "Passthrough", "—")]),
-    ("Legacy", "archive", [
-        ("legacy.example.com", "/", "host.docker.internal:8081", ["HTTP/1.1"], "critical", "Down", "Automatic", "0")]),
+    ("Shop", [
+        ("shop.example.com", "/", "shop-v1:8080, shop-v2:8080 · canary", "ok", "Healthy", "Automatic", "1 284", "2 h ago by ana@example.com"),
+        ("checkout.example.com", "/", "checkout:8080", "ok", "Healthy", "Automatic", "6 921", "3 days ago by ana@example.com")]),
+    ("Internal tools", [
+        ("grafana.internal.example.com", "/", "grafana:3000, grafana-b:3000", "warn", "1 target down", "Uploaded", "312", "1 week ago by rui@example.com")]),
+    ("Legacy", [
+        ("legacy.example.com", "/", "legacy:8081", "off", "Disabled", "Automatic", "–", "Yesterday by marta@example.com")]),
 ]
 
 
-def routes_table(selected=("shop.example.com",), actions=True):
+def routes_table(selected=("shop.example.com", "checkout.example.com")):
     bodies = []
-    cols = 8 if actions else 7
-    for project, _, rows_data in ROUTES:
-        rpm = sum(int(r[7].replace(" ", "")) for r in rows_data if r[7].replace(" ", "").isdigit())
+    for project, rows_data in ROUTES:
+        rpm = sum(int(r[6].replace(" ", "")) for r in rows_data if r[6].replace(" ", "").isdigit())
         n = len(rows_data)
-        rows = [f'''<tr class="ap-group"><td colspan="{cols}"><button class="ap-group-title" type="button" aria-expanded="true">{icon("chevron-down")}{project}<span class="ap-group-meta">{n} route{"s" if n != 1 else ""} · {rpm:,} req/min</span></button></td></tr>'''.replace(",", " ")]
-        for host, path, target, protos, tone, word, cert, r in rows_data:
-            sel = ' aria-selected="true"' if host in selected else ""
+        rows = [f'''<tr class="ap-group"><td colspan="8"><span class="ap-group-title">{project}<span class="ap-group-meta">{n} route{"s" if n != 1 else ""} · {rpm:,} req/min</span></span></td></tr>'''.replace(",", " ")]
+        for host, path, target, tone, word, cert, r, changed in rows_data:
+            sel = ' aria-selected="true"' if host in selected else ' aria-selected="false"'
             chk = " checked" if host in selected else ""
-            tags = "".join(f'<span class="ap-tag">{p}</span>' for p in protos)
-            if "10%" in target:
-                tags += '<span class="ap-tag ap-tag-honey">Canary 10%</span>'
-            act = (f'<td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for {host}" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu>{icon("ellipsis")}</button></td>') if actions else ""
+            toggle = (icon("play"), f"Enable {host}") if tone == "off" else (icon("pause"), f"Disable {host}")
+            act = (f'<td class="ap-col-actions"><div class="ap-row" style="gap:2px;justify-content:flex-end">'
+                   f'<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="{toggle[1]}">{toggle[0]}</button>'
+                   f'<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete {host}">{icon("trash-2")}</button></div></td>')
             rows.append(f"""<tr{sel}><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select {host}"{chk}></td>
-<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">{host}</span><span class="ap-caption ap-data">{path}</span></div></td>
-<td class="ap-data ap-muted">{target}</td><td><div class="ap-row" style="gap:4px">{tags}</div></td>
+<td><div class="ap-cell-main"><a class="ap-data" href="#">{host}</a><span class="ap-caption ap-data">{path}</span></div></td>
+<td class="ap-data ap-muted">{target}</td>
 <td><span class="ap-status ap-status-{tone}"><span class="ap-dot" aria-hidden="true"></span>{word}</span></td>
-<td class="ap-muted">{cert}</td><td class="ap-num">{r}</td>{act}</tr>""")
-        bodies.append(f'<tbody data-group>{"".join(rows)}</tbody>')
-    head_act = '<th scope="col" class="ap-col-actions"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Actions</span></th>' if actions else ""
+<td class="ap-muted">{cert}</td><td class="ap-num">{r}</td><td class="ap-muted">{changed}</td>{act}</tr>""")
+        bodies.append(f'<tbody>{"".join(rows)}</tbody>')
     return f"""<div class="ap-table-wrap"><table class="ap-table">
 <caption class="ap-sr">Routes, grouped by project</caption>
-<thead><tr><th class="ap-col-check" scope="col"><input class="ap-check" type="checkbox" aria-label="Select all routes"></th>
-<th scope="col" aria-sort="ascending"><button class="ap-sort" type="button">Hostname {icon("arrow-up")}</button></th><th scope="col">Target</th><th scope="col">Protocols</th><th scope="col">Status</th><th scope="col">Certificate</th><th scope="col" class="ap-num">Req/min</th>{head_act}</tr></thead>
+<thead><tr><th class="ap-col-check" scope="col"><input class="ap-check" type="checkbox" aria-label="Select all routes shown"></th>
+<th scope="col">Hostname</th><th scope="col">Target</th><th scope="col">Status</th><th scope="col">Certificate</th><th scope="col" class="ap-num">Req/min</th><th scope="col">Changed</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead>
 {"".join(bodies)}</table></div>"""
 
 
-PAGER = """<div class="ap-pager"><span>5 of 42 routes, in 3 of 6 projects</span><div class="ap-row"><button class="ap-btn ap-btn-sm" type="button" disabled>Previous</button><button class="ap-btn ap-btn-sm" type="button">Next</button></div></div>"""
+TOOLBAR = f"""<div class="ap-toolbar" role="search" aria-label="Filter routes" style="padding-top:4px"><div class="ap-filter">{icon("search")}<input class="ap-input" type="search" placeholder="Filter by hostname or target" aria-label="Filter by hostname or target"></div>
+<div class="ap-seg" role="group" aria-label="Status"><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Needs attention</button><button type="button" aria-pressed="false">Disabled</button></div>
+<select class="ap-select" aria-label="Project"><option>All projects</option></select></div>"""
 
-C["Table"] = ("Data", 440, f"""<div class="ap-panel">{routes_table()}<div class="ap-panel-foot">{PAGER}</div></div>""", """# Table
+SELECTBAR = f"""<div class="ap-selectbar" role="region" aria-label="Selected routes"><strong>2 selected</strong><button class="ap-btn ap-btn-sm" type="button">{icon("eraser")}Purge cache</button><button class="ap-btn ap-btn-sm" type="button">{icon("folder-input")}Move to project…</button><button class="ap-btn ap-btn-sm" type="button" style="color:var(--critical)">{icon("trash-2")}Delete…</button><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" style="margin-left:auto;background:none">Clear selection</button></div>"""
 
-Tables list objects of one kind (routes, certificates, users) so people can scan, sort, select and act on them.
+C["Table"] = ("Data", 520, f"""<div class="ap-panel">{TOOLBAR}{SELECTBAR}{routes_table()}</div>""", """# Table
 
-- The table sits flush inside a card. Header labels are small and `ink-3`, with no fill; rows divide with hairline `line`; no zebra stripes.
-- **Grouped by project:** each project starts with a group row (`ap-group`) holding a disclosure button (`ap-group-title`, `aria-expanded`), the project name and a summary ("2 routes · 8 205 req/min"). Collapsing a group hides its rows.
-- The first column names the object in the data face (a hostname), with its secondary detail under it in `caption`.
-- Numbers align right in `ap-num` (data face, tabular figures). Missing values show "—".
-- Status columns use Status, never color alone. Feature lists use Tags.
-- Selection: a checkbox column; selected rows get `aria-selected="true"` and `honey-soft`. Bulk actions appear above the table when something is selected.
-- Row actions sit in a last ⋯ column opening a Menu. Clicking the row itself opens the object's detail.
-- Sortable headers use `ap-sort` with `aria-sort`.
-- Pagination (`ap-pager`) below, as "1–5 of 42 routes". Under 640px the table scrolls inside `ap-table-wrap`; long lists become cards (name, status, one key value).
+Tables list objects of one kind (routes, certificates, users) so people can scan, filter, select and act on them.
 
-**The consumer provides:** columns, rows, sort state, selection and the row actions.
+- The table sits flush inside a panel. Header labels are small and `ink-3`, with no fill; rows divide with hairline `line`; no zebra stripes.
+- **Filters** sit above the table in a toolbar (`ap-toolbar`, `role="search"`): a text filter (`ap-filter`, with a search icon), a Segmented control for status and a select for the project. Filters only change what's shown.
+- **Grouped by project:** when every project is shown, each project starts with a group row (`ap-group`) with its name and a summary ("2 routes · 8 205 req/min").
+- The first column names the object in the data face, as the link to its page (`ap-cell-main`), with its secondary detail under it in `caption`.
+- Numbers align right in `ap-num` (data face, tabular figures). Missing values show "–". Changes show when and who: "2 h ago by ana@example.com".
+- Status columns use Status, never color alone.
+- **Selection:** a checkbox column, only for people who can act on the rows; selected rows get `aria-selected="true"` and `honey-soft`. A selection bar (`ap-selectbar`) appears above the table with the count, the bulk actions and **Clear selection**.
+- **Row actions** are up to three ghost icon buttons in the last column (`ap-col-actions`), each with an `aria-label` naming the object: disable or enable, purge, delete.
+- Under 640px the table scrolls inside `ap-table-wrap`.
+- **Not used in the app yet:** sortable headers (`ap-sort`, `aria-sort`), collapsible groups, a ⋯ menu per row and pagination (`ap-pager`).
+
+**The consumer provides:** columns, rows, filters, selection and the row actions.
 """)
 
 
 PROJECTS = [
-    ("Shop", "shopping-bag", "ok", "Healthy", 9, "8 205", "Storefront, checkout and their APIs."),
-    ("Payments API", "credit-card", "ok", "Healthy", 6, "3 410", "Card and SEPA payment endpoints."),
-    ("Internal tools", "wrench", "warn", "1 target down", 14, "640", "Grafana, MQTT and staff tools."),
-    ("Legacy", "archive", "critical", "1 route down", 4, "0", "Old sites kept until migration."),
+    ("Shop", "shopping-bag", "ok", "Healthy", 9, "8 205", "Storefront, checkout and their APIs.", 2),
+    ("Payments API", "credit-card", "ok", "Healthy", 6, "3 410", "Card and SEPA payment endpoints.", 0),
+    ("Internal tools", "wrench", "warn", "1 target down", 14, "640", "Grafana, MQTT and staff tools.", 1),
+    ("Legacy", "archive", "critical", "1 route down", 4, "0", "Old sites kept until migration.", 0),
 ]
 
 
 def project_cards(limit=None):
     out = []
-    for name, ic, tone, word, routes, rpm, desc in PROJECTS[:limit]:
+    for name, ic, tone, word, routes, rpm, desc, redirects in PROJECTS[:limit]:
+        extra = f'<span><b>{redirects}</b> redirect{"s" if redirects != 1 else ""}</span>' if redirects else ""
         out.append(f"""<a class="ap-panel ap-project" href="#"><div class="ap-project-head"><span class="ap-project-mark">{icon(ic)}</span><span class="ap-status ap-status-{tone}"><span class="ap-dot" aria-hidden="true"></span>{word}</span></div>
 <div><h3 class="ap-h ap-h-3">{name}</h3><p class="ap-caption" style="margin:2px 0 0;font-size:13px;line-height:18px">{desc}</p></div>
-<div class="ap-project-facts"><span><b>{routes}</b> routes</span><span><b>{rpm}</b> req/min</span></div></a>""")
+<div class="ap-project-facts"><span><b>{routes}</b> routes</span><span><b>{rpm}</b> req/min</span>{extra}</div></a>""")
     return f'<div class="ap-projects">{"".join(out)}</div>'
 
 
@@ -421,11 +458,11 @@ A project card summarizes one project: its health, how many routes it has, and i
 
 - A project groups routes, stream routes, redirects and uploaded certificates for organizing and filtering. It is not an access boundary: roles apply to the whole cluster.
 - Head: a Lucide icon chosen for the project on a `sunken` tile, and the project's worst status as a Status ("1 route down").
-- Name in `title-3`, a one-line description, then the counts in `ink`.
+- Name in `title-3`, a one-line description, then the counts in `ink`: routes, traffic, and redirects when there are any.
 - The whole card is the link; it lifts slightly on hover.
 - Cards sit in a grid (`ap-projects`) that fills the width with cards at least 260px wide.
 
-**The consumer provides:** name, icon, worst status, description, route count and traffic.
+**The consumer provides:** name, icon, worst status, description, route and redirect counts, and traffic.
 """)
 
 C["KeyValue"] = ("Data", 220, """
@@ -475,24 +512,29 @@ The timeline lists audit log entries: who did what, from where, through which su
 **The consumer provides:** the entries, already formatted.
 """)
 
-C["Tabs"] = ("Navigation", 110, """
-<div class="ap-tabs" role="tablist" aria-label="Route sections">
-  <button class="ap-tab" role="tab" aria-selected="true" type="button">Targets</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Traffic rules</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Certificate</button>
-  <button class="ap-tab" role="tab" aria-selected="false" type="button">Access <span class="ap-count">3</span></button>
+C["Tabs"] = ("Navigation", 150, """
+<nav class="ap-tabs" aria-label="Account">
+  <a class="ap-tab" href="#" aria-current="page">Profile</a>
+  <a class="ap-tab" href="#">Security</a>
+  <a class="ap-tab" href="#">Active sessions</a>
+</nav>
+<div class="ap-tabs" role="tablist" aria-label="Certificate" style="margin-top:16px">
+  <button class="ap-tab" role="tab" aria-selected="true" type="button">Details</button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">Routes <span class="ap-count">3</span></button>
   <button class="ap-tab" role="tab" aria-selected="false" type="button">History</button>
 </div>
 """, """# Tabs
 
-Tabs split one object's settings or one list into views of the same level.
+Tabs split one object's settings or one area into views of the same level.
 
-- The selected tab is `ink`, semibold, with a 2px `ink` underline and `aria-selected="true"`; others are `ink-2`.
+- **Link tabs** (`nav.ap-tabs` with `a.ap-tab`) when each view has its own URL, as in Account: Profile, Security, Active sessions. The current one has `aria-current="page"`.
+- **Panel tabs** (`role="tablist"`, `button.ap-tab[role=tab]`) when the views share one page; the selected tab has `aria-selected="true"`.
+- The current tab is `ink`, semibold, with a 2px `ink` underline; others are `ink-2`.
 - Two to six tabs, named with nouns. A count (`ap-count`) only when it helps decide where to look.
 - Tabs never hide unsaved changes: switching keeps what was typed.
 - Under 640px the tab row scrolls sideways.
 
-**The consumer provides:** the tab labels, the selected tab and the panels (`role="tabpanel"`).
+**The consumer provides:** the tab labels, the current tab and the links or panels (`role="tabpanel"`).
 """)
 
 C["Steps"] = ("Navigation", 120, """
@@ -518,25 +560,29 @@ Steps show where a multi-stage process stands: first-access setup, root key rota
 """)
 
 C["Dialog"] = ("Overlays", 330, f"""
-<div class="ap-dialog" role="dialog" aria-modal="true" aria-labelledby="dt" style="margin:0 auto">
-  <div class="ap-dialog-head"><h2 class="ap-h ap-h-2" id="dt">Delete route shop.example.com?</h2></div>
-  <div class="ap-dialog-body">
-    <p style="margin:0">Requests to <span class="ap-code">shop.example.com</span> will get a 404 on all 3 replicas as soon as you confirm. Its automatic certificate is kept for 30 days in case you add the route again.</p>
-    <div class="ap-field"><label class="ap-label" for="cf">Type the hostname to confirm</label><input class="ap-input ap-data" id="cf" placeholder="shop.example.com"></div>
+<div class="ap-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dt" aria-describedby="dd" style="margin:0 auto">
+  <div class="ap-dialog-head"><span class="ap-dialog-mark ap-dialog-mark-critical">{icon("trash-2")}</span><h2 class="ap-h ap-h-2" id="dt">Delete route shop.example.com?</h2></div>
+  <div class="ap-dialog-body" id="dd">
+    <p style="margin:0">Requests to <span class="ap-code">shop.example.com</span> will get a 404 on every replica as soon as you confirm. Its automatic certificate is kept, in case you add the route again.</p>
+    <div class="ap-field"><label class="ap-label" for="cf">Type <span class="ap-data">shop.example.com</span> to confirm</label><input class="ap-input ap-data" id="cf" autocomplete="off" spellcheck="false"></div>
   </div>
-  <div class="ap-dialog-foot"><button class="ap-btn ap-btn-ghost" type="button">Keep route</button><button class="ap-btn ap-btn-danger" type="button">Delete route</button></div>
+  <div class="ap-dialog-foot"><button class="ap-btn ap-btn-ghost" type="button">Cancel</button><button class="ap-btn ap-btn-danger" type="button" disabled>Delete route</button></div>
 </div>
 """, """# Dialog
 
-A dialog asks for a decision that must be made before going on, usually confirming a destructive change.
+A dialog asks for a decision that must be made before going on, usually confirming a destructive change, or collects a few fields for one action (upload a certificate, invite someone).
 
-- Title is the question, with the object: "Delete route shop.example.com?".
-- Body says what happens, when, and what is kept. For changes that are hard to undo, ask the person to type the object's name.
-- Buttons: the safe choice as a ghost button that names itself ("Keep route"), the action in `ap-btn-danger` (or primary for non-destructive decisions), right-aligned.
-- A solid `surface` sheet (`ap-dialog`) over `scrim`, `shadow-float`, 460px wide, rising in over 280ms. Escape and the safe button close it; focus starts on the first field or the safe button and stays inside.
+- Title is the question, with the object: "Delete route shop.example.com?". A confirmation has a tone mark (`ap-dialog-mark`, critical for destructive actions) before the title; a non-destructive decision has none.
+- Body says what happens, when, and what is kept. For changes that are hard to undo, ask the person to type the object's name ("Type shop.example.com to confirm"); the action stays disabled until it matches.
+- Buttons, right-aligned: **Cancel** as a ghost button, then the action, named for what it does ("Delete route"), in `ap-btn-danger`, or primary for non-destructive decisions. While it runs, the action shows its busy label ("Deleting…").
+- If the action fails, the dialog stays open and a critical Banner inside it says why, so the person can try again or cancel.
+- A solid `surface` sheet (`ap-dialog`, `role="alertdialog"` for confirmations) over `scrim`, `shadow-float`, 460px wide (`ap-dialog-lg` for forms), rising in over 280ms. Escape and Cancel close it; focus starts on Cancel, or on the first field of a form, and stays inside.
+- Actions that need a password again (new recovery codes, a new authenticator app) ask for it in their dialog.
 - Never stack dialogs, and never use one for information a Toast or Banner can give.
 
-**The consumer provides:** the question, consequences, optional confirmation field, and the two actions.
+**In the library:** `Confirmer.confirm({ heading, text, confirm, busy, tone, typeToConfirm, action })` opens the confirmation and runs the action; it resolves when the action succeeds or the person cancels.
+
+**The consumer provides:** the question, consequences, optional confirmation text, the action's label and what it does.
 """)
 
 NODES = [("edge-1", "voter", "Voter", "0 behind"), ("edge-2", "leader", "Leader", "Index 184 223"), ("edge-3", "voter", "Voter", "2 behind"), ("edge-4", "follower", "Follower", "Catching up"), ("edge-5", "down", "Missing 4 min", "Removal in 11 min")]
@@ -571,6 +617,8 @@ C["Split"] = ("Apiary", 140, """
 
 A split bar shows how a route's traffic is divided between target groups by weight.
 
+**Not used in the app yet:** the route editor shows the split as a line of text in a field labeled "Split" ("shop-v1 90% · shop-v2 10%"). The bar is kept for a future overview of a route.
+
 - Segment widths match the weights exactly. The first group is `ink`, the canary `honey`, a third `line-strong`; more than three groups are listed, not drawn.
 - Label each segment with the group and its share; when a segment is too narrow, keep only the share.
 - Give the bar `role="img"` and an `aria-label` with every group and share.
@@ -579,28 +627,36 @@ A split bar shows how a route's traffic is divided between target groups by weig
 **The consumer provides:** the groups and their weights.
 """)
 
-C["CopyField"] = ("Apiary", 140, f"""
+C["CopyField"] = ("Forms", 250, f"""
 <div class="ap-field">
-  <span class="ap-label">Create the root key on a manager node</span>
-  <div class="ap-copy"><code>docker run --rm hub.datapoint.software/datapoint/apiary:0.4.0 secrets init | docker secret create apiary_root_key_2 -</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}Copy</button></div>
-  <span class="ap-help">The key goes straight into Swarm's encrypted store and never touches disk.</span>
+  <span class="ap-label">Create the new key on a manager node</span>
+  <div class="ap-copy"><code>(umask 077 &amp;&amp; docker run --rm hub.datapoint.software/datapoint/apiary:0.1.0 secrets init &gt; apiary_root_key_2) &amp;&amp; docker secret create apiary_root_key_2 apiary_root_key_2</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}<span>Copy</span></button></div>
+  <span class="ap-help">Then copy the file's content into your secret store, and delete the file.</span>
+</div>
+<div class="ap-field">
+  <span class="ap-label">Recovery codes</span>
+  <div class="ap-copy" style="align-items:flex-start"><code style="white-space:pre;line-height:1.6">7KQ2-M9XD
+P4TR-8WCN
+H3JF-Q6ZB</code><button class="ap-btn ap-btn-sm" type="button">{icon("check")}<span>Copied</span></button></div>
 </div>
 """, """# CopyField
 
 A copy field shows a command or value that people run or paste elsewhere, with a Copy button.
 
-- The full text is visible and selectable; long lines scroll inside the field, never wrap.
-- The label says where to run it; the help text says what it does.
-- The button changes to "Copied" for 2 seconds. If the clipboard is refused, select the text instead.
-- Never put secrets in a copy field. Commands that create secrets pipe them straight to their destination.
+- The full text is visible and selectable. A command stays on one line and scrolls inside the field; a list (recovery codes) is multiline.
+- The label says where to run it or what it is; the help text says what it does or what to do next.
+- The button shows a check and "Copied" for 2 seconds. If the clipboard is refused, select the text instead.
+- Secrets appear only when the person must save them themselves, once: an authenticator app's key, recovery codes. Say where to keep them. Commands that create secrets write them to a file only the user can read (`umask 077`), for the person to move into a secret store.
+
+**In the app:** `<ap-copy-text text multiline>`.
 
 **The consumer provides:** the label, the text and the help text.
 """)
 
-C["EmptyState"] = ("Apiary", 250, f"""
+C["EmptyState"] = ("Layout", 250, f"""
 <div class="ap-panel"><div class="ap-empty">
   <div class="ap-empty-mark" aria-hidden="true"></div>
-  <h3 class="ap-h ap-h-2">No stream routes yet</h3>
+  <h2 class="ap-h ap-h-2">No stream routes yet</h2>
   <p>Stream routes forward raw TCP or UDP, such as MQTT or SMTP, from a port in the range your compose file publishes (10000–10099).</p>
   <button class="ap-btn ap-btn-primary" type="button">{icon("plus")}Add stream route</button>
 </div></div>
@@ -640,6 +696,98 @@ def calendar():
 <div class="ap-cal-foot"><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button">Today</button><button class="ap-btn ap-btn-sm ap-btn-primary" type="button">Done</button></div></div>"""
 
 
+C["PageHead"] = ("Layout", 170, f"""
+<div class="ap-stack" style="gap:4px">
+  <nav class="ap-crumbs" aria-label="Breadcrumb"><a href="#">Routes</a><span aria-hidden="true">/</span><span aria-current="page">shop.example.com</span></nav>
+  <div class="ap-page-head">
+    <div style="min-width:0"><h1 class="ap-h ap-h-1">shop.example.com</h1><p class="ap-sub">Shop · 2 targets · changed 2 h ago by ana@example.com</p></div>
+    <div class="ap-row" style="gap:12px"><button class="ap-btn" type="button">{icon("eraser")}Purge cache</button><button class="ap-btn ap-btn-primary" type="button">{icon("plus")}New route</button></div>
+  </div>
+</div>
+""", """# PageHead
+
+Every page starts with a page head: where you are, what this page is, and its main actions.
+
+- Breadcrumbs (`ap-crumbs`, a `nav` labeled "Breadcrumb") lead from the area to the page; the last crumb is the page itself, with `aria-current="page"`, not a link.
+- One `h1` per page, in `title-1`. A subtitle (`ap-sub`) with the one or two facts people check first.
+- Actions sit on the right, the primary one last. They wrap below the heading on narrow screens.
+- In the library: `<ap-page-head heading [crumbs]>`, with content in `pageSub` and `pageActions`.
+
+**The consumer provides:** the heading, the crumbs, the subtitle and the actions.
+""")
+
+C["Panel"] = ("Layout", 470, f"""
+<div class="ap-stack" style="gap:16px">
+<section class="ap-panel" aria-labelledby="pn1">
+  <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pn1">Signing out</h2><p class="ap-panel-desc">People are signed out after this long without activity.</p></div></div>
+  <div class="ap-panel-body"><div class="ap-field" style="max-width:220px"><label class="ap-label" for="pn2">Idle timeout</label><div class="ap-affix"><input class="ap-input ap-data" id="pn2" value="60" inputmode="numeric"><span class="ap-affix-text">minutes</span></div><span class="ap-help">5 to 720 minutes.</span></div></div>
+  <div class="ap-panel-foot"><div class="ap-row" style="justify-content:flex-end"><button class="ap-btn ap-btn-primary" type="button">Save</button></div></div>
+</section>
+<section class="ap-panel ap-panel-danger" aria-labelledby="pn3">
+  <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pn3">Danger zone</h2></div></div>
+  <div class="ap-panel-body ap-list">
+    <div class="ap-list-row"><div class="ap-list-text"><strong>Recover from a lost majority</strong><span class="ap-muted">Only when most voters are gone for good. This replica becomes the only voter, and anything only the lost voters had is lost.</span></div><button class="ap-btn ap-btn-danger" type="button">Start recovery…</button></div>
+  </div>
+</section>
+</div>
+""", """# Panel
+
+A panel groups one topic on a page: a settings section, a list, a table.
+
+- `ap-panel` is a `surface` card with `shadow-card`. Give it a `section` with `aria-labelledby` pointing at its heading.
+- **Head** (`ap-panel-head`): an `h2` in `title-3` and an optional description (`ap-panel-desc`, at most two lines); panel-level actions sit on the right.
+- **Body** (`ap-panel-body`) for content with padding; tables sit flush, without a body.
+- **Foot** (`ap-panel-foot`) for the panel's own Save, aligned right, when the panel saves on its own.
+- **Lists** (`ap-list`, `ap-list-row`): one setting or action per row, its text (`ap-list-text`, a bold name and a `muted` sentence) on the left and its control on the right.
+- **Danger zone** (`ap-panel-danger`, a faint critical ring): the last panel on a page, titled "Danger zone", for actions that can't be undone. Each is a list row with a danger button that ends in "…" and opens a confirmation.
+
+**The consumer provides:** the heading, the description and the content.
+""")
+
+C["Loading"] = ("Status", 150, f"""
+<div class="ap-panel" style="padding:24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width:60%;height:14px"></span><span class="ap-skel" style="width:40%;height:14px;margin-top:10px"></span></div>
+<div class="ap-row" style="gap:16px;margin-top:16px"><button class="ap-btn ap-btn-primary" type="button" disabled aria-busy="true">Saving…</button><span class="ap-row ap-muted" style="gap:8px"><span class="ap-spinner" aria-hidden="true"></span>Restoring the backup…</span></div>
+""", """# Loading
+
+How the app shows that something is on its way.
+
+- **Skeleton** (`ap-skel`): grey bars where a list or panel will appear, while its first load runs. The container gets `aria-busy="true"` and `aria-label="Loading"`. Two bars are enough; never imitate the exact layout.
+- **Busy button:** the button that started the work says what is happening ("Saving…", "Checking…") and is disabled with `aria-busy="true"` until it ends.
+- **Spinner** (`ap-spinner`): for long operations that aren't tied to a button, next to a sentence saying what is running. It inherits the text color.
+- Show nothing for the first 200 ms, so fast answers don't flash.
+- Reduced motion stops the shimmer and the spin.
+
+**The consumer provides:** where the content will appear and what is running.
+""")
+
+C["SaveBar"] = ("Forms", 130, f"""
+<div class="ap-savebar" style="position:static"><span class="ap-muted">Unsaved changes</span><div class="ap-row" style="gap:8px"><a class="ap-btn ap-btn-ghost" href="#">Cancel</a><button class="ap-btn ap-btn-primary" type="submit">Save route</button></div></div>
+""", """# SaveBar
+
+The save bar sits at the bottom of a long form, like the route editor, and stays visible while you scroll.
+
+- `ap-savebar` is sticky, 16px above the bottom of the window, a `surface` with `shadow-float`.
+- Cancel is a ghost link back to where you came from; the primary button is last and names the result: "Create route" for a new object, "Save route" for an existing one, "Saving…" while it runs.
+- Short forms end with their buttons in the panel foot instead.
+
+**The consumer provides:** the labels and the submit and cancel handlers.
+""")
+
+C["CodeInput"] = ("Forms", 170, """
+<div class="ap-field" style="max-width:280px"><label class="ap-label" for="otp1">Code</label><input class="ap-input ap-otp" id="otp1" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" value="482 913"><span class="ap-help">Enter the code from your authenticator app.</span></div>
+""", """# CodeInput
+
+A one-time code field for two-step verification: in sign-in, setup, accepting an invite and the recovery dialog.
+
+- One input, not one box per digit: paste and password managers work, and screen readers read one field.
+- `ap-otp` makes it large and centered, in the data face with wide spacing.
+- `inputmode="numeric"` and `autocomplete="one-time-code"`, so phones offer the code from the authenticator or a message.
+- Recovery codes (`xxxx-xxxx-xxxx-xxxx`) use a plain input instead, with no `ap-otp` and no numeric keyboard.
+- The submit button says "Checking…" while the code is verified; a wrong code gets a field error and keeps focus in the field.
+
+**The consumer provides:** the label and the help text.
+""")
+
 C["DatePicker"] = ("Forms", 520, f"""
 <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
 <div class="ap-field" style="width:300px"><label class="ap-label" for="dt1">Starts</label><div class="ap-dtp"><div class="ap-affix"><input class="ap-input ap-data" id="dt1" value="2026-11-05 22:00"><span class="ap-affix-text">UTC</span></div><button class="ap-btn ap-btn-icon ap-dtp-btn" type="button" aria-label="Choose starts on a calendar" aria-haspopup="dialog" aria-expanded="true">{icon("calendar")}</button></div><span class="ap-help">At most 7 days before it ends.</span></div>
@@ -648,7 +796,8 @@ C["DatePicker"] = ("Forms", 520, f"""
 
 A date and time field: type it, or choose it on a calendar.
 
-- The text field takes `YYYY-MM-DD HH:MM` and stays the source of truth; the calendar button beside it opens a popover (`ap-cal-pop`, `role="dialog"`) that writes into it.
+- The text field takes `YYYY-MM-DD HH:MM` and stays the source of truth; the calendar button beside it opens a popover (`ap-cal-pop`, `role="dialog"`) that writes into it. In the library, `<ap-calendar-button [target]="input" label>` attaches to any input.
+- Minutes move in 5-minute steps. When the field is empty, the calendar starts at the next full hour.
 - **Every time is UTC**, and the field says so with a `UTC` suffix. Everyone on call reads the same times, and the audit log, logs and Raft agree.
 - Weeks start on Monday. Today is in `honey-text`, the selection is a honey disc, days outside the allowed range are disabled.
 - Keyboard: arrows move by day and week, Page Up and Page Down by month (with Shift, by year), Home and End to the week's start and end, Enter selects, Escape closes and returns focus to the button.
@@ -662,10 +811,9 @@ C["Validation"] = ("Forms", 560, f"""
 <div class="ap-banner ap-banner-critical ap-error-summary" role="alert">{icon("circle-alert")}<div class="ap-banner-body"><span class="ap-banner-title">Fix 2 problems to add this route</span><ul><li><a href="#v1">Hostname: Enter a hostname, such as shop.example.com.</a></li><li><a href="#v3">Weights: The weights add up to 110%. Make them add up to 100%.</a></li></ul></div></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
 <div class="ap-field"><label class="ap-label" for="v1">Hostname</label><input class="ap-input ap-data" id="v1" aria-invalid="true" value="shop..example.com"><span class="ap-error">{icon("circle-alert")}A hostname has no empty parts: check for two dots in a row.</span></div>
-<div class="ap-field"><label class="ap-label" for="v2">Hostname</label><input class="ap-input ap-data" id="v2" value="docs.example.com"><span class="ap-note ap-checking"><span class="ap-spinner" aria-hidden="true"></span>Checking…</span></div>
-<div class="ap-field"><label class="ap-label" for="v4">Hostname</label><input class="ap-input ap-data" id="v4" value="docs.example.com"><span class="ap-note ap-valid">{icon("circle-check")}No other route uses this hostname and path.</span></div>
-<div class="ap-field"><label class="ap-label" for="v5">Description <span class="ap-optional">(optional)</span></label><input class="ap-input" id="v5" value="Storefront, checkout and their APIs, plus the old mobile endpoints"><div class="ap-field-foot"><span class="ap-help">Shown on the project card.</span><span class="ap-counter ap-counter-over">130/120</span></div></div>
-<div class="ap-field"><label class="ap-label" for="v6">New password</label><input class="ap-input" id="v6" type="password" value="hunter2hunter"><ul class="ap-checklist"><li data-met>{icon("circle-check")}At least 12 characters</li><li data-met>{icon("circle-check")}Not a common password or repeated characters</li><li>{icon("circle")}Doesn't contain your email name</li></ul></div>
+<div class="ap-field"><label class="ap-label" for="v2">Hostname</label><input class="ap-input ap-data" id="v2" value="docs.example.com"><span class="ap-help" aria-live="polite">Checking…</span></div>
+<div class="ap-field"><label class="ap-label" for="v4">Hostname</label><input class="ap-input ap-data" id="v4" value="shop.example.com" aria-invalid="true"><span class="ap-error">{icon("circle-alert")}Another route already uses this hostname and path.</span></div>
+<div class="ap-field"><label class="ap-label" for="v6">New password</label><input class="ap-input" id="v6" type="password" value="hunter2hunter2"><ul class="ap-checklist"><li>{icon("circle")}At least 15 characters</li><li data-met>{icon("circle-check")}Not a common password or repeated characters</li><li data-met>{icon("circle-check")}Doesn’t contain your email name</li></ul></div>
 </div>
 """, """# Validation
 
@@ -674,28 +822,34 @@ How forms tell people what to fix.
 - **When:** a field is checked when you leave it, then again as you type, so a fixed error clears at once. Nothing turns red while you type in a field for the first time.
 - **On submit,** every field is checked. Forms with more than one problem list them at the top in an error summary (`ap-error-summary`, `role="alert"`), in page order, each a link that moves focus to its field. With one problem, focus moves straight to that field.
 - **Field errors** (`ap-error`, under the help text, linked with `aria-describedby`) set `aria-invalid`, which turns the border `critical`. Messages say what to do, with an example: "Enter a hostname, such as shop.example.com", not "Invalid hostname".
-- **Checks that need the server** show "Checking…" (`ap-checking`) and, when it helps, a quiet confirmation (`ap-valid`).
-- **Limits** show a counter (`ap-counter`) that turns `critical` past the limit; the field still accepts the text so nothing is cut off silently.
-- **Rules that must all hold,** such as password rules, are a live checklist (`ap-checklist`).
+- **Checks that need the server** (a hostname another route uses, an email someone has) run 400 ms after typing stops and show "Checking…" in a polite live region under the field; a problem then shows as an ordinary field error.
+- **Rules that must all hold,** such as password rules, are a live checklist (`ap-checklist`, from `<ap-password-checklist>`).
 - **Cross-field rules** (weights that add up to 100%, an end after the start) attach to the group or the second field.
-- **Server errors** appear at the top of the form; what was typed is kept. Submit buttons stay enabled: pressing one is how people find out what's missing.
+- **Server errors** come back as codes. Errors for a field appear on that field; others at the top of the form. What was typed is kept.
+- **Submit buttons stay enabled** until pressed: pressing one is how people find out what's missing. While the request runs, the button is busy ("Saving…").
+- **Not used in the app yet:** the spinner (`ap-checking`), a quiet confirmation (`ap-valid`) and the counter (`ap-counter`, which turns `critical` past a limit).
 
 **The consumer provides:** the rules and their messages.
 """)
 
-C["FileDrop"] = ("Forms", 250, f"""
-<div class="ap-field" style="max-width:480px"><span class="ap-label">Certificate and chain</span><label class="ap-drop">{icon("upload")}<span><strong>Choose a file</strong> or drop it here</span><span class="ap-caption">.pem, .crt or .cer, leaf certificate first</span><input type="file"></label></div>
-<div class="ap-field" style="max-width:480px"><span class="ap-label">Private key</span><div class="ap-file">{icon("file-key")}<span>wildcard-example-net.key</span><span class="ap-caption" style="flex:none">1.7 KB</span><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Remove wildcard-example-net.key">{icon("x")}</button></div></div>
+C["FileDrop"] = ("Forms", 330, f"""
+<div class="ap-stack" style="max-width:480px;gap:16px">
+<div class="ap-field"><label class="ap-label" for="fd1">Certificate and chain</label><textarea class="ap-textarea ap-data" id="fd1" rows="4" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----"></textarea><span class="ap-help">PEM, leaf certificate first, then the intermediates.</span></div>
+<label class="ap-drop" style="margin-top:-8px">{icon("file")}<span><strong>Choose a file</strong> or drop it here</span><span class="ap-caption">.pem, .crt or .cer</span><input type="file" accept=".pem,.crt,.cer"></label>
+</div>
 """, """# FileDrop
 
-A file field you can click or drop onto (`ap-drop`), for certificates and keys.
+A text field for a certificate or key, with a zone under it that fills the field from a file (`ap-drop`).
 
+- Pasting is the main path: people often have a certificate in a terminal, not a file. The textarea is the source of truth; choosing or dropping a file reads it into the textarea, where it can be checked and edited.
 - The whole zone is the file input's label, so it's one click and works with the keyboard; it highlights in `honey-soft` while a file is dragged over it.
-- Once chosen, the file shows as a row (`ap-file`) with its name, size and a remove button.
-- Checked in the browser first (type and content, such as a PEM header), then by the server (a key that doesn't match its certificate), with the error under the zone.
-- Always offer a "Paste text" alternative next to it: people often have a certificate in a terminal, not a file.
+- The zone names the accepted types; the field's help says what the content must be.
+- Checked by the server (a key that doesn't match its certificate, an encrypted key), with the error on the field.
+- **Not used in the app yet:** the chosen-file row (`ap-file`).
 
-**The consumer provides:** label, accepted types and help.
+**In the app:** the `apFileDrop` directive on the `ap-drop` label, next to the field it fills.
+
+**The consumer provides:** label, accepted types, help and the field it fills.
 """)
 
 for name, (group, height, body, readme) in C.items():
