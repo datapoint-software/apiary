@@ -1,5 +1,5 @@
 import { applyEach, applyWhen, required, schema, validate } from '@angular/forms/signals';
-import { hostname, port, target, wholeNumber } from '@datapoint/apiary-ui';
+import { hostname, ipRanges, port, target, wholeNumber } from '@datapoint/apiary-ui';
 import { RouteModel } from './route-model';
 
 export const routeRules = schema<RouteModel>((route) => {
@@ -18,6 +18,7 @@ export const routeRules = schema<RouteModel>((route) => {
     port(t.port);
   });
   wholeNumber(route.timeoutSeconds, 1, 120);
+  ipRanges(route.allowedAddresses);
   applyWhen(route, ({ value }) => value().certificate === 'uploaded', (uploaded) => {
     required(uploaded.certificateId, { error: { kind: 'certificate.choose' } });
   });

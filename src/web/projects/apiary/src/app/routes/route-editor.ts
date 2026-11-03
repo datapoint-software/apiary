@@ -123,6 +123,7 @@ export class RouteEditor implements HasUnsavedChanges {
       targets: value.targets.map((t) => ({ host: t.host.trim(), port: t.port, weight: t.weight })),
       timeoutSeconds: value.timeoutSeconds,
       certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
+      allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));

@@ -15,6 +15,7 @@ export interface RouteView {
   readonly changedAt: string;
   readonly changedBy?: string;
   readonly disabled: boolean;
+  readonly allowedAddresses: readonly string[];
 }
 
 export interface ProjectView {

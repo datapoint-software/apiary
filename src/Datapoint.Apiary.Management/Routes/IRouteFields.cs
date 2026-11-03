@@ -15,4 +15,6 @@ public interface IRouteFields
     int TimeoutSeconds { get; }
 
     Guid? CertificateId { get; }
+
+    IReadOnlyList<string>? AllowedAddresses { get; }
 }

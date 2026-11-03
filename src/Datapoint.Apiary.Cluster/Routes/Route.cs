@@ -12,4 +12,6 @@ public sealed record Route(
     string? ChangedBy)
 {
     public bool Disabled { get; init; }
+
+    public IReadOnlyList<string>? AllowedAddresses { get; init; }
 }

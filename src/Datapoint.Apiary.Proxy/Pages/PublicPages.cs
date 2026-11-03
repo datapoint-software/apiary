@@ -22,6 +22,12 @@ public static class PublicPages
         "This site is unavailable",
         "It's turned off for now. If you expected it to work, contact whoever runs it.");
 
+    public static IResult Forbidden() => Page(
+        StatusCodes.Status403Forbidden,
+        "Not allowed",
+        "You can't open this site from here",
+        "It only accepts visitors from certain networks. If you need it, contact whoever runs it.");
+
     private static IResult Page(int status, string title, string heading, string text) => Results.Content(
         $$$"""
         <!doctype html>

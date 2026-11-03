@@ -9,6 +9,7 @@ namespace Datapoint.Apiary.Management.Routes;
 public static class RouteRules
 {
     public const int MaximumTimeoutSeconds = 120;
+    public const int MaximumAllowedAddresses = 100;
 
     public static void AddRouteRules<T>(this AbstractValidator<T> validator, IClusterState cluster, Func<T, Guid?> existingId)
         where T : IRouteFields
@@ -24,6 +25,9 @@ public static class RouteRules
             target.RuleFor(t => t.Host).Target();
             target.RuleFor(t => t.Port).Port();
         });
+        validator.RuleFor(r => r.AllowedAddresses).Cascade(CascadeMode.Stop)
+            .Must(a => RouteNormalization.Addresses(a) is not { Count: > MaximumAllowedAddresses }).WithErrorCode(ErrorCodes.IpRangeTooMany)
+            .Must(a => RouteNormalization.Addresses(a)?.All(RuleExtensions.IsIpRange) ?? true).WithErrorCode(ErrorCodes.IpRangeInvalid);
         validator.RuleFor(r => r.CertificateId).Cascade(CascadeMode.Stop)
             .Must(id => cluster.Current.Certificates.ContainsKey(id!.Value)).WithErrorCode(ErrorCodes.CertificateNotFound)
             .Must(id => cluster.Current.Certificates[id!.Value].Source == CertificateSource.Uploaded).WithErrorCode(ErrorCodes.CertificateNotUploaded)

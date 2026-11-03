@@ -6,6 +6,7 @@ export const appMessages: MessageCatalog = {
   'route.notFound': () => 'This route was deleted. Go back to the routes list to see what’s there now.',
   'route.duplicate': () => 'Another route already uses this hostname and path. Change one of them.',
   'route.targetsRequired': () => 'Add at least one target.',
+  'ipRange.tooMany': () => 'Use 100 addresses or ranges at most. Combine neighbors into a wider range.',
   'certificate.notFound': () => 'This certificate was deleted. Go back to the certificates list to see what’s there now.',
   'certificate.notUploaded': () => 'Choose an uploaded certificate. Automatic ones belong to a single hostname.',
   'certificate.notAutomatic': () => 'Only automatic certificates renew. Upload a new one instead.',

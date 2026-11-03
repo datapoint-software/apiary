@@ -15,6 +15,7 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<TargetConnector>();
         services.AddSingleton<IForwarderHttpClientFactory, GuardedForwarderHttpClientFactory>();
         services.AddSingleton<IProxyConfigProvider, StateProxyConfigProvider>();
+        services.AddSingleton<AddressAllowlists>();
         services.AddSingleton<AccessLogWriter>();
         services.AddHostedService(provider => provider.GetRequiredService<AccessLogWriter>());
         services.AddReverseProxy();

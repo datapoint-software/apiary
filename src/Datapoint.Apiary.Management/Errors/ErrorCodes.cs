@@ -32,6 +32,7 @@ public static class ErrorCodes
     public const string TargetLinkLocal = "target.linkLocal";
     public const string TargetUnspecified = "target.unspecified";
     public const string IpRangeInvalid = "ipRange.invalid";
+    public const string IpRangeTooMany = "ipRange.tooMany";
 
     public const string ProjectNotFound = "project.notFound";
     public const string RouteNotFound = "route.notFound";
@@ -86,7 +87,7 @@ public static class ErrorCodes
         Required, TooLong, Range, Invalid,
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
-        TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid,
+        TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,

@@ -53,6 +53,6 @@ public static class RuleExtensions
         return path.StartsWith('/') && path.Length <= 1024 && !hasForbidden && !path.Any(char.IsWhiteSpace);
     }
 
-    private static bool IsIpRange(string value) =>
+    public static bool IsIpRange(string value) =>
         IPNetwork.TryParse(value, out _) || IPAddress.TryParse(value, out _);
 }

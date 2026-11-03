@@ -14,10 +14,11 @@ export interface RouteModel {
   timeoutSeconds: number | null;
   certificate: 'automatic' | 'uploaded';
   certificateId: string;
+  allowedAddresses: string;
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '' };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '' };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -29,5 +30,6 @@ export function routeModel(route: RouteView): RouteModel {
     timeoutSeconds: route.timeoutSeconds,
     certificate: route.certificateId ? 'uploaded' : 'automatic',
     certificateId: route.certificateId ?? '',
+    allowedAddresses: route.allowedAddresses.join('\n'),
   };
 }
