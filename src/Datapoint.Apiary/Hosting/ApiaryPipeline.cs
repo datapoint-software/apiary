@@ -20,7 +20,7 @@ public static class ApiaryPipeline
         app.UseExceptionHandler(handler => handler.Run(context =>
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
         app.UseWhen(c => !Listener.IsCluster(c), serving => serving.UseReadinessGate(app.Services.GetRequiredService<RaftClusterState>()));
-        app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
+        app.UseWhen(Listener.IsAdmin, admin => admin.UseAdminSecurityHeaders().UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
         app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
         app.UseRouting();
         var admin = app.MapGroup("").WithMetadata(ListenerMetadata.Admin);
