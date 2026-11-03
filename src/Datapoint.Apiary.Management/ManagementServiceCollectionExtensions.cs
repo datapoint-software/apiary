@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Management.Activity;
+using Datapoint.Apiary.Management.Account;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Audit;
@@ -29,6 +30,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddScoped<ForwardedRequest>();
         services.AddScoped<CurrentUser>();
         services.AddScoped<Sessions>();
+        services.AddScoped<PasswordConfirmation>();
         services.AddScoped<Invitations>();
         services.AddScoped<AuditLog>();
         services.AddScoped<BackupRestorer>();

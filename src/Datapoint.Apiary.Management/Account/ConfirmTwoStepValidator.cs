@@ -5,5 +5,9 @@ namespace Datapoint.Apiary.Management.Account;
 
 public sealed class ConfirmTwoStepValidator : AbstractValidator<ConfirmTwoStep>
 {
-    public ConfirmTwoStepValidator() => RuleFor(x => x.Code).Code();
+    public ConfirmTwoStepValidator()
+    {
+        RuleFor(x => x.Code).Code();
+        RuleFor(x => x.Password).CurrentPassword();
+    }
 }

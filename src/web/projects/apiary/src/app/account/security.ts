@@ -5,7 +5,6 @@ import {
   ApiProblem,
   Banner,
   Button,
-  Confirmer,
   ErrorSummary,
   Field,
   Form,
@@ -23,6 +22,7 @@ import { Auth } from '../auth/auth';
 import { matchesPassword } from '../auth/repeat-password';
 import { openDialog } from '../shell/open-dialog';
 import { AccountTabs } from './account-tabs';
+import { NewCodesDialog } from './new-codes-dialog';
 import { RecoveryCodesDialog } from './recovery-codes-dialog';
 import { TwoStepDialog } from './two-step-dialog';
 import { WriteLock } from '../cluster/write-lock';
@@ -36,7 +36,6 @@ import { WriteLock } from '../cluster/write-lock';
 export class Security {
   private readonly api = inject(Api);
   private readonly dialog = inject(Dialog);
-  private readonly confirmer = inject(Confirmer);
   private readonly toaster = inject(Toaster);
   protected readonly auth = inject(Auth);
   protected readonly crumbs = [{ label: 'Your account', link: '/account' }];
@@ -78,21 +77,12 @@ export class Security {
   }
 
   protected async newCodes(): Promise<void> {
-    let codes: readonly string[] = [];
     const left = this.auth.user()?.recoveryCodesLeft ?? 0;
-    const confirmed = await this.confirmer.confirm({
-      heading: 'Make new recovery codes?',
-      text: `Your ${left} remaining codes stop working, and you get 10 new ones. Store them somewhere safe, apart from your phone.`,
-      confirm: 'Make new codes',
-      busy: 'Making…',
-      tone: 'primary',
-      action: async () => {
-        codes = await this.api.send<string[]>('account.new-recovery-codes');
-      },
-    });
-    if (confirmed) {
+    const codes = await openDialog<readonly string[], number>(this.dialog, NewCodesDialog, left);
+    if (codes) {
       await this.auth.load();
       await openDialog<void, readonly string[]>(this.dialog, RecoveryCodesDialog, codes);
     }
   }
+
 }

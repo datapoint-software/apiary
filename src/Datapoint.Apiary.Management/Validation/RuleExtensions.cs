@@ -1,6 +1,7 @@
 using System.Net;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Security.Network;
+using Datapoint.Apiary.Security.Passwords;
 using FluentValidation;
 
 namespace Datapoint.Apiary.Management.Validation;
@@ -27,6 +28,11 @@ public static class RuleExtensions
             .Must(host => TargetRules.Classify(host) is not AddressKind.LinkLocal).WithErrorCode(ErrorCodes.TargetLinkLocal)
             .Must(host => TargetRules.Classify(host) is not AddressKind.Unspecified).WithErrorCode(ErrorCodes.TargetUnspecified)
             .Must(host => TargetRules.IsAddress(host) || IsHostname(host)).WithErrorCode(ErrorCodes.TargetInvalid);
+
+    public static IRuleBuilderOptions<T, string> CurrentPassword<T>(this IRuleBuilderInitial<T, string> rule) =>
+        rule.Cascade(CascadeMode.Stop)
+            .NotEmpty().WithErrorCode(ErrorCodes.Required)
+            .MaximumLength(PasswordPolicy.MaximumLength).WithErrorCode(ErrorCodes.PasswordIncorrect);
 
     public static IRuleBuilderOptions<T, int> Port<T>(this IRuleBuilder<T, int> rule) =>
         rule.InclusiveBetween(1, 65535).WithErrorCode(ErrorCodes.Range);

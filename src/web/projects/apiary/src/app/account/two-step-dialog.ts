@@ -1,14 +1,14 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormField, form } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, problemErrors, sixDigitCode } from '@datapoint/apiary-ui';
+import { FormField, form, required } from '@angular/forms/signals';
+import { ApiProblem, Button, ErrorSummary, Field, Form, PasswordReveal, problemErrors, sixDigitCode } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { TwoStepEnrollment } from '../api/models';
 import { TwoStepSetup } from '../auth/two-step-setup';
 
 @Component({
   selector: 'ap-two-step-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, TwoStepSetup],
+  imports: [Form, Field, FormField, ErrorSummary, Button, PasswordReveal, TwoStepSetup],
   template: `
     <form class="ap-dialog" role="dialog" aria-labelledby="totp-title" [apForm]="code" #codeForm="apForm" (submit)="confirm(codeForm)">
       <div class="ap-dialog-head"><h2 class="ap-h ap-h-2" id="totp-title">Set up two-step sign-in again</h2></div>
@@ -18,6 +18,12 @@ import { TwoStepSetup } from '../auth/two-step-setup';
         <p class="ap-caption" style="margin: 0">Your current setup keeps working until you finish.</p>
         <ap-field label="Code from the app" [field]="code.code">
           <input class="ap-input ap-otp" [formField]="code.code" inputmode="numeric" autocomplete="one-time-code" cdkFocusInitial />
+        </ap-field>
+        <ap-field label="Your password" [field]="code.password">
+          <div class="ap-affix">
+            <input class="ap-input" type="password" #password [formField]="code.password" autocomplete="current-password" />
+            <ap-password-reveal [target]="password" label="password" />
+          </div>
         </ap-field>
       </div>
       <div class="ap-dialog-foot">
@@ -32,12 +38,19 @@ export class TwoStepDialog {
   protected readonly enrollment = inject<TwoStepEnrollment>(DIALOG_DATA);
   protected readonly dialog = inject<DialogRef<boolean>>(DialogRef);
   private readonly api = inject(Api);
-  protected readonly code = form(signal({ code: '' }), (p) => sixDigitCode(p.code));
+  protected readonly code = form(signal({ code: '', password: '' }), (p) => {
+    sixDigitCode(p.code);
+    required(p.password);
+  });
 
   protected async confirm(apForm: Form): Promise<void> {
     await apForm.submit(async () => {
       try {
-        await this.api.send('account.confirm-two-step', { challenge: this.enrollment.challenge, code: this.code.code().value() });
+        await this.api.send('account.confirm-two-step', {
+          challenge: this.enrollment.challenge,
+          code: this.code.code().value(),
+          password: this.code.password().value(),
+        });
         this.dialog.close(true);
         return undefined;
       } catch (problem) {

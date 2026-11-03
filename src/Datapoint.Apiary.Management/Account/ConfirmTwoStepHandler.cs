@@ -6,7 +6,7 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Account;
 
-public sealed class ConfirmTwoStepHandler(StateTransaction transaction, CurrentUser current, Challenges challenges, TimeProvider time)
+public sealed class ConfirmTwoStepHandler(StateTransaction transaction, CurrentUser current, Challenges challenges, PasswordConfirmation password, TimeProvider time)
     : ICommandHandler<ConfirmTwoStep>
 {
     public ValueTask HandleAsync(ConfirmTwoStep command, CancellationToken ct = default)
@@ -17,6 +17,8 @@ public sealed class ConfirmTwoStepHandler(StateTransaction transaction, CurrentU
         {
             throw ActionFailedException.Invalid(ErrorCodes.ChallengeExpired);
         }
+
+        password.Require(user, command.Password, nameof(ConfirmTwoStep.Password));
 
         var twoStep = TwoStepCodes.Enroll(challenge.Secret, command.Code, time.GetUtcNow(), [])
             ?? throw FieldErrors.For(nameof(ConfirmTwoStep.Code), ErrorCodes.CodeInvalid);
