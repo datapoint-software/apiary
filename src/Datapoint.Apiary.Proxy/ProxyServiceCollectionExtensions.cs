@@ -45,6 +45,7 @@ public static class ProxyServiceCollectionExtensions
         {
             o.SizeLimit = CacheSizeLimit;
             o.MaximumBodySize = CacheMaximumBody;
+            o.UseCaseSensitivePaths = true;
         });
         services.AddOptions<OutputCacheOptions>()
             .Configure<HttpCachePolicy>((o, policy) => o.AddPolicy(HttpCachePolicy.PolicyName, policy));
