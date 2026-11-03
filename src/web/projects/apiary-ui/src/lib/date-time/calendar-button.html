@@ -1,0 +1,88 @@
+<button
+  #button
+  apButton
+  [iconOnly]="true"
+  class="ap-dtp-btn"
+  type="button"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="isOpen()"
+  [attr.aria-label]="'Choose ' + label().toLowerCase() + ' on a calendar'"
+  (click)="toggle()"
+>
+  <ap-icon [icon]="icons.calendar" />
+</button>
+@if (isOpen()) {
+  <div
+    #popover
+    class="ap-popover ap-cal-pop"
+    role="dialog"
+    [attr.aria-label]="'Choose ' + label().toLowerCase()"
+    cdkTrapFocus
+    [style.top.px]="position().top"
+    [style.left.px]="position().left"
+    (keydown)="onKeydown($event)"
+  >
+    <div class="ap-cal-head">
+      <button apButton="ghost" size="small" [iconOnly]="true" type="button" aria-label="Previous month" (click)="step(-1)">
+        <ap-icon [icon]="icons.previous" />
+      </button>
+      <span class="ap-cal-title" aria-live="polite">{{ title() }}</span>
+      <button apButton="ghost" size="small" [iconOnly]="true" type="button" aria-label="Next month" (click)="step(1)">
+        <ap-icon [icon]="icons.next" />
+      </button>
+    </div>
+    <table class="ap-cal" role="presentation">
+      <thead>
+        <tr>
+          @for (weekday of weekdays; track weekday) {
+            <th scope="col"><abbr [title]="weekday" style="text-decoration: none">{{ weekday.slice(0, 2) }}</abbr></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (week of weeks(); track $index) {
+          <tr>
+            @for (day of week; track day.ms) {
+              <td>
+                <button
+                  class="ap-day"
+                  type="button"
+                  [attr.tabindex]="day.ms === focused() ? 0 : -1"
+                  [attr.aria-label]="day.label"
+                  [attr.aria-pressed]="day.isSelected || null"
+                  [attr.aria-current]="day.isToday ? 'date' : null"
+                  [attr.data-outside]="day.isOutside ? '' : null"
+                  [disabled]="!day.isAllowed"
+                  (click)="choose(day)"
+                >
+                  {{ day.date }}
+                </button>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+    @if (withTime()) {
+      <div class="ap-cal-time">
+        <span class="ap-label">Time</span>
+        <select class="ap-select" aria-label="Hour" (change)="setTime('hour', $any($event.target).value)">
+          @for (h of hours; track h) {
+            <option [value]="h" [selected]="h === hour()">{{ h < 10 ? '0' + h : h }}</option>
+          }
+        </select>
+        :
+        <select class="ap-select" aria-label="Minutes" (change)="setTime('minute', $any($event.target).value)">
+          @for (m of minutes; track m) {
+            <option [value]="m" [selected]="m === minute()">{{ m < 10 ? '0' + m : m }}</option>
+          }
+        </select>
+        <span>UTC</span>
+      </div>
+    }
+    <div class="ap-cal-foot">
+      <button apButton="ghost" size="small" type="button" (click)="today()">Today</button>
+      <button apButton="primary" size="small" type="button" (click)="close()">Done</button>
+    </div>
+  </div>
+}

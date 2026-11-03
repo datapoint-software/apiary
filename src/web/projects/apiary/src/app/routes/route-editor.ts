@@ -12,6 +12,7 @@ import {
   Form,
   PageHead,
   Status,
+  parseUtc,
   Toaster,
   problemErrors,
 } from '@datapoint/apiary-ui';
@@ -23,13 +24,14 @@ import { routeLabel } from './route-label';
 import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
 import { routeStatus } from './route-status';
+import { MaintenanceSection } from './maintenance-section';
 import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, MaintenanceSection, RouterLink],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -124,6 +126,13 @@ export class RouteEditor implements HasUnsavedChanges {
       timeoutSeconds: value.timeoutSeconds,
       certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
       allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
+      maintenance: value.maintenance.scheduled
+        ? {
+            start: new Date(parseUtc(value.maintenance.start) ?? 0).toISOString(),
+            end: new Date(parseUtc(value.maintenance.end) ?? 0).toISOString(),
+            message: value.maintenance.message.trim() || null,
+          }
+        : null,
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));

@@ -84,8 +84,7 @@
                   </td>
                   <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
                   <td>
-                    @let status = routeStatus(route);
-                    <ap-status [tone]="status[0]">{{ status[1] }}</ap-status>
+                    <ap-route-status [route]="route" />
                   </td>
                   <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
                   <td class="ap-num">{{ route.timeoutSeconds }} s</td>

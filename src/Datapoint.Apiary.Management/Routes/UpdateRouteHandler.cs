@@ -25,6 +25,7 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             TimeoutSeconds = command.TimeoutSeconds,
             CertificateId = command.CertificateId,
             AllowedAddresses = RouteNormalization.Addresses(command.AllowedAddresses),
+            Maintenance = RouteNormalization.Maintenance(command.Maintenance),
             ChangedAt = time.GetUtcNow(),
             ChangedBy = principals.Principal?.Identity?.Name,
         };

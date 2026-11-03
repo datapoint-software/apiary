@@ -38,6 +38,9 @@ public static class ErrorCodes
     public const string RouteNotFound = "route.notFound";
     public const string RouteDuplicate = "route.duplicate";
     public const string RouteTargetsRequired = "route.targetsRequired";
+    public const string MaintenanceEndBeforeStart = "maintenance.endBeforeStart";
+    public const string MaintenanceTooLong = "maintenance.tooLong";
+    public const string MaintenanceEnded = "maintenance.ended";
 
     public const string CertificateNotFound = "certificate.notFound";
     public const string CertificateNotUploaded = "certificate.notUploaded";
@@ -89,6 +92,7 @@ public static class ErrorCodes
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
+        MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
         CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,

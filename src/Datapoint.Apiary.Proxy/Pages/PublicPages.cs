@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Net;
 using Microsoft.AspNetCore.Http;
 
 namespace Datapoint.Apiary.Proxy.Pages;
@@ -27,6 +29,12 @@ public static class PublicPages
         "Not allowed",
         "You can't open this site from here",
         "It only accepts visitors from certain networks. If you need it, contact whoever runs it.");
+
+    public static IResult Maintenance(string? message, DateTimeOffset end) => Page(
+        StatusCodes.Status503ServiceUnavailable,
+        "Maintenance",
+        "Down for maintenance",
+        WebUtility.HtmlEncode(message ?? string.Create(CultureInfo.InvariantCulture, $"This site is being worked on. Try again after {end:yyyy-MM-dd HH:mm} UTC.")));
 
     private static IResult Page(int status, string title, string heading, string text) => Results.Content(
         $$$"""

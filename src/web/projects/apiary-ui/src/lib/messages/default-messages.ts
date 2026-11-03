@@ -14,6 +14,7 @@ export const defaultMessages: MessageCatalog = {
   invalid: () => 'Check this value.',
   tooLong: (p) => `Use at most ${p['max']} characters.`,
   range: (p) => `Enter a number from ${p['min']} to ${p['max']}.`,
+  'dateTime.format': () => 'Enter a date and time like 2026-11-03 14:00, in UTC.',
   'hostname.required': () => 'Enter a hostname, such as shop.example.com.',
   'hostname.invalid': () => 'Enter a hostname, such as shop.example.com.',
   'hostname.scheme': () => 'Enter the hostname only, without http:// or https://.',

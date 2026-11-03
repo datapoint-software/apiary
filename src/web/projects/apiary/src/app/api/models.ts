@@ -16,6 +16,13 @@ export interface RouteView {
   readonly changedBy?: string;
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
+  readonly maintenance?: MaintenanceWindow;
+}
+
+export interface MaintenanceWindow {
+  readonly start: string;
+  readonly end: string;
+  readonly message?: string;
 }
 
 export interface ProjectView {

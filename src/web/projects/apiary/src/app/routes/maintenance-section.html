@@ -1,0 +1,39 @@
+<section class="ap-panel" aria-labelledby="maintenance-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="maintenance-title">Maintenance window</h2>
+      <p class="ap-panel-desc">During the window, visitors get a 503 page with your message.</p>
+    </div>
+  </div>
+  <div class="ap-panel-body ap-stack">
+    <label class="ap-choice">
+      <input class="ap-switch" type="checkbox" [formField]="maintenance().scheduled" />
+      <span>Schedule maintenance</span>
+    </label>
+    @if (scheduled()) {
+      <div class="ap-grid-2">
+        <ap-field label="Starts" [field]="maintenance().start" help="In UTC, like every time in Apiary.">
+          <div class="ap-dtp">
+            <div class="ap-affix">
+              <input #start class="ap-input ap-data" [formField]="maintenance().start" placeholder="YYYY-MM-DD HH:MM" autocomplete="off" spellcheck="false" />
+              <span class="ap-affix-text">UTC</span>
+            </div>
+            <ap-calendar-button [target]="start" label="Starts" [min]="earliest" />
+          </div>
+        </ap-field>
+        <ap-field label="Ends" [field]="maintenance().end" help="At most 7 days after it starts.">
+          <div class="ap-dtp">
+            <div class="ap-affix">
+              <input #end class="ap-input ap-data" [formField]="maintenance().end" placeholder="YYYY-MM-DD HH:MM" autocomplete="off" spellcheck="false" />
+              <span class="ap-affix-text">UTC</span>
+            </div>
+            <ap-calendar-button [target]="end" label="Ends" [min]="earliest" />
+          </div>
+        </ap-field>
+      </div>
+      <ap-field label="Message for visitors" [field]="maintenance().message" [optional]="true" help="Up to 200 characters.">
+        <textarea class="ap-textarea" rows="2" placeholder="We’re upgrading the shop. Back by 00:30 UTC." [formField]="maintenance().message"></textarea>
+      </ap-field>
+    }
+  </div>
+</section>

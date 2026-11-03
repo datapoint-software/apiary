@@ -187,6 +187,8 @@
       </div>
     </section>
 
+    <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
+
     @if (existing.value(); as current) {
       <ap-route-danger-zone [route]="current" (deleted)="leave()" />
     }

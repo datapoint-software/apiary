@@ -1,21 +1,21 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Button, EmptyState, Icon, PageHead, Status } from '@datapoint/apiary-ui';
+import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
 import { Plus, Search } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
-import { routeStatus } from './route-status';
+import { RouteStatusLabel } from './route-status-label';
 import { RouteRowActions } from './route-row-actions';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, Status, RouteRowActions, RouterLink],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteStatusLabel, RouteRowActions, RouterLink],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -26,7 +26,6 @@ export class RouteList {
   private readonly router = inject(Router);
   protected readonly icons = { plus: Plus, search: Search };
   protected readonly statuses = [['all', 'All'], ['disabled', 'Disabled']] as const;
-  protected readonly routeStatus = routeStatus;
   protected readonly routeLabel = routeLabel;
   protected readonly targetLabel = targetLabel;
   protected readonly timeAgo = timeAgo;

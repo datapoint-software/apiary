@@ -14,4 +14,6 @@ public sealed record Route(
     public bool Disabled { get; init; }
 
     public IReadOnlyList<string>? AllowedAddresses { get; init; }
+
+    public MaintenanceWindow? Maintenance { get; init; }
 }

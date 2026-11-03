@@ -17,4 +17,6 @@ public interface IRouteFields
     Guid? CertificateId { get; }
 
     IReadOnlyList<string>? AllowedAddresses { get; }
+
+    MaintenanceWindow? Maintenance { get; }
 }

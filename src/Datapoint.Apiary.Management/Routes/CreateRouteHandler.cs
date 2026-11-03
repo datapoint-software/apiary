@@ -23,6 +23,7 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             principals.Principal?.Identity?.Name)
         {
             AllowedAddresses = RouteNormalization.Addresses(command.AllowedAddresses),
+            Maintenance = RouteNormalization.Maintenance(command.Maintenance),
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);

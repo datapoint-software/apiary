@@ -3,6 +3,7 @@ import { checkNewPassword } from '../password/password-check';
 import { checkHostname } from './hostname-check';
 import { checkIpRange } from './ip-range-check';
 import { checkTarget } from './target-check';
+import { parseUtc } from '../date-time/utc-date';
 
 function asError(code: string | null, params?: Record<string, unknown>) {
   return code ? { kind: code, params } : undefined;
@@ -47,4 +48,8 @@ export function newPassword(path: SchemaPath<string>, email: () => string = () =
 
 export function sixDigitCode(path: SchemaPath<string>): void {
   validate(path, ({ value }) => (/^\d{6}$/.test(value().replace(/\s/g, '')) ? undefined : { kind: 'code.format' }));
+}
+
+export function utcDateTime(path: SchemaPath<string>): void {
+  validate(path, ({ value }) => (parseUtc(value()) === null ? { kind: 'dateTime.format' } : undefined));
 }

@@ -13,9 +13,10 @@ public sealed record RouteView(
     DateTimeOffset ChangedAt,
     string? ChangedBy,
     bool Disabled,
-    IReadOnlyList<string> AllowedAddresses)
+    IReadOnlyList<string> AllowedAddresses,
+    MaintenanceWindow? Maintenance)
 {
     public static RouteView From(Route route) =>
         new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy,
-            route.Disabled, route.AllowedAddresses ?? []);
+            route.Disabled, route.AllowedAddresses ?? [], route.Maintenance);
 }
