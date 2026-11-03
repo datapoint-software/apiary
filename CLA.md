@@ -1,4 +1,4 @@
-# Contributor License Agreement
+# Contributor Licence Agreement
 
 Thank you for contributing to Apiary. This agreement explains the rights you give Datapoint - Sistemas de Informação, Lda. (NIPC 514296631, https://datapoint.software/) ("Datapoint") over your contributions. You keep the copyright in your contributions; you give Datapoint a licence to use them.
 
@@ -49,7 +49,7 @@ This agreement is governed by Portuguese law.
 
 Before your first contribution is merged, add a comment to your merge request (or pull request) saying:
 
-> I have read the Apiary Contributor License Agreement, version 1.0, and I agree to it. I sign it on my own behalf / on behalf of `<organisation>`.
+> I have read the Apiary Contributor Licence Agreement, version 1.0, and I agree to it. I sign it on my own behalf / on behalf of `<organisation>`.
 
 A maintainer records your agreement. It covers all your future Contributions too, so you only sign once.
 

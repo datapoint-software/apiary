@@ -1,6 +1,6 @@
 # Trademark policy
 
-Apiary's [license](LICENSE) lets you use, change and share the software. It doesn't give you rights to the Datapoint name or logo (see term 3 in [NOTICE](NOTICE)). This policy explains what you can do with them, so that people can always tell what Datapoint made and what it didn't.
+Apiary's [licence](LICENSE) lets you use, change and share the software. It doesn't give you rights to the Datapoint name or logo (see term 3 in [NOTICE](NOTICE)). This policy explains what you can do with them, so that people can always tell what Datapoint made and what it didn't.
 
 ## What this policy covers
 

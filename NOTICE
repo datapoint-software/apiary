@@ -5,7 +5,7 @@ Copyright (C) 2026 Datapoint - Sistemas de Informação, Lda.
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
 Software Foundation, version 3, with the additional terms below. The full text
-of the license is in the LICENSE file.
+of the licence is in the LICENSE file.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
@@ -41,13 +41,13 @@ Additional terms under section 7 of the GNU Affero General Public License
 
 3. Trademarks (section 7, paragraph e).
 
-   This license grants no rights under trademark law to the names
+   This licence grants no rights under trademark law to the names
    "Datapoint", "Datapoint Software" and "datapoint.software", or to the
    Datapoint logo, except as needed to preserve the attribution required by
    term 1. See TRADEMARKS.md.
 
 
-Files not covered by this license
+Files not covered by this licence
 ---------------------------------
 
 The files in the "branding" directory, including the Datapoint logo, are not
