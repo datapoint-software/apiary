@@ -13,18 +13,23 @@ public sealed class SessionAuthenticationHandler(
     IClusterState cluster,
     TimeProvider time) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Cookies.TryGetValue(SessionCookie.Name, out var token) || string.IsNullOrEmpty(token))
         {
-            return Task.FromResult(AuthenticateResult.NoResult());
+            return AuthenticateResult.NoResult();
+        }
+
+        var hash = SecretTokens.Hash(token);
+        if (!cluster.Current.Sessions.Values.Any(s => s.TokenHash == hash))
+        {
+            await cluster.SyncAsync(Context.RequestAborted);
         }
 
         var state = cluster.Current;
-        var hash = SecretTokens.Hash(token);
         var session = state.Sessions.Values.FirstOrDefault(s => s.TokenHash == hash);
-        return Task.FromResult(SessionPrincipals.Create(state, session, time.GetUtcNow(), Scheme.Name) is { } principal
+        return SessionPrincipals.Create(state, session, time.GetUtcNow(), Scheme.Name) is { } principal
             ? AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name))
-            : AuthenticateResult.NoResult());
+            : AuthenticateResult.NoResult();
     }
 }

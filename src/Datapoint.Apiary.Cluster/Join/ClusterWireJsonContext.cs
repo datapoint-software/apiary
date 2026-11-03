@@ -12,4 +12,5 @@ namespace Datapoint.Apiary.Cluster.Join;
 [JsonSerializable(typeof(ReplicaAnnouncement))]
 [JsonSerializable(typeof(SharedKeyRing))]
 [JsonSerializable(typeof(Acme.AcmeChallenge))]
+[JsonSerializable(typeof(Replicas.ClusterView))]
 public sealed partial class ClusterWireJsonContext : JsonSerializerContext;

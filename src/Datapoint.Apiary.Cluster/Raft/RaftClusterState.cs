@@ -2,8 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Join;
+using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Trust;
+using DotNext.Net.Cluster;
 using DotNext.Net.Cluster.Consensus.Raft;
 using DotNext.Net.Cluster.Consensus.Raft.StateMachine;
 using Microsoft.Extensions.Hosting;
@@ -44,6 +46,8 @@ public sealed partial class RaftClusterState(
     public ReplicaCredentials? Credentials { get; private set; }
 
     public bool IsReady => _ready.Task.IsCompleted;
+
+    public bool IsHealthy => IsReady || (discovery.IsSwarm && !_run.IsCompleted);
 
     public bool IsLeader => _raft?.Leader is { IsRemote: false };
 
@@ -89,12 +93,54 @@ public sealed partial class RaftClusterState(
         try
         {
             await raft.ReplicateAsync(_machine!.Seal(entry), context: null, timeout.Token);
+            await raft.ForceReplicationAsync(timeout.Token);
         }
         catch (Exception exception) when (exception is NotLeaderException or QuorumUnreachableException
             || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
         {
             throw new ClusterUnavailableException("The change wasn't confirmed by a majority of replicas.", exception);
         }
+    }
+
+    public async Task<ClusterView> DescribeAsync(CancellationToken cancellationToken)
+    {
+        var local = Describe();
+        if (IsLeader || LeaderAddress is not { } leader || await FetchViewAsync(leader, cancellationToken) is not { } view)
+        {
+            return local;
+        }
+
+        var own = Address?.ToString();
+        return local with { Members = [.. view.Members.Select(m => m with { Local = m.Address == own })] };
+    }
+
+    private async Task<ClusterView?> FetchViewAsync(IPAddress peer, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await client.GetAsync(peer, "view", cancellationToken);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadFromJsonAsync(ClusterWireJsonContext.Default.ClusterView, cancellationToken)
+                : null;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or ClusterUnavailableException
+            || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            return null;
+        }
+    }
+
+    public ClusterView Describe()
+    {
+        var state = Current;
+        var members = _raft?.Members.Select(m =>
+        {
+            var address = m.EndPoint.ToString() ?? "";
+            var replica = state.Replicas.Values.FirstOrDefault(r => r.Address == address);
+            var role = m.IsLeader ? MemberRole.Leader : MemberRole.Voter;
+            return new MemberView(replica?.Id, replica?.Node, address, role, !m.IsRemote || m.Status is ClusterMemberStatus.Available, !m.IsRemote, replica?.JoinedAt);
+        }).ToList() ?? [];
+        return new ClusterView(options.Value.Mode.ToString(), IsReady, IsWritable, state.Index, Identity?.Id, members);
     }
 
     public async Task<AcmeChallenge?> FindChallengeAsync(string token, CancellationToken cancellationToken)
@@ -115,6 +161,26 @@ public sealed partial class RaftClusterState(
             || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
         {
             return null;
+        }
+    }
+
+    public async Task SyncAsync(CancellationToken cancellationToken)
+    {
+        if (_raft is null || IsLeader)
+        {
+            return;
+        }
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(2));
+        try
+        {
+            await _raft.ApplyReadBarrierAsync(timeout.Token);
+        }
+        catch (Exception exception) when (exception is QuorumUnreachableException
+            || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            LogSyncFailed();
         }
     }
 
@@ -166,6 +232,9 @@ public sealed partial class RaftClusterState(
         previous.Cancel();
         previous.Dispose();
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Couldn't confirm with the leader that this replica is up to date")]
+    private partial void LogSyncFailed();
 
     private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
     {

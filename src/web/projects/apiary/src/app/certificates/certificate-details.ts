@@ -13,10 +13,11 @@ import { CertificateFacts } from './certificate-facts';
 import { CertificateHistory } from './certificate-history';
 import { sourceName, statusText, statusTone } from './certificate-status';
 import { UploadDialog } from './upload-dialog';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-certificate-details',
-  imports: [PageHead, Button, Icon, Banner, Status, RouterLink, CertificateFacts, CertificateHistory],
+  imports: [WriteLock, PageHead, Button, Icon, Banner, Status, RouterLink, CertificateFacts, CertificateHistory],
   templateUrl: './certificate-details.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

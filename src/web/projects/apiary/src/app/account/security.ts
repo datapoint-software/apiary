@@ -24,10 +24,11 @@ import { openDialog } from '../shell/open-dialog';
 import { AccountTabs } from './account-tabs';
 import { RecoveryCodesDialog } from './recovery-codes-dialog';
 import { TwoStepDialog } from './two-step-dialog';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-security',
-  imports: [PageHead, AccountTabs, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, PasswordChecklist, Status],
+  imports: [WriteLock, PageHead, AccountTabs, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, PasswordChecklist, Status],
   templateUrl: './security.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

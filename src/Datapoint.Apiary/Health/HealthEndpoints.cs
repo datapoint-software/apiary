@@ -8,7 +8,7 @@ public static class HealthEndpoints
     {
         endpoints.MapGet("/health/live", () => Results.Ok());
         endpoints.MapGet("/health/ready", (IHostApplicationLifetime lifetime, RaftClusterState cluster) =>
-            lifetime.ApplicationStarted.IsCancellationRequested && cluster.IsReady ? Results.Ok() : Results.StatusCode(StatusCodes.Status503ServiceUnavailable));
+            lifetime.ApplicationStarted.IsCancellationRequested && cluster.IsHealthy ? Results.Ok() : Results.StatusCode(StatusCodes.Status503ServiceUnavailable));
         return endpoints;
     }
 }

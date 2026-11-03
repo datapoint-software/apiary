@@ -9,12 +9,12 @@
   <ap-page-head [heading]="c.name" [crumbs]="[{ label: 'Certificates', link: '/certificates' }]">
     <span pageSub><ap-status [tone]="statusTone(c)">{{ statusText(c) }}</ap-status> &nbsp;·&nbsp; {{ sourceName(c) }}</span>
     @if (auth.canOperate() && c.source === 'automatic') {
-      <button pageActions apButton="primary" type="button" [disabled]="renewing()" (click)="renew()">
+      <button apWrite pageActions apButton="primary" type="button" [disabled]="renewing()" (click)="renew()">
         <ap-icon [icon]="icons.renew" />{{ renewing() ? 'Renewing…' : 'Renew now' }}
       </button>
     }
     @if (auth.canOperate() && c.source === 'uploaded') {
-      <button pageActions apButton type="button" (click)="replace()"><ap-icon [icon]="icons.upload" />Replace…</button>
+      <button apWrite pageActions apButton type="button" (click)="replace()"><ap-icon [icon]="icons.upload" />Replace…</button>
     }
   </ap-page-head>
 

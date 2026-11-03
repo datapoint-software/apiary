@@ -8,7 +8,7 @@
       <p class="ap-panel-desc">If you don’t recognize one, sign it out and change your password. Sessions end after 12 hours.</p>
     </div>
     @if (others() > 0) {
-      <button apButton size="small" type="button" (click)="endOthers()">Sign out of all others…</button>
+      <button apWrite apButton size="small" type="button" (click)="endOthers()">Sign out of all others…</button>
     }
   </div>
   <div class="ap-panel-body">
@@ -30,7 +30,7 @@
             </div>
           </div>
           @if (!session.current) {
-            <button apButton size="small" type="button" (click)="end(session)">Sign out</button>
+            <button apWrite apButton size="small" type="button" (click)="end(session)">Sign out</button>
           }
         </div>
       }

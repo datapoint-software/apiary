@@ -1,0 +1,56 @@
+<ap-page-head heading="Replicas">
+  <span pageSub>
+    @if (cluster.view.value()?.mode === 'Standalone') {
+      Apiary runs as one instance, so there’s nothing to replicate. Deploy it as a Swarm stack to run several replicas.
+    } @else {
+      Every replica keeps a copy of the configuration and serves traffic. A majority of them must agree on each change.
+    }
+  </span>
+</ap-page-head>
+
+<section class="ap-panel">
+  @if (cluster.view.isLoading() && members().length === 0) {
+    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  } @else {
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">Replicas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Replica</th>
+            <th scope="col">Address</th>
+            <th scope="col">Role</th>
+            <th scope="col">Status</th>
+            <th scope="col">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (member of members(); track member.address) {
+            @let state = status(member);
+            <tr>
+              <td>
+                <div class="ap-cell-main">
+                  <span class="ap-data" style="font-weight: 500">
+                    {{ member.node ?? 'Unknown node' }}
+                    @if (member.local) {
+                      <span class="ap-muted" style="font-weight: 400">(this replica)</span>
+                    }
+                  </span>
+                  @if (member.id) {
+                    <span class="ap-caption ap-data">{{ member.id }}</span>
+                  }
+                </div>
+              </td>
+              <td class="ap-data ap-muted">{{ member.address }}</td>
+              <td>{{ roles[member.role] }}</td>
+              <td><ap-status [tone]="state[0]">{{ state[1] }}</ap-status></td>
+              <td class="ap-muted">{{ member.joinedAt ? timeAgo(member.joinedAt) : '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<p class="ap-caption">Log index {{ cluster.view.value()?.index ?? 0 }}. Replicas that stay missing are removed after a while, so they don’t count against the majority.</p>

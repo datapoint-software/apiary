@@ -31,7 +31,7 @@
     </ap-field>
   </div>
   <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
-    <button apButton="primary" type="submit" [disabled]="password().submitting()">
+    <button apWrite apButton="primary" type="submit" [disabled]="password().submitting()">
       {{ password().submitting() ? 'Changing…' : 'Change password' }}
     </button>
   </div>
@@ -52,14 +52,14 @@
           <strong>Authenticator app</strong>
           <span class="ap-muted">Set up on {{ setUpOn() }}</span>
         </div>
-        <button apButton type="button" (click)="setUpAgain()">Set up again…</button>
+        <button apWrite apButton type="button" (click)="setUpAgain()">Set up again…</button>
       </div>
       <div class="ap-list-row">
         <div class="ap-list-text">
           <strong>Recovery codes</strong>
           <span class="ap-muted">{{ auth.user()?.recoveryCodesLeft }} of 10 left. Each works once, if you lose your phone.</span>
         </div>
-        <button apButton type="button" (click)="newCodes()">Make new codes…</button>
+        <button apWrite apButton type="button" (click)="newCodes()">Make new codes…</button>
       </div>
     </div>
   </div>

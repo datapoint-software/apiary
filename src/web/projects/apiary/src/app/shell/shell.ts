@@ -2,12 +2,13 @@ import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
-import { Button, Icon } from '@datapoint/apiary-ui';
-import { LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
+import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
+import { Hexagon, LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
 import { needsAttention } from '../certificates/certificate-status';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView } from '../api/models';
 import { Auth } from '../auth/auth';
+import { ClusterStatus } from '../cluster/cluster-status';
 import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
 import { NavGroup } from './nav-item';
@@ -17,7 +18,7 @@ import { readCollapsed, saveCollapsed } from './sidebar-preference';
 @Component({
   selector: 'ap-shell',
   host: { '(document:keydown.escape)': 'closeDrawer()' },
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Button, DatapointLogo, CdkMenu, CdkMenuItem, CdkMenuTrigger],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Button, Banner, Status, DatapointLogo, CdkMenu, CdkMenuItem, CdkMenuTrigger],
   templateUrl: './shell.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -25,6 +26,7 @@ export class Shell {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
   protected readonly auth = inject(Auth);
+  protected readonly cluster = inject(ClusterStatus);
   protected readonly roleNames = roleNames;
   protected readonly initials = computed(() =>
     (this.auth.user()?.name ?? '')
@@ -77,6 +79,10 @@ export class Shell {
           ...(this.auth.canAdminister() ? [{ icon: Users, label: 'Users', link: '/users' }] : []),
           { icon: ScrollText, label: 'Audit log', link: '/audit' },
         ],
+      },
+      {
+        title: 'Cluster',
+        items: [{ icon: Hexagon, label: 'Replicas', link: '/replicas', warn: this.cluster.reachable() < this.cluster.voters().length }],
       },
     ];
   });

@@ -7,10 +7,11 @@ import { Api } from '../api/api';
 import { ProjectView } from '../api/models';
 import { projectIcon } from '../shell/project-icons';
 import { Auth } from '../auth/auth';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-overview',
-  imports: [PageHead, RouterLink, Icon, Button],
+  imports: [WriteLock, PageHead, RouterLink, Icon, Button],
   templateUrl: './overview.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

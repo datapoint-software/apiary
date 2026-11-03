@@ -6,10 +6,11 @@ import { Api } from '../api/api';
 import { SessionView } from '../api/models';
 import { utcDateTime } from '../api/time-ago';
 import { AccountTabs } from './account-tabs';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-sessions',
-  imports: [PageHead, AccountTabs, Button, Icon],
+  imports: [WriteLock, PageHead, AccountTabs, Button, Icon],
   templateUrl: './sessions.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

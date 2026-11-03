@@ -13,6 +13,8 @@ public sealed partial class RaftClusterState
 {
     private static readonly TimeSpan s_monitorInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan s_leaveTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan s_leaderlessTimeout = TimeSpan.FromSeconds(45);
+    private DateTimeOffset? _leaderlessSince;
     private readonly SemaphoreSlim _membership = new(1, 1);
     private readonly Dictionary<IPEndPoint, DateTimeOffset> _missingSince = [];
 
@@ -162,11 +164,6 @@ public sealed partial class RaftClusterState
 
     private async Task AnnounceAsync(EndPoint address, IReadOnlyDictionary<string, string> metadata, CancellationToken cancellationToken)
     {
-        if (MemberAddressBook.Read(MembersFile).Contains(address))
-        {
-            return;
-        }
-
         while (true)
         {
             foreach (var peer in await AnnouncementTargetsAsync(cancellationToken))
@@ -217,6 +214,7 @@ public sealed partial class RaftClusterState
             try
             {
                 await RemoveMissingAsync(cancellationToken);
+                await CheckMovedPeersAsync(cancellationToken);
             }
             catch (Exception exception) when (exception is ClusterUnavailableException or InvalidOperationException or HttpRequestException)
             {
@@ -249,6 +247,43 @@ public sealed partial class RaftClusterState
                 await RemoveMissingMemberAsync(member, cancellationToken);
             }
         }
+    }
+
+    private async Task CheckMovedPeersAsync(CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        if (LeaderAddress is not null)
+        {
+            _leaderlessSince = null;
+            return;
+        }
+
+        _leaderlessSince ??= now;
+        if (now - _leaderlessSince < s_leaderlessTimeout)
+        {
+            return;
+        }
+
+        foreach (var peer in await discovery.PeersAsync(Address!.Address, cancellationToken))
+        {
+            if (Moved(await FetchViewAsync(peer, cancellationToken)) is { } moved)
+            {
+                LogPeerMoved(moved.Node ?? moved.Id.ToString(), moved.Address);
+                _leaderlessSince = now;
+                return;
+            }
+        }
+    }
+
+    private Replica? Moved(ClusterView? view)
+    {
+        var address = view?.Members.FirstOrDefault(m => m.Local)?.Address;
+        if (view?.ReplicaId is not { } id || address is null || !Current.Replicas.TryGetValue(id, out var known) || known.Address == address)
+        {
+            return null;
+        }
+
+        return IPEndPoint.TryParse(address, out var endPoint) && !IsMember(endPoint) ? known with { Address = address } : null;
     }
 
     private async Task RemoveMissingMemberAsync(IPEndPoint member, CancellationToken cancellationToken)
@@ -299,6 +334,9 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't check for missing replicas")]
     private partial void LogMonitorFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "No leader for a while, and the replica on {Node} now runs at {Address}, which this replica's member list doesn't have. If replicas restarted while the cluster had no majority, restart the whole service so every replica updates its member list")]
+    private partial void LogPeerMoved(string node, string address);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Removed the replica at {Address}, missing from Swarm for longer than the timeout")]
     private partial void LogRemovedMissing(string address);

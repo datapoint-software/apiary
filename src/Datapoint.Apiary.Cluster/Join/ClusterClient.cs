@@ -87,6 +87,9 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
             SslOptions = ssl,
             ConnectTimeout = TimeSpan.FromSeconds(3),
             PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            KeepAlivePingDelay = TimeSpan.FromSeconds(2),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(2),
+            KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
         };
         return new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan, DefaultRequestVersion = HttpVersion.Version20, DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower };
     }

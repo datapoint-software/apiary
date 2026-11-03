@@ -146,3 +146,24 @@ export interface RenewResult {
   readonly failureCode?: string;
   readonly failureDetail?: string;
 }
+
+export type MemberRole = 'leader' | 'voter' | 'joining';
+
+export interface MemberView {
+  readonly id?: string;
+  readonly node?: string;
+  readonly address: string;
+  readonly role: MemberRole;
+  readonly reachable: boolean;
+  readonly local: boolean;
+  readonly joinedAt?: string;
+}
+
+export interface ClusterView {
+  readonly mode: 'Standalone' | 'Swarm';
+  readonly ready: boolean;
+  readonly writable: boolean;
+  readonly index: number;
+  readonly replicaId?: string;
+  readonly members: readonly MemberView[];
+}

@@ -1,6 +1,6 @@
 <ap-page-head heading="Users">
   <span pageSub>Everyone with access to this cluster. Give each person the least access they need.</span>
-  <button pageActions apButton="primary" type="button" (click)="invite()"><ap-icon [icon]="icons.invite" />Invite someone</button>
+  <button apWrite pageActions apButton="primary" type="button" (click)="invite()"><ap-icon [icon]="icons.invite" />Invite someone</button>
 </ap-page-head>
 
 @if (withoutTwoStep(); as count) {

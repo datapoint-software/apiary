@@ -23,10 +23,11 @@ import { routeLabel } from './route-label';
 import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
 import { Auth } from '../auth/auth';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, RouterLink],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

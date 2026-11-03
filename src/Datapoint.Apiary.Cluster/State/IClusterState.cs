@@ -15,4 +15,6 @@ public interface IClusterState
     ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken);
 
     ValueTask AppendAsync(StateEntry entry, CancellationToken cancellationToken);
+
+    Task SyncAsync(CancellationToken cancellationToken);
 }

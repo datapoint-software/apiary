@@ -56,6 +56,15 @@
         <ap-icon [icon]="panelIcon" />
       </button>
       <div class="ap-top-end">
+        @if (cluster.view.value()?.mode === 'Swarm') {
+          <a routerLink="/replicas" style="text-decoration: none">
+            <ap-status [tone]="cluster.locked() ? 'critical' : cluster.reachable() < cluster.voters().length ? 'warn' : 'ok'">
+              {{ cluster.reachable() }} of {{ cluster.voters().length }} replicas<span class="ap-sr"
+                >, {{ cluster.locked() ? 'changes are paused' : 'changes are accepted' }}</span
+              >
+            </ap-status>
+          </a>
+        }
         @if (auth.user(); as user) {
           <button
             class="ap-avatar ap-avatar-btn"
@@ -88,6 +97,13 @@
         }
       </div>
     </header>
+    @if (cluster.locked()) {
+      <ap-banner class="ap-global" tone="critical" heading="Changes are paused" role="alert">
+        Only {{ cluster.reachable() }} of {{ cluster.voters().length }} replicas can be reached, so the cluster can’t agree on changes.
+        Traffic keeps flowing with the last configuration.
+        <a bannerActions routerLink="/replicas">See replicas</a>
+      </ap-banner>
+    }
     <main class="ap-content" id="main" tabindex="-1">
       <router-outlet />
     </main>

@@ -175,7 +175,7 @@
               <strong>Delete this route</strong>
               <span class="ap-muted">Requests to it get a 404 on every replica.</span>
             </div>
-            <button
+            <button apWrite
               apButton
               type="button"
               style="color: var(--critical)"
@@ -192,7 +192,7 @@
     @if (auth.canOperate()) {
       <div class="ap-savebar">
         <a apButton="ghost" routerLink="/routes">Cancel</a>
-        <button apButton="primary" type="submit" [disabled]="route().submitting()">
+        <button apWrite apButton="primary" type="submit" [disabled]="route().submitting()">
           {{ route().submitting() ? 'Saving…' : isNew() ? 'Create route' : 'Save route' }}
         </button>
       </div>

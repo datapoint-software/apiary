@@ -26,6 +26,8 @@ public sealed partial class RaftClusterState
 
     private string MembersFile => Path.Combine(RaftDirectory, "members");
 
+    private string HistoryFile => Path.Combine(RaftDirectory, "addresses.json");
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(StateDirectory);
@@ -52,8 +54,9 @@ public sealed partial class RaftClusterState
 
             RewriteAddresses();
             await StartRaftAsync(bootstrap, cancellationToken);
+            var monitoring = MonitorAsync(cancellationToken);
             await BecomeReadyAsync(bootstrap, cancellationToken);
-            await MonitorAsync(cancellationToken);
+            await monitoring;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -77,7 +80,11 @@ public sealed partial class RaftClusterState
 
         _machine = new ApiaryStateMachine(snapshots, encryption, options.Value.SnapshotEvery)
         {
-            Applied = _ => NotifyChanged(),
+            Applied = entry =>
+            {
+                LogApplied(Current.Index, new ChangeNames(entry));
+                NotifyChanged();
+            },
         };
         await _machine.RestoreAsync(cancellationToken);
         _log = new WriteAheadLog(new WriteAheadLog.Options { Location = Path.Combine(RaftDirectory, "log") }, _machine);
@@ -155,9 +162,12 @@ public sealed partial class RaftClusterState
             return null;
         }
 
-        lock (_peerAddresses)
+        if (IPEndPoint.TryParse(response.Address, out var address))
         {
-            _peerAddresses[response.ReplicaId] = IPEndPoint.Parse(response.Address);
+            lock (_peerAddresses)
+            {
+                _peerAddresses[response.ReplicaId] = address;
+            }
         }
 
         if (response is { Status: JoinStatus.Joined, Keys: { } keys })
@@ -176,23 +186,20 @@ public sealed partial class RaftClusterState
 
     private void RewriteAddresses()
     {
+        var now = time.GetUtcNow();
+        var current = new Dictionary<Guid, IPEndPoint>(_peerAddresses) { [Identity!.Id] = Address! };
+        var history = AddressHistory.Load(HistoryFile).With([
+            .. Current.Replicas.Values.Select(r => new KnownAddress(r.Address, r.Id, r.JoinedAt)),
+            .. current.Select(c => new KnownAddress(c.Value.ToString(), c.Key, now)),
+        ]);
+        history.Save(HistoryFile);
+
         var stored = MemberAddressBook.Read(MembersFile);
-        if (stored.Count == 0)
-        {
-            return;
-        }
-
-        var moved = new Dictionary<IPEndPoint, IPEndPoint>(Current.Replicas.Count);
-        foreach (var replica in Current.Replicas.Values)
-        {
-            var now = replica.Id == Identity!.Id ? Address : _peerAddresses.GetValueOrDefault(replica.Id);
-            if (now is not null && IPEndPoint.TryParse(replica.Address, out var old) && !old.Equals(now))
-            {
-                moved[old] = now;
-            }
-        }
-
-        if (!stored.Any(moved.ContainsKey))
+        var moved = stored
+            .Select(old => (Old: old, Now: history.ReplicaAt(old.ToString()) is { } id ? current.GetValueOrDefault(id) : null))
+            .Where(m => m.Now is not null && !m.Now.Equals(m.Old))
+            .ToDictionary(m => m.Old, m => m.Now!);
+        if (moved.Count == 0)
         {
             return;
         }
@@ -230,14 +237,26 @@ public sealed partial class RaftClusterState
         }
 
         await _raft!.Readiness.WaitAsync(cancellationToken);
-        if (!IsLeader)
-        {
-            await _raft.ApplyReadBarrierAsync(cancellationToken);
-        }
-
+        await CatchUpAsync(cancellationToken);
         _ready.TrySetResult();
         NotifyChanged();
         LogReady(Address!, Current.Index);
+    }
+
+    private async Task CatchUpAsync(CancellationToken cancellationToken)
+    {
+        while (!IsLeader)
+        {
+            try
+            {
+                await _raft!.ApplyReadBarrierAsync(cancellationToken);
+                return;
+            }
+            catch (QuorumUnreachableException)
+            {
+                await Task.Delay(s_joinRetry, time, cancellationToken);
+            }
+        }
     }
 
     private StateEntry CreationEntry()
@@ -253,6 +272,9 @@ public sealed partial class RaftClusterState
     }
 
     private string NodeName => options.Value.NodeName ?? Environment.MachineName;
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Applied the entry at index {Index}: {Changes}")]
+    private partial void LogApplied(long index, ChangeNames changes);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Loaded the state at index {Index}")]
     private partial void LogLoaded(long index);
@@ -274,4 +296,9 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Critical, Message = "The replica couldn't start its part of the cluster, so Apiary stops")]
     private partial void LogStartFailed(Exception exception);
+
+    private readonly record struct ChangeNames(StateEntry Entry)
+    {
+        public override string ToString() => string.Join(", ", Entry.Changes.Select(c => c.GetType().Name));
+    }
 }

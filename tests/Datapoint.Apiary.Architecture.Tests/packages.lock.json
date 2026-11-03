@@ -35,10 +35,50 @@
           "xunit.v3.mtp-v2": "[4.0.2]"
         }
       },
+      "DotNext": {
+        "type": "Transitive",
+        "resolved": "6.11.1",
+        "contentHash": "ALxxxTUDB7wYCqof4MpMSUwgMdqaTR9cPWfum5m3KTgAqKgUo5MVQAZWBszS9AuJLSM6TVV97pkFcNkyFNSfxQ==",
+        "dependencies": {
+          "System.IO.Hashing": "10.0.13"
+        }
+      },
+      "DotNext.IO": {
+        "type": "Transitive",
+        "resolved": "6.11.1",
+        "contentHash": "OYIynnufDtmMS6zu+iyIYWVtbrTQOrW79Oy8GlMTELrNjPCmyEv/qiqSQX68qG2Wd9ei2j2va7VBERRut0kJxw==",
+        "dependencies": {
+          "DotNext": "6.11.1"
+        }
+      },
+      "DotNext.Threading": {
+        "type": "Transitive",
+        "resolved": "6.11.1",
+        "contentHash": "0wv/aySI9MnAKW61JGqvRGEiU7jAniBD0gcm2Vz8mpeQRUhngMhvbMtD2MotXntuUaWLb6Q3Z+9ZDyA1ru97oQ==",
+        "dependencies": {
+          "DotNext": "6.11.1"
+        }
+      },
+      "DotNext.Unsafe": {
+        "type": "Transitive",
+        "resolved": "6.11.1",
+        "contentHash": "JMaKNZyRmesnGK9iAOmVFhWkjbQY5+iksIMrjv2TUCVeOtXXeRVF5YIWpi3+FLy+al8thjb+tDpKwI0VT4ECtw==",
+        "dependencies": {
+          "DotNext": "6.11.1"
+        }
+      },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
         "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
+      },
+      "Microsoft.AspNetCore.Connections.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "l/1VmXALhXxdTWG+41N25xigbAXZx/43c6cVw+mXxLH6KCKO25P3c53MLK5w5ua0GCr2RdZhN/xsUwCG7v9N1w==",
+        "dependencies": {
+          "Microsoft.Extensions.Features": "10.0.13"
+        }
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
@@ -49,6 +89,19 @@
         "type": "Transitive",
         "resolved": "10.0.14",
         "contentHash": "QtpQzuSZVyTPCuHW058yCs9Nj0394uUkNyFHS813nOmK9UgUdBdaprJ5PPsBgsQIpxADTsTkbaMMonykem6qdw=="
+      },
+      "Microsoft.Extensions.Features": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "7xLogOKNBYYWbUUEMOPfuirfcYG8iBNQ4TOc3aUzJpiRD7tyQqzYWhDPXAk2kOuJTd7ImcGtdT1HEQTC9VljuQ=="
+      },
+      "Microsoft.Extensions.Logging.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "aSZEhEig4fvNiw2zs8Z6NyDlniKtq6YjcF3DyHuqTEHcZ2VKA/6itMPZ+dW+yWABWExlDcQwwdbqX1Rcb7W8WQ==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13"
+        }
       },
       "Microsoft.OpenApi": {
         "type": "Transitive",
@@ -92,8 +145,8 @@
       },
       "System.IO.Hashing": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA=="
+        "resolved": "10.0.13",
+        "contentHash": "ZlcywyQ7FJmgOV2nctdfOEPGS0kRK8T2CdOoPr6F4HPYpmjSo6GQfj3yTyOzNO6B+2U84/JKSPkJJMWqLmVsMw=="
       },
       "System.Security.AccessControl": {
         "type": "Transitive",
@@ -192,7 +245,8 @@
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[0.1.0, )"
+          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
       "datapoint.apiary.management": {
@@ -298,6 +352,19 @@
         "dependencies": {
           "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.3",
           "Datapoint.Mediator.FluentValidation": "4.0.0-beta.3"
+        }
+      },
+      "DotNext.Net.Cluster": {
+        "type": "CentralTransitive",
+        "requested": "[6.11.1, )",
+        "resolved": "6.11.1",
+        "contentHash": "1zcFDI3GNB9/FZN02tQAlJr6lOUDjlD3O3o0xdtETsuS3Ja6s87yQOFFk5fcDepw3/aFtFLcEA5+iUUO3JVTtw==",
+        "dependencies": {
+          "DotNext.IO": "6.11.1",
+          "DotNext.Threading": "6.11.1",
+          "DotNext.Unsafe": "6.11.1",
+          "Microsoft.AspNetCore.Connections.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13"
         }
       },
       "FluentValidation": {

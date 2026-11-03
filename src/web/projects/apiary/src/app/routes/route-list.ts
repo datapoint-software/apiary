@@ -9,10 +9,11 @@ import { timeAgo } from '../api/time-ago';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
 import { Auth } from '../auth/auth';
+import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-list',
-  imports: [PageHead, EmptyState, Icon, Button, RouterLink],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouterLink],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

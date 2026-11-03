@@ -8,6 +8,7 @@ using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Mediator;
+using DotNext.Net.Cluster.Consensus.Raft;
 
 namespace Datapoint.Apiary.Replication;
 
@@ -23,6 +24,7 @@ public static class ClusterEndpoints
             Membership(() => cluster.ReleaseAsync(announcement, ct)));
         replicas.MapPost("/entries", AppendAsync);
         replicas.MapPost("/" + CommandForwarder.Path, CommandAsync);
+        replicas.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView));
         replicas.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
             cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge) ? Results.Json(challenge, ClusterWireJsonContext.Default.AcmeChallenge) : Results.NotFound());
         return group;
@@ -45,8 +47,17 @@ public static class ClusterEndpoints
             : Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    private static async Task<IResult> Membership(Func<Task<bool>> change) =>
-        await change() ? Results.Ok() : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    private static async Task<IResult> Membership(Func<Task<bool>> change)
+    {
+        try
+        {
+            return await change() ? Results.Ok() : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+        catch (Exception exception) when (exception is NotLeaderException or QuorumUnreachableException or ClusterUnavailableException or HttpRequestException)
+        {
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+    }
 
     private static async Task<IResult> AppendAsync(HttpContext context, RaftClusterState cluster)
     {
@@ -81,7 +92,7 @@ public static class ClusterEndpoints
             return Results.StatusCode(StatusCodes.Status421MisdirectedRequest);
         }
 
-        var command = await context.Request.ReadFromJsonAsync<ForwardedCommand>(ApiJson.Options, context.RequestAborted);
+        var command = await context.Request.ReadFromJsonAsync<ForwardedCommand>(ForwardingJson.Options, context.RequestAborted);
         if (command is null)
         {
             return Results.BadRequest();
@@ -89,7 +100,7 @@ public static class ClusterEndpoints
 
         if (cluster.Current.AppliedRequests.TryGetValue(command.RequestId, out var applied))
         {
-            return Results.Json(new ForwardedResult(applied.Result is { } stored ? JsonDocument.Parse(stored).RootElement : null, null), ApiJson.Options);
+            return Results.Json(new ForwardedResult(applied.Result is { } stored ? JsonDocument.Parse(stored).RootElement : null, null, cluster.Current.Index), ForwardingJson.Options);
         }
 
         var recorder = new CookieRecorder();
@@ -100,8 +111,8 @@ public static class ClusterEndpoints
         try
         {
             var result = await dispatcher.DispatchAsync(command.Action, command.Arguments, ApiJson.Options, context.RequestAborted);
-            var json = result is null ? (JsonElement?)null : JsonSerializer.SerializeToElement(result, result.GetType(), ApiJson.Options);
-            return Results.Json(new ForwardedResult(json, recorder.Cookie), ApiJson.Options);
+            var json = result is null ? (JsonElement?)null : JsonSerializer.SerializeToElement(result, result.GetType(), ForwardingJson.Options);
+            return Results.Json(new ForwardedResult(json, recorder.Cookie, cluster.Current.Index), ForwardingJson.Options);
         }
         catch (Exception exception) when (ApiErrors.Map(exception) is { } problem)
         {

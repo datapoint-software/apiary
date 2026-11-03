@@ -1,7 +1,7 @@
 <ap-page-head heading="Certificates">
   <span pageSub>Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs.</span>
   @if (auth.canOperate()) {
-    <button pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
+    <button apWrite pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
   }
 </ap-page-head>
 
@@ -23,7 +23,7 @@
     <ap-empty-state heading="No certificates yet">
       Add a route and Apiary gets its certificate for you. Upload your own for a wildcard or internal hostname.
       @if (auth.canOperate()) {
-        <button emptyActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
+        <button apWrite emptyActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
       }
     </ap-empty-state>
   } @else {
