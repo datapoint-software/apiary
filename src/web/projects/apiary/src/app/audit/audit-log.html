@@ -16,11 +16,23 @@
         <option [value]="person">{{ person }}</option>
       }
     </select>
+    <div class="ap-seg" role="group" aria-label="Through">
+      @for (option of vias; track option[0]) {
+        <button type="button" [attr.aria-pressed]="via() === option[0]" (click)="via.set(option[0])">{{ option[1] }}</button>
+      }
+    </div>
+    <div class="ap-search" style="flex: 1 1 220px">
+      <ap-icon [icon]="searchIcon" />
+      <input #searchBox class="ap-input" type="search" aria-label="Search the audit log" placeholder="Search actions, people, addresses…" [value]="search()" (input)="type(searchBox.value)" />
+    </div>
     <label class="ap-choice" style="font-size: 0.875rem">
       <input class="ap-switch" type="checkbox" [checked]="failedOnly()" (change)="failedOnly.set($any($event.target).checked)" />
       Denied and failed only
     </label>
   </div>
+  @if (range() === 'custom') {
+    <ap-custom-range (applied)="custom.set($event)" />
+  }
   <div class="ap-panel-body" style="padding-top: 0" aria-live="polite">
     @for (day of days(); track day.title) {
       <h3 class="ap-overline" style="margin: 18px 0 0">{{ day.title }}</h3>
