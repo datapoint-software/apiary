@@ -151,6 +151,7 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
 - **The image is published as `hub.datapoint.software/datapoint/apiary`,** tagged with the bare version.
 - **CI comes last:** the pipeline is added once all features are complete. Until then, builds and tests run locally.
 - **The container image is our own,** based on Microsoft's Ubuntu runtime image, because HTTP/3 needs `libmsquic`, which the chiseled images don't reliably include. Kestrel falls back to HTTP/2 silently without it, so a test checks that HTTP/3 is actually served. The image runs as a non-root user.
+- **Base images are pinned by digest** in the `Dockerfile`, after the tag they came from (`aspnet:10.0-noble@sha256:…`), so a build is reproducible and a changed upstream image can't slip in. Patches don't arrive by themselves either: when updating .NET or Node, or monthly for security fixes, get the new digests with `docker buildx imagetools inspect <image:tag>` and update all three.
 
 ### ASP.NET Core
 
