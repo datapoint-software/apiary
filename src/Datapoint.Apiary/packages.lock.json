@@ -1,0 +1,191 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Datapoint.Mediator.AspNetCore": {
+        "type": "Direct",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "N1881tFtHCxzc3e9IRHBlZnYhQTV0ien7w6C5xX+LP08+6eXoR2EoPQR/PH1gPi3GnPHuMtYr43rS3Ejpjnw4Q==",
+        "dependencies": {
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.Authorization.AspNetCore": {
+        "type": "Direct",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "dLfL7QEJp46MOyyLMs/aaaLKMEj0XmW+3AJPhf6qo0y5uMUEDhrw+HQBKSkrXdZJ0WMHxgMbPTUYDdfltpsRyg==",
+        "dependencies": {
+          "Datapoint.Mediator.Authorization": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.Authorization.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "5UVmpMwPOrEnNYPwtojv60DjlRZcqotgG98R7GSF0iBRvCG9mTIAwtotSxUGwMoDP0s66cO4VW2unM97Sw+tTg==",
+        "dependencies": {
+          "Datapoint.Mediator.Authorization": "4.0.0-beta.3",
+          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "jCv0HQ+89GjcuJZk+8So63ZTHF7MNxYOjMhsC4vGoTFi1DpBiw7yY6mYzF4eN7W7PTwXygaPyHuKB+Xkds5Rnw==",
+        "dependencies": {
+          "Datapoint.Mediator": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.FluentValidation.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "w8cQaThcsGkDrcd5DJKM6l15YnseftdQAhEMfYYyTlANFxMNrqZA/Dze+9UeX5DSohoWaF8k+WEAx2JD8BJZZw==",
+        "dependencies": {
+          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.3",
+          "Datapoint.Mediator.FluentValidation": "4.0.0-beta.3"
+        }
+      },
+      "FluentValidation.DependencyInjectionExtensions": {
+        "type": "Direct",
+        "requested": "[12.2.0, )",
+        "resolved": "12.2.0",
+        "contentHash": "QpKXgiO9E6wXCh19X2Musn8MZM0xt7KQt/QrD6GDBn3MCUfy8a+rkhCzrYJNCfoxTsTRQ7bpKP8T3geTnJNNeQ==",
+        "dependencies": {
+          "FluentValidation": "12.2.0"
+        }
+      },
+      "Meziantou.Analyzer": {
+        "type": "Direct",
+        "requested": "[3.0.320, )",
+        "resolved": "3.0.320",
+        "contentHash": "yKkD+uA684so6/ct3dcGm8H2esrLn/gAS9qYbAcis216gBx+o5LWm5ou/BZDIDg6TTzr5ayojv9cgpoHSasxOw=="
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Direct",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "3M6yO4nv8fmvM/1X7DqQcMxw/ptNLBcUzZt19SBEyfZF32gqZuwoPNnYd1xlDnFvQOGOkZDncf7p9E24blcTkQ==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.12.2, 3.0.0)"
+        }
+      },
+      "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "Kcobt3pnOdO0A+6CKiMHZdTEluJpsfxiV20axtZdmfBQnDmiWTKPJADlgAfdTuKNAnVarrkJa0UEGwuOo91muw=="
+      },
+      "Microsoft.VisualStudio.Threading.Analyzers": {
+        "type": "Direct",
+        "requested": "[18.12.1, )",
+        "resolved": "18.12.1",
+        "contentHash": "sQt7NpnselT1gP1a7bTfhmfHYV0jbavst/8mOoWTMSjXhXzWPssqgBoIwrxNsgJUa7XQzD2raSRMAFfmlepxNw=="
+      },
+      "Roslynator.Analyzers": {
+        "type": "Direct",
+        "requested": "[5.0.1, )",
+        "resolved": "5.0.1",
+        "contentHash": "sCZ0Di4B937wKa9pwKbdsE6Njr8A/FdCLw28+yDKyMaDZ/f8JWxcFn6NOCukzKhCG/eA6M2DbXlKkrPi0g0lIA=="
+      },
+      "Microsoft.OpenApi": {
+        "type": "Transitive",
+        "resolved": "2.12.2",
+        "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
+      },
+      "System.IO.Hashing": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA=="
+      },
+      "datapoint.apiary.certificates": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Apiary.Cluster": "[0.1.0, )",
+          "Datapoint.Apiary.Security": "[0.1.0, )"
+        }
+      },
+      "datapoint.apiary.cluster": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Apiary.Security": "[0.1.0, )"
+        }
+      },
+      "datapoint.apiary.management": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Apiary.Certificates": "[0.1.0, )",
+          "Datapoint.Apiary.Cluster": "[0.1.0, )",
+          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Mediator.Abstractions": "[4.0.0-beta.3, )",
+          "Datapoint.Mediator.Authorization": "[4.0.0-beta.3, )",
+          "FluentValidation": "[12.2.0, )",
+          "FluentValidation.DependencyInjectionExtensions": "[12.2.0, )"
+        }
+      },
+      "datapoint.apiary.proxy": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Apiary.Cluster": "[0.1.0, )",
+          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Yarp.ReverseProxy": "[2.3.0, )"
+        }
+      },
+      "datapoint.apiary.security": {
+        "type": "Project"
+      },
+      "Datapoint.Mediator": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "kryhxM/pkvzpHO/kjLXiRhBaG7nWhWy+q8Pi2lrb7R341XKnpvEv3ZvfS+qOwonifmR+hyzroYA77UZ9GuA9Aw==",
+        "dependencies": {
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "MIygYC5KoC9AdToYmWhYzOo2MuNPIT5xuHauOd1i98vFvWLuaQrVzidXu6oPXO2Jr26tZjd/+BkWAZ+yI1Zkzg=="
+      },
+      "Datapoint.Mediator.Authorization": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "kSqM4XNE7QzCedeBmR0GrVH2/LKCRVjfvqXp6VBwckySevzRBMW6E7yCA7yiQw1X/gA8YB9PfQWvf2W26IckKA==",
+        "dependencies": {
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.3"
+        }
+      },
+      "Datapoint.Mediator.FluentValidation": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0-beta.3, )",
+        "resolved": "4.0.0-beta.3",
+        "contentHash": "xQ2FoXkZAsA344fl8ONteomwgg8uYO/sR4W/ht5pkhM3GQ8Y8WDXbZMdpYRRY4oRX3yH7M9UxkJTtgmMSL5Q0A==",
+        "dependencies": {
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.3",
+          "FluentValidation": "12.2.0"
+        }
+      },
+      "FluentValidation": {
+        "type": "CentralTransitive",
+        "requested": "[12.2.0, )",
+        "resolved": "12.2.0",
+        "contentHash": "DR3lFbdnKucaaj1/8zMNOACMz/64igzox1yVZSFVsLxYB5mxAB+wFP1WZ8fjwrZnbU1KA1DoMzHKYKxUfuZ4wQ=="
+      },
+      "Yarp.ReverseProxy": {
+        "type": "CentralTransitive",
+        "requested": "[2.3.0, )",
+        "resolved": "2.3.0",
+        "contentHash": "gxtkN3a+9biu9V9Zd5NaTO6VZWXAnS2mhQ0R/VXmSPoTuiQNZsakKikrKpDtKxrL5nUYzbRsHtl40WNq+ZBKKg==",
+        "dependencies": {
+          "System.IO.Hashing": "8.0.0"
+        }
+      }
+    }
+  }
+}

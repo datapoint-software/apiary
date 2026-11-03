@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Datapoint.Apiary.Cluster\Datapoint.Apiary.Cluster.csproj" />
+    <ProjectReference Include="..\Datapoint.Apiary.Security\Datapoint.Apiary.Security.csproj" />
+  </ItemGroup>
+</Project>

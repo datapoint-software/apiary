@@ -1,0 +1,34 @@
+using Datapoint.Apiary.Api;
+using Datapoint.Apiary.Health;
+using Datapoint.Apiary.Proxy.AccessLogs;
+
+namespace Datapoint.Apiary.Hosting;
+
+public static class ApiaryPipeline
+{
+    public static WebApplication UseApiary(this WebApplication app)
+    {
+        app.UseExceptionHandler(handler => handler.Run(context =>
+            ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
+        app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UsePreviewPrincipal());
+        app.UseWhen(context => !Listener.IsAdmin(context), proxy => proxy.UseMiddleware<AccessLogMiddleware>());
+        app.UseRouting();
+        MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
+        app.MapReverseProxy().WithMetadata(ListenerMetadata.Public);
+        app.MapFallback(PublicPages.NotFound).WithMetadata(ListenerMetadata.Public);
+        return app;
+    }
+
+    private static void MapAdmin(RouteGroupBuilder admin)
+    {
+        admin.MapApiaryHealth();
+        admin.MapOpenApi();
+        admin.MapActions("/api", o =>
+        {
+            o.SerializerOptions = ApiJson.Options;
+            o.MapException = ApiErrors.Map;
+        });
+        admin.MapFallback("/api/{**rest}", () => new ApiProblem(StatusCodes.Status404NotFound, "request.notFound").ToResult());
+        admin.MapFallbackToFile("index.html");
+    }
+}

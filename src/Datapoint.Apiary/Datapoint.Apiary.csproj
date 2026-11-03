@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>apiary</AssemblyName>
+    <RootNamespace>Datapoint.Apiary</RootNamespace>
+    <UserSecretsId>datapoint-apiary</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Datapoint.Mediator.DependencyInjection" />
+    <PackageReference Include="Datapoint.Mediator.AspNetCore" />
+    <PackageReference Include="Datapoint.Mediator.Authorization.DependencyInjection" />
+    <PackageReference Include="Datapoint.Mediator.Authorization.AspNetCore" />
+    <PackageReference Include="Datapoint.Mediator.FluentValidation.DependencyInjection" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <ProjectReference Include="..\Datapoint.Apiary.Management\Datapoint.Apiary.Management.csproj" />
+    <ProjectReference Include="..\Datapoint.Apiary.Proxy\Datapoint.Apiary.Proxy.csproj" />
+  </ItemGroup>
+</Project>

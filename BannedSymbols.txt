@@ -1,0 +1,9 @@
+T:System.Random;Use RandomNumberGenerator for anything security-related
+T:System.Runtime.Serialization.Formatters.Binary.BinaryFormatter;Insecure and removed
+M:Microsoft.Extensions.DependencyInjection.DataProtectionServiceCollectionExtensions.AddDataProtection(Microsoft.Extensions.DependencyInjection.IServiceCollection);Secrets derive from the root key, not a Data Protection key ring
+M:System.Security.Cryptography.X509Certificates.X509Certificate2.#ctor(System.Byte[]);Use X509CertificateLoader
+M:System.Security.Cryptography.X509Certificates.X509Certificate2.#ctor(System.String);Use X509CertificateLoader
+M:System.Security.Cryptography.X509Certificates.X509Certificate2.#ctor(System.Byte[],System.String);Use X509CertificateLoader
+M:System.Security.Cryptography.X509Certificates.X509Certificate2.#ctor(System.String,System.String);Use X509CertificateLoader
+M:System.Security.Cryptography.Rfc2898DeriveBytes.#ctor(System.String,System.Byte[],System.Int32,System.Security.Cryptography.HashAlgorithmName);Use Rfc2898DeriveBytes.Pbkdf2
+M:System.Security.Cryptography.Rfc2898DeriveBytes.#ctor(System.Byte[],System.Byte[],System.Int32,System.Security.Cryptography.HashAlgorithmName);Use Rfc2898DeriveBytes.Pbkdf2

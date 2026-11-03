@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Datapoint.Mediator.Abstractions" />
+    <PackageReference Include="Datapoint.Mediator.Authorization" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <ProjectReference Include="..\Datapoint.Apiary.Cluster\Datapoint.Apiary.Cluster.csproj" />
+    <ProjectReference Include="..\Datapoint.Apiary.Certificates\Datapoint.Apiary.Certificates.csproj" />
+    <ProjectReference Include="..\Datapoint.Apiary.Security\Datapoint.Apiary.Security.csproj" />
+  </ItemGroup>
+</Project>

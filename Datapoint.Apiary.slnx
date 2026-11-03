@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Datapoint.Apiary/Datapoint.Apiary.csproj" />
+    <Project Path="src/Datapoint.Apiary.Certificates/Datapoint.Apiary.Certificates.csproj" />
+    <Project Path="src/Datapoint.Apiary.Cluster/Datapoint.Apiary.Cluster.csproj" />
+    <Project Path="src/Datapoint.Apiary.Management/Datapoint.Apiary.Management.csproj" />
+    <Project Path="src/Datapoint.Apiary.Proxy/Datapoint.Apiary.Proxy.csproj" />
+    <Project Path="src/Datapoint.Apiary.Security/Datapoint.Apiary.Security.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Datapoint.Apiary.Architecture.Tests/Datapoint.Apiary.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>

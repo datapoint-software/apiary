@@ -1,0 +1,15 @@
+.DS_Store
+.claude/launch.json
+.claude/settings.local.json
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+node_modules/
+dist/
+.angular/
+coverage/
+/data/
+src/Datapoint.Apiary/wwwroot/
