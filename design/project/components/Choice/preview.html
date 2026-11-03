@@ -1,0 +1,33 @@
+<!-- @dsCard group="Forms" height=170 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Choice — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+  <label class="ap-choice"><input class="ap-switch" type="checkbox" checked><span class="ap-choice-text"><span>Sticky sessions</span><span class="ap-help">Keeps each client on the group it first got.</span></span></label>
+  <label class="ap-choice"><input class="ap-switch" type="checkbox"><span class="ap-choice-text"><span>Compression</span><span class="ap-help">Off by default. Only for public, static content.</span></span></label>
+  <div class="ap-stack" style="gap:8px">
+    <label class="ap-choice"><input class="ap-check" type="checkbox" checked>HTTP/2</label>
+    <label class="ap-choice"><input class="ap-check" type="checkbox" checked>HTTP/3</label>
+    <label class="ap-choice"><input class="ap-check" type="checkbox">WebSockets</label>
+  </div>
+  <div class="ap-stack" style="gap:8px" role="radiogroup" aria-label="Certificate source">
+    <label class="ap-choice"><input class="ap-radio" type="radio" name="src" checked>Automatic</label>
+    <label class="ap-choice"><input class="ap-radio" type="radio" name="src">Uploaded certificate</label>
+  </div>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

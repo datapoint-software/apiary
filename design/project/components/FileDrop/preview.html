@@ -1,0 +1,22 @@
+<!-- @dsCard group="Forms" height=250 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FileDrop — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-field" style="max-width:480px"><span class="ap-label">Certificate and chain</span><label class="ap-drop"><i data-lucide="upload" class="ap-icon" aria-hidden="true"></i><span><strong>Choose a file</strong> or drop it here</span><span class="ap-caption">.pem, .crt or .cer, leaf certificate first</span><input type="file"></label></div>
+<div class="ap-field" style="max-width:480px"><span class="ap-label">Private key</span><div class="ap-file"><i data-lucide="file-key" class="ap-icon" aria-hidden="true"></i><span>wildcard-example-net.key</span><span class="ap-caption" style="flex:none">1.7 KB</span><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Remove wildcard-example-net.key"><i data-lucide="x" class="ap-icon" aria-hidden="true"></i></button></div></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

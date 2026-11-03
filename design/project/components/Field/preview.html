@@ -1,0 +1,49 @@
+<!-- @dsCard group="Forms" height=330 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Field — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+  <div class="ap-field">
+    <label class="ap-label" for="f1">Hostname</label>
+    <input class="ap-input ap-data" id="f1" value="shop.example.com">
+    <span class="ap-help">The name clients use. Wildcards need an uploaded certificate.</span>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f2">Target</label>
+    <div class="ap-affix"><span class="ap-affix-text">http://</span><input class="ap-input ap-data" id="f2" value="shop" aria-label="Target host"><span class="ap-affix-text">:8080</span></div>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f3">Certificate</label>
+    <select class="ap-select" id="f3"><option>Automatic (Let's Encrypt)</option><option>*.example.com (uploaded)</option></select>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f4">Path prefix <span class="ap-optional">(optional)</span></label>
+    <input class="ap-input ap-data" id="f4" placeholder="/api">
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f5">Target port</label>
+    <input class="ap-input ap-data" id="f5" value="80800" aria-invalid="true" aria-describedby="e5">
+    <span class="ap-error" id="e5"><i data-lucide="circle-alert" class="ap-icon" aria-hidden="true"></i>Ports go from 1 to 65535.</span>
+  </div>
+  <div class="ap-field">
+    <label class="ap-label" for="f6">Node</label>
+    <input class="ap-input ap-data" id="f6" value="edge-2" disabled>
+    <span class="ap-help">Set by Swarm. Change the placement in the compose file.</span>
+  </div>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

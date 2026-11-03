@@ -1,0 +1,25 @@
+<!-- @dsCard group="Apiary" height=140 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Split — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-stack" style="gap:8px">
+  <div class="ap-split" role="img" aria-label="Traffic split: shop-v1 90 percent, shop-v2 10 percent"><span style="flex:90">shop-v1 · 90%</span><span style="flex:10">10%</span></div>
+  <span class="ap-caption">Sticky sessions on. Testers reach shop-v2 with the header <span class="ap-code">X-Canary: true</span>.</span>
+</div>
+<div class="ap-split" role="img" aria-label="Traffic split: blue 50, green 30, legacy 20 percent"><span style="flex:50">blue · 50%</span><span style="flex:30">green · 30%</span><span style="flex:20">legacy · 20%</span></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

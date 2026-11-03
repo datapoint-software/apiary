@@ -1,0 +1,23 @@
+<!-- @dsCard group="Status" height=200 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Toast — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-toast ap-toast-ok" role="status"><i data-lucide="circle-check" class="ap-icon" aria-hidden="true"></i><span class="ap-toast-text"><span class="ap-toast-title">Route saved</span>Applied on 4 of 5 replicas.</span><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon ap-toast-close" type="button" aria-label="Dismiss"><i data-lucide="x" class="ap-icon" aria-hidden="true"></i></button></div>
+<div class="ap-toast ap-toast-info" role="status"><i data-lucide="info" class="ap-icon" aria-hidden="true"></i><span class="ap-toast-text">shop.example.com disabled.</span><button class="ap-btn ap-btn-sm" type="button">Undo</button><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon ap-toast-close" type="button" aria-label="Dismiss"><i data-lucide="x" class="ap-icon" aria-hidden="true"></i></button></div>
+<div class="ap-toast ap-toast-error" role="alert"><i data-lucide="circle-alert" class="ap-icon" aria-hidden="true"></i><span class="ap-toast-text"><span class="ap-toast-title">Couldn't reach the leader</span>edge-2 didn't answer within 5 seconds. Nothing was changed.</span><button class="ap-btn ap-btn-sm" type="button">Try again</button><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon ap-toast-close" type="button" aria-label="Dismiss"><i data-lucide="x" class="ap-icon" aria-hidden="true"></i></button></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

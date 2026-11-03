@@ -1,0 +1,21 @@
+<!-- @dsCard group="Data" height=300 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Timeline — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-panel ap-panel-body" style="padding-block:8px"><ol class="ap-timeline"><li class="ap-event "><span class="ap-dot" aria-hidden="true"></span><div><div>ana@example.com changed route <span class="ap-data">shop.example.com</span></div><div class="ap-event-meta">Weights 100/0 → 90/10 · from 10.0.4.21 · UI</div></div><time datetime="2026-11-02T14:32Z">14:32</time></li><li class="ap-event ap-event-agent"><span class="ap-dot" aria-hidden="true"></span><div><div>Agent “ops-assistant” for marta@example.com purged the cache of <span class="ap-data">api.example.com</span></div><div class="ap-event-meta">From 10.0.4.88 · MCP</div></div><time datetime="2026-11-02T14:05Z">14:05</time></li><li class="ap-event ap-event-denied"><span class="ap-dot" aria-hidden="true"></span><div><div>Denied: rui@example.com tried to delete user marta@example.com</div><div class="ap-event-meta">Role Operator can't manage users · from 10.0.7.3 · UI</div></div><time datetime="2026-11-02T13:47Z">13:47</time></li><li class="ap-event "><span class="ap-dot" aria-hidden="true"></span><div><div>Certificate for <span class="ap-data">api.example.com</span> renewed</div><div class="ap-event-meta">Let's Encrypt · leader edge-2</div></div><time datetime="2026-11-02T11:20Z">11:20</time></li></ol></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

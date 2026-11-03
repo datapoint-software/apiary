@@ -1,0 +1,32 @@
+<!-- @dsCard group="Status" height=200 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Meter — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-meter">
+  <div class="ap-meter-head"><span class="ap-data">shop.example.com</span><span class="ap-status ap-status-ok"><span class="ap-dot" aria-hidden="true"></span>61 days left</span></div>
+  <div class="ap-meter-track" role="meter" aria-valuemin="0" aria-valuemax="90" aria-valuenow="61" aria-label="Days left on certificate"><div class="ap-meter-fill" style="width:68%"></div></div>
+</div>
+<div class="ap-meter ap-meter-warn">
+  <div class="ap-meter-head"><span class="ap-data">legacy.example.com</span><span class="ap-status ap-status-warn"><span class="ap-dot" aria-hidden="true"></span>9 days left</span></div>
+  <div class="ap-meter-track" role="meter" aria-valuemin="0" aria-valuemax="90" aria-valuenow="9" aria-label="Days left on certificate"><div class="ap-meter-fill" style="width:10%"></div></div>
+</div>
+<div class="ap-meter ap-meter-info">
+  <div class="ap-meter-head"><span>Root key rotation</span><span class="ap-data">2 of 3 replicas</span></div>
+  <div class="ap-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="3" aria-valuenow="2" aria-label="Replicas on the new root key"><div class="ap-meter-fill" style="width:66.6%"></div></div>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

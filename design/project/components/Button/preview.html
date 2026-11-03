@@ -1,0 +1,33 @@
+<!-- @dsCard group="Actions" height=150 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Button — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-row">
+  <button class="ap-btn ap-btn-primary" type="button"><i data-lucide="plus" class="ap-icon" aria-hidden="true"></i>Add route</button>
+  <button class="ap-btn" type="button">Export backup</button>
+  <button class="ap-btn ap-btn-ghost" type="button">Cancel</button>
+  <button class="ap-btn ap-btn-danger" type="button"><i data-lucide="trash-2" class="ap-icon" aria-hidden="true"></i>Delete route</button>
+  <button class="ap-btn ap-btn-icon ap-btn-ghost" type="button" aria-label="Refresh"><i data-lucide="refresh-cw" class="ap-icon" aria-hidden="true"></i></button>
+</div>
+<div class="ap-row">
+  <button class="ap-btn ap-btn-sm" type="button">Purge cache</button>
+  <button class="ap-btn ap-btn-lg ap-btn-primary" type="button">Create administrator</button>
+  <button class="ap-btn" type="button" disabled>Renew now</button>
+  <span class="ap-caption">Renewal is paused while the cluster has no majority.</span>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!-- @dsCard group="Status" height=120 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Status — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-row" style="gap:20px">
+  <span class="ap-status ap-status-ok"><span class="ap-dot" aria-hidden="true"></span>Healthy</span>
+  <span class="ap-status ap-status-warn"><span class="ap-dot" aria-hidden="true"></span>Expires in 9 days</span>
+  <span class="ap-status ap-status-critical"><span class="ap-dot" aria-hidden="true"></span>Down</span>
+  <span class="ap-status ap-status-info"><span class="ap-dot" aria-hidden="true"></span>Catching up</span>
+  <span class="ap-status ap-status-off"><span class="ap-dot" aria-hidden="true"></span>Disabled</span>
+  <span class="ap-status ap-status-honey"><span class="ap-dot" aria-hidden="true"></span>Leader</span>
+</div>
+<div class="ap-row" style="gap:20px">
+  <span class="ap-status ap-status-ok"><span class="ap-dot ap-dot-ring" aria-hidden="true"></span>Pending approval</span>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

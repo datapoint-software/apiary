@@ -1,0 +1,30 @@
+<!-- @dsCard group="Navigation" height=120 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Steps — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<ol class="ap-steps" aria-label="Root key rotation">
+  <li class="ap-step ap-step-done">New key created</li>
+  <li class="ap-step" aria-current="step">Rolling update</li>
+  <li class="ap-step">Old key forgotten</li>
+</ol>
+<ol class="ap-steps" aria-label="Setup">
+  <li class="ap-step ap-step-done">Administrator</li>
+  <li class="ap-step" aria-current="step">Authenticator app</li>
+  <li class="ap-step">Recovery codes</li>
+</ol>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!-- @dsCard group="Navigation" height=110 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Tabs — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-tabs" role="tablist" aria-label="Route sections">
+  <button class="ap-tab" role="tab" aria-selected="true" type="button">Targets</button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">Traffic rules</button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">Certificate</button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">Access <span class="ap-count">3</span></button>
+  <button class="ap-tab" role="tab" aria-selected="false" type="button">History</button>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

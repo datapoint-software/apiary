@@ -1,0 +1,24 @@
+<!-- @dsCard group="Status" height=330 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Banner — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-banner ap-banner-critical" role="alert"><i data-lucide="octagon-alert" class="ap-icon" aria-hidden="true"></i><div class="ap-banner-body"><span class="ap-banner-title">Writes are paused</span><span>Only 1 of 3 voters is reachable, so route, user and certificate changes can't be saved. Traffic keeps flowing with the last known routes.</span><div class="ap-banner-actions"><a href="#">What to do when the majority is lost</a></div></div></div>
+<div class="ap-banner ap-banner-warn"><i data-lucide="triangle-alert" class="ap-icon" aria-hidden="true"></i><div class="ap-banner-body"><span class="ap-banner-title">2 certificates expire in less than 14 days</span><span>Automatic renewal failed for <span class="ap-code">legacy.example.com</span>: the HTTP-01 challenge got a 404.</span></div></div>
+<div class="ap-banner ap-banner-info"><i data-lucide="info" class="ap-icon" aria-hidden="true"></i><div class="ap-banner-body"><span>Rotating the root key: 2 of 3 replicas run the new key.</span></div></div>
+<div class="ap-banner ap-banner-ok"><i data-lucide="circle-check" class="ap-icon" aria-hidden="true"></i><div class="ap-banner-body"><span>Backup exported. It contains private keys: store it encrypted.</span></div></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!-- @dsCard group="Data" height=440 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Table — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-panel"><div class="ap-table-wrap"><table class="ap-table">
+<caption class="ap-sr">Routes, grouped by project</caption>
+<thead><tr><th class="ap-col-check" scope="col"><input class="ap-check" type="checkbox" aria-label="Select all routes"></th>
+<th scope="col" aria-sort="ascending"><button class="ap-sort" type="button">Hostname <i data-lucide="arrow-up" class="ap-icon" aria-hidden="true"></i></button></th><th scope="col">Target</th><th scope="col">Protocols</th><th scope="col">Status</th><th scope="col">Certificate</th><th scope="col" class="ap-num">Req/min</th><th scope="col" class="ap-col-actions"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Actions</span></th></tr></thead>
+<tbody data-group><tr class="ap-group"><td colspan="8"><button class="ap-group-title" type="button" aria-expanded="true"><i data-lucide="chevron-down" class="ap-icon" aria-hidden="true"></i>Shop<span class="ap-group-meta">2 routes · 8 205 req/min</span></button></td></tr><tr aria-selected="true"><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select shop.example.com" checked></td>
+<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">shop.example.com</span><span class="ap-caption ap-data">/</span></div></td>
+<td class="ap-data ap-muted">shop-v1 90% · shop-v2 10%</td><td><div class="ap-row" style="gap:4px"><span class="ap-tag">HTTP/2</span><span class="ap-tag">HTTP/3</span><span class="ap-tag ap-tag-honey">Canary 10%</span></div></td>
+<td><span class="ap-status ap-status-ok"><span class="ap-dot" aria-hidden="true"></span>Healthy</span></td>
+<td class="ap-muted">Automatic</td><td class="ap-num">1 284</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for shop.example.com" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu><i data-lucide="ellipsis" class="ap-icon" aria-hidden="true"></i></button></td></tr><tr><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select checkout.example.com"></td>
+<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">checkout.example.com</span><span class="ap-caption ap-data">/</span></div></td>
+<td class="ap-data ap-muted">checkout:8080</td><td><div class="ap-row" style="gap:4px"><span class="ap-tag">HTTP/2</span></div></td>
+<td><span class="ap-status ap-status-ok"><span class="ap-dot" aria-hidden="true"></span>Healthy</span></td>
+<td class="ap-muted">Automatic</td><td class="ap-num">6 921</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for checkout.example.com" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu><i data-lucide="ellipsis" class="ap-icon" aria-hidden="true"></i></button></td></tr></tbody><tbody data-group><tr class="ap-group"><td colspan="8"><button class="ap-group-title" type="button" aria-expanded="true"><i data-lucide="chevron-down" class="ap-icon" aria-hidden="true"></i>Internal tools<span class="ap-group-meta">2 routes · 312 req/min</span></button></td></tr><tr><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select grafana.internal.example.com"></td>
+<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">grafana.internal.example.com</span><span class="ap-caption ap-data">/</span></div></td>
+<td class="ap-data ap-muted">grafana:3000</td><td><div class="ap-row" style="gap:4px"><span class="ap-tag">HTTP/2</span></div></td>
+<td><span class="ap-status ap-status-warn"><span class="ap-dot" aria-hidden="true"></span>1 of 2 targets down</span></td>
+<td class="ap-muted">*.internal (uploaded)</td><td class="ap-num">312</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for grafana.internal.example.com" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu><i data-lucide="ellipsis" class="ap-icon" aria-hidden="true"></i></button></td></tr><tr><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select mqtt.example.com"></td>
+<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">mqtt.example.com</span><span class="ap-caption ap-data">TCP 10022</span></div></td>
+<td class="ap-data ap-muted">mosquitto:1883</td><td><div class="ap-row" style="gap:4px"><span class="ap-tag">TCP</span></div></td>
+<td><span class="ap-status ap-status-ok"><span class="ap-dot" aria-hidden="true"></span>Healthy</span></td>
+<td class="ap-muted">Passthrough</td><td class="ap-num">—</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for mqtt.example.com" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu><i data-lucide="ellipsis" class="ap-icon" aria-hidden="true"></i></button></td></tr></tbody><tbody data-group><tr class="ap-group"><td colspan="8"><button class="ap-group-title" type="button" aria-expanded="true"><i data-lucide="chevron-down" class="ap-icon" aria-hidden="true"></i>Legacy<span class="ap-group-meta">1 route · 0 req/min</span></button></td></tr><tr><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select legacy.example.com"></td>
+<td><div style="display:flex;flex-direction:column;gap:2px"><span class="ap-data" style="font-weight:500">legacy.example.com</span><span class="ap-caption ap-data">/</span></div></td>
+<td class="ap-data ap-muted">host.docker.internal:8081</td><td><div class="ap-row" style="gap:4px"><span class="ap-tag">HTTP/1.1</span></div></td>
+<td><span class="ap-status ap-status-critical"><span class="ap-dot" aria-hidden="true"></span>Down</span></td>
+<td class="ap-muted">Automatic</td><td class="ap-num">0</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for legacy.example.com" aria-haspopup="menu" aria-expanded="false" aria-controls="row-menu" data-menu><i data-lucide="ellipsis" class="ap-icon" aria-hidden="true"></i></button></td></tr></tbody></table></div><div class="ap-panel-foot"><div class="ap-pager"><span>5 of 42 routes, in 3 of 6 projects</span><div class="ap-row"><button class="ap-btn ap-btn-sm" type="button" disabled>Previous</button><button class="ap-btn ap-btn-sm" type="button">Next</button></div></div></div></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

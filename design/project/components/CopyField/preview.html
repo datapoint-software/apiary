@@ -1,0 +1,25 @@
+<!-- @dsCard group="Apiary" height=140 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CopyField — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-field">
+  <span class="ap-label">Create the root key on a manager node</span>
+  <div class="ap-copy"><code>docker run --rm datapoint/apiary:0.4.0 secrets init | docker secret create apiary_root_key_2 -</code><button class="ap-btn ap-btn-sm" type="button"><i data-lucide="copy" class="ap-icon" aria-hidden="true"></i>Copy</button></div>
+  <span class="ap-help">The key goes straight into Swarm's encrypted store and never touches disk.</span>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!-- @dsCard group="Forms" height=520 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DatePicker — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+<div class="ap-field" style="width:300px"><label class="ap-label" for="dt1">Starts</label><div class="ap-dtp"><div class="ap-affix"><input class="ap-input ap-data" id="dt1" value="2026-11-05 22:00"><span class="ap-affix-text">UTC</span></div><button class="ap-btn ap-btn-icon ap-dtp-btn" type="button" aria-label="Choose starts on a calendar" aria-haspopup="dialog" aria-expanded="true"><i data-lucide="calendar" class="ap-icon" aria-hidden="true"></i></button></div><span class="ap-help">At most 7 days before it ends.</span></div>
+<div class="ap-popover ap-cal-pop" role="dialog" aria-label="Choose starts" style="position:static">
+<div class="ap-cal-head"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Previous month"><i data-lucide="chevron-left" class="ap-icon" aria-hidden="true"></i></button><span class="ap-cal-title">November 2026</span><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Next month"><i data-lucide="chevron-right" class="ap-icon" aria-hidden="true"></i></button></div>
+<table class="ap-cal" role="presentation"><thead><tr><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th></tr></thead><tbody><tr><td><button class="ap-day" type="button" data-outside disabled>26</button></td><td><button class="ap-day" type="button" data-outside disabled>27</button></td><td><button class="ap-day" type="button" data-outside disabled>28</button></td><td><button class="ap-day" type="button" data-outside disabled>29</button></td><td><button class="ap-day" type="button" data-outside disabled>30</button></td><td><button class="ap-day" type="button" data-outside disabled>31</button></td><td><button class="ap-day" type="button">1</button></td></tr><tr><td><button class="ap-day" type="button" aria-current="date">2</button></td><td><button class="ap-day" type="button">3</button></td><td><button class="ap-day" type="button">4</button></td><td><button class="ap-day" type="button" aria-pressed="true">5</button></td><td><button class="ap-day" type="button">6</button></td><td><button class="ap-day" type="button">7</button></td><td><button class="ap-day" type="button">8</button></td></tr><tr><td><button class="ap-day" type="button">9</button></td><td><button class="ap-day" type="button">10</button></td><td><button class="ap-day" type="button">11</button></td><td><button class="ap-day" type="button">12</button></td><td><button class="ap-day" type="button">13</button></td><td><button class="ap-day" type="button">14</button></td><td><button class="ap-day" type="button">15</button></td></tr><tr><td><button class="ap-day" type="button">16</button></td><td><button class="ap-day" type="button">17</button></td><td><button class="ap-day" type="button">18</button></td><td><button class="ap-day" type="button">19</button></td><td><button class="ap-day" type="button">20</button></td><td><button class="ap-day" type="button">21</button></td><td><button class="ap-day" type="button">22</button></td></tr><tr><td><button class="ap-day" type="button">23</button></td><td><button class="ap-day" type="button">24</button></td><td><button class="ap-day" type="button">25</button></td><td><button class="ap-day" type="button">26</button></td><td><button class="ap-day" type="button">27</button></td><td><button class="ap-day" type="button">28</button></td><td><button class="ap-day" type="button">29</button></td></tr><tr><td><button class="ap-day" type="button">30</button></td><td><button class="ap-day" type="button" data-outside>1</button></td><td><button class="ap-day" type="button" data-outside>2</button></td><td><button class="ap-day" type="button" data-outside>3</button></td><td><button class="ap-day" type="button" data-outside>4</button></td><td><button class="ap-day" type="button" data-outside>5</button></td><td><button class="ap-day" type="button" data-outside>6</button></td></tr></tbody></table>
+<div class="ap-cal-time"><label class="ap-label" for="cal-h">Time</label><select class="ap-select" id="cal-h"><option>22</option></select>:<select class="ap-select" aria-label="Minutes"><option>00</option></select><span>UTC</span></div>
+<div class="ap-cal-foot"><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button">Today</button><button class="ap-btn ap-btn-sm ap-btn-primary" type="button">Done</button></div></div></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!-- @dsCard group="Apiary" height=200 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ClusterMap — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-cluster" role="list" aria-label="Replicas"><div class="ap-node ap-node-voter"><span class="ap-node-hex">1</span><span class="ap-node-name">edge-1</span><span class="ap-node-role">Voter<br>0 behind</span></div><div class="ap-node ap-node-leader"><span class="ap-node-hex">2</span><span class="ap-node-name">edge-2</span><span class="ap-node-role">Leader<br>Index 184 223</span></div><div class="ap-node ap-node-voter"><span class="ap-node-hex">3</span><span class="ap-node-name">edge-3</span><span class="ap-node-role">Voter<br>2 behind</span></div><div class="ap-node ap-node-follower"><span class="ap-node-hex">4</span><span class="ap-node-name">edge-4</span><span class="ap-node-role">Follower<br>Catching up</span></div><div class="ap-node ap-node-down"><span class="ap-node-hex">5</span><span class="ap-node-name">edge-5</span><span class="ap-node-role">Missing 4 min<br>Removal in 11 min</span></div></div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

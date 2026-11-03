@@ -1,0 +1,30 @@
+<!-- @dsCard group="Actions" height=230 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Menu — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-row" style="align-items:flex-start;gap:24px">
+  <div class="ap-menu" role="menu" aria-label="Route actions">
+    <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="pencil" class="ap-icon" aria-hidden="true"></i>Edit route</button>
+    <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="copy" class="ap-icon" aria-hidden="true"></i>Duplicate</button>
+    <button class="ap-menu-item" role="menuitem" type="button"><i data-lucide="eraser" class="ap-icon" aria-hidden="true"></i>Purge cache<span class="ap-kbd">P</span></button>
+    <div class="ap-menu-sep" role="separator"></div>
+    <button class="ap-menu-item ap-menu-danger" role="menuitem" type="button"><i data-lucide="trash-2" class="ap-icon" aria-hidden="true"></i>Delete route…</button>
+  </div>
+  <span class="ap-tooltip" role="tooltip">Writes are paused: 1 of 3 voters is reachable</span>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

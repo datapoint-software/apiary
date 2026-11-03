@@ -1,0 +1,27 @@
+<!-- @dsCard group="Accessibility" height=420 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DisplaySettings — preview</title>
+<style>html, body { margin: 0; } body { background: var(--ground); } .pv { padding: 20px; }</style>
+</head>
+<body class="ap" lang="en">
+<div class="pv"><div class="ap-popover" role="dialog" aria-modal="false" aria-labelledby="display-t" id="display" style="position:static">
+<h2 class="ap-h ap-h-3" id="display-t">Display and accessibility</h2>
+<div class="ap-setting"><span class="ap-label" id="set-theme">Appearance</span><div class="ap-seg" role="group" aria-labelledby="set-theme" data-setting="theme"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="light">Light</button><button type="button" aria-pressed="false" data-value="dark">Dark</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-text">Text size</span><div class="ap-seg" role="group" aria-labelledby="set-text" data-setting="text"><button type="button" aria-pressed="true" data-value="default">Default</button><button type="button" aria-pressed="false" data-value="large">Large</button><button type="button" aria-pressed="false" data-value="larger">Larger</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-contrast">Contrast</span><div class="ap-seg" role="group" aria-labelledby="set-contrast" data-setting="contrast"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="more">More</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-motion">Motion</span><div class="ap-seg" role="group" aria-labelledby="set-motion" data-setting="motion"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="reduce">Reduced</button></div></div>
+<p class="ap-caption" style="margin:0">Automatic follows your device settings. Saved in this browser only.</p>
+</div></div>
+<script>
+document.querySelectorAll('[data-setting]').forEach(function (seg) {
+  seg.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+  });
+});
+</script>
+</body>
+</html>

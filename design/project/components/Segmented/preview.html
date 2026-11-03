@@ -1,0 +1,33 @@
+<!-- @dsCard group="Forms" height=90 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Segmented — preview</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); }
+.pv { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+</style>
+</head>
+<body class="ap">
+<div class="pv">
+<div class="ap-row" style="gap:16px">
+  <div class="ap-seg" role="group" aria-label="Time range">
+    <button type="button" aria-pressed="false">1 h</button>
+    <button type="button" aria-pressed="true">24 h</button>
+    <button type="button" aria-pressed="false">7 d</button>
+    <button type="button" aria-pressed="false">30 d</button>
+  </div>
+  <div class="ap-seg" role="group" aria-label="Protocol">
+    <button type="button" aria-pressed="true">HTTP</button>
+    <button type="button" aria-pressed="false">TCP</button>
+    <button type="button" aria-pressed="false">UDP</button>
+  </div>
+</div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

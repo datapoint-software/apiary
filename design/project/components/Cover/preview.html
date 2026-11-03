@@ -1,0 +1,74 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cover</title>
+<style>
+html, body { margin: 0; }
+body { background: var(--ground); width: 960px; height: 288px; position: relative; overflow: hidden; }
+svg { position: absolute; left: 0; top: 0; display: block; }
+.honey { fill: var(--honey); }
+.ink { fill: var(--ink); }
+.soft { fill: var(--honey-soft); }
+.strong { fill: var(--line-strong); }
+.text { position: absolute; left: 40px; top: 144px; }
+.name { margin: 0; font: 700 64px/0.95 var(--font-display); letter-spacing: -0.03em; color: var(--ink); white-space: nowrap; }
+.tag { margin: 8px 0 0; font: 400 14px/20px var(--font-text); color: var(--ink-3); max-width: 440px; }
+</style>
+</head>
+<body>
+<svg width="960" height="112" viewBox="0 0 960 112" aria-hidden="true">
+<!--
+blocks: honey 448x112 (space-8 x7, space-8 + space-7 tall), ink 256x112 (space-8 x4), honey-soft 160x112, line-strong 96x112 (space-7 x2); full-height band.
+arrangement: top-band skeleton, a strip of unequal bands flush across the top, because the name is too wide for the 440px zone.
+pattern: literal motif, honeycomb cells, chosen because the README keeps the hexagon as the system's one shape (brand mark, replicas); ink cells on honey, honey cells on ink, across their seam.
+scales: cell pitch space-5 (24px) across, 28px down; cells 28x24 (86% of the pitch), square block corners so the band reads as one strip; the hexagon is the brand mark's shape.
+-->
+<rect class="honey" x="0" y="0" width="448" height="112"/>
+<rect class="ink" x="448" y="0" width="256" height="112"/>
+<rect class="soft" x="704" y="0" width="160" height="112"/>
+<rect class="strong" x="864" y="0" width="96" height="112"/>
+<polygon class="ink" points="337.1,44.0 350.9,44.0 357.8,56 350.9,68.0 337.1,68.0 330.2,56"/>
+<polygon class="ink" points="361.1,30.0 374.9,30.0 381.8,42 374.9,54.0 361.1,54.0 354.2,42"/>
+<polygon class="ink" points="361.1,58.0 374.9,58.0 381.8,70 374.9,82.0 361.1,82.0 354.2,70"/>
+<polygon class="ink" points="385.1,16.0 398.9,16.0 405.8,28 398.9,40.0 385.1,40.0 378.2,28"/>
+<polygon class="ink" points="385.1,44.0 398.9,44.0 405.8,56 398.9,68.0 385.1,68.0 378.2,56"/>
+<polygon class="ink" points="385.1,72.0 398.9,72.0 405.8,84 398.9,96.0 385.1,96.0 378.2,84"/>
+<polygon class="ink" points="409.1,30.0 422.9,30.0 429.8,42 422.9,54.0 409.1,54.0 402.2,42"/>
+<polygon class="ink" points="409.1,58.0 422.9,58.0 429.8,70 422.9,82.0 409.1,82.0 402.2,70"/>
+<polygon class="ink" points="409.1,86.0 422.9,86.0 429.8,98 422.9,110.0 409.1,110.0 402.2,98"/>
+<polygon class="ink" points="433.1,16.0 446.9,16.0 453.8,28 446.9,40.0 433.1,40.0 426.2,28"/>
+<polygon class="ink" points="433.1,44.0 446.9,44.0 453.8,56 446.9,68.0 433.1,68.0 426.2,56"/>
+<polygon class="ink" points="433.1,72.0 446.9,72.0 453.8,84 446.9,96.0 433.1,96.0 426.2,84"/>
+<polygon class="honey" points="457.1,30.0 470.9,30.0 477.8,42 470.9,54.0 457.1,54.0 450.2,42"/>
+<polygon class="honey" points="457.1,58.0 470.9,58.0 477.8,70 470.9,82.0 457.1,82.0 450.2,70"/>
+<polygon class="honey" points="457.1,86.0 470.9,86.0 477.8,98 470.9,110.0 457.1,110.0 450.2,98"/>
+<polygon class="honey" points="481.1,16.0 494.9,16.0 501.8,28 494.9,40.0 481.1,40.0 474.2,28"/>
+<polygon class="honey" points="481.1,44.0 494.9,44.0 501.8,56 494.9,68.0 481.1,68.0 474.2,56"/>
+<polygon class="honey" points="481.1,72.0 494.9,72.0 501.8,84 494.9,96.0 481.1,96.0 474.2,84"/>
+<polygon class="honey" points="505.1,30.0 518.9,30.0 525.8,42 518.9,54.0 505.1,54.0 498.2,42"/>
+<polygon class="honey" points="505.1,58.0 518.9,58.0 525.8,70 518.9,82.0 505.1,82.0 498.2,70"/>
+<polygon class="honey" points="505.1,86.0 518.9,86.0 525.8,98 518.9,110.0 505.1,110.0 498.2,98"/>
+<polygon class="honey" points="529.1,16.0 542.9,16.0 549.8,28 542.9,40.0 529.1,40.0 522.2,28"/>
+<polygon class="honey" points="529.1,44.0 542.9,44.0 549.8,56 542.9,68.0 529.1,68.0 522.2,56"/>
+<polygon class="honey" points="529.1,72.0 542.9,72.0 549.8,84 542.9,96.0 529.1,96.0 522.2,84"/>
+<polygon class="honey" points="553.1,30.0 566.9,30.0 573.8,42 566.9,54.0 553.1,54.0 546.2,42"/>
+<polygon class="honey" points="553.1,58.0 566.9,58.0 573.8,70 566.9,82.0 553.1,82.0 546.2,70"/>
+<polygon class="honey" points="553.1,86.0 566.9,86.0 573.8,98 566.9,110.0 553.1,110.0 546.2,98"/>
+<polygon class="honey" points="577.1,16.0 590.9,16.0 597.8,28 590.9,40.0 577.1,40.0 570.2,28"/>
+<polygon class="honey" points="577.1,44.0 590.9,44.0 597.8,56 590.9,68.0 577.1,68.0 570.2,56"/>
+<polygon class="honey" points="577.1,72.0 590.9,72.0 597.8,84 590.9,96.0 577.1,96.0 570.2,84"/>
+<polygon class="honey" points="601.1,30.0 614.9,30.0 621.8,42 614.9,54.0 601.1,54.0 594.2,42"/>
+<polygon class="honey" points="601.1,58.0 614.9,58.0 621.8,70 614.9,82.0 601.1,82.0 594.2,70"/>
+<polygon class="honey" points="601.1,86.0 614.9,86.0 621.8,98 614.9,110.0 601.1,110.0 594.2,98"/>
+<polygon class="honey" points="625.1,16.0 638.9,16.0 645.8,28 638.9,40.0 625.1,40.0 618.2,28"/>
+<polygon class="honey" points="625.1,44.0 638.9,44.0 645.8,56 638.9,68.0 625.1,68.0 618.2,56"/>
+<polygon class="honey" points="649.1,58.0 662.9,58.0 669.8,70 662.9,82.0 649.1,82.0 642.2,70"/>
+</svg>
+<div class="text">
+<h1 class="name">Apiary Design System</h1>
+<p class="tag">Clean and quiet by default, so what needs attention stands out.</p>
+</div>
+</body>
+</html>
