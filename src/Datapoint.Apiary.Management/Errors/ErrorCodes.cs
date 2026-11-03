@@ -42,6 +42,9 @@ public static class ErrorCodes
     public const string ProjectMoveToSelf = "project.moveToSelf";
     public const string RouteNotFound = "route.notFound";
     public const string RouteDuplicate = "route.duplicate";
+    public const string RouteTargetsTooMany = "route.targetsTooMany";
+    public const string RouteWeightsTotal = "route.weightsTotal";
+    public const string RouteCanaryName = "route.canaryName";
     public const string RouteTargetsRequired = "route.targetsRequired";
     public const string RouteRedirectExists = "route.redirectExists";
     public const string RedirectNotFound = "redirect.notFound";
@@ -110,7 +113,7 @@ public static class ErrorCodes
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
-        ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
+        ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired, RouteTargetsTooMany, RouteWeightsTotal, RouteCanaryName,
         MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,

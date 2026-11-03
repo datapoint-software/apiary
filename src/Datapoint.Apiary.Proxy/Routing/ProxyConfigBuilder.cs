@@ -11,7 +11,9 @@ public static class ProxyConfigBuilder
 {
     public const string RouteIdMetadata = "apiary.route";
     private static readonly TimeSpan s_probeInterval = TimeSpan.FromSeconds(15);
+    public const string AffinityCookie = "apiary_affinity";
     private static readonly TimeSpan s_probeTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan s_affinityLifetime = TimeSpan.FromHours(1);
 
     public static IReadOnlyList<RouteConfig> BuildRoutes(ApiaryState state)
     {
@@ -51,7 +53,8 @@ public static class ProxyConfigBuilder
     private static ClusterConfig BuildCluster(Route route) => new()
     {
         ClusterId = ClusterId(route),
-        LoadBalancingPolicy = "PowerOfTwoChoices",
+        LoadBalancingPolicy = route.Targets.Count > 1 ? WeightedPolicy.PolicyName : "PowerOfTwoChoices",
+        SessionAffinity = route.Sticky ? Affinity : null,
         HealthCheck = new HealthCheckConfig
         {
             AvailableDestinationsPolicy = "HealthyOrPanic",
@@ -67,7 +70,32 @@ public static class ProxyConfigBuilder
         HttpRequest = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(route.TimeoutSeconds) },
         Destinations = route.Targets
             .Select((target, index) => (Key: index.ToString(CultureInfo.InvariantCulture), Target: target))
-            .ToDictionary(d => d.Key, d => new DestinationConfig { Address = Address(d.Target) }, StringComparer.Ordinal),
+            .ToDictionary(d => d.Key, d => Destination(d.Target), StringComparer.Ordinal),
+    };
+
+    private static SessionAffinityConfig Affinity { get; } = new()
+    {
+        Enabled = true,
+        Policy = "HashCookie",
+        FailurePolicy = "Redistribute",
+        AffinityKeyName = AffinityCookie,
+        Cookie = new SessionAffinityCookieConfig
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+            SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest,
+            Expiration = s_affinityLifetime,
+        },
+    };
+
+    private static DestinationConfig Destination(RouteTarget target) => new()
+    {
+        Address = Address(target),
+        Metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [WeightedPolicy.WeightMetadata] = target.Weight.ToString(CultureInfo.InvariantCulture),
+        },
     };
 
     public static string ClusterId(Route route) => route.Id.ToString("N");

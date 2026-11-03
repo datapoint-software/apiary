@@ -78,40 +78,7 @@
       </div>
     </section>
 
-    <section class="ap-panel" aria-labelledby="targets-title">
-      <div class="ap-panel-head">
-        <div>
-          <h2 class="ap-h ap-h-3" id="targets-title">Target</h2>
-          <p class="ap-panel-desc">
-            The service that receives the traffic, by its name on the shared network.
-          </p>
-        </div>
-      </div>
-      <div class="ap-panel-body ap-stack">
-        @for (target of route.targets; track $index) {
-          <div class="ap-grid-2" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)">
-            <ap-field label="Service or host" [field]="target.host" summaryLabel="Target">
-              <input
-                class="ap-input ap-data"
-                [formField]="target.host"
-                placeholder="shop-v1"
-                autocomplete="off"
-                spellcheck="false"
-                autocapitalize="none"
-              />
-            </ap-field>
-            <ap-field label="Port" [field]="target.port" summaryLabel="Target port">
-              <input
-                class="ap-input ap-data"
-                type="number"
-                inputmode="numeric"
-                [formField]="target.port"
-              />
-            </ap-field>
-          </div>
-        }
-      </div>
-    </section>
+    <ap-targets-section [route]="route" />
 
     <section class="ap-panel" aria-labelledby="certificate-title">
       <div class="ap-panel-head">

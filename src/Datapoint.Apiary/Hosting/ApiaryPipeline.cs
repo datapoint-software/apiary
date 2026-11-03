@@ -31,7 +31,7 @@ public static class ApiaryPipeline
         app.MapGroup("/cluster").WithMetadata(ListenerMetadata.Cluster).MapApiaryCluster();
         app.MapReverseProxy(proxy =>
         {
-            proxy.UseMiddleware<RouteGate>();
+            proxy.UseApiaryRouteFeatures();
             proxy.UseSessionAffinity();
             proxy.UseLoadBalancing();
             proxy.UsePassiveHealthChecks();

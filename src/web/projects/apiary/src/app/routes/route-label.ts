@@ -5,5 +5,8 @@ export function routeLabel(route: Pick<RouteView, 'host' | 'path'>): string {
 }
 
 export function targetLabel(route: RouteView): string {
-  return route.targets.map((t) => `${t.host}:${t.port}`).join(' · ');
+  if (route.targets.length === 1) {
+    return `${route.targets[0].host}:${route.targets[0].port}`;
+  }
+  return route.targets.map((t) => `${t.host} ${t.weight}%`).join(' · ') + (route.canary ? ' · canary' : '');
 }

@@ -17,9 +17,17 @@ export interface RouteView {
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
   readonly maintenance?: MaintenanceWindow;
+  readonly canary?: RouteCanary;
+  readonly sticky: boolean;
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;
   readonly targetsDown: number;
+}
+
+export interface RouteCanary {
+  readonly source: 'header' | 'cookie';
+  readonly name: string;
+  readonly value: string;
 }
 
 export type RouteHealth = 'unknown' | 'healthy' | 'degraded' | 'down';

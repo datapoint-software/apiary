@@ -11,6 +11,8 @@ public static class RouteRules
     public const int MaximumTimeoutSeconds = 120;
     public const int MaximumAllowedAddresses = 100;
     public const int MaximumMaintenanceMessage = 200;
+    public const int MaximumTargets = 10;
+    public const int MaximumCanaryValue = 200;
     public static readonly TimeSpan MaximumMaintenance = TimeSpan.FromDays(7);
 
     public static void AddRouteRules<T>(this AbstractValidator<T> validator, IClusterState cluster, TimeProvider time, Func<T, Guid?> existingId)
@@ -23,12 +25,25 @@ public static class RouteRules
             .Must(host => !Redirects.CreateRedirectValidator.IsRedirect(cluster.Current, host)).WithErrorCode(ErrorCodes.RouteRedirectExists);
         validator.RuleFor(r => r.Path).Path();
         validator.RuleFor(r => r.TimeoutSeconds).InclusiveBetween(1, MaximumTimeoutSeconds).WithErrorCode(ErrorCodes.Range);
-        validator.RuleFor(r => r.Targets).NotEmpty().WithErrorCode(ErrorCodes.RouteTargetsRequired);
+        validator.RuleFor(r => r.Targets).Cascade(CascadeMode.Stop)
+            .NotEmpty().WithErrorCode(ErrorCodes.RouteTargetsRequired)
+            .Must(t => t.Count <= MaximumTargets).WithErrorCode(ErrorCodes.RouteTargetsTooMany)
+            .Must(t => t.Count == 1 || t.Sum(target => target.Weight) == 100).WithErrorCode(ErrorCodes.RouteWeightsTotal);
         validator.RuleForEach(r => r.Targets).ChildRules(target =>
         {
             target.RuleFor(t => t.Host).Target();
             target.RuleFor(t => t.Port).Port();
+            target.RuleFor(t => t.Weight).InclusiveBetween(0, 100).WithErrorCode(ErrorCodes.Range);
         });
+        validator.RuleFor(r => r.Canary!).ChildRules(canary =>
+        {
+            canary.RuleFor(c => c.Source).IsInEnum().WithErrorCode(ErrorCodes.Invalid);
+            canary.RuleFor(c => c.Name).Must(IsToken).WithErrorCode(ErrorCodes.RouteCanaryName);
+            canary.RuleFor(c => c.Value).Cascade(CascadeMode.Stop)
+                .Must(v => !string.IsNullOrWhiteSpace(v)).WithErrorCode(ErrorCodes.Required)
+                .MaximumLength(MaximumCanaryValue).WithErrorCode(ErrorCodes.TooLong)
+                .Must(v => v.All(c => c is >= ' ' and <= '~' && c is not ';' and not ',')).WithErrorCode(ErrorCodes.Invalid);
+        }).When(r => r.Canary is not null && r.Targets.Count > 1);
         validator.RuleFor(r => r.AllowedAddresses).Cascade(CascadeMode.Stop)
             .Must(a => RouteNormalization.Addresses(a) is not { Count: > MaximumAllowedAddresses }).WithErrorCode(ErrorCodes.IpRangeTooMany)
             .Must(a => RouteNormalization.Addresses(a)?.All(RuleExtensions.IsIpRange) ?? true).WithErrorCode(ErrorCodes.IpRangeInvalid);
@@ -54,6 +69,9 @@ public static class RouteRules
             .WithErrorCode(ErrorCodes.RouteDuplicate)
             .OverridePropertyName(nameof(IRouteFields.Path));
     }
+
+    private static bool IsToken(string name) =>
+        name.Trim() is { Length: > 0 and <= 100 } trimmed && trimmed.All(c => char.IsAsciiLetterOrDigit(c) || "!#$%&'*+-.^_`|~".Contains(c));
 
     private static bool Covers(ApiaryState state, IRouteFields fields) =>
         state.Certificates[fields.CertificateId!.Value].Material?.Covers(RouteNormalization.Host(fields.Host)) == true;

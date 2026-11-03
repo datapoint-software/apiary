@@ -16,7 +16,7 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             command.ProjectId,
             RouteNormalization.Host(command.Host),
             RouteNormalization.Path(command.Path),
-            [.. command.Targets.Select(t => t with { Host = t.Host.Trim().ToLowerInvariant() })],
+            RouteNormalization.Targets(command.Targets),
             command.TimeoutSeconds,
             command.CertificateId,
             now,
@@ -24,6 +24,8 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
         {
             AllowedAddresses = RouteNormalization.Addresses(command.AllowedAddresses),
             Maintenance = RouteNormalization.Maintenance(command.Maintenance),
+            Canary = RouteNormalization.Canary(command.Canary, command.Targets.Count),
+            Sticky = command.Sticky,
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);

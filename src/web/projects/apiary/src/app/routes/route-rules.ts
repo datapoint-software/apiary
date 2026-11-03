@@ -16,6 +16,24 @@ export const routeRules = schema<RouteModel>((route) => {
   applyEach(route.targets, (t) => {
     target(t.host);
     port(t.port);
+    hidden(t.weight, ({ valueOf }) => valueOf(route.targets).length < 2);
+    wholeNumber(t.weight, 0, 100);
+  });
+  validate(route.targets, ({ value }) => {
+    const targets = value();
+    const total = targets.reduce((sum, t) => sum + (t.weight ?? 0), 0);
+    return targets.length > 1 && total !== 100 ? { kind: 'route.weightsTotal', params: { total } } : undefined;
+  });
+  for (const path of [route.canary.name, route.canary.value]) {
+    hidden(path, ({ valueOf }) => valueOf(route.targets).length < 2 || valueOf(route.canary.source) === 'none');
+  }
+  validate(route.canary.name, ({ value }) => (/^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,100}$/.test(value().trim()) ? undefined : { kind: 'route.canaryName' }));
+  validate(route.canary.value, ({ value }) => {
+    const text = value().trim();
+    if (!text) {
+      return { kind: 'required' };
+    }
+    return text.length > 200 ? { kind: 'tooLong', params: { max: 200 } } : undefined;
   });
   wholeNumber(route.timeoutSeconds, 1, 120);
   ipRanges(route.allowedAddresses);

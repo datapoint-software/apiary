@@ -4,7 +4,13 @@ import { RouteView } from '../api/models';
 export interface RouteTargetModel {
   host: string;
   port: number | null;
-  weight: number;
+  weight: number | null;
+}
+
+export interface CanaryModel {
+  source: 'none' | 'header' | 'cookie';
+  name: string;
+  value: string;
 }
 
 export interface MaintenanceModel {
@@ -24,6 +30,12 @@ export interface RouteModel {
   certificateId: string;
   allowedAddresses: string;
   maintenance: MaintenanceModel;
+  canary: CanaryModel;
+  sticky: boolean;
+}
+
+function noCanary(): CanaryModel {
+  return { source: 'none', name: 'X-Canary', value: 'true' };
 }
 
 function noMaintenance(): MaintenanceModel {
@@ -31,7 +43,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance() };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -52,5 +64,7 @@ export function routeModel(route: RouteView): RouteModel {
           message: route.maintenance.message ?? '',
         }
       : noMaintenance(),
+    canary: route.canary ? { ...route.canary } : noCanary(),
+    sticky: route.sticky,
   };
 }

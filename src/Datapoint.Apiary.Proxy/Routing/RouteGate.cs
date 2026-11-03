@@ -9,9 +9,7 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
 {
     public Task InvokeAsync(HttpContext context)
     {
-        var metadata = context.GetReverseProxyFeature().Route.Config.Metadata;
-        if (metadata is null || !metadata.TryGetValue(ProxyConfigBuilder.RouteIdMetadata, out var value)
-            || !Guid.TryParse(value, out var id) || !cluster.Current.Routes.TryGetValue(id, out var route))
+        if (ProxyRoutes.Find(context, cluster.Current) is not { } route)
         {
             return next(context);
         }

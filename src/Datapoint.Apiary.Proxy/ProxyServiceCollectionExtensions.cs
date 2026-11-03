@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.Health;
+using Yarp.ReverseProxy.LoadBalancing;
 
 namespace Datapoint.Apiary.Proxy;
 
@@ -25,6 +26,7 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<ProxyMetrics>();
         services.AddSingleton<RouteTelemetrySource>();
         services.AddSingleton<IActiveHealthCheckPolicy, ReachablePolicy>();
+        services.AddSingleton<ILoadBalancingPolicy, WeightedPolicy>();
         services.AddHostedService(provider => provider.GetRequiredService<AccessLogWriter>());
         services.AddReverseProxy();
         return services;

@@ -12,6 +12,10 @@ export const appMessages: MessageCatalog = {
   'route.notFound': () => 'This route was deleted. Go back to the routes list to see what’s there now.',
   'route.duplicate': () => 'Another route already uses this hostname and path. Change one of them.',
   'route.targetsRequired': () => 'Add at least one target.',
+  'route.targetsTooMany': () => 'A route can have at most 10 targets.',
+  'route.weightsTotal': (p) =>
+    p['total'] === undefined ? 'Make the weights add up to 100%.' : `The weights add up to ${p['total']}%. Make them add up to 100%.`,
+  'route.canaryName': () => 'Use letters, digits and hyphens, such as X-Canary.',
   'route.redirectExists': () => 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
   'redirect.notFound': () => 'This redirect was already deleted. The list now shows the current redirects.',
   'redirect.duplicate': () => 'This hostname already redirects. Delete that redirect first to change it.',

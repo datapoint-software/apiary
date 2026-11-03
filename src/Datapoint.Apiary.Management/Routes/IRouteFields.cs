@@ -19,4 +19,8 @@ public interface IRouteFields
     IReadOnlyList<string>? AllowedAddresses { get; }
 
     MaintenanceWindow? Maintenance { get; }
+
+    RouteCanary? Canary { get; }
+
+    bool Sticky { get; }
 }

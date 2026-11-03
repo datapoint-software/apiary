@@ -25,13 +25,14 @@ import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
 import { perMinute, routeStatus } from './route-status';
 import { MaintenanceSection } from './maintenance-section';
+import { TargetsSection } from './targets-section';
 import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, MaintenanceSection, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, MaintenanceSection, TargetsSection, RouterLink],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -123,7 +124,7 @@ export class RouteEditor implements HasUnsavedChanges {
       projectId: value.projectId,
       host: value.host.trim(),
       path: value.path.trim(),
-      targets: value.targets.map((t) => ({ host: t.host.trim(), port: t.port, weight: t.weight })),
+      targets: value.targets.map((t) => ({ host: t.host.trim(), port: t.port, weight: value.targets.length > 1 ? t.weight : 100 })),
       timeoutSeconds: value.timeoutSeconds,
       certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
       allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
@@ -134,6 +135,10 @@ export class RouteEditor implements HasUnsavedChanges {
             message: value.maintenance.message.trim() || null,
           }
         : null,
+      canary: value.targets.length > 1 && value.canary.source !== 'none'
+        ? { source: value.canary.source, name: value.canary.name.trim(), value: value.canary.value.trim() }
+        : null,
+      sticky: value.targets.length > 1 && value.sticky,
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));
