@@ -4,6 +4,7 @@ public static class ErrorCodes
 {
     public const string Internal = "internal";
     public const string InvalidRequest = "request.invalid";
+    public const string TooManyRequests = "request.tooMany";
     public const string AuthenticationRequired = "auth.required";
     public const string Forbidden = "auth.forbidden";
     public const string NoQuorum = "cluster.noQuorum";
@@ -132,7 +133,7 @@ public static class ErrorCodes
 
     public static IReadOnlyList<string> All { get; } =
     [
-        Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum, NotReady, Upgrading, RecoveryNotNeeded, NotMostRecent, OtherReplica,
+        Internal, InvalidRequest, TooManyRequests, AuthenticationRequired, Forbidden, NoQuorum, NotReady, Upgrading, RecoveryNotNeeded, NotMostRecent, OtherReplica,
         Required, TooLong, Range, Invalid,
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,

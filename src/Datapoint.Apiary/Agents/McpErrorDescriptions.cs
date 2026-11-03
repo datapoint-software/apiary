@@ -11,6 +11,7 @@ public static partial class McpErrorDescriptions
         ["internal"] = "Something went wrong on the server. Try again; if it keeps happening, ask the user to check Apiary's logs.",
         ["request.invalid"] = "The request couldn't be read. Check that the arguments match the tool's schema.",
         ["request.notFound"] = "There's no such action.",
+        ["request.tooMany"] = "Too many requests without signing in from this address. Wait the number of seconds in retryAfter.",
         ["validation.failed"] = "Some arguments are invalid. Each entry in errors names the field and why.",
         ["auth.required"] = "The agent isn't signed in, or its access ended. The user needs to connect it again.",
         ["auth.forbidden"] = "The user's role doesn't allow this. An Administrator can give them another role.",

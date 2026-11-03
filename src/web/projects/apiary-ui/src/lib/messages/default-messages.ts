@@ -4,6 +4,7 @@ export const defaultMessages: MessageCatalog = {
   internal: () => 'Something went wrong on the server. Try again; if it keeps happening, check Apiary’s logs.',
   'request.invalid': () => 'The request couldn’t be read. Reload the page and try again.',
   'request.notFound': () => 'That doesn’t exist anymore. Reload the page to see what’s there now.',
+  'request.tooMany': (p) => `Too many requests from your network. Wait ${p['retryAfter']} seconds, then try again.`,
   'auth.required': () => 'Your session has ended. Sign in again to continue.',
   'auth.forbidden': () => 'Your role doesn’t allow this. Ask an Administrator if you need it.',
   'cluster.noQuorum': () => 'Changes are paused while the cluster can’t reach a majority of voters. Try again once it recovers.',

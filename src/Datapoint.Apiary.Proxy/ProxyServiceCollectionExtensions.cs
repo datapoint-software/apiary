@@ -3,6 +3,7 @@ using Datapoint.Apiary.Proxy.AccessLogs;
 using Datapoint.Apiary.Proxy.Caching;
 using Datapoint.Apiary.Proxy.Health;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.RateLimits;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Proxy.Streams;
 using Datapoint.Apiary.Proxy.Telemetry;
@@ -31,6 +32,7 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<IForwarderHttpClientFactory, GuardedForwarderHttpClientFactory>();
         services.AddSingleton<IProxyConfigProvider, StateProxyConfigProvider>();
         services.AddSingleton<AddressAllowlists>();
+        services.AddSingleton<ClientRateLimiter>();
         services.AddSingleton<AccessLogWriter>();
         services.AddSingleton<ProxyMetrics>();
         services.AddSingleton<RouteTelemetrySource>();
