@@ -68,7 +68,7 @@ We follow Microsoft's conventions:
 Files:
 
 - **One top-level type per file,** named after the type: `RouteValidator.cs` holds `RouteValidator`. Nested types stay in their parent's file.
-- **A generic type's file** is named without its type parameters: `Result.cs` for `Result<T>`.
+- **The only exception is generic types.** A generic type's file is named without its type parameters, and a type extended by a generic one of the same name shares its file: `Result.cs` holds both `Result` and `Result<T> : Result`.
 - **A partial type split across files** uses `Type.Purpose.cs`, such as `RouteHandler.Logging.cs` for its `[LoggerMessage]` methods.
 - Enforced by [Meziantou.Analyzer](https://github.com/meziantou/Meziantou.Analyzer) (MIT) rule MA0048, which reports every top-level type whose name doesn't match its file.
 
