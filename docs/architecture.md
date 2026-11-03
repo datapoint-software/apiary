@@ -85,12 +85,12 @@ By default a route has a single target group, and none of the following applies.
 
 - **Weights.** A route can send traffic to several target groups by weight (e.g. 90% to `shop-v1`, 10% to `shop-v2`), so a new version can be released gradually. YARP has no weighted policy built in, so Apiary adds one. Each replica applies the weights on its own, so the split is statistical, not exact.
 - **Header or cookie selection.** A route can pick a target group by request header or cookie (e.g. `X-Canary: true`), so testers reach the new version on purpose. The header or cookie name and value are set per route.
-- **Sticky sessions.** A route can set a cookie that keeps each client on the group it first got (YARP's session affinity), so users don't switch between versions mid-session. The cookie's name and lifetime are set per route.
+- **Sticky sessions.** A route can set a cookie that keeps each client on the group it first got (YARP's session affinity), so users don't switch between versions mid-session. The cookie is `apiary_affinity` and lasts an hour. A canary header or cookie wins over it, so testers always reach the canary.
 
 ### Compression and caching
 
 - **Compression** (Brotli and gzip) is set per route and **off by default**. Compressing HTTPS responses that mix secrets with text an attacker can influence allows the [BREACH attack](https://www.breachattack.com/), which is why ASP.NET Core disables it for HTTPS unless enabled. Responses that are already compressed (images, archives) are skipped.
-- **Caching** is set per route and **off by default**. Apiary caches only what the target allows through `Cache-Control`, and never responses to requests with `Authorization` or cookies, or responses that set cookies, unless the target explicitly marks them `public`.
+- **Caching** is set per route and **off by default**. Apiary caches only what the target allows through `Cache-Control` (`max-age` or `s-maxage`), and never responses to requests with `Authorization` or cookies unless the target explicitly marks them `public`. Responses that set cookies are never cached. The cache runs after the route's checks, so a cached response never bypasses an allowlist, a disabled route or a maintenance window.
 - Each replica keeps its own cache in memory. Admins can purge a route's cache, which clears it on every replica.
 
 ### TCP and UDP
