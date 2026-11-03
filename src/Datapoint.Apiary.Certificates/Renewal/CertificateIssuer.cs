@@ -147,8 +147,11 @@ public sealed partial class CertificateIssuer(
 
     private Certificate Current(Certificate certificate) => cluster.Current.Certificates.GetValueOrDefault(certificate.Id) ?? certificate;
 
-    private static AuditRecorded Audit(DateTimeOffset now, string? user, string action, Certificate certificate, AuditOutcome outcome) =>
-        new(new AuditEntry(Guid.CreateVersion7(now), now, user, user is null ? SystemActor : null, null, action, [certificate.Name], null, outcome));
+    private AuditRecorded Audit(DateTimeOffset now, string? user, string action, Certificate certificate, AuditOutcome outcome) =>
+        new(new AuditEntry(Guid.CreateVersion7(now), now, user, user is null ? SystemActor : null, null, action, [certificate.Name], null, outcome, UserIdOf(user)));
+
+    private Guid? UserIdOf(string? email) =>
+        email is null ? null : cluster.Current.Users.Values.FirstOrDefault(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))?.Id;
 
     private async Task AppendAsync(IReadOnlyList<IStateChange> changes, CancellationToken cancellationToken)
     {

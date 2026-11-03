@@ -1,5 +1,6 @@
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Transactions;
 using Microsoft.Extensions.Logging;
 
@@ -16,7 +17,8 @@ public sealed partial class AuditLog(IClusterState cluster, IRequestOrigin origi
         }
 
         var now = time.GetUtcNow();
-        var entry = new AuditEntry(Guid.CreateVersion7(now), now, user, origin.Client, origin.Address, action, affected, ProjectId: null, outcome);
+        var userId = user is null ? null : UserLookup.ByEmail(cluster.Current, user)?.Id;
+        var entry = new AuditEntry(Guid.CreateVersion7(now), now, user, origin.Client, origin.Address, action, affected, ProjectId: null, outcome, userId);
         await cluster.AppendAsync(new StateEntry(Guid.CreateVersion7(now), now, [new AuditRecorded(entry)]), ct);
     }
 

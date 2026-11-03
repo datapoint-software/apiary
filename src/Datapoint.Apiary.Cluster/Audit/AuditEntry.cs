@@ -9,4 +9,5 @@ public sealed record AuditEntry(
     string Action,
     IReadOnlyList<string> Affected,
     Guid? ProjectId,
-    AuditOutcome Outcome);
+    AuditOutcome Outcome,
+    Guid? UserId = null);

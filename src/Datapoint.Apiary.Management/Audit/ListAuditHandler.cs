@@ -1,5 +1,6 @@
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Audit;
@@ -8,19 +9,28 @@ public sealed class ListAuditHandler(IClusterState cluster) : IQueryHandler<List
 {
     private const int MaximumEntries = 500;
 
-    public ValueTask<IReadOnlyList<AuditEntry>> HandleAsync(ListAudit query, CancellationToken ct = default) =>
-        new([.. cluster.Current.Audit
+    public ValueTask<IReadOnlyList<AuditEntry>> HandleAsync(ListAudit query, CancellationToken ct = default)
+    {
+        var state = cluster.Current;
+        var userId = string.IsNullOrEmpty(query.User) ? null : UserLookup.ByEmail(state, query.User)?.Id;
+        return new([.. state.Audit
             .AsEnumerable()
             .Reverse()
-            .Where(e => Matches(query, e))
+            .Where(e => Matches(query, userId, e))
             .Take(MaximumEntries)]);
+    }
 
-    private static bool Matches(ListAudit query, AuditEntry entry) =>
+    private static bool Matches(ListAudit query, Guid? userId, AuditEntry entry) =>
         InRange(query, entry)
-        && (string.IsNullOrEmpty(query.User) || string.Equals(entry.User, query.User, StringComparison.OrdinalIgnoreCase))
+        && IsBy(query.User, userId, entry)
         && (!query.FailedOnly || entry.Outcome is not AuditOutcome.Succeeded)
         && (query.Via is not { } via || Via(entry) == via)
         && (string.IsNullOrWhiteSpace(query.Search) || Contains(entry, query.Search.Trim()));
+
+    private static bool IsBy(string? user, Guid? userId, AuditEntry entry) =>
+        string.IsNullOrEmpty(user)
+        || (userId is { } id && entry.UserId == id)
+        || (entry.UserId is null && string.Equals(entry.User, user, StringComparison.OrdinalIgnoreCase));
 
     private static bool InRange(ListAudit query, AuditEntry entry) =>
         (query.From is not { } from || entry.At >= from)

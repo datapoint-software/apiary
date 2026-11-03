@@ -194,6 +194,7 @@ export interface AuditEntry {
   readonly affected: readonly string[];
   readonly projectId?: string;
   readonly outcome: 'succeeded' | 'failed' | 'denied';
+  readonly userId?: string;
 }
 
 export type CertificateStatus = 'ok' | 'pending' | 'failing' | 'expiring' | 'expired';

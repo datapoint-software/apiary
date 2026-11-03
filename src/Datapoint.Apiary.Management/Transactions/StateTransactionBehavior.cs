@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Telemetry;
+using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Mediator;
 using Datapoint.Mediator.Authorization;
@@ -94,6 +95,16 @@ public sealed class StateTransactionBehavior(
         }
     }
 
+    private Guid? UserIdOf(string? user)
+    {
+        if (transaction.ActingAs is null && Guid.TryParse(principals.Principal?.FindFirstValue(ApiaryClaims.UserId), out var id))
+        {
+            return id;
+        }
+
+        return user is null ? null : UserLookup.ByEmail(cluster.Current, user)?.Id;
+    }
+
     private IEnumerable<IStateChange> Audit(object command, DateTimeOffset now)
     {
         if (transaction.Unaudited)
@@ -101,15 +112,17 @@ public sealed class StateTransactionBehavior(
             yield break;
         }
 
+        var user = transaction.ActingAs ?? principals.Principal?.FindFirstValue(ClaimTypes.Name);
         yield return new AuditRecorded(new AuditEntry(
             Guid.CreateVersion7(now),
             now,
-            transaction.ActingAs ?? principals.Principal?.FindFirstValue(ClaimTypes.Name),
+            user,
             origin.Client,
             origin.Address,
             ActionName(command.GetType()),
             transaction.Affected,
             transaction.ProjectId,
-            AuditOutcome.Succeeded));
+            AuditOutcome.Succeeded,
+            UserIdOf(user)));
     }
 }
