@@ -1,10 +1,13 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Button, Icon } from '@datapoint/apiary-ui';
-import { LayoutDashboard, PanelLeft, Route } from 'lucide';
+import { LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView } from '../api/models';
+import { Auth } from '../auth/auth';
+import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
 import { NavGroup } from './nav-item';
 import { projectIcon } from './project-icons';
@@ -13,12 +16,24 @@ import { readCollapsed, saveCollapsed } from './sidebar-preference';
 @Component({
   selector: 'ap-shell',
   host: { '(document:keydown.escape)': 'closeDrawer()' },
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Button, DatapointLogo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Button, DatapointLogo, CdkMenu, CdkMenuItem, CdkMenuTrigger],
   templateUrl: './shell.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
   private readonly api = inject(Api);
+  private readonly router = inject(Router);
+  protected readonly auth = inject(Auth);
+  protected readonly roleNames = roleNames;
+  protected readonly initials = computed(() =>
+    (this.auth.user()?.name ?? '')
+      .split(/\s+/)
+      .map((part) => part[0] ?? '')
+      .join('')
+      .slice(0, 2)
+      .toUpperCase(),
+  );
+  protected readonly accountIcons = { profile: UserRound, security: ShieldCheck, sessions: MonitorSmartphone, signOut: LogOut };
   protected readonly version = '0.1.0';
   protected readonly collapsed = signal(readCollapsed());
   protected readonly drawerOpen = signal(false);
@@ -48,13 +63,20 @@ export class Shell {
         })),
       },
       { title: 'Traffic', items: [{ icon: Route, label: 'All routes', link: '/routes', count: routes || undefined }] },
+      {
+        title: 'Access',
+        items: [
+          ...(this.auth.canAdminister() ? [{ icon: Users, label: 'Users', link: '/users' }] : []),
+          { icon: ScrollText, label: 'Audit log', link: '/audit' },
+        ],
+      },
     ];
   });
 
   constructor() {
     const onChange = (event: MediaQueryListEvent) => this.isPhone.set(event.matches);
     this.phone.addEventListener('change', onChange);
-    const navigation = inject(Router).events.subscribe((event) => {
+    const navigation = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.drawerOpen.set(false);
       }
@@ -72,6 +94,11 @@ export class Shell {
     }
     this.collapsed.update((c) => !c);
     saveCollapsed(this.collapsed());
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    await this.router.navigate(['/sign-in']);
   }
 
   protected closeDrawer(): void {

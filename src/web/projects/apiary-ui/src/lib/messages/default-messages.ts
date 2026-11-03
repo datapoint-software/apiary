@@ -32,5 +32,10 @@ export const defaultMessages: MessageCatalog = {
   'target.linkLocal': () =>
     'Apiary doesn’t route to link-local addresses. Use the service’s name on the shared network.',
   'target.unspecified': () => 'Use the service’s own address, not 0.0.0.0 or ::.',
+  'password.tooShort': (p) => `Use at least ${p['min']} characters.`,
+  'password.tooLong': (p) => `Use at most ${p['max']} characters.`,
+  'password.common': () => 'This password is too easy to guess. Try a few unrelated words.',
+  'password.containsEmail': () => 'Don’t use your email name in your password.',
+  'code.format': () => 'Enter the 6 digits the app shows.',
   'ipRange.invalid': () => 'Enter an IPv4 or IPv6 address or range, such as 10.0.0.0/8.',
 };

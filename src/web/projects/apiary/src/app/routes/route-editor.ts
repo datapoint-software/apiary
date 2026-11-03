@@ -22,6 +22,7 @@ import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
 import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
+import { Auth } from '../auth/auth';
 
 @Component({
   selector: 'ap-route-editor',
@@ -33,6 +34,7 @@ export class RouteEditor implements HasUnsavedChanges {
   readonly id = input<string>();
   readonly project = input('');
   private readonly api = inject(Api);
+  protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
   private readonly confirmer = inject(Confirmer);

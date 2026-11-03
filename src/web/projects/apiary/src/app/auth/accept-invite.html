@@ -1,0 +1,40 @@
+<ap-auth-page heading="Join Apiary" [sub]="invite.value() ? 'Set up your account, ' + invite.value()!.name + '.' : ''" [wide]="true">
+  @if (invite.error()) {
+    <ap-banner tone="warn" heading="This invite link doesn’t work">
+      {{ messages.describe('invite.invalid') }}
+      <a bannerActions apButton size="small" routerLink="/sign-in">Sign in</a>
+    </ap-banner>
+  } @else if (codes().length) {
+    <ap-recovery-codes [codes]="codes()" (done)="finish()" />
+  } @else if (invite.value(); as invite) {
+    <form class="ap-form" style="gap: 16px" [apForm]="account" #inviteForm="apForm" (submit)="accept(inviteForm)">
+      <ap-error-summary verb="create your account" />
+      <dl class="ap-kv">
+        <dt>Email</dt>
+        <dd>{{ invite.email }}. You sign in with it.</dd>
+      </dl>
+      <ap-field label="Password" [field]="account.password">
+        <div class="ap-affix">
+          <input class="ap-input" type="password" #password [formField]="account.password" autocomplete="new-password" />
+          <ap-password-reveal [target]="password" />
+        </div>
+        <ap-password-checklist [password]="account.password().value()" [email]="invite.email" />
+      </ap-field>
+      <ap-field label="Password again" [field]="account.again">
+        <div class="ap-affix">
+          <input class="ap-input" type="password" #again [formField]="account.again" autocomplete="new-password" />
+          <ap-password-reveal [target]="again" label="password again" />
+        </div>
+      </ap-field>
+      <ap-two-step-setup [enrollment]="invite.enrollment" />
+      <ap-field label="Code from the app" [field]="account.code">
+        <input class="ap-input ap-otp" [formField]="account.code" inputmode="numeric" autocomplete="one-time-code" />
+      </ap-field>
+      <button apButton="primary" class="ap-btn-lg" type="submit" [disabled]="account().submitting()">
+        {{ account().submitting() ? 'Creating…' : 'Create account' }}
+      </button>
+    </form>
+  } @else {
+    <p class="ap-muted" style="margin: 0; text-align: center">Checking the invite…</p>
+  }
+</ap-auth-page>

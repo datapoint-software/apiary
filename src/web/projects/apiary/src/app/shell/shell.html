@@ -53,7 +53,38 @@
       >
         <ap-icon [icon]="panelIcon" />
       </button>
-      <div class="ap-top-end"></div>
+      <div class="ap-top-end">
+        @if (auth.user(); as user) {
+          <button
+            class="ap-avatar ap-avatar-btn"
+            type="button"
+            [attr.aria-label]="'Account: ' + user.name"
+            [cdkMenuTriggerFor]="accountMenu"
+          >
+            {{ initials() }}
+          </button>
+          <ng-template #accountMenu>
+            <div class="ap-menu" cdkMenu aria-label="Account">
+              <div class="ap-menu-head">
+                <span class="ap-avatar ap-avatar-lg" aria-hidden="true">{{ initials() }}</span>
+                <span>
+                  <strong>{{ user.name }}</strong>
+                  <span class="ap-secondary">{{ user.email }}</span>
+                  <span class="ap-secondary">{{ roleNames[user.role] }}</span>
+                </span>
+              </div>
+              <div class="ap-menu-sep" role="separator"></div>
+              <a class="ap-menu-item" cdkMenuItem routerLink="/account"><ap-icon [icon]="accountIcons.profile" />Your account</a>
+              <a class="ap-menu-item" cdkMenuItem routerLink="/account/security"><ap-icon [icon]="accountIcons.security" />Security</a>
+              <a class="ap-menu-item" cdkMenuItem routerLink="/account/sessions"><ap-icon [icon]="accountIcons.sessions" />Active sessions</a>
+              <div class="ap-menu-sep" role="separator"></div>
+              <button class="ap-menu-item" cdkMenuItem type="button" (cdkMenuItemTriggered)="signOut()">
+                <ap-icon [icon]="accountIcons.signOut" />Sign out
+              </button>
+            </div>
+          </ng-template>
+        }
+      </div>
     </header>
     <main class="ap-content" id="main" tabindex="-1">
       <router-outlet />

@@ -16,3 +16,21 @@ export function timeAgo(iso: string, now = Date.now()): string {
   const days = Math.floor(elapsed / day);
   return days === 1 ? 'yesterday' : `${days} days ago`;
 }
+
+export function timeUntil(iso: string, now = Date.now()): string {
+  const remaining = Date.parse(iso) - now;
+  if (remaining <= 0) {
+    return 'expired';
+  }
+  if (remaining < hour) {
+    return `in ${Math.max(1, Math.floor(remaining / minute))} min`;
+  }
+  if (remaining < day) {
+    return `in ${Math.floor(remaining / hour)} h`;
+  }
+  return `in ${Math.round(remaining / day)} days`;
+}
+
+export function utcDateTime(iso: string): string {
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)}`;
+}

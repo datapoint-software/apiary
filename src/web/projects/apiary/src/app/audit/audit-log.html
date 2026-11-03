@@ -1,0 +1,63 @@
+<ap-page-head heading="Audit log">
+  <span pageSub>Who changed what, from where. Entries are kept for 1 year.</span>
+</ap-page-head>
+
+<section class="ap-panel">
+  <div class="ap-panel-head"><h2 class="ap-h ap-h-3 ap-sr">Filters</h2></div>
+  <div class="ap-toolbar" style="padding-top: 4px">
+    <div class="ap-seg" role="group" aria-label="Time range">
+      @for (option of ranges; track option[0]) {
+        <button type="button" [attr.aria-pressed]="range() === option[0]" (click)="range.set(option[0])">{{ option[1] }}</button>
+      }
+    </div>
+    <select class="ap-select" aria-label="Person" [value]="who()" (change)="who.set($any($event.target).value)">
+      <option value="">Everyone</option>
+      @for (person of people(); track person) {
+        <option [value]="person">{{ person }}</option>
+      }
+    </select>
+    <label class="ap-choice" style="font-size: 0.875rem">
+      <input class="ap-switch" type="checkbox" [checked]="failedOnly()" (change)="failedOnly.set($any($event.target).checked)" />
+      Denied and failed only
+    </label>
+  </div>
+  <div class="ap-panel-body" style="padding-top: 0" aria-live="polite">
+    @for (day of days(); track day.title) {
+      <h3 class="ap-overline" style="margin: 18px 0 0">{{ day.title }}</h3>
+      <div>
+        @for (entry of day.entries; track entry.id) {
+          <div class="ap-event" [class.ap-event-denied]="entry.outcome !== 'succeeded'">
+            <span class="ap-dot" aria-hidden="true"></span>
+            <div>
+              <div>
+                <strong>{{ entry.user ?? 'System' }}</strong> {{ actionLabel(entry.action) }}
+                @if (entry.outcome === 'denied') {
+                  <span class="ap-tag">Denied</span>
+                } @else if (entry.outcome === 'failed') {
+                  <span class="ap-tag">Failed</span>
+                }
+              </div>
+              <div class="ap-event-meta">
+                <span class="ap-data">{{ entry.action }}</span>
+                @if (entry.address) {
+                  · from <span class="ap-data">{{ entry.address }}</span>
+                }
+              </div>
+            </div>
+            <time [attr.datetime]="entry.at">{{ entry.at.slice(11, 16) }} UTC</time>
+          </div>
+        }
+      </div>
+    } @empty {
+      @if (!entries.isLoading()) {
+        <ap-empty-state heading="No entries match">
+          Nothing in this range with these filters.
+          <button emptyActions class="ap-btn" type="button" (click)="reset()">Clear filters</button>
+        </ap-empty-state>
+      }
+    }
+  </div>
+</section>
+<p class="ap-caption" style="margin: 0">
+  The audit log includes email and IP addresses, which are personal data. They’re kept for 1 year, then deleted.
+</p>

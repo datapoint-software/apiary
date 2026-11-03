@@ -8,6 +8,7 @@ import { ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
+import { Auth } from '../auth/auth';
 
 @Component({
   selector: 'ap-route-list',
@@ -18,6 +19,7 @@ import { routeLabel, targetLabel } from './route-label';
 export class RouteList {
   readonly project = input('');
   private readonly api = inject(Api);
+  protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly confirmer = inject(Confirmer);
   private readonly toaster = inject(Toaster);

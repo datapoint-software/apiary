@@ -1,0 +1,39 @@
+<ap-page-head heading="Active sessions" [crumbs]="crumbs" />
+<ap-account-tabs />
+
+<section class="ap-panel" style="max-width: 760px" aria-labelledby="sessions-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="sessions-title">Where you’re signed in</h2>
+      <p class="ap-panel-desc">If you don’t recognize one, sign it out and change your password. Sessions end after 12 hours.</p>
+    </div>
+    @if (others() > 0) {
+      <button apButton size="small" type="button" (click)="endOthers()">Sign out of all others…</button>
+    }
+  </div>
+  <div class="ap-panel-body">
+    <div class="ap-list">
+      @for (session of sessions.value(); track session.id) {
+        <div class="ap-list-row">
+          <div style="display: flex; gap: 12px; align-items: flex-start; flex: 1 1 300px">
+            <span class="ap-project-mark"><ap-icon [icon]="icon(session)" /></span>
+            <div class="ap-list-text">
+              <strong>
+                {{ session.device ?? 'Unknown browser' }}
+                @if (session.current) {
+                  <span class="ap-tag ap-tag-honey">This browser</span>
+                }
+              </strong>
+              <span class="ap-muted">
+                <span class="ap-data">{{ session.address ?? 'unknown address' }}</span> · signed in {{ utcDateTime(session.startedAt) }} UTC
+              </span>
+            </div>
+          </div>
+          @if (!session.current) {
+            <button apButton size="small" type="button" (click)="end(session)">Sign out</button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</section>

@@ -1,5 +1,7 @@
 <ap-page-head [heading]="heading()" [crumbs]="[{ label: 'All routes', link: '/routes' }]">
-  <span pageSub>{{ isNew() ? 'Send requests for a hostname to services on the shared network.' : changed() }}</span>
+  <span pageSub>{{
+    isNew() ? 'Send requests for a hostname to services on the shared network.' : changed()
+  }}</span>
 </ap-page-head>
 
 @if (loadError()) {
@@ -8,7 +10,18 @@
     <a bannerActions apButton size="small" routerLink="/routes">All routes</a>
   </ap-banner>
 } @else {
-  <form class="ap-form" [apForm]="route" #editor="apForm" (submit)="save(editor)" style="max-width: 800px">
+  @if (!auth.canOperate()) {
+    <ap-banner tone="info" heading="You can view this route"
+      >Changing it needs the Operator role. Ask an Administrator if you need it.</ap-banner
+    >
+  }
+  <form
+    class="ap-form"
+    [apForm]="route"
+    #editor="apForm"
+    (submit)="save(editor)"
+    style="max-width: 800px"
+  >
     <ap-error-summary verb="save" />
 
     <section class="ap-panel" aria-labelledby="requests-title">
@@ -20,14 +33,34 @@
       </div>
       <div class="ap-panel-body ap-stack">
         <div class="ap-grid-2" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)">
-          <ap-field label="Hostname" [field]="route.host" help="Point its DNS at your edge nodes first, so the certificate can be issued.">
-            <input class="ap-input ap-data" [formField]="route.host" placeholder="shop.example.com" autocomplete="off" spellcheck="false" autocapitalize="none" />
+          <ap-field
+            label="Hostname"
+            [field]="route.host"
+            help="Point its DNS at your edge nodes first, so the certificate can be issued."
+          >
+            <input
+              class="ap-input ap-data"
+              [formField]="route.host"
+              placeholder="shop.example.com"
+              autocomplete="off"
+              spellcheck="false"
+              autocapitalize="none"
+            />
           </ap-field>
           <ap-field label="Path" [field]="route.path" help="Most routes use /.">
-            <input class="ap-input ap-data" [formField]="route.path" autocomplete="off" spellcheck="false" />
+            <input
+              class="ap-input ap-data"
+              [formField]="route.path"
+              autocomplete="off"
+              spellcheck="false"
+            />
           </ap-field>
         </div>
-        <ap-field label="Project" [field]="route.projectId" help="Only for grouping: it doesn’t change who can edit the route.">
+        <ap-field
+          label="Project"
+          [field]="route.projectId"
+          help="Only for grouping: it doesn’t change who can edit the route."
+        >
           <select class="ap-select" [formField]="route.projectId">
             <option value="">Choose a project</option>
             @for (project of projects.value(); track project.id) {
@@ -42,17 +75,31 @@
       <div class="ap-panel-head">
         <div>
           <h2 class="ap-h ap-h-3" id="targets-title">Target</h2>
-          <p class="ap-panel-desc">The service that receives the traffic, by its name on the shared network.</p>
+          <p class="ap-panel-desc">
+            The service that receives the traffic, by its name on the shared network.
+          </p>
         </div>
       </div>
       <div class="ap-panel-body ap-stack">
         @for (target of route.targets; track $index) {
           <div class="ap-grid-2" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)">
             <ap-field label="Service or host" [field]="target.host" summaryLabel="Target">
-              <input class="ap-input ap-data" [formField]="target.host" placeholder="shop-v1" autocomplete="off" spellcheck="false" autocapitalize="none" />
+              <input
+                class="ap-input ap-data"
+                [formField]="target.host"
+                placeholder="shop-v1"
+                autocomplete="off"
+                spellcheck="false"
+                autocapitalize="none"
+              />
             </ap-field>
             <ap-field label="Port" [field]="target.port" summaryLabel="Target port">
-              <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="target.port" />
+              <input
+                class="ap-input ap-data"
+                type="number"
+                inputmode="numeric"
+                [formField]="target.port"
+              />
             </ap-field>
           </div>
         }
@@ -60,12 +107,19 @@
     </section>
 
     <section class="ap-panel" aria-labelledby="rules-title">
-      <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="rules-title">Traffic rules</h2></div></div>
+      <div class="ap-panel-head">
+        <div><h2 class="ap-h ap-h-3" id="rules-title">Traffic rules</h2></div>
+      </div>
       <div class="ap-panel-body ap-stack">
         <div style="max-width: 220px">
           <ap-field label="Timeout" [field]="route.timeoutSeconds" help="From 1 to 120.">
             <div class="ap-affix">
-              <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="route.timeoutSeconds" />
+              <input
+                class="ap-input ap-data"
+                type="number"
+                inputmode="numeric"
+                [formField]="route.timeoutSeconds"
+              />
               <span class="ap-affix-text">seconds</span>
             </div>
           </ap-field>
@@ -75,24 +129,36 @@
 
     @if (!isNew()) {
       <section class="ap-panel ap-panel-danger" aria-labelledby="danger-title">
-        <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="danger-title">Delete</h2></div></div>
+        <div class="ap-panel-head">
+          <div><h2 class="ap-h ap-h-3" id="danger-title">Delete</h2></div>
+        </div>
         <div class="ap-panel-body">
           <div class="ap-list-row">
             <div class="ap-list-text">
               <strong>Delete this route</strong>
               <span class="ap-muted">Requests to it get a 404 on every replica.</span>
             </div>
-            <button apButton type="button" style="color: var(--critical)" (click)="delete()">Delete route…</button>
+            <button
+              apButton
+              type="button"
+              style="color: var(--critical)"
+              [disabled]="!auth.canOperate()"
+              (click)="delete()"
+            >
+              Delete route…
+            </button>
           </div>
         </div>
       </section>
     }
 
-    <div class="ap-savebar">
-      <a apButton="ghost" routerLink="/routes">Cancel</a>
-      <button apButton="primary" type="submit" [disabled]="route().submitting()">
-        {{ route().submitting() ? 'Saving…' : isNew() ? 'Create route' : 'Save route' }}
-      </button>
-    </div>
+    @if (auth.canOperate()) {
+      <div class="ap-savebar">
+        <a apButton="ghost" routerLink="/routes">Cancel</a>
+        <button apButton="primary" type="submit" [disabled]="route().submitting()">
+          {{ route().submitting() ? 'Saving…' : isNew() ? 'Create route' : 'Save route' }}
+        </button>
+      </div>
+    }
   </form>
 }

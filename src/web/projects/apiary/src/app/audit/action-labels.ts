@@ -1,0 +1,28 @@
+const labels: Record<string, string> = {
+  'routes.create': 'created a route',
+  'routes.update': 'changed a route',
+  'routes.delete': 'deleted a route',
+  'setup.complete': 'completed setup and became the first administrator',
+  'auth.verify': 'signed in',
+  'auth.sign-in': 'failed to sign in several times',
+  'auth.sign-out': 'signed out',
+  'invites.accept': 'accepted an invite',
+  'users.invite': 'invited someone',
+  'users.renew-invite': 'made a new invite link',
+  'users.change-role': 'changed someone’s role',
+  'users.reset-two-step': 'reset someone’s two-step sign-in',
+  'users.disable': 'disabled a user',
+  'users.enable': 'enabled a user',
+  'users.delete': 'deleted a user',
+  'users.create-admin': 'created an administrator from the command line',
+  'account.update-profile': 'changed their profile',
+  'account.change-password': 'changed their password',
+  'account.confirm-two-step': 'set up two-step sign-in again',
+  'account.new-recovery-codes': 'made new recovery codes',
+  'account.end-session': 'signed out one of their sessions',
+  'account.end-other-sessions': 'signed out their other sessions',
+};
+
+export function actionLabel(action: string): string {
+  return labels[action] ?? action;
+}

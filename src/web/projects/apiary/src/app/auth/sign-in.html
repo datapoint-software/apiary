@@ -1,0 +1,62 @@
+<ap-auth-page heading="Sign in to Apiary">
+  @switch (step()) {
+    @case ('password') {
+      <form class="ap-form" style="gap: 16px" [apForm]="credentials" #signInForm="apForm" (submit)="signIn(signInForm)">
+        <ap-error-summary verb="sign in" />
+        <ap-field label="Email" [field]="credentials.email">
+          <input class="ap-input" type="email" [formField]="credentials.email" autocomplete="username" spellcheck="false" autocapitalize="none" />
+        </ap-field>
+        <ap-field label="Password" [field]="credentials.password">
+          <div class="ap-affix">
+            <input class="ap-input" type="password" #password [formField]="credentials.password" autocomplete="current-password" />
+            <ap-password-reveal [target]="password" />
+          </div>
+        </ap-field>
+        <button apButton="primary" class="ap-btn-lg" type="submit" [disabled]="credentials().submitting()">
+          {{ credentials().submitting() ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+    }
+    @case ('codes') {
+      <ap-recovery-codes [codes]="codes()" (done)="enter()" />
+    }
+    @default {
+      <form class="ap-form" style="gap: 16px" [apForm]="code" #codeForm="apForm" (submit)="verify(codeForm)">
+        <ap-error-summary verb="continue" />
+        @if (step() === 'enroll' && signInStep()?.enrollment; as enrollment) {
+          <p class="ap-muted" style="margin: 0; font-size: 0.875rem">
+            Your account needs two-step sign-in. Set it up now to continue.
+          </p>
+          <ap-two-step-setup [enrollment]="enrollment" />
+        } @else {
+          <p class="ap-muted" style="margin: 0; text-align: center; font-size: 0.875rem">
+            {{ recovery() ? 'Enter one of your recovery codes.' : 'Enter the code from your authenticator app.' }}
+          </p>
+        }
+        <ap-field [label]="recovery() ? 'Recovery code' : 'Code'" [field]="code.code">
+          <input
+            class="ap-input"
+            [class.ap-otp]="!recovery()"
+            [formField]="code.code"
+            [attr.inputmode]="recovery() ? null : 'numeric'"
+            autocomplete="one-time-code"
+            [placeholder]="recovery() ? 'xxxx-xxxx' : ''"
+            spellcheck="false"
+            autocapitalize="none"
+          />
+        </ap-field>
+        <button apButton="primary" class="ap-btn-lg" type="submit" [disabled]="code().submitting()">
+          {{ code().submitting() ? 'Checking…' : 'Continue' }}
+        </button>
+        <div class="ap-row" style="justify-content: space-between">
+          <button class="ap-link ap-caption" type="button" style="color: var(--honey-text)" (click)="back()">Back</button>
+          @if (step() === 'code') {
+            <button class="ap-link ap-caption" type="button" style="color: var(--honey-text)" (click)="toggleRecovery()">
+              {{ recovery() ? 'Use the app instead' : 'Use a recovery code' }}
+            </button>
+          }
+        </div>
+      </form>
+    }
+  }
+</ap-auth-page>

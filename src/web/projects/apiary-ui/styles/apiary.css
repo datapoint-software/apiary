@@ -717,3 +717,5 @@
 .ap a.ap-btn { color: var(--ink); }
 .ap a.ap-btn-primary { color: var(--on-honey); }
 .ap a.ap-btn-danger { color: var(--on-critical, #fff); }
+.ap a.ap-menu-item { color: var(--ink); text-decoration: none; }
+.ap a.ap-menu-item:hover, .ap a.ap-menu-item:focus-visible { color: var(--on-honey); }

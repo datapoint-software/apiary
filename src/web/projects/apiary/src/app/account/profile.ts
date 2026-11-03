@@ -1,0 +1,74 @@
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { FormField, form, required } from '@angular/forms/signals';
+import { ApiProblem, Button, ErrorSummary, Field, Form, PageHead, Toaster, problemErrors } from '@datapoint/apiary-ui';
+import { Api } from '../api/api';
+import { Auth } from '../auth/auth';
+import { roleNames } from '../auth/roles';
+import { AccountTabs } from './account-tabs';
+
+@Component({
+  selector: 'ap-profile',
+  imports: [PageHead, AccountTabs, Form, Field, FormField, ErrorSummary, Button],
+  template: `
+    <ap-page-head heading="Your account" />
+    <ap-account-tabs />
+    <form class="ap-panel" style="max-width: 640px" aria-labelledby="profile-title" [apForm]="profile" #profileForm="apForm" (submit)="save(profileForm)">
+      <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="profile-title">Profile</h2></div>
+      <div class="ap-panel-body ap-stack">
+        <ap-error-summary verb="save your profile" />
+        <ap-field label="Name" [field]="profile.name">
+          <input class="ap-input" [formField]="profile.name" autocomplete="name" />
+        </ap-field>
+        <ap-field label="Email" [field]="profile.email" help="You sign in with it.">
+          <input class="ap-input" type="email" [formField]="profile.email" autocomplete="email" spellcheck="false" autocapitalize="none" />
+        </ap-field>
+        <dl class="ap-kv">
+          <dt>Role</dt>
+          <dd>{{ role() }}. Another administrator can change it.</dd>
+          <dt>Time zone</dt>
+          <dd>Apiary shows every time in UTC, so everyone on call reads the same times.</dd>
+        </dl>
+      </div>
+      <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
+        <button apButton="primary" type="submit" [disabled]="profile().submitting()">{{ profile().submitting() ? 'Saving…' : 'Save profile' }}</button>
+      </div>
+    </form>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Profile {
+  private readonly api = inject(Api);
+  private readonly auth = inject(Auth);
+  private readonly toaster = inject(Toaster);
+  private readonly model = signal({ name: '', email: '' });
+  protected readonly profile = form(this.model, (p) => {
+    required(p.name);
+    required(p.email);
+  });
+  protected readonly role = () => roleNames[this.auth.user()?.role ?? 'viewer'];
+
+  constructor() {
+    effect(() => {
+      const user = this.auth.user();
+      if (user && !this.profile().dirty()) {
+        this.model.set({ name: user.name, email: user.email });
+      }
+    });
+  }
+
+  protected async save(apForm: Form): Promise<void> {
+    const saved = await apForm.submit(async () => {
+      try {
+        await this.api.send('account.update-profile', this.model());
+        return undefined;
+      } catch (problem) {
+        return problemErrors(problem as ApiProblem, this.profile);
+      }
+    });
+    if (saved) {
+      this.profile().reset();
+      await this.auth.load();
+      this.toaster.show('Profile saved.');
+    }
+  }
+}

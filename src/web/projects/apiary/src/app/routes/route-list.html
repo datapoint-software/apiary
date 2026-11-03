@@ -1,8 +1,10 @@
 <ap-page-head heading="All routes">
   <span pageSub>Every HTTP route in the cluster, grouped by project.</span>
-  <a pageActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: projectFilter() || null }">
-    <ap-icon [icon]="icons.plus" />Add route
-  </a>
+  @if (auth.canOperate()) {
+    <a pageActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: projectFilter() || null }">
+      <ap-icon [icon]="icons.plus" />Add route
+    </a>
+  }
 </ap-page-head>
 
 @if (isLoading()) {
@@ -13,7 +15,9 @@
   <section class="ap-panel">
     <ap-empty-state heading="No routes yet">
       A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.
-      <a emptyActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="icons.plus" />Add route</a>
+      @if (auth.canOperate()) {
+        <a emptyActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="icons.plus" />Add route</a>
+      }
     </ap-empty-state>
   </section>
 } @else {
@@ -75,9 +79,11 @@
                   <td class="ap-num">{{ route.timeoutSeconds }} s</td>
                   <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
                   <td class="ap-col-actions">
-                    <button apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + routeLabel(route)" (click)="delete(route)">
-                      <ap-icon [icon]="icons.delete" />
-                    </button>
+                    @if (auth.canOperate()) {
+                      <button apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + routeLabel(route)" (click)="delete(route)">
+                        <ap-icon [icon]="icons.delete" />
+                      </button>
+                    }
                   </td>
                 </tr>
               }

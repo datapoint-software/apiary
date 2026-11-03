@@ -26,6 +26,14 @@ export class Api {
     }
   }
 
+  async read<T>(action: string, body: object = {}): Promise<T> {
+    try {
+      return await firstValueFrom(this.http.post<T>(this.url(action), body));
+    } catch (error) {
+      throw toProblem(error);
+    }
+  }
+
   query(action: string, body: object = {}) {
     this.version();
     return { url: this.url(action), method: 'POST', body };

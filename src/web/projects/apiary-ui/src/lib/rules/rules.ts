@@ -1,4 +1,5 @@
 import { SchemaPath, validate } from '@angular/forms/signals';
+import { checkNewPassword } from '../password/password-check';
 import { checkHostname } from './hostname-check';
 import { checkIpRange } from './ip-range-check';
 import { checkTarget } from './target-check';
@@ -38,4 +39,12 @@ export function ipRanges(path: SchemaPath<string>): void {
     const lines = value().split('\n').map((line) => line.trim()).filter(Boolean);
     return asError(lines.map(checkIpRange).find((code) => code !== null) ?? null);
   });
+}
+
+export function newPassword(path: SchemaPath<string>, email: () => string = () => ''): void {
+  validate(path, ({ value }) => asError(checkNewPassword(value(), email()), { min: 15, max: 256 }));
+}
+
+export function sixDigitCode(path: SchemaPath<string>): void {
+  validate(path, ({ value }) => (/^\d{6}$/.test(value().replace(/\s/g, '')) ? undefined : { kind: 'code.format' }));
 }

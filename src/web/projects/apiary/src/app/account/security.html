@@ -1,0 +1,66 @@
+<ap-page-head heading="Security" [crumbs]="crumbs" />
+<ap-account-tabs />
+
+<form class="ap-panel" style="max-width: 640px" aria-labelledby="password-title" [apForm]="password" #passwordForm="apForm" (submit)="changePassword(passwordForm)">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="password-title">Password</h2>
+      <p class="ap-panel-desc">Changing it signs you out of your other sessions.</p>
+    </div>
+  </div>
+  <div class="ap-panel-body ap-stack">
+    <ap-error-summary verb="change your password" />
+    <ap-field label="Current password" [field]="password.current">
+      <div class="ap-affix">
+        <input class="ap-input" type="password" #current [formField]="password.current" autocomplete="current-password" />
+        <ap-password-reveal [target]="current" label="current password" />
+      </div>
+    </ap-field>
+    <ap-field label="New password" [field]="password.next">
+      <div class="ap-affix">
+        <input class="ap-input" type="password" #next [formField]="password.next" autocomplete="new-password" />
+        <ap-password-reveal [target]="next" label="new password" />
+      </div>
+      <ap-password-checklist [password]="password.next().value()" [email]="auth.user()?.email ?? ''" />
+    </ap-field>
+    <ap-field label="New password again" [field]="password.again">
+      <div class="ap-affix">
+        <input class="ap-input" type="password" #again [formField]="password.again" autocomplete="new-password" />
+        <ap-password-reveal [target]="again" label="new password again" />
+      </div>
+    </ap-field>
+  </div>
+  <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
+    <button apButton="primary" type="submit" [disabled]="password().submitting()">
+      {{ password().submitting() ? 'Changing…' : 'Change password' }}
+    </button>
+  </div>
+</form>
+
+<section class="ap-panel" style="max-width: 640px" aria-labelledby="two-step-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="two-step-title">Two-step sign-in</h2>
+      <p class="ap-panel-desc">A code from an app on your phone, asked after your password. Every account needs it.</p>
+    </div>
+    <ap-status tone="ok">On</ap-status>
+  </div>
+  <div class="ap-panel-body">
+    <div class="ap-list">
+      <div class="ap-list-row">
+        <div class="ap-list-text">
+          <strong>Authenticator app</strong>
+          <span class="ap-muted">Set up on {{ setUpOn() }}</span>
+        </div>
+        <button apButton type="button" (click)="setUpAgain()">Set up again…</button>
+      </div>
+      <div class="ap-list-row">
+        <div class="ap-list-text">
+          <strong>Recovery codes</strong>
+          <span class="ap-muted">{{ auth.user()?.recoveryCodesLeft }} of 10 left. Each works once, if you lose your phone.</span>
+        </div>
+        <button apButton type="button" (click)="newCodes()">Make new codes…</button>
+      </div>
+    </div>
+  </div>
+</section>

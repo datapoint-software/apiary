@@ -6,6 +6,7 @@ import { Plus } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView } from '../api/models';
 import { projectIcon } from '../shell/project-icons';
+import { Auth } from '../auth/auth';
 
 @Component({
   selector: 'ap-overview',
@@ -15,6 +16,7 @@ import { projectIcon } from '../shell/project-icons';
 })
 export class Overview {
   private readonly api = inject(Api);
+  protected readonly auth = inject(Auth);
   protected readonly plus = Plus;
   protected readonly projectIcon = projectIcon;
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });

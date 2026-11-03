@@ -1,6 +1,8 @@
 <ap-page-head heading="Overview">
   <span pageSub>{{ routeCount() }} {{ routeCount() === 1 ? 'route' : 'routes' }} in {{ projects.value().length }} {{ projects.value().length === 1 ? 'project' : 'projects' }}.</span>
-  <a pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />Add route</a>
+  @if (auth.canOperate()) {
+    <a pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />Add route</a>
+  }
 </ap-page-head>
 <div class="ap-grid-2">
   @for (project of projects.value(); track project.id) {
