@@ -6,6 +6,7 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
@@ -37,6 +38,8 @@ import { Auth } from '../auth/auth';
 import { ClusterStatus } from '../cluster/cluster-status';
 import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
+import { DisplayMenu } from './display-menu';
+import { SearchBox } from './search-box';
 import { NavGroup } from './nav-item';
 import { projectIcon } from './project-icons';
 import { readCollapsed, saveCollapsed } from './sidebar-preference';
@@ -44,7 +47,7 @@ import { version } from '../version';
 
 @Component({
   selector: 'ap-shell',
-  host: { '(document:keydown.escape)': 'closeDrawer()' },
+  host: { '(document:keydown.escape)': 'closeDrawer()', '(document:keydown)': 'shortcut($event)' },
   imports: [
     RouterOutlet,
     RouterLink,
@@ -57,6 +60,8 @@ import { version } from '../version';
     CdkMenu,
     CdkMenuItem,
     CdkMenuTrigger,
+    SearchBox,
+    DisplayMenu,
   ],
   templateUrl: './shell.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,10 +97,11 @@ export class Shell {
   protected readonly sidebarLabel = computed(() => {
     const labels = this.isPhone()
       ? ['Open menu', 'Close menu']
-      : ['Expand sidebar', 'Collapse sidebar'];
+      : ['Expand sidebar (Ctrl or ⌘ + B)', 'Collapse sidebar (Ctrl or ⌘ + B)'];
     return labels[this.sidebarExpanded() ? 1 : 0];
   });
   protected readonly panelIcon = PanelLeft;
+  private readonly search = viewChild.required(SearchBox);
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), {
     defaultValue: [],
   });
@@ -196,6 +202,20 @@ export class Shell {
   protected async signOut(): Promise<void> {
     await this.auth.signOut();
     await this.router.navigate(['/sign-in']);
+  }
+
+  protected shortcut(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) {
+      return;
+    }
+    const key = event.key.toLowerCase();
+    if (key === 'k') {
+      event.preventDefault();
+      this.search().focus();
+    } else if (key === 'b' && !this.isPhone()) {
+      event.preventDefault();
+      this.toggleSidebar();
+    }
   }
 
   protected closeDrawer(): void {

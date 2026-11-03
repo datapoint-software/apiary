@@ -55,6 +55,7 @@
       >
         <ap-icon [icon]="panelIcon" />
       </button>
+      <ap-search-box />
       <div class="ap-top-end">
         @if (cluster.view()?.mode === 'Swarm') {
           <a routerLink="/replicas" style="text-decoration: none">
@@ -65,6 +66,7 @@
             </ap-status>
           </a>
         }
+        <ap-display-menu />
         @if (auth.user(); as user) {
           <button
             class="ap-avatar ap-avatar-btn"
