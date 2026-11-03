@@ -63,6 +63,7 @@ On macOS, use .NET runtime 10.0.14 or later (`dotnet --list-runtimes`). Even the
 
 ## Documentation
 
+- [Deploying](docs/deploying.md): step-by-step guide to set up Apiary on a production Swarm, for system administrators.
 - [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and management (admin UI and MCP).
 - [Engineering](docs/engineering.md): repository layout, dependency rules between projects, and the .NET and Angular conventions.
 - [Failure modes](docs/failure-modes.md): what happens when replicas, nodes or the network fail, and when the cluster is scaled.
