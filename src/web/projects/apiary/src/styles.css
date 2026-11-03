@@ -10,3 +10,10 @@ body {
   background: var(--ground);
   color: var(--ink);
 }
+
+.ap-content > :not(router-outlet) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
