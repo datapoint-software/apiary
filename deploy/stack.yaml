@@ -9,6 +9,11 @@ services:
     secrets:
       - source: apiary_root_key_1
         target: apiary_root_key
+        uid: "1654"
+        gid: "1654"
+        mode: 0400
+    read_only: true
+    cap_drop: [ALL]
     ports:
       - { target: 8080, published: 80, protocol: tcp, mode: host }
       - { target: 8443, published: 443, protocol: tcp, mode: host }
@@ -16,6 +21,7 @@ services:
       - { target: 9443, published: 9443, protocol: tcp, mode: host }
     volumes:
       - data:/data
+      - { type: tmpfs, target: /tmp }
     networks:
       - apiary
     stop_grace_period: 30s
