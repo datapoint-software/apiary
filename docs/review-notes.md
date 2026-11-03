@@ -99,7 +99,7 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 
 ## Security findings to resolve before 1.0
 
-- **Recovery codes are hashed with SHA-256.** They have about 40 bits of entropy, so someone holding both the state and the root key could find them offline. The state is now encrypted at rest, which covers a copy of the state volume on its own; a slow hash would cover the rest.
+- **Fixed: recovery codes had about 40 bits of entropy**, few enough to find offline from their SHA-256 hashes by someone holding both the state and the root key. New codes have 16 characters in 4 groups, about 79 bits; codes issued before still work until they're used or replaced.
 - **The state log isn't bound to its order.** Each entry is encrypted and authenticated on its own, so someone who can write to the state volume can't forge or change entries, but could drop the last ones or replay a copy of the volume from earlier. Milestone 4's Raft log replaces this storage; bind each entry to its index there.
 - **Fixed: Apiary generated a root key whenever none was mounted.** In Swarm it now refuses to start without the secret, as architecture.md says.
 - **The common-password list is short**, plus checks for repeated characters and keyboard or alphabet runs. Replace it with a real list (e.g. common passwords of 15 characters or more) before release.
