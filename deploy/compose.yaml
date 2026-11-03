@@ -1,0 +1,27 @@
+name: apiary
+
+services:
+  apiary:
+    image: apiary:dev
+    build:
+      context: ..
+    ports:
+      - "80:8080"
+      - "127.0.0.1:9443:9443"
+    volumes:
+      - data:/data
+    networks:
+      - apiary
+    restart: unless-stopped
+
+  whoami:
+    image: traefik/whoami:v1.11
+    networks:
+      - apiary
+
+volumes:
+  data:
+
+networks:
+  apiary:
+    name: apiary

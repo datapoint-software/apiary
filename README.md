@@ -12,6 +12,20 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 - **Runs small too.** The same image also runs on a one-node Swarm or with Docker Compose on a single computer, without high availability and with fewer features.
 - **Automatic certificates.** Apiary obtains and renews certificates with the [ACME protocol](https://datatracker.ietf.org/doc/html/rfc8555) and shares them across all replicas, without manual steps.
 
+## Try it
+
+Apiary is in development, and the admin port has no sign-in yet, so run it on your own machine only. With Docker:
+
+```bash
+docker compose -f deploy/compose.yaml up --build
+```
+
+- `http://localhost:9443` is the admin UI, bound to your machine only.
+- Add a route from `whoami.localhost` to `whoami`, port 80, then open `http://whoami.localhost`.
+- `docker compose -f deploy/compose.yaml logs -f apiary` shows the access log.
+
+For development without Docker, run `dotnet run --project src/Datapoint.Apiary` and, in `src/web`, `npm start`, which serves the UI on `http://localhost:4200`.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and management (admin UI and MCP).
