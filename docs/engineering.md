@@ -195,10 +195,10 @@ No text written in .NET reaches a client: not validation messages, and not excep
 Where the words come from:
 
 - **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalog is ready for Angular's internationalization when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
-- **MCP** agents have no UI, so the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters. It's never an exception message, and it can later share the UI's translations.
+- **MCP** agents have no UI, and English is what they need: the model reads it, explains the problem to its user in their language, and often corrects its own call. So the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters, and it can later share the UI's translations. English text that Datapoint.Mediator adds for agents is fine too, such as the JSON parser's message for arguments it can't read, which names the field at fault. Like every response, it must never include what the caller sent.
 - **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalog.
 
-**Known issue:** Datapoint.Mediator 4.0.0-beta.3 still sends English text for unreadable request bodies and for 401 and 403, on HTTP and MCP. FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. See [risks.md](risks.md).
+**Known issue:** on the HTTP API, Datapoint.Mediator 4.0.0-beta.3 still sends English text for unreadable request bodies and for 401 and 403, where the UI expects only codes. FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. See [risks.md](risks.md).
 
 ### Security APIs
 
