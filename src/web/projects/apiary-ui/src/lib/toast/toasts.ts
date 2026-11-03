@@ -17,6 +17,15 @@ export class Toasts {
   protected readonly icons = { ok: CircleCheck, error: CircleAlert, info: Info };
   protected readonly close = X;
 
+  protected release(id: number, event: MouseEvent | FocusEvent): void {
+    const toast = event.currentTarget as HTMLElement;
+    const focused = event instanceof FocusEvent ? event.relatedTarget : document.activeElement;
+    const hovered = event instanceof FocusEvent && toast.matches(':hover');
+    if (!hovered && !(focused instanceof Node && toast.contains(focused))) {
+      this.toaster.resume(id);
+    }
+  }
+
   protected act(toast: Toast): void {
     this.toaster.dismiss(toast.id);
     toast.action?.run();

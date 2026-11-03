@@ -37,6 +37,7 @@ export class Toaster {
   }
 
   private arm(toast: Toast): void {
+    clearTimeout(this.timers.get(toast.id));
     if (toast.tone === 'error') {
       return;
     }

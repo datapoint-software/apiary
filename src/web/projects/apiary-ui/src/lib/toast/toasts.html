@@ -4,8 +4,9 @@
     [class]="'ap-toast-' + toast.tone"
     [attr.role]="toast.tone === 'error' ? 'alert' : 'status'"
     (mouseenter)="toaster.pause(toast.id)"
-    (mouseleave)="toaster.resume(toast.id)"
+    (mouseleave)="release(toast.id, $event)"
     (focusin)="toaster.pause(toast.id)"
+    (focusout)="release(toast.id, $event)"
   >
     <ap-icon [icon]="icons[toast.tone]" />
     <span class="ap-toast-text">
