@@ -12,7 +12,7 @@ public static class ApiErrors
     public static IResult? Map(Exception exception) => exception switch
     {
         ValidationException validation => ValidationProblems.From(validation).ToResult(),
-        InvalidActionArgumentsException { Field: { } field } => ValidationProblems.InvalidArgument(field).ToResult(),
+        InvalidActionArgumentsException { Field: { } field } invalid => ValidationProblems.InvalidArgument(field, invalid.Reason).ToResult(),
         ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code, Params: failed.Params).ToResult(),
         ForwardedProblemException forwarded => forwarded.ToResult(),
         ClusterUnavailableException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.NoQuorum).ToResult(),

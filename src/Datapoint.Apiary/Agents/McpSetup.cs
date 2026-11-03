@@ -41,7 +41,7 @@ public static class McpSetup
     private static string? Describe(Exception exception) => exception switch
     {
         ValidationException validation => Json(ValidationProblems.From(validation)),
-        InvalidActionArgumentsException { Field: { } field } => Json(ValidationProblems.InvalidArgument(field)),
+        InvalidActionArgumentsException { Field: { } field } invalid => Json(ValidationProblems.InvalidArgument(field, invalid.Reason)),
         ActionFailedException failed => Json(new ApiProblem(0, failed.Code, Params: failed.Params)),
         ForwardedProblemException forwarded => Json(Forwarded(forwarded.Body)),
         ClusterUnavailableException => Json(new ApiProblem(0, ErrorCodes.NoQuorum)),

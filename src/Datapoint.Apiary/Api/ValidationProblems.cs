@@ -1,5 +1,6 @@
 using System.Text;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Mediator;
 using FluentValidation;
 using FluentValidation.Results;
 
@@ -22,8 +23,14 @@ public static class ValidationProblems
     public static ApiProblem From(ValidationException exception) =>
         new(StatusCodes.Status400BadRequest, ValidationFailed, [.. exception.Errors.Select(ToFieldError)]);
 
-    public static ApiProblem InvalidArgument(string field) =>
-        new(StatusCodes.Status400BadRequest, ValidationFailed, [new FieldError(field, ErrorCodes.Invalid, null)]);
+    public static ApiProblem InvalidArgument(string field, InvalidActionArgumentReason? reason) =>
+        new(StatusCodes.Status400BadRequest, ValidationFailed, [new FieldError(field, ArgumentCode(reason), null)]);
+
+    private static string ArgumentCode(InvalidActionArgumentReason? reason) => reason switch
+    {
+        InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null => ErrorCodes.Required,
+        _ => ErrorCodes.Invalid,
+    };
 
     private static FieldError ToFieldError(ValidationFailure failure) =>
         new(FieldName(failure.PropertyName), Code(failure.ErrorCode), Parameters(failure));
