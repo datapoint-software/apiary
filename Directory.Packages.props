@@ -19,7 +19,6 @@
     <PackageVersion Include="Datapoint.Mediator.FluentValidation" Version="4.0.0-beta.4" />
     <PackageVersion Include="Datapoint.Mediator.FluentValidation.DependencyInjection" Version="4.0.0-beta.4" />
     <PackageVersion Include="Datapoint.Mediator.ModelContextProtocol" Version="4.0.0-beta.4" />
-    <PackageVersion Include="Datapoint.Mediator.CommandLine" Version="4.0.0-beta.4" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
