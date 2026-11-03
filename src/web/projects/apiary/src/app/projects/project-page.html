@@ -1,0 +1,40 @@
+@if (isMissing()) {
+  <ap-not-found />
+} @else if (project(); as project) {
+  <ap-page-head [heading]="project.name" [crumbs]="crumbs">
+    <span pageSub>{{ project.description }}</span>
+    @if (auth.canOperate()) {
+      <span pageActions class="ap-row" style="gap: 8px">
+        <button apWrite apButton="ghost" [iconOnly]="true" type="button" aria-label="Edit project" (click)="actions.edit(project)"><ap-icon [icon]="icons.edit" /></button>
+        <button apWrite apButton="ghost" [iconOnly]="true" type="button" aria-label="Delete project" (click)="actions.delete(project)"><ap-icon [icon]="icons.delete" /></button>
+        <a apWrite apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />Add route</a>
+      </span>
+    }
+  </ap-page-head>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+    <div class="ap-panel ap-stat">
+      <span class="ap-overline">Routes</span><span class="ap-stat-value">{{ project.routeCount }}</span>
+      @if (disabledCount()) {
+        <span class="ap-stat-delta">{{ disabledCount() }} disabled</span>
+      }
+    </div>
+    <div class="ap-panel ap-stat"><span class="ap-overline">Redirects</span><span class="ap-stat-value">{{ project.redirectCount }}</span></div>
+    <div class="ap-panel ap-stat"><span class="ap-overline">Certificates</span><span class="ap-stat-value">{{ certificateCount() }}</span></div>
+  </div>
+  <section class="ap-panel" aria-labelledby="project-routes-title">
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="project-routes-title">Routes</h2></div>
+    @if (projectRoutes().length === 0) {
+      <ap-empty-state heading="No routes in this project">
+        Add a route to send a hostname to a service. It appears in {{ project.name }} and in All routes.
+        @if (auth.canOperate()) {
+          <a apWrite emptyActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />Add route</a>
+        }
+      </ap-empty-state>
+    } @else {
+      @if (selectedRoutes().length > 0) {
+        <ap-route-selection-bar [routes]="selectedRoutes()" (cleared)="clearSelection()" />
+      }
+      <ap-route-table [groups]="groups()" [grouped]="false" [(selected)]="selected" />
+    }
+  </section>
+}

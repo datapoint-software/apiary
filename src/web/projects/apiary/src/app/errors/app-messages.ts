@@ -3,6 +3,12 @@ import { MessageCatalog } from '@datapoint/apiary-ui';
 export const appMessages: MessageCatalog = {
   'validation.failed': () => 'Some fields need attention.',
   'project.notFound': () => 'Choose a project.',
+  'project.nameTaken': () => 'There’s already a project with this name. Choose another.',
+  'project.iconUnknown': () => 'Choose one of the icons.',
+  'project.notEmpty': () => 'This project still has routes, redirects or certificates. Choose where they move first.',
+  'project.last': () => 'This is the only project. Create another before you delete it.',
+  'project.moveToSelf': () => 'Choose another project to move them to.',
+  'project.chooseDestination': () => 'Choose where they go.',
   'route.notFound': () => 'This route was deleted. Go back to the routes list to see what’s there now.',
   'route.duplicate': () => 'Another route already uses this hostname and path. Change one of them.',
   'route.targetsRequired': () => 'Add at least one target.',

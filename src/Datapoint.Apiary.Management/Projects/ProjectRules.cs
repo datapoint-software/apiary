@@ -14,10 +14,10 @@ public static class ProjectRules
     {
         validator.RuleFor(p => p.Name).Cascade(CascadeMode.Stop)
             .Must(name => !string.IsNullOrWhiteSpace(name)).WithErrorCode(ErrorCodes.Required)
-            .Must(name => name.Trim().Length <= MaximumNameLength).WithErrorCode(ErrorCodes.TooLong)
+            .MaximumLength(MaximumNameLength).WithErrorCode(ErrorCodes.TooLong)
             .Must((p, name) => !IsTaken(cluster.Current, name, id(p))).WithErrorCode(ErrorCodes.ProjectNameTaken);
         validator.RuleFor(p => p.Description)
-            .Must(description => description.Trim().Length <= MaximumDescriptionLength).WithErrorCode(ErrorCodes.TooLong);
+            .MaximumLength(MaximumDescriptionLength).WithErrorCode(ErrorCodes.TooLong);
         validator.RuleFor(p => p.Icon)
             .Must(ProjectIcons.All.Contains).WithErrorCode(ErrorCodes.ProjectIconUnknown);
     }

@@ -13,6 +13,7 @@ import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
 import {
   Archive,
   CornerUpRight,
+  FolderOpen,
   Hexagon,
   KeyRound,
   LayoutDashboard,
@@ -106,13 +107,15 @@ export class Shell {
       { title: '', items: [{ icon: LayoutDashboard, label: 'Overview', link: '/' }] },
       {
         title: 'Projects',
-        items: projects.map((p) => ({
-          icon: projectIcon(p.icon),
-          label: p.name,
-          link: '/routes',
-          query: { project: p.id },
-          count: p.routeCount || undefined,
-        })),
+        items: [
+          ...projects.map((p) => ({
+            icon: projectIcon(p.icon),
+            label: p.name,
+            link: `/projects/${p.id}`,
+            count: p.routeCount || undefined,
+          })),
+          { icon: FolderOpen, label: 'All projects', link: '/projects' },
+        ],
       },
       {
         title: 'Traffic',

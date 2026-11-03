@@ -42,6 +42,8 @@ export interface ProjectView {
   readonly description: string;
   readonly icon: string;
   readonly routeCount: number;
+  readonly redirectCount: number;
+  readonly certificateCount: number;
 }
 
 export type Role = 'viewer' | 'operator' | 'administrator';

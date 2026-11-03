@@ -16,6 +16,16 @@ export const routes: Routes = [
       { path: '', title: 'Overview · Apiary', loadComponent: () => import('./overview/overview').then((m) => m.Overview) },
       { path: 'routes', title: 'All routes · Apiary', loadComponent: () => import('./routes/route-list').then((m) => m.RouteList) },
       {
+        path: 'projects',
+        title: 'Projects · Apiary',
+        loadComponent: () => import('./projects/project-list').then((m) => m.ProjectList),
+      },
+      {
+        path: 'projects/:id',
+        title: 'Project · Apiary',
+        loadComponent: () => import('./projects/project-page').then((m) => m.ProjectPage),
+      },
+      {
         path: 'routes/new',
         title: 'New route · Apiary',
         canActivate: [requiresRole('operator')],
