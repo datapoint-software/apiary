@@ -81,6 +81,7 @@ public static class ErrorCodes
     public const string PasswordTooLong = "password.tooLong";
     public const string PasswordCommon = "password.common";
     public const string PasswordContainsEmail = "password.containsEmail";
+    public const string PasswordBreached = "password.breached";
     public const string PasswordIncorrect = "password.incorrect";
     public const string PasswordUnchanged = "password.unchanged";
     public const string CodeInvalid = "code.invalid";
@@ -134,7 +135,7 @@ public static class ErrorCodes
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
         CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,
-        EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
+        EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordBreached, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
         ReplicaNotFound, ReplicaNotPending, ReplicaReachable,

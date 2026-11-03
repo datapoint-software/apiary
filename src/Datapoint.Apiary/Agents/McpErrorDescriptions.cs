@@ -89,6 +89,7 @@ public static partial class McpErrorDescriptions
         ["password.tooLong"] = "Use at most {max} characters.",
         ["password.common"] = "This password is too common.",
         ["password.containsEmail"] = "The password contains the email address's name.",
+        ["password.breached"] = "This password appears in Have I Been Pwned's list of breached passwords.",
         ["password.incorrect"] = "The current password isn't right.",
         ["password.unchanged"] = "The new password is the same as the current one.",
         ["code.invalid"] = "The authenticator code didn't work.",

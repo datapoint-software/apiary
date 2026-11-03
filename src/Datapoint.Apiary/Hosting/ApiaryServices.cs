@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Accounts;
 using Datapoint.Apiary.Agents;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
@@ -43,6 +44,7 @@ public static class ApiaryServices
         services.AddSingleton(new StreamPortPolicy(options.OwnPorts));
         services.AddApiaryManagement();
         services.AddApiarySso();
+        services.AddBreachedPasswords(options.CheckBreachedPasswords);
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
         services.AddScoped<ICommandForwarder, CommandForwarder>();
         services.AddHttpPrincipalAccessor();

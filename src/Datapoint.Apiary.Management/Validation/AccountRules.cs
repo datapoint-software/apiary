@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Security.Passwords;
 using FluentValidation;
@@ -21,14 +22,15 @@ public static class AccountRules
             .MaximumLength(MaximumEmailLength).WithErrorCode(ErrorCodes.TooLong)
             .Must(IsEmail).WithErrorCode(ErrorCodes.EmailInvalid);
 
-    public static IRuleBuilderOptions<T, string> NewPassword<T>(this IRuleBuilderInitial<T, string> rule, Func<T, string?> email) =>
+    public static IRuleBuilderOptions<T, string> NewPassword<T>(this IRuleBuilderInitial<T, string> rule, Func<T, string?> email, IBreachedPasswords breached) =>
         rule.Cascade(CascadeMode.Stop)
             .NotEmpty().WithErrorCode(ErrorCodes.Required)
             .MinimumLength(PasswordPolicy.MinimumLength).WithErrorCode(ErrorCodes.PasswordTooShort)
             .MaximumLength(PasswordPolicy.MaximumLength).WithErrorCode(ErrorCodes.PasswordTooLong)
             .Must(password => !CommonPasswords.IsCommon(password)).WithErrorCode(ErrorCodes.PasswordCommon)
             .Must((model, password) => PasswordPolicy.Check(password, email(model)) is not PasswordProblem.ContainsEmail)
-            .WithErrorCode(ErrorCodes.PasswordContainsEmail);
+            .WithErrorCode(ErrorCodes.PasswordContainsEmail)
+            .MustAsync(async (password, ct) => !await breached.IsBreachedAsync(password, ct)).WithErrorCode(ErrorCodes.PasswordBreached);
 
     public static IRuleBuilderOptions<T, string> Code<T>(this IRuleBuilderInitial<T, string> rule) =>
         rule.Cascade(CascadeMode.Stop)

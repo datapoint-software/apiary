@@ -60,6 +60,7 @@ export const appMessages: MessageCatalog = {
   'code.invalid': () => 'That code didn’t work. Check that your phone’s clock is right, then try the newest code.',
   'email.invalid': () => 'Enter an email address, such as ana@example.com.',
   'email.taken': () => 'Someone already uses this email.',
+  'password.breached': () => 'This password appeared in a data breach, so attackers try it first. Choose another.',
   'password.incorrect': () => 'That isn’t your current password.',
   'password.unchanged': () => 'Choose a password different from the current one.',
   'password.again': () => 'Enter the password again.',
