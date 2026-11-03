@@ -13,7 +13,7 @@ public sealed record CreateStreamRoute(
     [property: Description("A name for people, such as MQTT. At most 40 characters.")] string Name,
     [property: Description("Tcp or Udp.")] StreamProtocol Protocol,
     [property: Description("The port Apiary listens on, from 1 to 65535. It can't be one of Apiary's own ports.")] int ListenPort,
-    [property: Description("The target's hostname or IP address on the shared network, such as mqtt. Loopback and link-local addresses are refused.")] string TargetHost,
+    [property: Description("The target's hostname or IP address on the shared network, such as mqtt. Loopback and link-local addresses, cloud metadata endpoints and Apiary's admin, Raft and cluster ports are refused.")] string TargetHost,
     [property: Description("The target's port.")] int TargetPort,
     [property: Description("TCP only: TLS server names (SNI) this route answers, such as mqtt.example.com or *.example.com, so several TLS services can share a port without Apiary decrypting them. Leave it empty to take every connection on the port.")] IReadOnlyList<string>? ServerNames = null,
     [property: Description("UDP only: seconds without traffic before a client's session ends, from 1 to 3600.")] int IdleTimeoutSeconds = StreamRules.DefaultIdleTimeoutSeconds,

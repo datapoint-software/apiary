@@ -12,7 +12,7 @@ public sealed record CreateRoute(
     [property: Description("The id of the project the route belongs to.")] Guid ProjectId,
     [property: Description("The hostname requests are sent to, such as shop.example.com.")] string Host,
     [property: Description("The path prefix, starting with /. Use / for the whole site.")] string Path,
-    [property: Description("Where requests go: up to 10 targets, each a hostname or IP address, a port and a weight, such as a Swarm service name. With two or more, the weights split the traffic and add up to 100. Loopback and link-local addresses are refused.")] IReadOnlyList<RouteTarget> Targets,
+    [property: Description("Where requests go: up to 10 targets, each a hostname or IP address, a port and a weight, such as a Swarm service name. With two or more, the weights split the traffic and add up to 100. Loopback and link-local addresses, cloud metadata endpoints and Apiary's admin, Raft and cluster ports are refused.")] IReadOnlyList<RouteTarget> Targets,
     [property: Description("How long to wait for the target, in seconds, from 1 to 120.")] int TimeoutSeconds = 30,
     [property: Description("The id of an uploaded certificate that covers the hostname, or null for an automatic certificate from Let's Encrypt.")] Guid? CertificateId = null,
     [property: Description("The addresses and ranges allowed to use the route, such as 10.0.0.0/8 or 2001:db8::/32. Anyone else gets a 403. Leave it empty to allow everyone.")] IReadOnlyList<string>? AllowedAddresses = null,
