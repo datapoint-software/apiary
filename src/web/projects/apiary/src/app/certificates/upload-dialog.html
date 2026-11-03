@@ -45,16 +45,20 @@
       <ap-field label="Certificate and chain" [field]="upload.chainPem" help="PEM, leaf certificate first, then the intermediates. Include the root if your CA isn’t publicly trusted.">
         <textarea class="ap-textarea ap-data" rows="6" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----" [formField]="upload.chainPem" cdkFocusInitial></textarea>
       </ap-field>
-      <label apButton size="small" style="align-self: flex-start; margin-top: -8px">
-        <ap-icon [icon]="fileIcon" />Choose a .pem, .crt or .cer file…
-        <input type="file" accept=".pem,.crt,.cer" class="ap-sr" (change)="load($event, upload.chainPem)" />
+      <label class="ap-drop" style="margin-top: -8px" (apFileDrop)="read($event, upload.chainPem)">
+        <ap-icon [icon]="fileIcon" />
+        <span><strong>Choose a file</strong> or drop it here</span>
+        <span class="ap-caption">.pem, .crt or .cer</span>
+        <input type="file" accept=".pem,.crt,.cer" (change)="load($event, upload.chainPem)" />
       </label>
       <ap-field label="Private key" [field]="upload.keyPem" help="PEM, not protected by a passphrase. It’s encrypted with the root key and never shown again.">
         <textarea class="ap-textarea ap-data" rows="4" spellcheck="false" placeholder="-----BEGIN PRIVATE KEY-----" [formField]="upload.keyPem"></textarea>
       </ap-field>
-      <label apButton size="small" style="align-self: flex-start; margin-top: -8px">
-        <ap-icon [icon]="fileIcon" />Choose a .pem or .key file…
-        <input type="file" accept=".pem,.key" class="ap-sr" (change)="load($event, upload.keyPem)" />
+      <label class="ap-drop" style="margin-top: -8px" (apFileDrop)="read($event, upload.keyPem)">
+        <ap-icon [icon]="fileIcon" />
+        <span><strong>Choose a file</strong> or drop it here</span>
+        <span class="ap-caption">.pem or .key</span>
+        <input type="file" accept=".pem,.key" (change)="load($event, upload.keyPem)" />
       </label>
     </div>
     <div class="ap-dialog-foot">

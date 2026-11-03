@@ -7,6 +7,7 @@ import { FileUp } from 'lucide';
 import { Api } from '../api/api';
 import { CertificatePreview, ProjectView } from '../api/models';
 import { utcDateTime } from '../api/time-ago';
+import { FileDrop } from './file-drop';
 
 interface UploadModel {
   projectId: string;
@@ -25,7 +26,7 @@ const maximumFileSize = 65_536;
 
 @Component({
   selector: 'ap-upload-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, Status, Banner],
+  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, Status, Banner, FileDrop],
   templateUrl: './upload-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -109,9 +110,12 @@ export class UploadDialog {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) {
-      return;
+    if (file) {
+      await this.read(file, field);
     }
+  }
+
+  protected async read(file: File, field: FieldTree<string>): Promise<void> {
     const text = await file.slice(0, maximumFileSize).text();
     field().value.set(text);
     field().markAsTouched();
