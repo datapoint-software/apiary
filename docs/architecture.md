@@ -233,6 +233,7 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 
 - [OpenTelemetry](https://opentelemetry.io/), the vendor-neutral standard, which Datapoint.Mediator already emits. Apiary exports over OTLP to a configured endpoint, and also offers a Prometheus `/metrics` endpoint on the admin port. Both are configurable.
 - Key metrics: requests per route and status code, latency, target health, days until each certificate expires, failed renewals, each replica's Raft role and how far behind it is, and failed writes.
+- Settings: `Apiary__Telemetry__OtlpEndpoint` turns on OTLP export of metrics and traces; `Apiary__Telemetry__Prometheus=false` removes `/metrics`.
 
 ### Access logs
 
@@ -243,7 +244,7 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 
 ### Personal data
 
-- IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognizes network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
+- IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognizes network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`): `Apiary__AccessLogs__ShortenAddresses=true` keeps the first 24 bits of IPv4 addresses and the first 48 of IPv6 ones.
 - The audit log, which Apiary does store, keeps entries for a configurable period, 1 year by default. Older entries are deleted automatically.
 - **Signed off** by the data protection officer on 2026-11-02: full IP addresses by default, on the grounds of network and information security, and a default audit log retention of 1 year, long enough to investigate incidents found months later.
 
@@ -251,4 +252,5 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 
 - **The Docker health check** passes once a replica has first caught up with the cluster, then stays healthy as long as the process responds. Swarm replaces tasks whose health check fails, so failing a replica that falls briefly behind under load would weaken the cluster when it's busiest. Falling behind shows in the metrics instead.
 - **The admin port** offers `/health/live` (the process responds) and `/health/ready` (caught up, with routes and certificates loaded) for monitoring tools.
+- **Targets** are checked by every replica with `GET /` every 15 seconds. Any HTTP answer, even a 404 or 500, counts as up; two failed connections or timeouts in a row count as down. A route is degraded when some of its targets are down for every replica, and down when all are. If every target of a route looks down, Apiary still sends them traffic rather than refusing it, so a wrong verdict never causes an outage on its own.
 - **The public ports** have no health endpoint by default. A load balancer in front can check TCP port 443, or a path admins enable.
