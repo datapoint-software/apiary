@@ -55,7 +55,8 @@ public static class OAuthEndpoints
             s_grantTypes,
             ["S256"],
             s_none,
-            s_none));
+            s_none,
+            IssParameterSupported: true));
     }
 
     private static IResult Authorize(HttpRequest request)
@@ -158,7 +159,8 @@ public static class OAuthEndpoints
         [property: JsonPropertyName("grant_types_supported")] IReadOnlyList<string> GrantTypes,
         [property: JsonPropertyName("code_challenge_methods_supported")] IReadOnlyList<string> CodeChallengeMethods,
         [property: JsonPropertyName("token_endpoint_auth_methods_supported")] IReadOnlyList<string> TokenAuthMethods,
-        [property: JsonPropertyName("revocation_endpoint_auth_methods_supported")] IReadOnlyList<string> RevocationAuthMethods);
+        [property: JsonPropertyName("revocation_endpoint_auth_methods_supported")] IReadOnlyList<string> RevocationAuthMethods,
+        [property: JsonPropertyName("authorization_response_iss_parameter_supported")] bool IssParameterSupported);
 
     private sealed record RegistrationRequest(
         [property: JsonPropertyName("client_name")] string? ClientName,

@@ -55,7 +55,9 @@ export class ConnectAgent {
     this.failure.set('');
     try {
       const connected = await this.api.send<ConnectedAgent>('agents.connect', this.request);
-      location.assign(connected.redirectTo);
+      const target = new URL(connected.redirectTo);
+      target.searchParams.set('iss', location.origin);
+      location.assign(target.toString());
     } catch (problem) {
       this.failure.set(this.messages.describe((problem as ApiProblem).code ?? 'internal'));
       this.working.set(false);
@@ -68,6 +70,7 @@ export class ConnectAgent {
     if (this.request.state) {
       target.searchParams.set('state', this.request.state);
     }
+    target.searchParams.set('iss', location.origin);
     location.assign(target.toString());
   }
 }
