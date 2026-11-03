@@ -706,3 +706,16 @@
 .ap .ap-about-credits a { color: var(--ink-2); }
 .ap-about-logo { color: var(--ink-2); margin-bottom: var(--space-2); }
 .ap-about-logo svg { width: 108px; height: auto; display: block; }
+
+/* Angular CDK dialogs: the overlay pane holds .ap-dialog, the backdrop is the scrim. */
+.ap-dialog-backdrop { background: var(--scrim); animation: ap-fade 200ms ease; }
+.ap-dialog-pane { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+.ap-dialog-pane > * { display: contents; }
+.ap-dialog-pane .ap-dialog { width: 100%; max-height: inherit; overflow: auto; }
+
+/* Links styled as buttons keep the button's colors, not the link color. */
+.ap a.ap-btn { color: var(--ink); }
+.ap a.ap-btn-primary { color: var(--on-honey); }
+.ap a.ap-btn-danger { color: var(--on-critical, #fff); }
+.ap a.ap-menu-item { color: var(--ink); text-decoration: none; }
+.ap a.ap-menu-item:hover, .ap a.ap-menu-item:focus-visible { color: var(--on-honey); }
