@@ -33,7 +33,7 @@ export const defaultMessages: MessageCatalog = {
   'target.loopback': () =>
     'Apiary doesn’t route to loopback addresses. Use the service’s name on the shared network, such as shop-v1.',
   'target.linkLocal': () =>
-    'Apiary doesn’t route to link-local addresses. Use the service’s name on the shared network.',
+    'Apiary doesn’t route to link-local addresses or cloud metadata endpoints. Use the service’s name on the shared network.',
   'target.unspecified': () => 'Use the service’s own address, not 0.0.0.0 or ::.',
   'password.tooShort': (p) => `Use at least ${p['min']} characters.`,
   'password.tooLong': (p) => `Use at most ${p['max']} characters.`,

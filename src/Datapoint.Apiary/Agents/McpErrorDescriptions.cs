@@ -38,7 +38,7 @@ public static partial class McpErrorDescriptions
         ["target.required"] = "A target is required, such as the service name shop-v1.",
         ["target.invalid"] = "Use a service name, hostname or IP address.",
         ["target.loopback"] = "Apiary doesn't forward to loopback addresses. Use the service's name on the shared network, such as shop-v1.",
-        ["target.linkLocal"] = "Apiary doesn't forward to link-local addresses, such as cloud metadata endpoints. Use the service's name on the shared network.",
+        ["target.linkLocal"] = "Apiary doesn't forward to link-local addresses or cloud metadata endpoints. Use the service's name on the shared network.",
         ["target.unspecified"] = "Use the service's own address, not 0.0.0.0 or ::.",
         ["ipRange.invalid"] = "Use an IPv4 or IPv6 address or range, such as 10.0.0.0/8 or 2001:db8::/32.",
         ["ipRange.tooMany"] = "Use at most 100 addresses or ranges. Combine neighbors into a wider range.",

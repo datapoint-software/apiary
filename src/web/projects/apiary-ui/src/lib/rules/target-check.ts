@@ -11,7 +11,7 @@ function ipv4Kind(host: string): string | null | undefined {
   if (a === 127) {
     return 'target.loopback';
   }
-  if (a === 169 && b === 254) {
+  if ((a === 169 && b === 254) || host === '100.100.100.200') {
     return 'target.linkLocal';
   }
   return host === '0.0.0.0' ? 'target.unspecified' : null;
@@ -22,7 +22,7 @@ function ipv6Kind(host: string): string | null {
   if (bare === '::1') {
     return 'target.loopback';
   }
-  if (/^fe80:/i.test(bare)) {
+  if (/^fe80:/i.test(bare) || /^fd00:ec2::254$/i.test(bare)) {
     return 'target.linkLocal';
   }
   return bare === '::' ? 'target.unspecified' : null;
