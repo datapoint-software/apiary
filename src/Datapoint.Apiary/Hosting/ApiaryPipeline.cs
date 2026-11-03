@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Agents;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster.Raft;
@@ -23,6 +24,7 @@ public static class ApiaryPipeline
         app.UseWhen(Listener.IsAdmin, admin => admin.UseAdminSecurityHeaders().UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
         app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
         app.UseRouting();
+        app.UseAuthorization();
         var admin = app.MapGroup("").WithMetadata(ListenerMetadata.Admin);
         admin.MapApiaryMetrics(app.Configuration.GetSection("Apiary:Telemetry"));
         MapAdmin(admin);
@@ -44,6 +46,7 @@ public static class ApiaryPipeline
         admin.MapGroup("/operator").MapApiaryOperator();
         admin.MapOpenApi();
         admin.MapApiaryOAuth();
+        admin.MapApiaryMcp();
         admin.MapActions("/api", o =>
         {
             o.SerializerOptions = ApiJson.Options;

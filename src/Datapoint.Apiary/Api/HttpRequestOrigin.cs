@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Datapoint.Apiary.Auth;
+using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Replication;
 
@@ -8,7 +10,7 @@ public sealed class HttpRequestOrigin(IHttpContextAccessor accessor) : IRequestO
 {
     public string? Address => Forwarded is { } forwarded ? forwarded.Address : ConnectionAddress();
 
-    public string? Client => Forwarded?.Client;
+    public string? Client => Forwarded is { } forwarded ? forwarded.Client : accessor.HttpContext?.User.FindFirstValue(ApiaryClaims.Client);
 
     public string? Device => Forwarded is { } forwarded ? forwarded.Device : DeviceNames.From(accessor.HttpContext?.Request.Headers.UserAgent.ToString());
 

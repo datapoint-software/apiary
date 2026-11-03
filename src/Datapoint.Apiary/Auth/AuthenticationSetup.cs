@@ -22,6 +22,7 @@ public static class AuthenticationSetup
                     ? AuthenticationSchemes.LocalOperator
                     : AuthenticationSchemes.Session)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(AuthenticationSchemes.Session, null)
+            .AddScheme<AuthenticationSchemeOptions, AgentAuthenticationHandler>(AuthenticationSchemes.Agent, null)
             .AddScheme<AuthenticationSchemeOptions, LocalOperatorAuthenticationHandler>(AuthenticationSchemes.LocalOperator, null);
         return services;
     }

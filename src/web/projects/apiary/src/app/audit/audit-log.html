@@ -26,10 +26,13 @@
       <h3 class="ap-overline" style="margin: 18px 0 0">{{ day.title }}</h3>
       <div>
         @for (entry of day.entries; track entry.id) {
-          <div class="ap-event" [class.ap-event-denied]="entry.outcome !== 'succeeded'">
+          <div class="ap-event" [class.ap-event-denied]="entry.outcome !== 'succeeded'" [class.ap-event-agent]="byAgent(entry)">
             <span class="ap-dot" aria-hidden="true"></span>
             <div>
               <div>
+                @if (byAgent(entry)) {
+                  Agent “{{ entry.client }}” for
+                }
                 <strong>{{ entry.user ?? 'System' }}</strong> {{ actionLabel(entry.action) }}
                 @if (entry.outcome === 'denied') {
                   <span class="ap-tag">Denied</span>
@@ -38,7 +41,7 @@
                 }
               </div>
               <div class="ap-event-meta">
-                <span class="ap-data">{{ entry.action }}</span>
+                <span class="ap-data">{{ entry.action }}</span>{{ byAgent(entry) ? ' · through MCP' : '' }}
                 @if (entry.address) {
                   · from <span class="ap-data">{{ entry.address }}</span>
                 }

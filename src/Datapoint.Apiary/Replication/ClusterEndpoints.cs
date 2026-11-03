@@ -128,14 +128,17 @@ public static class ClusterEndpoints
     private static ClaimsPrincipal Principal(ForwardedCommand command, ApiaryState state, DateTimeOffset now)
     {
         var session = command.Claims.FirstOrDefault(c => c.Type == ApiaryClaims.SessionId)?.Value;
-        if (session is null)
+        var agent = command.Claims.FirstOrDefault(c => c.Type == ApiaryClaims.AgentId)?.Value;
+        var principal = (session, agent) switch
         {
-            return CommandForwarder.Principal(command);
-        }
-
-        return Guid.TryParse(session, out var id)
-            && SessionPrincipals.Create(state, state.Sessions.GetValueOrDefault(id), now, command.AuthenticationType ?? AuthenticationSchemes.Session) is { } principal
-            ? principal
-            : new ClaimsPrincipal(new ClaimsIdentity());
+            ({ } sessionId, _) => Guid.TryParse(sessionId, out var id)
+                ? SessionPrincipals.Create(state, state.Sessions.GetValueOrDefault(id), now, command.AuthenticationType ?? AuthenticationSchemes.Session)
+                : null,
+            (_, { } agentId) => Guid.TryParse(agentId, out var id)
+                ? AgentPrincipals.Create(state, state.Agents.GetValueOrDefault(id), now, command.AuthenticationType ?? AuthenticationSchemes.Agent)
+                : null,
+            _ => CommandForwarder.Principal(command),
+        };
+        return principal ?? new ClaimsPrincipal(new ClaimsIdentity());
     }
 }

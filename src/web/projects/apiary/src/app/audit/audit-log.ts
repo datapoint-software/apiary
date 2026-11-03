@@ -32,6 +32,7 @@ export class AuditLog {
   protected readonly who = signal('');
   protected readonly failedOnly = signal(false);
   protected readonly actionLabel = actionLabel;
+  protected readonly byAgent = (entry: AuditEntry) => !!entry.user && !!entry.client;
 
   protected readonly entries = httpResource<AuditEntry[]>(
     () =>

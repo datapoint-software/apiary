@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Agents;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Certificates;
@@ -45,6 +46,7 @@ public static class ApiaryServices
             .AddAuthorizationBehavior()
             .AddValidationBehavior()
             .AddBehavior<StateTransactionBehavior>());
+        services.AddApiaryMcp();
 
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddApiaryProxy(options.OwnPorts, section.GetSection("AccessLogs"));
