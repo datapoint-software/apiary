@@ -17,7 +17,7 @@ public static class KestrelSetup
         {
             var options = kestrel.ApplicationServices.GetRequiredService<IOptions<ApiaryOptions>>().Value;
             var allowlist = AdminAllowlist.Create(
-                options.AdminAllowlist,
+                options.AdminRanges,
                 kestrel.ApplicationServices.GetRequiredService<ILogger<AdminAllowlist>>());
             kestrel.AddServerHeader = false;
             kestrel.ListenAnyIP(options.HttpPort);

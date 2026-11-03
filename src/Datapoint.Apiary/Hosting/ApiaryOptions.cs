@@ -22,8 +22,12 @@ public sealed class ApiaryOptions
 
     public bool CheckBreachedPasswords { get; set; }
 
-    public IReadOnlyList<string> AdminAllowlist { get; set; } =
+    public static IReadOnlyList<string> DefaultAdminAllowlist { get; } =
         ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7", "127.0.0.0/8", "::1/128"];
+
+    public IReadOnlyList<string> AdminAllowlist { get; set; } = [];
+
+    public IReadOnlyList<string> AdminRanges => AdminAllowlist is [] ? DefaultAdminAllowlist : AdminAllowlist;
 
     public IReadOnlySet<int> OwnPorts => new HashSet<int> { HttpPort, HttpsPort, AdminPort, RaftPort, ClusterPort };
 }
