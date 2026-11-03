@@ -150,7 +150,11 @@ public static class OAuthEndpoints
         {
             try
             {
-                await mediator.SendAsync(new RevokeAgentToken(token, clientId), context.RequestAborted);
+                var revocation = await mediator.SendAsync(new RevokeAgentToken(token, clientId), context.RequestAborted);
+                if (revocation.Error is { } error)
+                {
+                    return Error(error, StatusCodes.Status400BadRequest);
+                }
             }
             catch (ValidationException)
             {
