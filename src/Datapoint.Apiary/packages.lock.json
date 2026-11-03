@@ -4,58 +4,58 @@
     "net10.0": {
       "Datapoint.Mediator.AspNetCore": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "xIs+xSCOJ4FKEG9X1th12VYClb/tnjgEG7xjQYqO2V+eHXl08lPuFB2JmXR59YdTetRdg9pYi7GMx9zy422cgA==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "9i9LxPorQ1jV78OTiyOMcRJZXh101k8WnrqVzb7xUxoIBfMEMttd8Ci41ON96MI1nEokjclAwjSof+RH878EtQ==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5"
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.Authorization.AspNetCore": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "Oi4hhtAxADCVv9JYp9et7pcCMoVliSXwrZFaO5i/CLEff9EUmkXodmlU5UuOEAHaJPPCDhwWPa3wxOkrPJjieg==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "aqxJFX9IgiqLRzYlJb080pNfd0xeIQ49Oa9+BS4/vyRdoHBLsVueL+x60TzT+D8ZRH6232qc3rPyYWJdL5HMkg==",
         "dependencies": {
-          "Datapoint.Mediator.Authorization": "4.0.0-beta.5"
+          "Datapoint.Mediator.Authorization": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.Authorization.DependencyInjection": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "b5xKq47LIf7ze36X2BXUULDGZx5lPmz/kkx96Nek3Porwu+YDtT72SpyPcMnUCyEBzY+sXMo1WpO8j3BPZzkWQ==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "OBthK/3eCk362K/BgJkFZVUYVR+QtCWeP+y3CfKe+KYlvUGBlwhqBUI8yTLF67PXUjOf3b7pr0AVt6ngKkS+Zw==",
         "dependencies": {
-          "Datapoint.Mediator.Authorization": "4.0.0-beta.5",
-          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.5"
+          "Datapoint.Mediator.Authorization": "4.0.0-beta.6",
+          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.DependencyInjection": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "/8T5wZCzC/jv6yBiMD7lLf24lxKi+mOFYhhr3MoF6mZaDy6/3V2QXmCm+mnYDxfXrO11Y7IQWkue8mc/ZbA/WQ==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "okk3FEB6G3Gm9sUG1Aly08q00hZchtZW6Zgbp0tcR58WhDMfLSiJ5ZPr7Y1Y8+sRbZ3u6e+s8Skf7mY6wzaJaQ==",
         "dependencies": {
-          "Datapoint.Mediator": "4.0.0-beta.5"
+          "Datapoint.Mediator": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.FluentValidation.DependencyInjection": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "dFL4hGA44N20B7A3IIj6pSAwslshA5GFnw/Y4VeDunhUgR1oEtAnoBMZfhQDEV6/ODwJRf7AKHPo3Xui5wQAWg==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "8d82DpIbmU3Souh5iLemnuqFYrntf429ppxUgGvNIzVM0+l2DUR2iwjyB79xjMPHzIlLxm7IvU759kHKshAKFw==",
         "dependencies": {
-          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.5",
-          "Datapoint.Mediator.FluentValidation": "4.0.0-beta.5"
+          "Datapoint.Mediator.DependencyInjection": "4.0.0-beta.6",
+          "Datapoint.Mediator.FluentValidation": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.ModelContextProtocol": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "VB8D3m73W7x+RFTSxtOFmWws0trie9cFn3Gyc2/cEQK00oRt/2z6UxNJ7pnMXJWc5f6oC3/qlpojncfbY6+62w==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "FLfMMQaNFmKiGXFDS9h6qyqFLiFeND2hQJ24rtYSihEQVssNOqM66+nRNgh/sxMUj57ZZsJLFnjHyD5joOKihQ==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5",
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6",
           "ModelContextProtocol": "2.3.0"
         }
       },
@@ -303,8 +303,8 @@
           "Datapoint.Apiary.Certificates": "[0.1.0, )",
           "Datapoint.Apiary.Cluster": "[0.1.0, )",
           "Datapoint.Apiary.Security": "[0.1.0, )",
-          "Datapoint.Mediator.Abstractions": "[4.0.0-beta.5, )",
-          "Datapoint.Mediator.Authorization": "[4.0.0-beta.5, )",
+          "Datapoint.Mediator.Abstractions": "[4.0.0-beta.6, )",
+          "Datapoint.Mediator.Authorization": "[4.0.0-beta.6, )",
           "FluentValidation": "[12.2.0, )",
           "FluentValidation.DependencyInjectionExtensions": "[12.2.0, )"
         }
@@ -322,35 +322,35 @@
       },
       "Datapoint.Mediator": {
         "type": "CentralTransitive",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "XrhJXF8Y1vRh14Zskl6vgnqrCEBwjQGBX20HaTHcxYpbf2tBws3wITsohuVY2ebLVSqBWOQxMQowTQKtyy4kKQ==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "FUfndR+fqXb8mPQmUxDwsmGLFl3XvoJXUups0cuX+7oWk/0SaY8cTNCVZJKbxTECMxI0bnWsq+RMEazejH9tbQ==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5"
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "P/RkaxjOQ+p9pxmxromhOWI+nUuN6GBUy7w58rJuiFvLvZssSRSGwa93n1ebLdYb4V7kW+8ObykfHNTpn9pmAw=="
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "OSyC0y8+1v7RX1L/arW20QctFgP+imomVLhkdmgZGGyxDlJkBeOW1BGWRnHYpQDgDqcya1Qxb9Qs6Oo9Eg/3HQ=="
       },
       "Datapoint.Mediator.Authorization": {
         "type": "CentralTransitive",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "P6w1Q6EEq3sKyltwhiw87I/+PUKcCDMEPO7Tz+FAX9ZTEOR8oMFAO3FjdRvkNUn/11gu+1pj6TuK5nIVbBHF7g==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "rYNKxi/CfvHo5K78MweKO7QIUXXRY5d7gqYm3/STETZM46SicTrmdoLisqqZ1NBZvbe7f+vfCuINZPLyj1Fe+g==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5"
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6"
         }
       },
       "Datapoint.Mediator.FluentValidation": {
         "type": "CentralTransitive",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "oFDpI29Evc1JqXi7cZITDUVi6zGmmVx6pvwpaIy4xwMwEsy0e9Jc6gsH/lgU2z7RoAt1/RNy9ZB+cTPQrbIf3Q==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "C+qr5ZaCKDq7mCfna9rdbW/5NaLLgbCNQe6oCSoQOHNa6nn2JCTyd1Hnp7B/SK840D0vQybfkQIqs8lGD/WqXg==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5",
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6",
           "FluentValidation": "12.2.0"
         }
       },

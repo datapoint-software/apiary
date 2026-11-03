@@ -4,17 +4,17 @@
     "net10.0": {
       "Datapoint.Mediator.Abstractions": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "P/RkaxjOQ+p9pxmxromhOWI+nUuN6GBUy7w58rJuiFvLvZssSRSGwa93n1ebLdYb4V7kW+8ObykfHNTpn9pmAw=="
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "OSyC0y8+1v7RX1L/arW20QctFgP+imomVLhkdmgZGGyxDlJkBeOW1BGWRnHYpQDgDqcya1Qxb9Qs6Oo9Eg/3HQ=="
       },
       "Datapoint.Mediator.Authorization": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.5, )",
-        "resolved": "4.0.0-beta.5",
-        "contentHash": "P6w1Q6EEq3sKyltwhiw87I/+PUKcCDMEPO7Tz+FAX9ZTEOR8oMFAO3FjdRvkNUn/11gu+1pj6TuK5nIVbBHF7g==",
+        "requested": "[4.0.0-beta.6, )",
+        "resolved": "4.0.0-beta.6",
+        "contentHash": "rYNKxi/CfvHo5K78MweKO7QIUXXRY5d7gqYm3/STETZM46SicTrmdoLisqqZ1NBZvbe7f+vfCuINZPLyj1Fe+g==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.5"
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6"
         }
       },
       "FluentValidation": {
