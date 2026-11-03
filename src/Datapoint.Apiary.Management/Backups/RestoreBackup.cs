@@ -5,6 +5,6 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Backups;
 
-[Action("backups.restore", Description = "Replaces the whole configuration with a backup's, on every replica, and signs everyone out. Changes made since the backup are lost. Traffic keeps flowing.")]
+[Action("backups.restore", Description = "Replaces the whole configuration with a backup's, on every replica, and signs everyone out. Changes made since the backup are lost, but the audit log keeps their entries. Traffic keeps flowing.")]
 [RequiresRole(Role.Administrator)]
 public sealed record RestoreBackup([property: Description("The backup file's content, as backups.export returned it.")] string Content) : ICommand<RestoredBackup>;
