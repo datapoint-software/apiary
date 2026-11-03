@@ -23,6 +23,7 @@ const labels: Record<string, string> = {
   'keys.rotate-data-key': 'started using a new key to encrypt the stored configuration',
   'certificates.upload': 'uploaded a certificate',
   'certificates.delete': 'deleted a certificate',
+  'users.update-session-policy': 'changed when people are signed out for inactivity',
   'admin-certificate.upload': 'uploaded the admin interface’s certificate',
   'admin-certificate.reset': 'switched the admin interface to a self-signed certificate',
   'setup.complete': 'completed setup and became the first administrator',

@@ -13,11 +13,12 @@ import { openDialog } from '../shell/open-dialog';
 import { InviteDialog } from './invite-dialog';
 import { InviteLinkData, InviteLinkDialog } from './invite-link-dialog';
 import { RoleDialog } from './role-dialog';
+import { SessionPolicyPanel } from './session-policy-panel';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-user-list',
-  imports: [WriteLock, PageHead, Button, Icon, Banner, Status, CdkMenu, CdkMenuItem, CdkMenuTrigger],
+  imports: [WriteLock, SessionPolicyPanel, PageHead, Button, Icon, Banner, Status, CdkMenu, CdkMenuItem, CdkMenuTrigger],
   templateUrl: './user-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

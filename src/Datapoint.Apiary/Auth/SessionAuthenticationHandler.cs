@@ -11,6 +11,7 @@ public sealed class SessionAuthenticationHandler(
     ILoggerFactory logger,
     UrlEncoder encoder,
     IClusterState cluster,
+    SessionActivity activity,
     TimeProvider time) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -28,7 +29,7 @@ public sealed class SessionAuthenticationHandler(
 
         var state = cluster.Current;
         var session = state.Sessions.Values.FirstOrDefault(s => s.TokenHash == hash);
-        return SessionPrincipals.Create(state, session, time.GetUtcNow(), Scheme.Name) is { } principal
+        return SessionPrincipals.Create(state, session, time.GetUtcNow(), Scheme.Name) is { } principal && !activity.HasExpired(Context, session ?? throw new InvalidOperationException("A principal without a session."))
             ? AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name))
             : AuthenticateResult.NoResult();
     }

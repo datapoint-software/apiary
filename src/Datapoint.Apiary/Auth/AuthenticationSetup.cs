@@ -15,6 +15,7 @@ public static class AuthenticationSetup
             o.XmlEncryptor = new NullXmlEncryptor();
         });
         services.AddSingleton<LocalOperatorToken>();
+        services.AddSingleton<SessionActivity>();
         services.AddScoped<ISessionCookie, SessionCookie>();
         services.AddAuthentication(AuthenticationSchemes.Default)
             .AddPolicyScheme(AuthenticationSchemes.Default, null, o => o.ForwardDefaultSelector = context =>

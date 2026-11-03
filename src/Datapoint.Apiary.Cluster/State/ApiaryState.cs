@@ -103,5 +103,7 @@ public sealed record ApiaryState
 
     public AdminCertificate? AdminCertificate { get; init; }
 
+    public SessionPolicy? SessionPolicy { get; init; }
+
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

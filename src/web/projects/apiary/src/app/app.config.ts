@@ -4,13 +4,14 @@ import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from 
 import { provideErrorMessages } from '@datapoint/apiary-ui';
 import { routes } from './app.routes';
 import { unauthorized } from './auth/unauthorized';
+import { backgroundRequests } from './auth/user-activity';
 import { appMessages } from './errors/app-messages';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding(), withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
-    provideHttpClient(withFetch(), withInterceptors([unauthorized])),
+    provideHttpClient(withFetch(), withInterceptors([backgroundRequests, unauthorized])),
     provideErrorMessages(appMessages),
   ],
 };

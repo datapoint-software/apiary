@@ -228,6 +228,10 @@ export interface CertificateDetails {
   readonly addedBy?: string;
 }
 
+export interface SessionPolicyView {
+  readonly idleMinutes: number;
+}
+
 export interface AdminCertificateView {
   readonly selfSigned: boolean;
   readonly hosts: readonly string[];
