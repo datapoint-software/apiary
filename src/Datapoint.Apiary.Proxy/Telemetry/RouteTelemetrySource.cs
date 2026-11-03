@@ -20,7 +20,7 @@ public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLooku
             snapshots.Add(new RouteSnapshot(route.Id, metrics.PerMinute(id), Targets(ProxyConfigBuilder.ClusterId(route))));
         }
 
-        snapshots.AddRange(cluster.Current.StreamRoutes.Keys.Select(id => new RouteSnapshot(id, 0, []) { Connections = streams.Count(id) }));
+        snapshots.AddRange(cluster.Current.StreamRoutes.Keys.Select(id => new RouteSnapshot(id, 0, []) { Connections = streams.Count(id), LastConnectionAt = streams.LastOpened(id) }));
         metrics.Forget(keep);
         return snapshots;
     }

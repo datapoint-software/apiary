@@ -49,11 +49,8 @@
               <td class="ap-data ap-muted">{{ stream.targetHost }}:{{ stream.targetPort }}</td>
               <td class="ap-muted">{{ projectNames().get(stream.projectId) }}</td>
               <td>
-                @if (stream.disabled) {
-                  <ap-status tone="off">Disabled</ap-status>
-                } @else {
-                  <ap-status tone="ok">Active</ap-status>
-                }
+                @let status = activity(stream);
+                <ap-status [tone]="status.tone">{{ status.text }}</ap-status>
                 @if (stream.allowedAddresses.length) {
                   <span class="ap-caption" style="display: block">Allowlist</span>
                 }

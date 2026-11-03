@@ -69,6 +69,7 @@ export interface StreamRouteView {
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
   readonly connections: number;
+  readonly lastConnectionAt?: string;
   readonly changedAt: string;
   readonly changedBy?: string;
 }

@@ -9,6 +9,7 @@ import { ProjectView, StreamRouteView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 import { openDialog } from '../shell/open-dialog';
+import { streamActivity } from './stream-activity';
 import { SavedStream, StreamDialog } from './stream-dialog';
 
 @Component({
@@ -24,6 +25,7 @@ export class StreamList {
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
   protected readonly auth = inject(Auth);
+  protected readonly activity = streamActivity;
   protected readonly icons = { add: Plus, edit: Pencil, delete: Trash2, disable: Power, enable: Play };
   protected readonly streams = httpResource<StreamRouteView[]>(() => this.api.query('streams.list'), { defaultValue: [] });
   private readonly refresh = reloadEvery(this.streams);

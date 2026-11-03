@@ -23,6 +23,7 @@ public static class RouteTelemetryMerger
         return new RouteTelemetry(reports.Sum(r => r.RequestsPerMinute), Health(up, down), down)
         {
             Connections = reports.Sum(r => r.Connections),
+            LastConnectionAt = reports.Max(r => r.LastConnectionAt),
         };
     }
 

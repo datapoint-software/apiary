@@ -15,6 +15,6 @@ public sealed class ListStreamRoutesHandler(IClusterState cluster, IRouteTelemet
             .OrderBy(s => s.ListenPort)
             .ThenBy(s => s.Protocol)
             .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(s => StreamRouteView.Of(s, readings.TryGetValue(s.Id, out var reading) ? reading.Connections : 0))];
+            .Select(s => StreamRouteView.Of(s, readings.GetValueOrDefault(s.Id)))];
     }
 }

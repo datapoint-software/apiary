@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Cluster.Streams;
+using Datapoint.Apiary.Management.Routes;
 
 namespace Datapoint.Apiary.Management.Streams;
 
@@ -15,10 +16,11 @@ public sealed record StreamRouteView(
     bool Disabled,
     IReadOnlyList<string> AllowedAddresses,
     long Connections,
+    DateTimeOffset? LastConnectionAt,
     DateTimeOffset ChangedAt,
     string? ChangedBy)
 {
-    public static StreamRouteView Of(StreamRoute stream, long connections) => new(
+    public static StreamRouteView Of(StreamRoute stream, RouteTelemetry? telemetry) => new(
         stream.Id,
         stream.ProjectId,
         stream.Name,
@@ -30,7 +32,8 @@ public sealed record StreamRouteView(
         stream.IdleTimeoutSeconds,
         stream.Disabled,
         stream.AllowedAddresses ?? [],
-        connections,
+        telemetry?.Connections ?? 0,
+        telemetry?.LastConnectionAt,
         stream.ChangedAt,
         stream.ChangedBy);
 }
