@@ -1,0 +1,5 @@
+/* Prototype controls: not part of Apiary. They switch the invented data between scenarios. */
+.pt-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 65; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border: 1.5px dashed var(--ink-3); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink-2); font: 600 0.75rem/1rem var(--font-text); cursor: pointer; box-shadow: var(--shadow-card); }
+.pt-fab:hover { color: var(--ink); border-color: var(--ink-2); }
+.pt-panel { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 66; width: min(340px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow-y: auto; border: 1.5px dashed var(--ink-3); }
+.ap-toasts { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }

@@ -1,0 +1,41 @@
+<a class="ap-skip" href="#main" data-skip>Skip to content</a>
+<div class="ap-shell" id="app-shell" data-shell>
+<aside class="ap-side" id="side" aria-label="Sidebar">
+<div class="ap-side-head"><a class="ap-brand" href="#/" aria-label="Apiary, Overview"><span class="ap-brand-mark" aria-hidden="true"></span><span class="ap-brand-name">Apiary</span></a></div>
+<div id="side-nav" style="display:contents"></div>
+<div class="ap-side-foot">
+<nav class="ap-nav" aria-label="Help"><button class="ap-nav-item ap-nav-button" type="button" data-label="About Apiary" data-about><i data-lucide="info" class="ap-icon" aria-hidden="true"></i><span class="ap-nav-label">About Apiary</span></button></nav>
+<div class="ap-attribution">
+<a href="https://datapoint.software/" aria-label="Datapoint Software" style="color:inherit">{{LOGO}}</a>
+<span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
+<span>Version 0.4.0 · <a href="#">AGPL-3.0</a> · <a href="#">Source</a></span>
+</div></div>
+</aside>
+<div class="ap-side-scrim" data-drawer-close aria-hidden="true"></div>
+<div style="min-width:0">
+<header class="ap-top">
+<button class="ap-btn ap-btn-ghost ap-btn-icon ap-sidebar-btn" type="button" aria-controls="side" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl or ⌘ + B)" data-sidebar><i data-lucide="panel-left" class="ap-icon" aria-hidden="true"></i></button>
+<div class="ap-search" role="search"><i data-lucide="search" class="ap-icon" aria-hidden="true"></i><input class="ap-input" id="q" type="search" placeholder="Search routes, certificates, users" aria-label="Search" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list" autocomplete="off" spellcheck="false"><span class="ap-kbd" aria-hidden="true">⌘K</span><div class="ap-menu ap-search-pop" id="q-list" role="listbox" aria-label="Search results" hidden></div></div>
+<div class="ap-top-end">
+<a href="#/replicas" id="top-status" style="text-decoration:none"></a>
+<div style="position:relative"><button class="ap-btn ap-btn-ghost ap-btn-icon" type="button" aria-label="Display and accessibility" aria-haspopup="dialog" aria-expanded="false" aria-controls="display" data-display><i data-lucide="accessibility" class="ap-icon" aria-hidden="true"></i></button>
+<div class="ap-popover" role="dialog" aria-modal="false" aria-labelledby="display-t" id="display" hidden style="right:0;top:calc(100% + 8px)">
+<h2 class="ap-h ap-h-3" id="display-t">Display and accessibility</h2>
+<div class="ap-setting"><span class="ap-label" id="set-theme">Appearance</span><div class="ap-seg" role="group" aria-labelledby="set-theme" data-setting="theme"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="light">Light</button><button type="button" aria-pressed="false" data-value="dark">Dark</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-text">Text size</span><div class="ap-seg" role="group" aria-labelledby="set-text" data-setting="text"><button type="button" aria-pressed="true" data-value="default">Default</button><button type="button" aria-pressed="false" data-value="large">Large</button><button type="button" aria-pressed="false" data-value="larger">Larger</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-contrast">Contrast</span><div class="ap-seg" role="group" aria-labelledby="set-contrast" data-setting="contrast"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="more">More</button></div></div>
+<div class="ap-setting"><span class="ap-label" id="set-motion">Motion</span><div class="ap-seg" role="group" aria-labelledby="set-motion" data-setting="motion"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="reduce">Reduced</button></div></div>
+<p class="ap-caption" style="margin:0">Automatic follows your device settings. Saved in this browser only.</p>
+</div></div>
+<button class="ap-avatar ap-avatar-btn" type="button" aria-label="Account: Ana Lopes" aria-haspopup="menu" aria-expanded="false" data-account>AL</button>
+</div>
+</header>
+<div id="global"></div>
+<main class="ap-content" id="main" tabindex="-1"></main>
+</div>
+</div>
+<div id="bare" hidden></div>
+<div id="overlays"></div>
+<div id="toasts" class="ap-toasts" aria-live="polite"></div>
+<div id="announcer" class="ap-sr" aria-live="polite"></div>
+<button class="pt-fab" type="button" aria-haspopup="dialog" aria-expanded="false" data-proto><i data-lucide="flask-conical" class="ap-icon" aria-hidden="true"></i>Prototype</button>
