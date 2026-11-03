@@ -213,8 +213,50 @@ We follow the [Angular style guide](https://angular.dev/style-guide) and [Angula
   - Members used only by the template are `protected`; properties Angular sets are `readonly`.
 - **State:** signals, `computed` and `linkedSignal`. `effect` is only for side effects outside Angular, never to copy state. Data is loaded with `httpResource`.
 - **Services:** the `@Service` decorator, introduced in v22, rather than `@Injectable({ providedIn: 'root' })`.
-- **Forms:** [Signal Forms](https://angular.dev/api/forms/signals/form), stable since v22. The library adds the validation behavior the prototype settled (see the Validation card): check a field when you leave it, then as you type, and show an error summary on submit. It builds these on the forms' `touched()` and `errors()` signals.
+- **Forms:** [Signal Forms](https://angular.dev/api/forms/signals/form), stable since v22; see [Forms](#forms).
 - **Routing:** lazy-loaded feature routes. Unsaved changes are guarded with a functional `CanDeactivateFn`.
+
+### Readability
+
+The same rules as in .NET. In TypeScript, ESLint enforces most of them.
+
+| Rule | ESLint rule |
+|---|---|
+| At most three levels of nesting | `max-depth: 3` |
+| A complexity limit per function | `complexity: 10` |
+| Functions of about 40 lines at most | `max-lines-per-function: 40` |
+| No `else` after `return` | `no-else-return` |
+| No nested conditional operators | `no-nested-ternary` |
+| Braces always | `curly` |
+| Strict equality | `eqeqeq` |
+| One class per file, named after it | `max-classes-per-file: 1` |
+| No `any`: use `unknown` and narrow it | `@typescript-eslint/no-explicit-any` |
+| No non-null assertion `!`; the rare justified one gets a comment and a suppression | `@typescript-eslint/no-non-null-assertion` |
+| `readonly` wherever a value doesn't change | `@typescript-eslint/prefer-readonly` |
+| Angular's naming: camelCase members, PascalCase types | `@typescript-eslint/naming-convention` |
+
+Guard clauses, `continue` in loops and names for complex conditions apply as in .NET, and are checked in review.
+
+**Templates only display:**
+
+- Logic goes into `computed()` signals: a template reads `isExpired()`, never `route.expires < now && !route.disabled`. Checked by `@angular-eslint/template/conditional-complexity` and `template/cyclomatic-complexity`.
+- At most two levels of `@if` and `@for` nesting in a template. Anything deeper becomes a child component.
+- Built-in control flow (`template/prefer-control-flow`), and self-closing tags for empty elements (`template/prefer-self-closing-tags`).
+- Templates in their own `.html` file, except for library components of a few lines.
+
+**Components do one job.** Feature pages load data and handle actions. Library and presentational components take inputs and emit outputs, nothing more. A component class of more than a few hundred lines is doing more than one job.
+
+### Forms
+
+- **One vocabulary of errors.** Client-side validators produce the same codes as the server's validators (`hostname.consecutiveDots`, `target.loopback`, `range`), so the UI's message catalog words both alike, and there's one list to translate.
+- **Shared rules live in `@datapoint/apiary-ui`** as Signal Forms rule functions (`hostname()`, `port()`, `target()`, `ipRange()`), mirroring the server's FluentValidation extensions. A test compares the codes on both sides.
+- **Each form's rules are in their own file,** apart from the component: `route-editor.ts` and `route-rules.ts`. The rules are tested without rendering anything.
+- **The library decides when errors show.** `<ap-field>` shows a field's error when you leave it, then as you type. `<ap-error-summary>` lists them on submit and moves focus. A form never decides that on its own.
+- **Fields that don't apply don't validate.** A field that depends on another, like the maintenance window's dates, is marked hidden or disabled in the schema, not only wrapped in `@if`, so it can never block a save.
+- **Checks that need the server are async validators,** with debounce and a pending state, shown as "Checking…".
+- **Server errors land on fields.** The submit handler maps the ProblemDetails `errors` onto fields by name; errors without a field go to the summary. Server text is never shown, only codes through the catalog.
+- **Library controls plug straight in.** Inputs, selects, switches and the date picker implement Signal Forms' custom-control interfaces, so forms bind to them like native inputs.
+- **Forms hold no business rules.** They check shape and give quick feedback. Anything that depends on the cluster's state is decided by the server.
 - **HTTP:** a client generated from the admin API's OpenAPI document, so the UI and the API can't drift apart. Uploads with progress use `withXhr()`; fetch is the default.
 
 ### The component library
@@ -230,7 +272,7 @@ We follow the [Angular style guide](https://angular.dev/style-guide) and [Angula
 ### Tools and tests
 
 - The `@angular/build` builder.
-- [angular-eslint](https://github.com/angular-eslint/angular-eslint) and Prettier.
+- [angular-eslint](https://github.com/angular-eslint/angular-eslint) and typescript-eslint, with the rules under [Readability](#readability) as errors, and Prettier.
 - [Vitest](https://angular.dev/guide/testing) for unit tests, with component harnesses for library components.
 - Playwright with axe-core for end-to-end and accessibility tests, reusing the prototype's flows.
 - Avoid what the style guide replaced: NgModules, zone.js, `@Input`/`@Output`, `*ngIf`/`*ngFor`, `ngClass`/`ngStyle`, the webpack builders and Karma.
