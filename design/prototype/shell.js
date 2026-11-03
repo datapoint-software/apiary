@@ -9,16 +9,30 @@ if (Proto.state.data === 'empty') D = emptyData();
 const shell = $('#app-shell'), side = $('#side'), main = $('#main');
 const projectOf = id => D.projects.find(p => p.id === id);
 const routesOf = id => D.routes.filter(r => r.project === id);
-const rpmOf = id => routesOf(id).reduce((a, r) => a + r.rpm, 0);
+const rpmOf = id => routesOf(id).filter(r => !r.disabled).reduce((a, r) => a + r.rpm, 0);
 function projectHealth(id) {
-  const rs = routesOf(id);
-  const bad = rs.filter(r => r.status === 'critical').length, warn = rs.filter(r => r.status === 'warn').length;
-  if (!rs.length) return ['off', 'No routes'];
-  if (bad) return ['critical', plural(bad, 'route') + ' down'];
-  if (warn) return ['warn', rs.find(r => r.status === 'warn').statusText];
-  return ['ok', 'Healthy'];
+  const rs = routesOf(id), active = rs.filter(r => !r.disabled);
+  const down = active.filter(r => r.status === 'critical').length, degraded = active.filter(r => r.status === 'warn').length;
+  if (down) return ['critical', plural(down, 'route') + ' down'];
+  if (degraded) return ['warn', plural(degraded, 'route') + ' degraded'];
+  return rs.length ? ['ok', 'Healthy'] : ['off', 'No routes'];
 }
-const certTone = c => (c.expires - NOW < 14 * DAY || c.status !== 'ok' ? (c.expires < NOW ? 'critical' : 'warn') : 'ok');
+const initialsOf = name => name.split(/\s+/).map(x => x[0] || '').join('').slice(0, 2).toUpperCase();
+const isAdmin = () => D.me.role === 'Administrator';
+const canOperate = () => D.me.role !== 'Viewer';
+function clusterVoters() {
+  const lost = Proto.state.cluster === 'quorum' ? ['edge-1', 'edge-3'] : Proto.state.cluster === 'degraded' ? ['edge-3'] : [];
+  return D.replicas.filter(r => r.role !== 'follower').map(r => Object.assign({}, r, { reachable: r.role !== 'down' && !lost.includes(r.name) }));
+}
+function certPhase(c) {
+  const failing = c.source === 'auto' && c.note === 'Renewal failed';
+  if (!c.expires) return failing ? 'failing' : 'pending';
+  if (c.expires <= NOW) return 'expired';
+  if (failing) return 'failing';
+  return c.expires - NOW < (c.source === 'uploaded' ? 30 : 14) * DAY ? 'expiring' : 'ok';
+}
+const certTone = c => (certPhase(c) === 'failing' && !c.expires ? 'critical' : { ok: 'ok', pending: 'info', failing: 'warn', expiring: 'warn', expired: 'critical' }[certPhase(c)]);
+const certNeedsAttention = c => !['ok', 'pending'].includes(certPhase(c));
 
 /* Router */
 const Routes = [];
@@ -90,39 +104,34 @@ function skeleton() {
 
 /* Sidebar, built from the data so counts and attention dots stay true */
 function renderNav(p) {
-  const certsBad = D.certs.some(c => certTone(c) !== 'ok');
-  const replicasBad = Proto.state.cluster !== 'healthy' || D.replicas.some(r => r.role === 'down');
-  const lastBackup = D.backups.length ? NOW - D.backups[0].at : Infinity;
+  const voters = clusterVoters();
   const groups = [
     ['', [['layout-dashboard', 'Overview', '#/']]],
-    ['Projects', [...D.projects.map(pr => { const h = projectHealth(pr.id)[0]; return [pr.icon, pr.name, '#/projects/' + pr.id, h === 'critical' || h === 'warn' ? h : routesOf(pr.id).length || null]; }), ['plus', 'New project', null, null, 'data-new-project data-write']]],
-    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams', D.streams.length || null], ['shield-check', 'Certificates', '#/certificates', certsBad ? 'warn' : null], ['corner-up-right', 'Redirects', '#/redirects', D.redirects.length || null]]],
-    ['Cluster', [['hexagon', 'Replicas', '#/replicas', replicasBad ? (Proto.state.cluster === 'quorum' ? 'critical' : 'warn') : null], ['archive', 'Backups', '#/backups', lastBackup > 7 * DAY ? 'warn' : null], ['key-round', 'Root key', '#/root-key']]],
-    ['Access', [['users', 'Users', '#/users', D.users.length], ['bot', 'Connected agents', '#/agents', D.agents.length || null], ['scroll-text', 'Audit log', '#/audit']]],
+    ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
+    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects']]],
+    ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
+    ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
-  const all = groups.flatMap(g => g[1]).filter(i => i[2]);
+  const all = groups.flatMap(g => g[1]);
   const best = all.filter(i => i[2] === '#' + p || (i[2] !== '#/' && ('#' + p).startsWith(i[2] + '/'))).sort((a, b) => b[2].length - a[2].length)[0];
-  $('#side-nav').innerHTML = groups.map(([title, items]) => `<nav class="ap-nav" aria-label="${title || 'Main'}">${title ? `<span class="ap-overline" aria-hidden="true">${title}</span>` : ''}${items.map(([ic, label, href, badge, attrs]) => {
-    let extra = '';
-    if (badge === 'warn' || badge === 'critical') extra = `<span class="ap-dot" style="color:var(--${badge})" aria-hidden="true"></span><span class="ap-sr">, needs attention</span>`;
-    else if (badge) extra = `<span class="ap-count"><span class="ap-sr">, </span>${badge}</span>`;
-    const inner = `${icon(ic)}<span class="ap-nav-label">${esc(label)}</span>${extra}`;
-    return href ? `<a class="ap-nav-item" href="${href}" data-label="${esc(label)}"${best && best[2] === href ? ' aria-current="page"' : ''}>${inner}</a>`
-      : `<button class="ap-nav-item ap-nav-button" type="button" data-label="${esc(label)}" ${attrs}>${inner}</button>`;
+  $('#side-nav').innerHTML = groups.map(([title, items]) => `<nav class="ap-nav" aria-label="${title || 'Main'}">${title ? `<span class="ap-overline" aria-hidden="true">${title}</span>` : ''}${items.map(([ic, label, href, count, warn]) => {
+    const extra = warn ? '<span class="ap-dot" style="color:var(--warn)" aria-hidden="true"></span><span class="ap-sr">, needs attention</span>'
+      : count ? `<span class="ap-count"><span class="ap-sr">, </span>${count}</span>` : '';
+    return `<a class="ap-nav-item" href="${href}" data-label="${esc(label)}"${best && best[2] === href ? ' aria-current="page"' : ''}>${icon(ic)}<span class="ap-nav-label">${esc(label)}</span>${extra}</a>`;
   }).join('')}</nav>`).join('');
   paint();
-  applyWriteLock($('#side-nav'));
 }
 
-/* Cluster write status in the top bar, and the cluster-wide banner below it */
+/* Replica count in the top bar, and the banner below it while changes are paused */
 function renderStatus() {
-  const s = Proto.state.cluster;
-  const [tone, text, sr] = { healthy: ['ok', '3 of 3 voters', 'writes are accepted'], degraded: ['warn', '2 of 3 voters', 'writes are accepted'], quorum: ['critical', '1 of 3 voters', 'writes are paused'] }[s];
-  $('#top-status').innerHTML = `<span class="ap-status ap-status-${tone}"><span class="ap-dot" aria-hidden="true"></span>${text}<span class="ap-sr">, ${sr}</span></span>`;
-  $('#global').innerHTML = s === 'quorum'
-    ? `<div class="ap-banner ap-banner-critical ap-global" role="alert">${icon('circle-alert')}<div class="ap-banner-body"><span class="ap-banner-title">Changes are paused</span><span>Only 1 of 3 voters can be reached, so the cluster can't agree on changes. Traffic keeps flowing with the last configuration. Bring edge-1 or edge-3 back, or as a last resort, recover the cluster from the surviving replica.</span><div class="ap-banner-actions"><a href="#/replicas">See replicas</a></div></div></div>`
-    : s === 'degraded'
-      ? `<div class="ap-banner ap-banner-warn ap-global">${icon('triangle-alert')}<div class="ap-banner-body"><span class="ap-banner-title">edge-3 can't be reached</span><span>Changes still work with 2 of 3 voters. If one more voter is lost, changes pause until it's back.</span><div class="ap-banner-actions"><a href="#/replicas">See replicas</a></div></div></div>` : '';
+  const voters = clusterVoters(), reachable = voters.filter(v => v.reachable).length, locked = Proto.state.cluster === 'quorum';
+  const tone = locked ? 'critical' : reachable < voters.length ? 'warn' : 'ok';
+  $('#top-status').innerHTML = `<span class="ap-status ap-status-${tone}"><span class="ap-dot" aria-hidden="true"></span>${reachable} of ${voters.length} replicas<span class="ap-sr">, ${locked ? 'changes are paused' : 'changes are accepted'}</span></span>`;
+  $('#global').innerHTML = locked
+    ? `<div class="ap-banner ap-banner-critical ap-global" role="alert">${icon('circle-alert')}<div class="ap-banner-body"><span class="ap-banner-title">Changes are paused</span><span>Only ${reachable} of ${voters.length} replicas can be reached, so the cluster can’t agree on changes. Traffic keeps flowing with the last configuration.</span><div class="ap-banner-actions"><a href="#/replicas">See replicas</a></div></div></div>` : '';
+  const acct = $('[data-account]');
+  acct.textContent = initialsOf(D.me.name);
+  acct.setAttribute('aria-label', 'Account: ' + D.me.name);
   paint();
 }
 
@@ -131,10 +140,10 @@ const sideBtn = $('[data-sidebar]');
 const phone = matchMedia('(max-width: 639px)');
 function sideLabel() {
   const open = phone.matches ? shell.dataset.drawer === 'open' : shell.dataset.collapsed !== 'true';
-  const text = phone.matches ? (open ? 'Close navigation' : 'Open navigation') : (open ? 'Collapse sidebar' : 'Expand sidebar');
+  const text = phone.matches ? (open ? 'Close menu' : 'Open menu') : (open ? 'Collapse sidebar' : 'Expand sidebar') + ' (Ctrl or ⌘ + B)';
   sideBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   sideBtn.setAttribute('aria-label', text);
-  sideBtn.title = phone.matches ? text : text + ' (Ctrl or ⌘ + B)';
+  sideBtn.removeAttribute('title');
 }
 function setCollapsed(on, save) { shell.dataset.collapsed = on ? 'true' : 'false'; if (save) store.set('sidebarCollapsed', on); sideLabel(); }
 function setDrawer(open, refocus = true) {
@@ -180,7 +189,7 @@ $('[data-account]').addEventListener('click', e => menu(e.currentTarget, [
   { icon: 'monitor-smartphone', label: 'Active sessions', run: () => go('/account/sessions') },
   '-',
   { icon: 'log-out', label: 'Sign out', run: () => go('/sign-in') },
-], { label: 'Account', head: `<div class="ap-menu-head"><span class="ap-avatar ap-avatar-lg" aria-hidden="true">${D.me.initials}</span><span><strong>${esc(D.me.name)}</strong><span class="ap-secondary">${esc(D.me.email)}</span><span class="ap-secondary">${D.me.role}</span></span></div><div class="ap-menu-sep" role="separator"></div>` }));
+], { label: 'Account', head: `<div class="ap-menu-head"><span class="ap-avatar ap-avatar-lg" aria-hidden="true">${initialsOf(D.me.name)}</span><span><strong>${esc(D.me.name)}</strong><span class="ap-secondary">${esc(D.me.email)}</span><span class="ap-secondary">${D.me.role}</span></span></div><div class="ap-menu-sep" role="separator"></div>` }));
 
 /* About, reachable from the sidebar in every state: the attribution must never be hidden */
 $('[data-about]').addEventListener('click', () => {
@@ -197,14 +206,16 @@ $('[data-about]').addEventListener('click', () => {
 /* Search: a combobox over pages, projects, routes, certificates and users */
 const q = $('#q'), qList = $('#q-list');
 let qItems = [], qActive = -1;
+const SEARCH_PAGES = [['layout-dashboard', 'Overview', '/'], ['route', 'All routes', '/routes'], ['cable', 'Stream routes', '/streams'], ['shield-check', 'Certificates', '/certificates'], ['corner-up-right', 'Redirects', '/redirects'], ['hexagon', 'Replicas', '/replicas'], ['archive', 'Backups', '/backups', true], ['key-round', 'Root key', '/root-key', true], ['users', 'Users', '/users', true], ['door-open', 'Single sign-on', '/single-sign-on', true], ['bot', 'Connected agents', '/agents'], ['scroll-text', 'Audit log', '/audit'], ['user-round', 'Your account', '/account']];
+const shortDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 function searchIndex() {
-  const pages = [['Overview', '/'], ['All routes', '/routes'], ['Stream routes', '/streams'], ['Certificates', '/certificates'], ['Redirects', '/redirects'], ['Replicas', '/replicas'], ['Backups', '/backups'], ['Root key', '/root-key'], ['Users', '/users'], ['Connected agents', '/agents'], ['Audit log', '/audit'], ['Your account', '/account']];
+  const admin = isAdmin();
   return [
-    ...pages.map(([t, p]) => ({ icon: 'file', title: t, sub: 'Page', path: p })),
+    ...SEARCH_PAGES.filter(x => admin || !x[3]).map(([ic, t, p]) => ({ icon: ic, title: t, sub: 'Page', path: p })),
     ...D.projects.map(p => ({ icon: p.icon, title: p.name, sub: 'Project · ' + plural(routesOf(p.id).length, 'route'), path: '/projects/' + p.id })),
-    ...D.routes.map(r => ({ icon: 'route', title: r.host + (r.path === '/' ? '' : r.path), sub: 'Route · ' + projectOf(r.project).name, path: '/routes/' + r.id })),
-    ...D.certs.map(c => ({ icon: 'shield-check', title: c.host, sub: 'Certificate · expires ' + fmtDate(c.expires, false), path: '/certificates/' + encodeURIComponent(c.host) })),
-    ...D.users.map(u => ({ icon: 'user-round', title: u.name, sub: 'User · ' + u.email, path: '/users' })),
+    ...D.routes.map(r => ({ icon: 'route', title: routeLabel(r), sub: 'Route · ' + (projectOf(r.project) ? projectOf(r.project).name : 'No project'), path: '/routes/' + r.id })),
+    ...D.certs.map(c => ({ icon: 'shield-check', title: c.host, sub: 'Certificate · expires ' + shortDate.format(new Date(c.expires)), path: '/certificates/' + encodeURIComponent(c.host) })),
+    ...(admin ? D.users.map(u => ({ icon: 'user-round', title: u.name, sub: 'User · ' + u.email, path: '/users' })) : []),
   ];
 }
 function closeSearch() { qList.hidden = true; q.setAttribute('aria-expanded', 'false'); q.removeAttribute('aria-activedescendant'); qActive = -1; }
@@ -213,7 +224,7 @@ function drawSearch() {
   if (!t) return closeSearch();
   qItems = searchIndex().filter(i => (i.title + ' ' + i.sub).toLowerCase().includes(t)).slice(0, 8);
   qActive = qItems.length ? 0 : -1;
-  qList.innerHTML = qItems.length ? qItems.map((i, n) => `<div class="ap-option" role="option" id="q-${n}" aria-selected="${n === qActive}" data-n="${n}">${icon(i.icon)}<span>${esc(i.title)}<small>${esc(i.sub)}</small></span></div>`).join('') : `<div class="ap-search-empty" role="presentation">Nothing matches "${esc(q.value.trim())}".</div>`;
+  qList.innerHTML = qItems.length ? qItems.map((i, n) => `<div class="ap-option" role="option" id="q-${n}" aria-selected="${n === qActive}" data-n="${n}">${icon(i.icon)}<span>${esc(i.title)}<small>${esc(i.sub)}</small></span></div>`).join('') : `<div class="ap-search-empty">Nothing matches “${esc(q.value.trim())}”.</div>`;
   qList.hidden = false;
   q.setAttribute('aria-expanded', 'true');
   syncActive();
@@ -223,11 +234,14 @@ function syncActive() {
   $$('.ap-option', qList).forEach((o, n) => o.setAttribute('aria-selected', n === qActive ? 'true' : 'false'));
   if (qActive >= 0) { q.setAttribute('aria-activedescendant', 'q-' + qActive); $('#q-' + qActive).scrollIntoView({ block: 'nearest' }); } else q.removeAttribute('aria-activedescendant');
 }
-function pick(n) { const i = qItems[n]; if (!i) return; q.value = ''; closeSearch(); go(i.path); }
+function pick(n) { const i = qItems[n]; if (!i) return; q.value = ''; closeSearch(); q.blur(); go(i.path); }
+$('.ap-search .ap-kbd').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 q.addEventListener('input', drawSearch);
+q.addEventListener('focus', drawSearch);
 q.addEventListener('keydown', e => {
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (qList.hidden) drawSearch(); e.preventDefault(); if (qItems.length) { qActive = (qActive + (e.key === 'ArrowDown' ? 1 : -1) + qItems.length) % qItems.length; syncActive(); } }
-  else if (e.key === 'Enter') { e.preventDefault(); pick(qActive); }
+  const open = !qList.hidden && qItems.length;
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && open) { e.preventDefault(); qActive = (qActive + (e.key === 'ArrowDown' ? 1 : -1) + qItems.length) % qItems.length; syncActive(); }
+  else if (e.key === 'Enter' && open) { e.preventDefault(); pick(qActive); }
   else if (e.key === 'Escape') { e.stopPropagation(); if (!qList.hidden) closeSearch(); else { q.value = ''; q.blur(); } }
 });
 q.addEventListener('blur', () => setTimeout(closeSearch, 150));
@@ -236,8 +250,9 @@ qList.addEventListener('mousedown', e => { const o = e.target.closest('[data-n]'
 /* Keyboard: Escape closes the innermost layer; Ctrl or ⌘ + K searches, + B collapses the sidebar */
 document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey;
-  if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); if (!shell.hidden) { q.focus(); q.select(); } }
-  if (mod && e.key.toLowerCase() === 'b' && !phone.matches && !shell.hidden) { e.preventDefault(); sideBtn.click(); }
+  const plain = mod && !e.altKey && !e.shiftKey;
+  if (plain && e.key.toLowerCase() === 'k') { e.preventDefault(); if (!shell.hidden) { q.focus(); q.select(); } }
+  if (plain && e.key.toLowerCase() === 'b' && !phone.matches && !shell.hidden) { e.preventDefault(); sideBtn.click(); }
   if (e.key !== 'Escape') return;
   if (openMenuState) return closeMenu(true);
   const top = Dialogs[Dialogs.length - 1];
@@ -259,10 +274,11 @@ document.body.querySelector('.ap').appendChild(protoPanel);
 function drawProto() {
   const seg = (k, label, opts) => `<div class="ap-setting"><span class="ap-label" id="pt-${k}">${label}</span><div class="ap-seg" role="group" aria-labelledby="pt-${k}" data-pt="${k}">${opts.map(([v, t]) => `<button type="button" aria-pressed="${Proto.state[k] === v}" data-v="${v}">${t}</button>`).join('')}</div></div>`;
   protoPanel.innerHTML = `<div><h2 class="ap-h ap-h-3" id="pt-t">Prototype controls</h2><p class="ap-caption" style="margin:2px 0 0">Not part of Apiary. Switch scenarios to see alerts, empty states and failures.</p></div>
-${seg('cluster', 'Cluster', [['healthy', 'Healthy'], ['degraded', '1 voter down'], ['quorum', 'No quorum']])}
+${seg('cluster', 'Cluster', [['healthy', 'Healthy'], ['degraded', '1 replica down'], ['quorum', 'No quorum']])}
 ${seg('network', 'Server', [['fast', 'Fast'], ['slow', 'Slow'], ['failing', 'Failing']])}
 ${seg('data', 'Data', [['sample', 'Sample'], ['empty', 'New install']])}
-<div class="ap-setting"><span class="ap-label">Screens</span><div class="ap-row"><a class="ap-btn ap-btn-sm" href="#/sign-in">Sign in</a><a class="ap-btn ap-btn-sm" href="#/setup">First run</a><a class="ap-btn ap-btn-sm" href="#/nowhere">Not found</a></div></div>
+<div class="ap-setting"><span class="ap-label">Screens</span><div class="ap-row" style="flex-wrap:wrap"><a class="ap-btn ap-btn-sm" href="#/sign-in">Sign in</a><a class="ap-btn ap-btn-sm" href="#/setup">First run</a><a class="ap-btn ap-btn-sm" href="#/invite/sample">Accept invite</a><a class="ap-btn ap-btn-sm" href="#/connect">Connect an agent</a><a class="ap-btn ap-btn-sm" href="#/nowhere">Not found</a></div></div>
+<div class="ap-setting"><span class="ap-label">What visitors see</span><div class="ap-row" style="flex-wrap:wrap">${PUBLIC_PAGES.map(([k, , t]) => `<a class="ap-btn ap-btn-sm" href="#/public/${k}">${t}</a>`).join('')}</div></div>
 <button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-pt-reset style="align-self:flex-start">Reset the sample data</button>`;
 }
 function setProto(open) {

@@ -53,8 +53,8 @@ const status = (tone, text) => `<span class="ap-status ap-status-${tone}"><span 
 const banner = (tone, title, text = '', actions = '', ic) => `<div class="ap-banner ap-banner-${tone}">${icon(ic || { info: 'info', ok: 'circle-check', warn: 'triangle-alert', critical: 'circle-alert' }[tone])}<div class="ap-banner-body">${title ? `<span class="ap-banner-title">${title}</span>` : ''}${text ? `<span>${text}</span>` : ''}${actions ? `<div class="ap-banner-actions">${actions}</div>` : ''}</div></div>`;
 function pageHead({ crumbs = [], title, sub = '', actions = '' }) {
   const sep = '<span aria-hidden="true">/</span>';
-  const trail = [[D.cluster.name, '#/'], ...crumbs].map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join(sep);
-  return `<div class="ap-stack" style="gap:4px"><nav class="ap-crumbs" aria-label="Breadcrumb">${trail}${sep}<span aria-current="page">${esc(title)}</span></nav>
+  const trail = crumbs.map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join(sep);
+  return `<div class="ap-stack" style="gap:4px"><nav class="ap-crumbs" aria-label="Breadcrumb">${trail}${crumbs.length ? sep : ''}<span aria-current="page">${esc(title)}</span></nav>
 <div class="ap-page-head"><div style="min-width:0"><h1 class="ap-h ap-h-1">${esc(title)}</h1>${sub ? `<p class="ap-sub">${sub}</p>` : ''}</div>${actions ? `<div class="ap-row" style="gap:12px">${actions}</div>` : ''}</div></div>`;
 }
 function sparkline(values, h = 36, w = 220) {
@@ -229,7 +229,7 @@ document.addEventListener('mousedown', e => { if (openMenuState && !openMenuStat
 addEventListener('resize', () => closeMenu(false));
 
 /* Writes are locked while the cluster has no quorum: the controls stay visible and say why. */
-const LOCK_WHY = "Changes are paused while the cluster can't reach a majority of voters.";
+const LOCK_WHY = "Changes are paused while the cluster can't reach a majority of replicas.";
 function applyWriteLock(root = document) {
   const locked = Proto.state.cluster === 'quorum';
   $$('[data-write]', root).forEach(b => {

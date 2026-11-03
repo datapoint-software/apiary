@@ -51,7 +51,7 @@ function seedData() {
       { id: 'a3f9c41e', name: 'edge-2', node: 'swarm-node-2', role: 'leader', index: 184223, lag: 0, version: '0.4.0', seen: NOW },
       { id: 'b72e1190', name: 'edge-3', node: 'swarm-node-3', role: 'voter', index: 184221, lag: 2, version: '0.4.0', seen: NOW - 1000 },
       { id: 'c0d4e7a8', name: 'edge-4', node: 'swarm-node-4', role: 'follower', index: 183990, lag: 233, version: '0.4.0', seen: NOW - 2000, note: 'Catching up' },
-      { id: 'd5a2b913', name: 'edge-5', node: 'swarm-node-5', role: 'down', index: 181002, lag: 3221, version: '0.4.0', seen: NOW - 4 * MIN, note: 'Removal in 11 min' },
+      { id: 'd5a2b913', name: 'edge-5', node: 'swarm-node-5', role: 'voter', index: 184223, lag: 0, version: '0.4.0', seen: NOW - 1000 },
     ],
     backups: [
       { id: 'b5', at: at(12, '09:14'), size: 2.4, by: 'ana@example.com', kind: 'Manual', index: 179420 },
@@ -86,7 +86,7 @@ function seedData() {
       { at: at(1, '16:58'), actor: 'rui@example.com', agent: 'on-call bot', via: 'MCP', text: 'read the health of <code>mqtt-admin.internal.example.com</code>', meta: 'From 10.0.7.3' },
       { at: at(1, '15:20'), actor: 'marta@example.com', via: 'UI', text: 'added stream route <code>Syslog</code>', meta: 'UDP 514 → vector:514 · from 10.0.4.88' },
       { at: at(1, '09:41'), actor: 'ana@example.com', via: 'UI', text: 'invited tiago@example.com as Viewer', meta: 'From 10.0.4.21' },
-      { at: at(2, '18:03'), actor: 'System', via: 'System', text: 'added edge-5 as a follower', meta: 'Automatic membership · swarm-node-5' },
+      { at: at(2, '18:03'), actor: 'System', via: 'System', text: 'added edge-5 as a voter', meta: 'Automatic membership · swarm-node-5' },
       { at: at(3, '11:12'), actor: 'rui@example.com', via: 'UI', text: 'scheduled maintenance for <code>blog.example.com</code>', meta: '2026-11-02 22:00 to 2026-11-03 00:30 UTC' },
       { at: at(5, '10:00'), actor: 'ana@example.com', via: 'UI', text: 'started a root key rotation', meta: 'apiary_root_key_2 → apiary_root_key_3' },
       { at: at(12, '09:14'), actor: 'ana@example.com', via: 'UI', text: 'backed up the cluster', meta: '2.4 MB · index 179 420' },

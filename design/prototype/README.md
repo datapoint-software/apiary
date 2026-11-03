@@ -2,7 +2,7 @@
 
 A clickable prototype of Apiary's admin interface: every page in the sidebar, the account pages, sign-in and first run. It shows how the components fit together and how the interface behaves, including validation, dialogs, alerts and the date and time picker. All data is invented and lives in memory; reloading resets it.
 
-- **Prototype controls:** the dashed button at the bottom right switches scenarios. **Cluster:** healthy, one voter down, or no quorum, where changes pause. **Server:** fast, slow, or failing. **Data:** sample, or a new install. It also opens the sign-in, first-run and not-found screens. The controls aren't part of Apiary.
+- **Prototype controls:** the dashed button at the bottom right switches scenarios. **Cluster:** healthy, one replica down, or no quorum, where changes pause. **Server:** fast, slow, or failing. **Data:** sample, or a new install. It also opens the sign-in, first-run and not-found screens. The controls aren't part of Apiary.
 - **Try:** add a route with mistakes in it, a loopback target or weights that don't add up; schedule a maintenance window; upload a certificate (put "mismatch" in the key); renew the failing certificate for legacy.example.com; invite someone; filter the audit log by a custom range; leave a route with unsaved changes.
 - **Patterns it settles:** validation (see Validation), confirmations that name what is affected and, when it can't be undone, ask you to type the name, writes locked while the cluster has no quorum, and every time in UTC.
 - **Attribution:** the sidebar footer and the About dialog show the Datapoint logo and "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", as the license requires.

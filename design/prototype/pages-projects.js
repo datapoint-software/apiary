@@ -1,65 +1,120 @@
 /* Overview and projects. Projects only group routes and certificates; they don't limit who can see or change them. */
-const PROJECT_ICONS = ['shopping-bag', 'credit-card', 'wrench', 'archive', 'megaphone', 'globe', 'server', 'database', 'cloud', 'boxes', 'flask-conical', 'heart-pulse'];
+const PROJECT_ICONS = ['folder', 'shopping-bag', 'credit-card', 'wrench', 'archive', 'megaphone', 'globe', 'server', 'database', 'cloud', 'boxes', 'flask-conical', 'heart-pulse'];
 
+const redirectsOf = id => D.redirects.filter(x => x.project === id);
+const projectContents = id => [[routesOf(id).length, 'route'], [redirectsOf(id).length, 'redirect'], [D.streams.filter(x => x.project === id).length, 'stream route'], [D.certs.filter(c => c.source !== 'auto' && c.project === id).length, 'uploaded certificate']];
 function projectCards(list) {
   return `<div class="ap-projects">${list.map(p => {
-    const [tone, text] = projectHealth(p.id);
+    const [tone, text] = projectHealth(p.id), redirects = redirectsOf(p.id).length;
     return `<a class="ap-panel ap-project" href="#/projects/${p.id}"><div class="ap-project-head"><span class="ap-project-mark">${icon(p.icon)}</span>${status(tone, text)}</div>
 <div><h3 class="ap-h ap-h-3">${esc(p.name)}</h3><p class="ap-caption" style="margin:2px 0 0;font-size:13px;line-height:18px">${esc(p.desc || 'No description')}</p></div>
-<div class="ap-project-facts"><span><b>${routesOf(p.id).length}</b> routes</span><span><b>${num(rpmOf(p.id))}</b> req/min</span></div></a>`;
+<div class="ap-project-facts"><span><b>${routesOf(p.id).length}</b> ${routesOf(p.id).length === 1 ? 'route' : 'routes'}</span><span><b>${num(rpmOf(p.id))}</b> req/min</span>${redirects ? `<span><b>${redirects}</b> ${redirects === 1 ? 'redirect' : 'redirects'}</span>` : ''}</div></a>`;
   }).join('')}</div>`;
+}
+
+/* Activity: 1 h in 5-minute points, 24 h in hourly points, ending now */
+const activity = () => (D.activityPoints ??= (() => {
+  if (!D.routes.length) return { hour: { minutesPerPoint: 5, points: [] }, day: { minutesPerPoint: 60, points: [] } };
+  const build = (mins, rpm, p95, err, start) => ({ minutesPerPoint: mins, p95: p95[p95.length - 1], points: rpm.map((r, i) => ({ at: start + i * mins * MIN, requests: r * mins, errors: r * mins * err[i] / 100, p95: p95[i] })) });
+  const hourStart = Math.floor(NOW / HOUR) * HOUR;
+  const byHour = [3900, 3300, 2900, 2700, 2800, 3500, 5200, 8100, 11600, 15800, 14900, 14300, 13900, 14600, 14275, 13800, 13200, 12400, 11000, 9600, 8300, 7100, 5900, 4700];
+  const p95ByHour = [31, 30, 29, 29, 30, 32, 35, 41, 48, 52, 46, 43, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 32, 31];
+  const errByHour = [0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.6, 1.4, 0.4, 0.3, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+  const hours = Array.from({ length: 24 }, (_, i) => new Date(hourStart - (23 - i) * HOUR).getUTCHours());
+  return {
+    hour: build(5, [13900, 14200, 14050, 14600, 14400, 14800, 15100, 14700, 14300, 14500, 14250, 14275], [38, 40, 39, 41, 44, 47, 45, 42, 40, 39, 39, 39], [0.2, 0.1, 0.2, 0.3, 0.2, 0.6, 0.4, 0.2, 0.1, 0.2, 0.2, 0.2], NOW - 12 * 5 * MIN),
+    day: Object.assign(build(60, hours.map(h => byHour[h]), hours.map(h => p95ByHour[h]), hours.map(h => errByHour[h]), hourStart - 23 * HOUR), { p95: 39 }),
+  };
+})());
+let overviewRange = 'day';
+function statNumber(v) {
+  if (v > 0 && v < 0.1) return '<0.1';
+  return v < 10 ? String(Math.round(v * 10) / 10) : num(v);
+}
+function activitySpark(values) {
+  if (values.length < 2) return '';
+  const w = 220, h = 36, max = Math.max(...values) || 1, step = w / (values.length - 1);
+  const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(h - v / max * h).toFixed(1)}`);
+  const line = 'M' + pts.join(' L'), last = pts[pts.length - 1].split(',');
+  return `<svg class="ap-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><line class="ap-spark-grid" x1="0" y1="${h}" x2="${w}" y2="${h}"/><path class="ap-spark-area" d="${line} L${w},${h} L0,${h} Z"/><path class="ap-spark-line" d="${line}" vector-effect="non-scaling-stroke"/><circle class="ap-spark-end" cx="${last[0]}" cy="${last[1]}" r="3.5"/></svg>`;
 }
 function statCards() {
-  const total = D.routes.reduce((a, r) => a + r.rpm, 0);
-  const stat = (label, value, unit, delta, series) => `<div class="ap-panel ap-stat"><span class="ap-overline">${label}</span><span class="ap-stat-value">${value}<span class="ap-stat-unit">${unit}</span></span><span class="ap-stat-delta">${delta}</span>${sparkline(series)}</div>`;
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-${stat('Requests', num(total), '/min', 'Up 18% on the previous 24 h', D.activity.rpm)}${stat('p95 latency', '39', 'ms', 'Peak 52 ms at 09:00 UTC', D.activity.p95)}${stat('5xx responses', '0.2', '%', 'Peak 1.4% at 08:00 UTC', D.activity.err)}</div>`;
+  const { minutesPerPoint: mpp, points, p95 } = activity()[overviewRange];
+  const quiet = overviewRange === 'hour' ? 'No requests in the last hour' : 'No requests in the last 24 h';
+  const requests = points.reduce((a, x) => a + x.requests, 0), errors = points.reduce((a, x) => a + x.errors, 0);
+  const elapsed = points.length ? Math.max(1, (NOW - points[0].at) / MIN) : 1;
+  const share = x => (x.requests ? x.errors / x.requests * 100 : 0);
+  const peak = f => points.reduce((best, x) => (f(x) > (best ? f(best) : 0) ? x : best), undefined);
+  const busiest = peak(x => x.requests), slowest = peak(x => x.p95), worst = peak(share);
+  const at = x => fmtTime(x.at) + ' UTC';
+  const stat = (label, value, unit, note, series) => `<div class="ap-panel ap-stat"><span class="ap-overline">${label}</span><span class="ap-stat-value">${value}<span class="ap-stat-unit">${unit}</span></span><span class="ap-stat-delta">${note}</span>${activitySpark(series)}</div>`;
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px" data-stats>
+${stat('Requests', statNumber(requests / elapsed), '/min', busiest ? `Peak ${statNumber(busiest.requests / mpp)}/min at ${at(busiest)}` : quiet, points.map(x => x.requests / mpp))}${stat('p95 latency', p95 === undefined ? '–' : statNumber(p95), p95 === undefined ? '' : 'ms', slowest ? `Peak ${statNumber(slowest.p95)} ms at ${at(slowest)}` : quiet, points.map(x => x.p95))}${stat('5xx responses', requests ? statNumber(errors / requests * 100) : '–', '%', worst ? `Peak ${statNumber(share(worst))}% at ${at(worst)}` : requests ? 'None so far' : quiet, points.map(share))}</div>`;
 }
-function clusterMap() {
-  const down = Proto.state.cluster === 'quorum' ? ['edge-1', 'edge-3'] : Proto.state.cluster === 'degraded' ? ['edge-3'] : [];
-  return `<div class="ap-cluster" role="list" aria-label="Replicas">${D.replicas.map((r, i) => {
-    const isDown = r.role === 'down' || down.includes(r.name);
-    const cls = isDown ? 'down' : r.role;
-    const role = isDown ? (r.role === 'down' ? `Missing 4 min<br>${r.note}` : 'Voter<br>Unreachable') : r.role === 'leader' ? `Leader<br>Index ${num(r.index)}` : r.role === 'voter' ? `Voter<br>${r.lag} behind` : `Follower<br>${r.note}`;
-    return `<div class="ap-node ap-node-${cls}" role="listitem"><span class="ap-node-hex" aria-hidden="true">${i + 1}</span><span class="ap-node-name">${r.name}</span><span class="ap-node-role">${role}</span></div>`;
-  }).join('')}</div>`;
+function replicaPanel() {
+  const voters = clusterVoters(), leader = voters.find(v => v.role === 'leader');
+  const nodes = voters.map((v, i) => `<div class="ap-node ap-node-${v.reachable ? v.role : 'down'}" role="listitem"><span class="ap-node-hex" aria-hidden="true">${i + 1}</span><span class="ap-node-name">${esc(v.name)}</span><span class="ap-node-role">${v.reachable ? (v.role === 'leader' ? 'Leader' : 'Voter') : 'Unreachable'}</span></div>`).join('');
+  const backup = D.backups.length ? status(NOW - D.backups[0].at > 7 * DAY ? 'warn' : 'ok', ago(D.backups[0].at)) : status('warn', 'Never');
+  return `<section class="ap-panel" aria-labelledby="cl-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="cl-t">Replicas</h2><a href="#/replicas" class="ap-caption" style="color:var(--honey-text)">Manage replicas</a></div>
+<div class="ap-panel-body ap-stack"><div class="ap-cluster" role="list" aria-label="Replicas">${nodes}</div><dl class="ap-kv"><dt>Leader</dt><dd><span class="ap-data">${leader ? esc(leader.name) : 'None'}</span></dd><dt>Voters</dt><dd>${voters.filter(v => v.reachable).length} of ${voters.length} reachable</dd>${isAdmin() ? `<dt>Last backup</dt><dd>${backup}</dd>` : ''}</dl></div></section>`;
 }
 function certMeter(c) {
-  const left = Math.round((c.expires - NOW) / DAY), life = Math.round((c.expires - c.issued) / DAY);
-  const tone = certTone(c);
+  const left = c.expires ? Math.max(0, Math.round((c.expires - NOW) / DAY)) : 0, life = Math.max(1, Math.round(((c.expires || NOW) - (c.issued || NOW)) / DAY));
+  const tone = certTone(c), days = left === 1 ? '1 day left' : left + ' days left';
+  const text = { pending: 'Requesting from Let’s Encrypt', failing: c.expires ? 'Renewal failing, ' + days : 'Not issued yet', expiring: 'Expires soon, ' + days, expired: 'Expired' }[certPhase(c)] || days;
   const pct = Math.max(2, Math.min(100, Math.round(left / life * 100)));
-  return `<div class="ap-meter${tone === 'ok' ? '' : ' ap-meter-' + tone}"><div class="ap-meter-head"><a class="ap-data" href="#/certificates/${encodeURIComponent(c.host)}" style="color:var(--ink)">${esc(c.host)}</a>${status(tone, left + ' days left')}</div>
-<div class="ap-meter-track" role="meter" aria-valuemin="0" aria-valuemax="${life}" aria-valuenow="${left}" aria-label="Days left for ${esc(c.host)}"><div class="ap-meter-fill" style="width:${pct}%"></div></div><span class="ap-caption">${esc(c.note || (c.source === 'auto' ? 'Automatic' : 'Uploaded'))}</span></div>`;
+  return `<div class="ap-meter${tone === 'ok' ? '' : ' ap-meter-' + tone}"><div class="ap-meter-head"><a class="ap-data" href="#/certificates/${encodeURIComponent(c.host)}" style="color:var(--ink)">${esc(c.host)}</a>${status(tone, text)}</div>
+<div class="ap-meter-track" role="meter" aria-valuemin="0" aria-valuemax="${life}" aria-valuenow="${left}" aria-label="Days left for ${esc(c.host)}"><div class="ap-meter-fill" style="width:${pct}%"></div></div><span class="ap-caption">${c.source === 'auto' ? 'Automatic' : 'Uploaded'}</span></div>`;
 }
 function auditList(events) {
-  return `<ol class="ap-timeline">${events.map(e => `<li class="ap-event${e.denied ? ' ap-event-denied' : e.via === 'MCP' ? ' ap-event-agent' : ''}"><span class="ap-dot" aria-hidden="true"></span><div><div>${e.denied && e.actor !== 'System' ? 'Denied: ' : ''}${e.agent ? `Agent “${esc(e.agent)}” for ` : ''}${esc(e.actor)} ${e.text.replace(/<code>/g, '<span class="ap-data">').replace(/<\/code>/g, '</span>')}</div><div class="ap-event-meta">${esc(e.meta)} · ${e.via}</div></div><time datetime="${new Date(e.at).toISOString()}">${dayStart(e.at) === dayStart(NOW) ? fmtTime(e.at) : fmtDate(e.at)}</time></li>`).join('')}</ol>`;
+  if (!events.length) return '<ol class="ap-timeline"><li class="ap-muted" style="padding:12px 0">Nothing in the last 7 days.</li></ol>';
+  return `<ol class="ap-timeline">${events.map(e => `<li class="ap-event${e.denied ? ' ap-event-denied' : ''}"><span class="ap-dot" aria-hidden="true"></span><div><div>${e.denied && e.actor !== 'System' ? 'Denied: ' : ''}${esc(e.actor)} ${e.text.replace(/<code>/g, '<span class="ap-data">').replace(/<\/code>/g, '</span>')}</div><div class="ap-event-meta">${esc(e.meta)}</div></div><time datetime="${new Date(e.at).toISOString()}">${ago(e.at)}</time></li>`).join('')}</ol>`;
+}
+function getStarted() {
+  const hasProjects = D.projects.length > 0, hasTeam = D.users.length > 1;
+  const step = (title, text, done, action) => `<li class="ap-list-row"><div class="ap-row" style="gap:14px;align-items:flex-start;flex:1 1 300px"><span class="ap-step${done ? ' ap-step-done' : ''}" aria-hidden="true"></span><div class="ap-list-text"><strong>${title}</strong><span class="ap-muted">${text}</span></div></div>${done ? status('ok', 'Done') : action}</li>`;
+  return `<section class="ap-panel" aria-labelledby="st-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="st-t">Get started</h2><span class="ap-caption">${1 + hasProjects + hasTeam} of 4 done</span></div><div class="ap-panel-body"><ol class="ap-list" style="margin:0;padding:0;list-style:none;counter-reset:step">
+${step('Create your administrator', 'Done: you’re signed in as an Administrator.', true)}
+${step('Create a project', 'Routes start in Default. Projects group them with their certificates, such as one per site or team.', hasProjects, `<button class="ap-btn" type="button" data-new-project data-write>${icon('plus')}New project</button>`)}
+${step('Add your first route', 'Point a hostname at a service on a network Apiary shares. Apiary gets its certificate automatically.', false, `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>`)}
+${step('Invite your team', 'Give each person their own account, with the least access they need.', hasTeam, '<a class="ap-btn" href="#/users">Invite people</a>')}
+</ol></div></section>
+${banner('info', 'Back up before you go further', 'Backups are taken on demand. Take one after your first changes, and before every upgrade.', '<a href="#/backups">Go to backups</a>')}`;
 }
 
 route('/', () => {
-  if (!D.routes.length && !D.projects.length) return welcome();
-  const failing = D.certs.filter(c => certTone(c) !== 'ok');
-  const down = D.routes.filter(r => r.status === 'critical');
+  const voters = clusterVoters(), unreachable = voters.filter(v => !v.reachable).length;
+  const hour = new Date(NOW).getUTCHours(), hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const first = D.me.name.split(/\s+/)[0];
+  const down = D.routes.filter(r => !r.disabled && r.status === 'critical').slice(0, 2);
+  const failing = D.certs.filter(certNeedsAttention).slice(0, 2);
   const alerts = [
-    ...failing.map(c => banner('warn', `1 certificate expires in ${Math.round((c.expires - NOW) / DAY)} days`, `Automatic renewal failed for <span class="ap-code">${esc(c.host)}</span>: its DNS doesn't point at your edge nodes, so Let's Encrypt can't check it. Apiary retries every 6 hours.`, `<a href="#/certificates/${encodeURIComponent(c.host)}">See the renewal log</a>`)),
-    ...down.map(r => banner('critical', `${esc(r.host)} is down`, `None of its targets answer health checks, so visitors get a 502. Check that <span class="ap-code">${esc(r.targets[0].host)}</span> is running on the shared network.`, `<a href="#/routes/${r.id}">Open the route</a>`)),
-  ].slice(0, 2).join('');
+    unreachable ? banner('critical', unreachable === 1 ? '1 replica is unreachable' : `${unreachable} replicas are unreachable`, 'The others keep serving traffic. Check the replica’s node in Docker.', '<a href="#/replicas">See the replicas</a>') : '',
+    ...down.map(r => banner('critical', `${esc(r.host)} is down`, `None of its targets answer health checks, so visitors get an error. Check that ${esc(r.targets[0].host)} is running and on a network Apiary can reach.`, `<a href="#/routes/${r.id}">Open the route</a>`)),
+    ...failing.map(c => banner('warn', `The certificate for ${esc(c.host)} needs attention`, `${c.expires ? `It expires in ${Math.max(0, Math.round((c.expires - NOW) / DAY))} days.` : 'It hasn’t been issued yet.'} Its renewal log says what went wrong.`, `<a href="#/certificates/${encodeURIComponent(c.host)}">See the renewal log</a>`)),
+  ].join('');
+  const ranges = [['hour', '1 h'], ['day', '24 h']];
   return {
     title: 'Overview',
-    html: `<div class="ap-stack" style="gap:4px"><nav class="ap-crumbs" aria-label="Breadcrumb"><a href="#/">${esc(D.cluster.name)}</a><span aria-hidden="true">/</span><span aria-current="page">Overview</span></nav>
-<div class="ap-page-head"><h1 class="ap-h ap-h-1">Good afternoon, ${esc(D.me.name.split(' ')[0])}</h1>
-<div class="ap-row" style="gap:12px"><div class="ap-seg" role="group" aria-label="Time range" data-seg><button type="button" aria-pressed="false">1 h</button><button type="button" aria-pressed="true">24 h</button><button type="button" aria-pressed="false">7 d</button></div>
-<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a></div></div></div>
+    html: `${pageHead({ title: first ? `${hello}, ${first}` : hello, actions: `<div class="ap-seg" role="group" aria-label="Time range" data-seg>${ranges.map(([v, t]) => `<button type="button" aria-pressed="${overviewRange === v}" data-v="${v}">${t}</button>`).join('')}</div>${canOperate() ? `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>` : ''}` })}
 ${alerts}
-${statCards()}
+${isAdmin() && !D.routes.length ? getStarted() : statCards()}
 <section class="ap-section" aria-labelledby="pj-t"><div class="ap-section-head"><h2 class="ap-h ap-h-2" id="pj-t">Projects</h2><a href="#/projects" style="font-size:14px">See all ${D.projects.length}</a></div>${projectCards(D.projects.slice(0, 3))}</section>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px;align-items:start">
-<section class="ap-panel" aria-labelledby="cl-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="cl-t">Replicas</h2><a href="#/replicas" class="ap-caption" style="color:var(--honey-text)">Manage replicas</a></div>
-<div class="ap-panel-body ap-stack">${clusterMap()}<dl class="ap-kv"><dt>Leader</dt><dd><span class="ap-data">edge-2 (a3f9c41e)</span></dd><dt>Voters</dt><dd>${{ healthy: '3 of 3', degraded: '2 of 3', quorum: '1 of 3' }[Proto.state.cluster]} reachable</dd><dt>Last backup</dt><dd>${D.backups.length ? status(NOW - D.backups[0].at > 7 * DAY ? 'warn' : 'ok', ago(D.backups[0].at)) : status('warn', 'Never')}</dd></dl></div></section>
+${replicaPanel()}
 <section class="ap-panel" aria-labelledby="ce-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="ce-t">Certificates</h2><a href="#/certificates" class="ap-caption" style="color:var(--honey-text)">All ${D.certs.length}</a></div>
-<div class="ap-panel-body ap-stack">${[...D.certs].sort((a, b) => a.expires - b.expires).slice(0, 4).map(certMeter).join('')}</div></section></div>
+<div class="ap-panel-body ap-stack">${D.certs.length ? [...D.certs].sort((a, b) => (a.expires || NOW) - (b.expires || NOW)).slice(0, 4).map(certMeter).join('') : '<p class="ap-muted" style="margin:0">No certificates yet. Each route gets one automatically.</p>'}</div></section></div>
 <section class="ap-panel" aria-labelledby="au-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="au-t">Recent activity</h2><a href="#/audit" class="ap-caption" style="color:var(--honey-text)">Open the audit log</a></div>
-<div class="ap-panel-body" style="padding-block:4px">${auditList(D.audit.slice(0, 4))}</div></section>`,
-    mount(el) { segs(el); },
+<div class="ap-panel-body" style="padding-block:4px">${auditList(D.audit.filter(e => NOW - e.at <= 7 * DAY).slice(0, 4))}</div></section>`,
+    mount(el) {
+      segs(el);
+      const seg = $('[data-seg]', el);
+      seg.addEventListener('seg', e => {
+        overviewRange = e.detail;
+        const stats = $('[data-stats]', el);
+        if (stats) { stats.outerHTML = statCards(); paint(); }
+      });
+    },
   };
 });
 function segs(el) {
@@ -70,50 +125,38 @@ function segs(el) {
     seg.dispatchEvent(new CustomEvent('seg', { detail: b.dataset.v || b.textContent }));
   }));
 }
-function welcome() {
-  const step = (n, title, text, action, done) => `<div class="ap-list-row"><div style="display:flex;gap:14px;align-items:flex-start;flex:1 1 300px"><span class="ap-step${done ? ' ap-step-done' : ''}" style="counter-reset:step ${n - 1}"></span><div class="ap-list-text"><strong>${title}</strong><span class="ap-muted">${text}</span></div></div>${action}</div>`;
-  return {
-    title: 'Welcome',
-    html: `${pageHead({ title: 'Welcome to Apiary', sub: 'Your cluster is running and ready for traffic. Four steps get it serving your sites.' })}
-<section class="ap-panel" aria-labelledby="st-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="st-t">Get started</h2><span class="ap-caption">1 of 4 done</span></div><div class="ap-panel-body"><div class="ap-list">
-${step(1, 'Create your administrator', 'Done: you are signed in as the first administrator.', status('ok', 'Done'), true)}
-${step(2, 'Create a project', 'Projects group routes and certificates, such as one per site or team.', `<button class="ap-btn" type="button" data-new-project data-write>${icon('plus')}New project</button>`)}
-${step(3, 'Add your first route', "Point a hostname at a service on the shared network. Apiary gets its certificate automatically.", `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>`)}
-${step(4, 'Invite your team', 'Give each person their own account, with the least access they need.', `<a class="ap-btn" href="#/users">Invite people</a>`)}
-</div></div></section>
-${banner('info', 'Back up before you go further', 'Backups are taken on demand. Take one after your first changes, and before every upgrade.', '<a href="#/backups">Go to backups</a>')}`,
-  };
-}
 
 route('/projects', () => ({
   title: 'Projects',
-  html: `${pageHead({ title: 'Projects', sub: "Projects group routes and certificates so they're easier to find. They don't change who can see or edit them.", actions: `<button class="ap-btn ap-btn-primary" type="button" data-new-project data-write>${icon('plus')}New project</button>` })}
-${D.projects.length ? projectCards(D.projects) : `<section class="ap-panel">${emptyState('No projects yet', 'Create a project for each site, team or customer, then add routes to it.', `<button class="ap-btn ap-btn-primary" type="button" data-new-project data-write>${icon('plus')}New project</button>`)}</section>`}`,
+  html: `${pageHead({ title: 'Projects', sub: 'Projects group routes and certificates so they’re easier to find. They don’t change who can see or edit them.', actions: canOperate() ? `<button class="ap-btn ap-btn-primary" type="button" data-new-project data-write>${icon('plus')}New project</button>` : '' })}
+${D.projects.length ? projectCards(D.projects) : `<section class="ap-panel">${emptyState('No projects yet', 'Create a project for each site, team or customer, then add routes to it.')}</section>`}`,
 }));
 
 route('/projects/:id', id => {
   const p = projectOf(id);
   if (!p) return notFound();
-  const rs = routesOf(id);
+  const rs = routesOf(id), hosts = new Set(rs.map(r => r.host));
   const [tone, text] = projectHealth(id);
-  const certs = D.certs.filter(c => rs.some(r => r.host === c.host));
+  const covers = (c, h) => c === h || (c.startsWith('*.') && h.endsWith(c.slice(1)) && !h.slice(0, -c.length + 1).includes('.'));
+  const certs = D.certs.filter(c => (c.project ? c.project === id : c.source === 'auto' ? hosts.has(c.host) : rs.some(r => covers(c.host, r.host))));
+  const disabled = rs.filter(r => r.disabled).length;
+  const add = `<a class="ap-btn ap-btn-primary" href="#/routes/new/${id}" data-write>${icon('plus')}Add route</a>`;
   return {
     title: p.name,
-    html: `${pageHead({ crumbs: [['Projects', '#/projects']], title: p.name, sub: esc(p.desc), actions: `<button class="ap-btn ap-btn-icon" type="button" aria-label="More actions for ${esc(p.name)}" aria-haspopup="menu" aria-expanded="false" data-pmenu>${icon('ellipsis')}</button><a class="ap-btn ap-btn-primary" href="#/routes/new/${id}" data-write>${icon('plus')}Add route</a>` })}
+    html: `${pageHead({ crumbs: [['Projects', '#/projects']], title: p.name, sub: esc(p.desc), actions: canOperate() ? `<span class="ap-row" style="gap:8px"><button class="ap-btn ap-btn-ghost ap-btn-icon" type="button" aria-label="Edit project" data-pedit data-write>${icon('pencil')}</button><button class="ap-btn ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete project" data-pdel data-write>${icon('trash-2')}</button>${add}</span>` : '' })}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
 <div class="ap-panel ap-stat"><span class="ap-overline">Health</span><span style="margin-top:10px">${status(tone, text)}</span></div>
-<div class="ap-panel ap-stat"><span class="ap-overline">Routes</span><span class="ap-stat-value">${rs.length}</span></div>
+<div class="ap-panel ap-stat"><span class="ap-overline">Routes</span><span class="ap-stat-value">${rs.length}</span>${disabled ? `<span class="ap-stat-delta">${disabled} disabled</span>` : ''}</div>
 <div class="ap-panel ap-stat"><span class="ap-overline">Requests</span><span class="ap-stat-value">${num(rpmOf(id))}<span class="ap-stat-unit">/min</span></span></div>
-<div class="ap-panel ap-stat"><span class="ap-overline">Certificates</span><span class="ap-stat-value">${certs.length}</span><span class="ap-stat-delta">${certs.filter(c => certTone(c) !== 'ok').length ? status('warn', 'Renewal failing') : 'All renewing'}</span></div></div>
+<div class="ap-panel ap-stat"><span class="ap-overline">Redirects</span><span class="ap-stat-value">${redirectsOf(id).length}</span></div>
+<div class="ap-panel ap-stat"><span class="ap-overline">Certificates</span><span class="ap-stat-value">${certs.length}</span></div></div>
 <section class="ap-panel" aria-labelledby="pr-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="pr-t">Routes</h2></div>
-${rs.length ? routesTable(rs, { grouped: false }) : emptyState('No routes in this project', `Add a route to send a hostname to a service. It appears in ${esc(p.name)} and in All routes.`, `<a class="ap-btn ap-btn-primary" href="#/routes/new/${id}" data-write>${icon('plus')}Add route</a>`)}</section>`,
+${rs.length ? routesTable(rs, { grouped: false }) : emptyState('No routes in this project', `Add a route to send a hostname to a service. It appears in ${esc(p.name)} and in All routes.`, canOperate() ? add : '')}</section>`,
     mount(el) {
       bindRoutesTable(el);
-      $('[data-pmenu]', el).addEventListener('click', e => menu(e.currentTarget, [
-        { icon: 'pencil', label: 'Edit project', write: true, run: () => newProject(p) },
-        '-',
-        { icon: 'trash-2', label: 'Delete project…', danger: true, write: true, run: () => deleteProject(p) },
-      ], { label: 'Project actions' }));
+      const edit = $('[data-pedit]', el), del = $('[data-pdel]', el);
+      edit && edit.addEventListener('click', () => newProject(p));
+      del && del.addEventListener('click', () => deleteProject(p));
     },
   };
 });
@@ -124,9 +167,9 @@ function newProject(p) {
   const d = dialog({
     title: editing ? 'Edit project' : 'New project', backdrop: false,
     body: `<form class="ap-form" id="pj-form" novalidate style="gap:16px"><div data-summary></div>
-${field({ name: 'name', label: 'Name', value: p ? p.name : '', attrs: 'autocomplete="off" maxlength="60"', counter: 40 })}
-${field({ name: 'desc', label: 'Description', optional: true, value: p ? p.desc : '', counter: 120, help: 'Shown on the project card.' })}
-<fieldset class="ap-field" data-field="icon" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:6px">Icon</legend><div class="ap-icon-pick">${PROJECT_ICONS.map((ic, i) => `<label><input type="radio" name="icon" value="${ic}" aria-label="${ic.replace(/-/g, ' ')}"${(p ? p.icon === ic : i === 5) ? ' checked' : ''}><span>${icon(ic)}</span></label>`).join('')}</div><span class="ap-error" id="e-icon" hidden></span></fieldset>
+${field({ name: 'name', label: 'Name', value: p ? p.name : '', attrs: 'autocomplete="off"' })}
+${field({ name: 'desc', label: 'Description', optional: true, value: p ? p.desc : '', attrs: 'autocomplete="off"', help: 'Shown on the project card.' })}
+<fieldset class="ap-field" data-field="icon" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:6px">Icon</legend><div class="ap-icon-pick">${PROJECT_ICONS.map(ic => `<label><input type="radio" name="icon" value="${ic}" aria-label="${ic.replace(/-/g, ' ')}"${(p ? p.icon === ic : ic === 'globe') ? ' checked' : ''}><span>${icon(ic)}</span></label>`).join('')}</div><span class="ap-error" id="e-icon" hidden></span></fieldset>
 </form>`,
     foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="pj-form" data-busy="${editing ? 'Saving…' : 'Creating…'}" data-write>${editing ? 'Save project' : 'Create project'}</button>`,
   });
@@ -134,12 +177,13 @@ ${field({ name: 'desc', label: 'Description', optional: true, value: p ? p.desc 
   form($('#pj-form', d.el), {
     name: v => {
       const s = String(v).trim();
-      if (!s) return 'Enter a name for the project.';
-      if (s.length > 40) return 'Use 40 characters or fewer.';
-      if (D.projects.some(x => x !== p && x.name.toLowerCase() === s.toLowerCase())) return `There's already a project called ${s}. Choose another name.`;
+      if (!s) return 'Fill this in.';
+      if (s.length > 40) return 'Use at most 40 characters.';
+      if (D.projects.some(x => x !== p && x.name.toLowerCase() === s.toLowerCase())) return 'There’s already a project with this name. Choose another.';
     },
-    desc: v => (String(v).length > 120 ? `Use 120 characters or fewer: it's ${String(v).length} now.` : null),
+    desc: v => (String(v).trim().length > 120 ? 'Use at most 120 characters.' : null),
   }, {
+    verb: editing ? 'save it' : 'create it',
     submit: async v => {
       await api();
       if (editing) Object.assign(p, { name: v.name.trim(), desc: v.desc.trim(), icon: v.icon });
@@ -156,24 +200,33 @@ ${field({ name: 'desc', label: 'Description', optional: true, value: p ? p.desc 
   });
 }
 function deleteProject(p) {
-  const rs = routesOf(p.id), others = D.projects.filter(x => x !== p);
-  if (!rs.length) {
-    return confirmDialog({ title: `Delete ${esc(p.name)}?`, text: "The project is empty, so nothing else changes.", confirm: 'Delete project', busy: 'Deleting…', onConfirm: async () => { await api(); D.projects.splice(D.projects.indexOf(p), 1); toast(`${p.name} deleted.`); go('/projects'); } });
+  const others = D.projects.filter(x => x !== p), parts = projectContents(p.id).filter(([n]) => n > 0);
+  if (!parts.length) {
+    return confirmDialog({
+      title: `Delete ${esc(p.name)}?`, text: 'The project is empty, so nothing else changes.', confirm: 'Delete project', busy: 'Deleting…',
+      onConfirm: async () => {
+        await api();
+        if (!others.length) throw { title: '', detail: 'This is the only project. Create another before you delete it.' };
+        D.projects.splice(D.projects.indexOf(p), 1); toast(`${p.name} deleted.`); go('/projects');
+      },
+    });
   }
   const d = dialog({
-    title: `Delete ${esc(p.name)}?`, role: 'alertdialog', mark: ['critical', 'triangle-alert'], backdrop: false,
-    body: `<p style="margin:0">${esc(p.name)} has ${plural(rs.length, 'route')}. Routes keep working: choose the project they move to.</p>
-<form id="dp-form" class="ap-form" novalidate style="gap:16px">${field({ name: 'to', label: 'Move its routes to', control: select('to', [['', 'Choose a project'], ...others.map(o => [o.id, o.name])], '') })}</form>`,
-    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-danger" type="submit" form="dp-form" data-busy="Deleting…" data-write>Move routes and delete</button>`,
+    title: `Delete ${esc(p.name)}?`, role: 'alertdialog', backdrop: false, describe: true,
+    body: `<form id="dp-form" class="ap-form" novalidate style="gap:16px"><p style="margin:0">${esc(p.name)} has ${parts.map(([n, one]) => plural(n, one)).join(', ')}. They keep working: choose the project they move to.</p><div data-summary></div>
+${field({ name: 'to', label: 'Move them to', control: select('to', [['', 'Choose a project'], ...others.map(o => [o.id, o.name])], '') })}</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-danger" type="submit" form="dp-form" data-busy="Deleting…" data-write>Move and delete</button>`,
+    initial: '#f-to',
   });
   applyWriteLock(d.el);
-  form($('#dp-form', d.el), { to: v => (!v ? 'Choose where the routes go.' : null) }, {
+  form($('#dp-form', d.el), { to: v => (!v ? 'Choose where they go.' : null) }, {
+    verb: 'delete it',
     submit: async v => {
       await api();
-      rs.forEach(r => { r.project = v.to; });
+      [...routesOf(p.id), ...redirectsOf(p.id), ...D.streams.filter(x => x.project === p.id), ...D.certs.filter(c => c.project === p.id)].forEach(x => { x.project = v.to; });
       D.projects.splice(D.projects.indexOf(p), 1);
       d.close();
-      toast(`${p.name} deleted. ${plural(rs.length, 'route')} moved to ${projectOf(v.to).name}.`);
+      toast(`${p.name} deleted. What it held moved to ${projectOf(v.to).name}.`);
       go('/projects/' + v.to);
     },
   });
@@ -184,6 +237,28 @@ route('*', () => notFound(), { notFound: true });
 function notFound() {
   return {
     title: 'Page not found',
-    html: `<section class="ap-panel" style="margin-top:40px">${emptyState('This page doesn’t exist', 'The link may be old, or what it pointed to was deleted. Everything else is where you left it.', '<a class="ap-btn ap-btn-primary" href="#/">Go to the overview</a>')}</section>`,
+    html: `<section class="ap-panel">${emptyState('This page doesn’t exist', 'The link may be old, or the item was deleted.', '<a class="ap-btn ap-btn-primary" href="#/">Go to the overview</a>')}</section>`,
   };
 }
+
+/* What visitors see when Apiary answers instead of a site: plain pages with the design tokens and no scripts */
+const PUBLIC_PAGES = [
+  ['not-found', 404, 'Not found', "There's nothing here", 'No site is set up at this address. If you expected one, check the address, or contact whoever runs it.'],
+  ['starting', 503, 'Starting', 'This server is starting', "It isn't ready to serve this site yet. Try again in a minute."],
+  ['unavailable', 503, 'Unavailable', 'This site is unavailable', "It's turned off for now. If you expected it to work, contact whoever runs it."],
+  ['not-allowed', 403, 'Not allowed', "You can't open this site from here", 'It only accepts visitors from certain networks. If you need it, contact whoever runs it.'],
+  ['too-many-requests', 429, 'Too many requests', 'Too many requests', 'This site got too many requests from your network. Wait a moment, then try again.'],
+  ['maintenance', 503, 'Maintenance', 'Down for maintenance', null],
+];
+route('/public/:page', key => {
+  const page = PUBLIC_PAGES.find(x => x[0] === key);
+  if (!page) return notFound();
+  const [, , title, heading, fixed] = page;
+  const w = (D.routes.find(r => r.maintenance) || {}).maintenance;
+  const text = fixed || esc(w && w.message ? w.message : `This site is being worked on. Try again after ${fmtDate(w ? w.end : NOW + HOUR)} UTC.`);
+  return {
+    title,
+    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="max-width:32rem;padding:var(--space-6)"><h1 style="font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)">${esc(heading)}</h1><p style="margin:0;color:var(--ink-2)">${fixed ? esc(text) : text}</p></main></div>`,
+    mount() { document.title = title; },
+  };
+}, { bare: true });

@@ -1,40 +1,52 @@
 /* Routes: the list, with filters and bulk actions, and the route editor. */
-let routeDraft = null;
 const routeLabel = r => r.host + (r.path === '/' ? '' : r.path);
 function routeStatus(r) {
   if (r.disabled) return ['off', 'Disabled'];
   if (r.maintenance && r.maintenance.start <= NOW && NOW < r.maintenance.end) return ['info', 'In maintenance'];
   return [r.status, r.statusText || 'Healthy'];
 }
+const needsAttention = r => !r.disabled && r.status !== 'ok';
+const targetLabel = r => (r.targets.length === 1 ? `${r.targets[0].host}:${r.targets[0].port}` : r.targets.map(t => `${t.host} ${t.weight}%`).join(' · ') + (r.canary ? ' · canary' : ''));
+function changedOf(r) {
+  if (!r.changed) {
+    const i = D.routes.indexOf(r) + 1, who = D.users.filter(u => u.status === 'active');
+    r.changed = [NOW - (i * 7 + 2) * HOUR, (who[i % who.length] || D.me).email];
+  }
+  return r.changed;
+}
+function canaryOf(r) {
+  if (!r.canary) return { source: 'none', name: 'X-Canary', value: 'true' };
+  if (typeof r.canary === 'object') return r.canary;
+  const [name, value = 'true'] = r.canary.split(':').map(s => s.trim());
+  return { source: 'header', name, value };
+}
+
 function routeRow(r) {
-  const targets = r.targets.length > 1 ? r.targets.map(t => `${t.host} ${t.weight}%`).join(' · ') : `${r.targets[0].host}:${r.targets[0].port}`;
-  const tags = r.protocols.map(p => `<span class="ap-tag">${p}</span>`).join('')
-    + (r.targets.length > 1 && r.canary ? `<span class="ap-tag ap-tag-honey">Canary ${Math.min(...r.targets.map(t => t.weight))}%</span>` : '')
-    + (r.maintenance && NOW < r.maintenance.start ? `<span class="ap-tag">${icon('calendar')}Maintenance ${fmtDate(r.maintenance.start).slice(5)}</span>` : '');
   const [tone, text] = routeStatus(r);
-  return `<tr data-id="${r.id}"><td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${esc(routeLabel(r))}" data-sel="${r.id}"></td>
+  const label = esc(routeLabel(r)), [at, by] = changedOf(r);
+  const upcoming = r.maintenance && NOW < r.maintenance.start ? `<span class="ap-caption">Maintenance ${fmtDate(r.maintenance.start)} UTC</span>` : '';
+  const act = (ic, aria, key) => `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="${aria}" data-ract="${key}" data-id="${r.id}" data-write>${icon(ic)}</button>`;
+  const actions = canOperate() ? (r.disabled ? act('play', 'Enable ' + label, 'enable') : act('pause', 'Disable ' + label, 'disable'))
+    + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + act('trash-2', 'Delete ' + label, 'delete') : '';
+  return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
 <td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span></div></td>
-<td class="ap-data ap-muted">${esc(targets)}</td><td><div class="ap-row" style="gap:4px">${tags}</div></td><td>${status(tone, text)}</td>
-<td class="ap-muted">${r.cert === 'auto' ? 'Automatic' : 'Uploaded'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
-<td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Actions for ${esc(routeLabel(r))}" aria-haspopup="menu" aria-expanded="false" data-rmenu="${r.id}">${icon('ellipsis')}</button></td></tr>`;
+<td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
+<td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
+<td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
 }
 function routesTable(list, { grouped = true } = {}) {
-  const headRow = `<thead><tr><th class="ap-col-check" scope="col"><input class="ap-check" type="checkbox" aria-label="Select all routes shown" data-selall></th><th scope="col" aria-sort="ascending"><span class="ap-sort">Hostname ${icon('arrow-up')}</span></th><th scope="col">Target</th><th scope="col">Protocols</th><th scope="col">Status</th><th scope="col">Certificate</th><th scope="col" class="ap-num">Req/min</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead>`;
+  const ops = canOperate();
+  const headRow = `<thead><tr>${ops ? '<th class="ap-col-check" scope="col"><input class="ap-check" type="checkbox" aria-label="Select all routes shown" data-selall></th>' : ''}<th scope="col">Hostname</th><th scope="col">Target</th><th scope="col">Status</th><th scope="col">Certificate</th><th scope="col" class="ap-num">Req/min</th><th scope="col">Changed</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead>`;
   const sorted = [...list].sort((a, b) => routeLabel(a).localeCompare(routeLabel(b)));
   const body = grouped
     ? D.projects.filter(p => sorted.some(r => r.project === p.id)).map(p => {
       const rs = sorted.filter(r => r.project === p.id);
-      return `<tbody><tr class="ap-group"><td colspan="8"><button class="ap-group-title" type="button" aria-expanded="true">${icon('chevron-down')}${esc(p.name)}<span class="ap-group-meta">${plural(rs.length, 'route')} · ${num(rs.reduce((a, r) => a + r.rpm, 0))} req/min</span></button></td></tr>${rs.map(routeRow).join('')}</tbody>`;
+      return `<tbody><tr class="ap-group"><td colspan="${ops ? 8 : 7}"><span class="ap-group-title">${esc(p.name)}<span class="ap-group-meta">${plural(rs.length, 'route')} · ${num(rs.reduce((a, r) => a + (r.disabled ? 0 : r.rpm), 0))} req/min</span></span></td></tr>${rs.map(routeRow).join('')}</tbody>`;
     }).join('')
     : `<tbody>${sorted.map(routeRow).join('')}</tbody>`;
   return `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Routes${grouped ? ', grouped by project' : ''}</caption>${headRow}${body}</table></div>`;
 }
 function bindRoutesTable(el, onSelect = () => {}) {
-  $$('.ap-group-title', el).forEach(b => b.addEventListener('click', () => {
-    const open = b.getAttribute('aria-expanded') !== 'true';
-    b.setAttribute('aria-expanded', open ? 'true' : 'false');
-    $$('tr:not(.ap-group)', b.closest('tbody')).forEach(r => { r.hidden = !open; });
-  }));
   const boxes = $$('[data-sel]', el), all = $('[data-selall]', el);
   const sync = () => {
     const n = boxes.filter(b => b.checked).length;
@@ -44,62 +56,60 @@ function bindRoutesTable(el, onSelect = () => {}) {
   };
   boxes.forEach(b => b.addEventListener('change', sync));
   if (all) all.addEventListener('change', () => { boxes.forEach(b => { b.checked = all.checked; }); sync(); });
-  $$('[data-rmenu]', el).forEach(b => b.addEventListener('click', () => routeMenu(b, D.routes.find(r => r.id === b.dataset.rmenu))));
-}
-function routeMenu(anchor, r) {
-  menu(anchor, [
-    { icon: 'pencil', label: 'Edit route', run: () => go('/routes/' + r.id) },
-    { icon: 'copy', label: 'Duplicate', write: true, run: () => { routeDraft = r; go('/routes/new/' + r.project); } },
-    { icon: 'eraser', label: 'Purge cache', write: true, disabled: !r.caching, why: `Caching is off for ${routeLabel(r)}, so there's nothing to purge.`, run: () => purge([r]) },
-    r.disabled ? { icon: 'play', label: 'Enable route', write: true, run: () => setDisabled(r, false) } : { icon: 'pause', label: 'Disable route…', write: true, run: () => setDisabled(r, true) },
-    '-',
-    { icon: 'trash-2', label: 'Delete route…', danger: true, write: true, run: () => deleteRoutes([r]) },
-  ], { label: 'Actions for ' + routeLabel(r) });
+  $$('[data-ract]', el).forEach(b => b.addEventListener('click', () => {
+    const r = D.routes.find(x => x.id === b.dataset.id);
+    ({ enable: () => setDisabled(r, false), disable: () => setDisabled(r, true), purge: () => purge([r]), delete: () => deleteRoutes([r]) })[b.dataset.ract]();
+  }));
 }
 async function purge(rs) {
-  toast(`Purging the cache of ${rs.length === 1 ? routeLabel(rs[0]) : plural(rs.length, 'route')}…`, { tone: 'info' });
-  try { await api(); toast(`Cache purged on ${replicasUp()} replicas.`); }
-  catch (err) { toast(err.detail, { tone: 'error', title: err.title, action: 'Try again', onAction: () => purge(rs) }); }
+  const cached = rs.filter(r => r.caching);
+  if (!cached.length) { toast(rs.length === 1 ? 'Caching is off for this route, so there’s nothing to purge.' : 'None of these routes has caching on.', { tone: 'error' }); return false; }
+  try {
+    await api();
+    toast(cached.length === 1 ? `Cache of ${routeLabel(cached[0])} purged on every replica.` : `Cache of ${cached.length} routes purged on every replica.`);
+    return true;
+  } catch (err) { toast(err.detail, { tone: 'error', title: err.title, action: 'Try again', onAction: () => purge(rs) }); return false; }
 }
-const replicasUp = () => ({ healthy: '4 of 5', degraded: '3 of 5', quorum: '2 of 5' }[Proto.state.cluster]);
 function setDisabled(r, off) {
-  const apply = async () => { await api(); r.disabled = off; refresh(); };
-  if (!off) return apply().then(() => toast(`${routeLabel(r)} enabled. Traffic flows again.`)).catch(err => toast(err.detail, { tone: 'error', title: err.title }));
+  const label = routeLabel(r);
+  const apply = async () => { await api(); r.disabled = off; r.changed = [NOW, D.me.email]; refresh(); };
+  if (!off) return apply().then(() => toast(`${label} enabled. Traffic flows again.`)).catch(err => toast(err.detail, { tone: 'error', title: err.title }));
   confirmDialog({
-    title: `Disable ${esc(routeLabel(r))}?`, tone: 'danger', mark: ['warn', 'pause'],
+    title: `Disable ${esc(label)}?`, tone: 'danger', mark: ['warn', 'pause'],
     text: 'Visitors get a 503 until you enable it again. Its settings and certificate are kept.',
     confirm: 'Disable route', busy: 'Disabling…',
-    onConfirm: async () => { await apply(); toast(`${routeLabel(r)} disabled.`, { action: 'Undo', onAction: () => setDisabled(r, false) }); },
+    onConfirm: async () => { await apply(); toast(`${label} disabled.`, { action: 'Undo', onAction: () => setDisabled(r, false) }); },
   });
 }
 function deleteRoutes(rs, after) {
   const one = rs.length === 1;
   confirmDialog({
     title: one ? `Delete route ${esc(routeLabel(rs[0]))}?` : `Delete ${rs.length} routes?`,
-    text: one ? `Requests to this hostname get a 404 on every replica as soon as you confirm. Its automatic certificate is kept for 30 days in case you add the route again.`
+    text: one ? 'Requests to this hostname and path get a 404 on every replica as soon as you confirm.'
       : `Requests to these hostnames get a 404 on every replica as soon as you confirm: ${rs.map(r => `<span class="ap-data">${esc(routeLabel(r))}</span>`).join(', ')}.`,
     type: one ? rs[0].host : `delete ${rs.length} routes`, confirm: one ? 'Delete route' : `Delete ${rs.length} routes`, busy: 'Deleting…',
     onConfirm: async () => {
       await api();
       D.routes = D.routes.filter(r => !rs.includes(r));
-      toast(`${one ? routeLabel(rs[0]) : plural(rs.length, 'route')} deleted on ${replicasUp()} replicas.`);
+      toast(one ? `${routeLabel(rs[0])} deleted.` : `${rs.length} routes deleted.`);
       after ? after() : refresh();
     },
   });
 }
 
 route('/routes', () => {
+  const add = canOperate() ? `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>` : '';
   if (!D.routes.length) {
-    return { title: 'All routes', html: `${pageHead({ crumbs: [], title: 'All routes' })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network. Apiary gets its certificate for you.', `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>`)}</section>` };
+    return { title: 'All routes', html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.', add)}</section>` };
   }
   return {
     title: 'All routes',
-    html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>` })}
+    html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}
 <section class="ap-panel" aria-labelledby="rl-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-2 ap-sr" id="rl-t">Routes</h2></div>
 <div class="ap-toolbar" role="search" aria-label="Filter routes" style="padding-top:4px">
 <div class="ap-filter">${icon('search')}<input class="ap-input" type="search" placeholder="Filter by hostname or target" aria-label="Filter by hostname or target" data-f="q"></div>
-${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.name])], '', 'aria-label="Project" data-f="project"')}
-<div class="ap-seg" role="group" aria-label="Status" data-f="status"><button type="button" aria-pressed="true" data-v="all">All</button><button type="button" aria-pressed="false" data-v="attention">Needs attention</button><button type="button" aria-pressed="false" data-v="disabled">Disabled</button></div></div>
+<div class="ap-seg" role="group" aria-label="Status" data-f="status"><button type="button" aria-pressed="true" data-v="all">All</button><button type="button" aria-pressed="false" data-v="attention">Needs attention</button><button type="button" aria-pressed="false" data-v="disabled">Disabled</button></div>
+${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.name])], '', 'aria-label="Project" data-f="project"')}</div>
 <div data-selbar></div><div data-table></div>
 <div class="ap-panel-foot"><div class="ap-pager"><span data-count aria-live="polite"></span></div></div></section>`,
     mount(el) {
@@ -109,11 +119,12 @@ ${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.nam
       function draw() {
         const t = f.q.trim().toLowerCase();
         const list = D.routes.filter(r => (!f.project || r.project === f.project)
-          && (!t || (r.host + r.path + ' ' + r.targets.map(x => x.host).join(' ')).toLowerCase().includes(t))
-          && (f.status === 'all' || (f.status === 'disabled' ? r.disabled : !r.disabled && r.status !== 'ok')));
+          && (!t || (r.host + r.path + ' ' + r.targets.map(x => x.host).join(' ')).includes(t))
+          && (f.status === 'all' || (f.status === 'disabled' ? r.disabled : needsAttention(r))));
         box.innerHTML = list.length ? routesTable(list) : emptyState('No routes match', 'Try another word, or clear the filters to see every route.', '<button class="ap-btn" type="button" data-clear>Clear filters</button>');
         $('[data-count]', el).textContent = `${list.length} of ${plural(D.routes.length, 'route')}`;
         paint();
+        applyWriteLock(box);
         selected = [];
         selbar();
         bindRoutesTable(box, ids => { selected = ids; selbar(); });
@@ -127,12 +138,12 @@ ${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.nam
         paint();
         applyWriteLock(bar);
       }
-      $('[data-selbar]', el).addEventListener('click', e => {
+      $('[data-selbar]', el).addEventListener('click', async e => {
         const b = e.target.closest('[data-b]');
         if (!b) return;
         const rs = D.routes.filter(r => selected.includes(r.id));
         if (b.dataset.b === 'clear') draw();
-        if (b.dataset.b === 'purge') purge(rs);
+        if (b.dataset.b === 'purge' && await purge(rs)) draw();
         if (b.dataset.b === 'delete') deleteRoutes(rs);
         if (b.dataset.b === 'move') moveRoutes(rs);
       });
@@ -150,113 +161,197 @@ ${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.nam
   };
 });
 function moveRoutes(rs) {
+  const count = plural(rs.length, 'route');
   const d = dialog({
-    title: `Move ${plural(rs.length, 'route')}`, backdrop: false,
-    body: `<p style="margin:0">Moving changes only where the routes are listed. Traffic isn't affected.</p><form id="mv-form" class="ap-form" novalidate>${field({ name: 'to', label: 'Project', control: select('to', [['', 'Choose a project'], ...D.projects.map(p => [p.id, p.name])], '') })}</form>`,
+    title: `Move ${count}`, backdrop: false,
+    body: `<p style="margin:0">Moving changes only where the routes are listed. Traffic isn’t affected.</p><form id="mv-form" class="ap-form" novalidate>${field({ name: 'to', label: 'Project', control: select('to', [['', 'Choose a project'], ...D.projects.map(p => [p.id, p.name])], '') })}</form>`,
     foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="mv-form" data-busy="Moving…" data-write>Move routes</button>`,
   });
   form($('#mv-form', d.el), { to: v => (!v ? 'Choose a project.' : null) }, {
-    submit: async v => { await api(); rs.forEach(r => { r.project = v.to; }); d.close(); toast(`${plural(rs.length, 'route')} moved to ${projectOf(v.to).name}.`); refresh(); },
+    verb: 'move them',
+    submit: async v => { await api(); rs.forEach(r => { r.project = v.to; }); d.close(); toast(`${count} moved to ${projectOf(v.to).name}.`); refresh(); },
   });
 }
 
-/* The route editor. One page with sections, so nothing is hidden behind a tab when it has an error. */
+/* The route editor. One page with sections, so nothing is hidden behind a tab when it has an error.
+   Messages follow the app's codes (route-rules.ts and the message catalogs). */
+const RM = {
+  required: 'Fill this in.',
+  range: (min, max) => `Enter a number from ${min} to ${max}.`,
+  tooLong: max => `Use at most ${max} characters.`,
+  'hostname.required': 'Enter a hostname, such as shop.example.com.',
+  'hostname.scheme': 'Enter the hostname only, without http:// or https://.',
+  'hostname.path': 'Enter the hostname only. Add a path in the Path field.',
+  'hostname.address': 'Use a hostname, not an IP address: certificates can’t be issued for IP addresses.',
+  'hostname.tooLong': 'A hostname can be at most 253 characters long.',
+  'hostname.notFull': 'Enter a full hostname, such as shop.example.com.',
+  'hostname.consecutiveDots': 'A hostname has no empty parts: check for two dots in a row.',
+  'hostname.label': 'Use letters, digits and hyphens in each part of the hostname, not starting or ending with a hyphen.',
+  'path.invalid': 'Enter a path that starts with /, such as /api, without ? or #.',
+  'port.required': 'Enter a port, such as 8080.',
+  'target.required': 'Enter a target, such as the service name shop-v1.',
+  'target.invalid': 'Use a service name, hostname or IP address.',
+  'target.port': 'Enter the port in the Port field.',
+  'target.loopback': 'Apiary doesn’t route to loopback addresses. Use the service’s name on the shared network, such as shop-v1.',
+  'target.linkLocal': 'Apiary doesn’t route to link-local addresses or cloud metadata endpoints. Use the service’s name on the shared network.',
+  'target.unspecified': 'Use the service’s own address, not 0.0.0.0 or ::.',
+  'ipRange.invalid': 'Enter an IPv4 or IPv6 address or range, such as 10.0.0.0/8.',
+  'ipRange.tooMany': 'Use 100 addresses or ranges at most. Combine neighbors into a wider range.',
+  'dateTime.format': 'Enter a date and time like 2026-11-03 14:00, in UTC.',
+  'maintenance.endBeforeStart': 'Choose an end after the start.',
+  'maintenance.tooLong': 'A maintenance window can last at most 7 days.',
+  'maintenance.ended': 'This window has already ended. Choose an end in the future, or turn maintenance off.',
+  'project.notFound': 'Choose a project.',
+  'route.duplicate': 'Another route already uses this hostname and path. Change one of them.',
+  'route.redirectExists': 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
+  'route.canaryName': 'Use letters, digits and hyphens, such as X-Canary.',
+  'certificate.choose': 'Choose an uploaded certificate.',
+  'certificate.doesNotCover': 'This certificate doesn’t cover the hostname. Choose one that does, or use an automatic certificate.',
+};
+function checkHost(v) {
+  const s = String(v || '').trim();
+  if (!s) return RM['hostname.required'];
+  if (/^https?:\/\//i.test(s)) return RM['hostname.scheme'];
+  if (/[/:]/.test(s)) return RM['hostname.path'];
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(s)) return RM['hostname.address'];
+  if (s.length > 253) return RM['hostname.tooLong'];
+  if (!s.includes('.')) return RM['hostname.notFull'];
+  if (s.split('.').some(p => p === '')) return RM['hostname.consecutiveDots'];
+  return s.split('.').every(p => /^[a-z0-9-]{0,63}$/i.test(p) && !p.startsWith('-') && !p.endsWith('-')) ? null : RM['hostname.label'];
+}
+function checkTarget(v) {
+  const s = String(v || '').trim().toLowerCase(), v6 = /^\[?[0-9a-f:]+\]?$/i;
+  if (!s) return RM['target.required'];
+  if (/:\d+$/.test(s) && !v6.test(s)) return RM['target.port'];
+  if (s === 'localhost' || s.endsWith('.localhost')) return RM['target.loopback'];
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s), bare = s.replace(/^\[|\]$/g, '');
+  if (v4) {
+    if (+v4[1] === 127) return RM['target.loopback'];
+    if ((+v4[1] === 169 && +v4[2] === 254) || s === '100.100.100.200') return RM['target.linkLocal'];
+    if (s === '0.0.0.0') return RM['target.unspecified'];
+  } else {
+    if (bare === '::1') return RM['target.loopback'];
+    if (/^fe80:/i.test(bare) || /^fd00:ec2::254$/i.test(bare)) return RM['target.linkLocal'];
+    if (bare === '::') return RM['target.unspecified'];
+  }
+  return /^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$/i.test(s) || v6.test(s) ? null : RM['target.invalid'];
+}
+const rtWhole = (min, max) => val => (String(val).trim() === '' || !Number.isInteger(+val) || +val < min || +val > max ? RM.range(min, max) : null);
+const certCovers = (c, h) => c === h || (c.startsWith('*.') && h.endsWith(c.slice(1)) && h.split('.').length === c.split('.').length);
+const withLabel = (html, label) => html.replace('class="ap-field"', `class="ap-field" data-label="${label}"`);
+const rtChoice = (name, checked, title, help, cls = 'ap-switch', style = '') => `<label class="ap-choice"${style ? ` style="${style}"` : ''}><input class="${cls}" type="checkbox" name="${name}"${checked ? ' checked' : ''}><span class="ap-choice-text"><span>${title}</span><span class="ap-help">${help}</span></span></label>`;
+const MAX_TARGETS = 10;
+
 route('/routes/new', () => routeEditor(null));
 route('/routes/new/:project', p => routeEditor(null, p));
 route('/routes/:id', id => { const r = D.routes.find(x => x.id === id); return r ? routeEditor(r) : notFound(); });
 
 function routeEditor(r, projectId) {
   const isNew = !r;
-  const src = r || routeDraft || { host: '', path: '/', project: projectId || '', targets: [{ host: '', port: 8080, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], cert: 'auto', timeout: 30, allow: [] };
-  const draftFrom = isNew && routeDraft;
-  routeDraft = null;
+  const src = r || { host: '', path: '/', project: projectId || (D.projects.length === 1 ? D.projects[0].id : ''), targets: [{ host: '', port: 8080, weight: 100 }], cert: 'auto', timeout: 30, allow: [] };
   let targets = src.targets.map(t => ({ ...t }));
+  const canary = canaryOf(src);
   const uploaded = D.certs.filter(c => c.source === 'uploaded');
+  const certId = src.cert === 'uploaded' ? src.certId || (uploaded.find(c => certCovers(c.host, src.host)) || {}).host || '' : '';
   const [tone, text] = r ? routeStatus(r) : [];
   const m = src.maintenance;
+  const ops = canOperate();
   const html = `${pageHead({
     crumbs: [['All routes', '#/routes']], title: isNew ? 'New route' : routeLabel(r),
-    sub: isNew ? (draftFrom ? `A copy of ${esc(routeLabel(draftFrom))}. Change the hostname or path: two routes can't share both.` : 'Send requests for a hostname to services on the shared network.') : `${status(tone, text)} &nbsp;·&nbsp; ${num(r.rpm)} req/min${r.changed ? ` &nbsp;·&nbsp; Changed by ${esc(r.changed[1])} ${ago(r.changed[0])}` : ''}`,
+    sub: isNew ? 'Send requests for a hostname to services on the shared network.' : `${status(tone, text)} &nbsp;·&nbsp; ${num(r.rpm)} req/min &nbsp;·&nbsp; Changed ${ago(changedOf(r)[0])}${r.changed[1] ? ` by ${esc(r.changed[1])}` : ''}`,
   })}
+${ops ? '' : banner('info', 'You can view this route', 'Changing it needs the Operator role. Ask an Administrator if you need it.')}
 <form class="ap-form" id="rt-form" novalidate style="max-width:800px">
 <div data-summary></div>
 <section class="ap-panel" aria-labelledby="s1"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s1">Requests</h2><p class="ap-panel-desc">Which requests this route answers.</p></div></div><div class="ap-panel-body ap-stack">
-<div class="ap-grid-2" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">${field({ name: 'host', label: 'Hostname', value: draftFrom ? '' : src.host, data: true, placeholder: 'shop.example.com', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'Point its DNS at your edge nodes first, so the certificate can be issued.' })}
+<div class="ap-grid-2" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">${field({ name: 'host', label: 'Hostname', value: src.host, data: true, placeholder: 'shop.example.com', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'Point its DNS at your edge nodes first, so the certificate can be issued.' })}
 ${field({ name: 'path', label: 'Path', value: src.path, data: true, help: 'Most routes use /.', attrs: 'autocomplete="off" spellcheck="false"' })}</div>
 ${field({ name: 'project', label: 'Project', control: select('project', [['', 'Choose a project'], ...D.projects.map(p => [p.id, p.name])], src.project), help: 'Only for grouping: it doesn’t change who can edit the route.' })}
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s2"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s2">Targets</h2><p class="ap-panel-desc">Services that receive the traffic, by their name on the shared network. With two or more, the weights split the traffic.</p></div></div><div class="ap-panel-body ap-stack">
+<div class="ap-stack" data-rows></div>
 <div data-split></div>
-<div class="ap-field" data-field="weights" data-label="Weights"><div class="ap-stack" style="gap:12px" data-rows></div><span class="ap-error" id="e-weights" hidden></span></div>
-<div><button class="ap-btn ap-btn-sm" type="button" data-add-target>${icon('plus')}Add target</button></div>
-<div data-canary></div>
-<label class="ap-choice"><input class="ap-switch" type="checkbox" name="sticky"${src.sticky ? ' checked' : ''}><span class="ap-choice-text"><span>Sticky sessions</span><span class="ap-help">Keeps each visitor on the target they first reached, for 1 hour.</span></span></label>
+<button class="ap-btn ap-btn-sm" type="button" style="align-self:flex-start" data-add-target>${icon('plus')}Add target</button>
+<div class="ap-stack" data-many>
+${field({ name: 'canarySource', label: 'Canary', optional: true, control: select('canarySource', [['none', 'No canary'], ['header', 'By header'], ['cookie', 'By cookie']], canary.source), help: '<span data-canary-help></span>' })}
+<div class="ap-grid-2" data-canary-fields>${withLabel(field({ name: 'canaryName', label: 'Name', value: canary.name, data: true, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"' }), 'Canary name')}${withLabel(field({ name: 'canaryValue', label: 'Value', value: canary.value, data: true, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"' }), 'Canary value')}</div>
+${rtChoice('sticky', src.sticky, 'Sticky sessions', 'Keeps each visitor on the target they first reached, for 1 hour, with a cookie.')}
+</div>
 </div></section>
 
-<section class="ap-panel" aria-labelledby="s3"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s3">Traffic rules</h2></div></div><div class="ap-panel-body ap-stack">
-<fieldset class="ap-field" data-field="protocols" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:8px">Protocols</legend><div class="ap-row" style="gap:20px">${['HTTP/2', 'HTTP/3', 'WebSockets'].map(p => `<label class="ap-choice"><input class="ap-check" type="checkbox" name="proto-${p}"${src.protocols.includes(p) ? ' checked' : ''}>${p}</label>`).join('')}</div><span class="ap-help" style="margin-top:6px">HTTP/1.1 always works.</span><span class="ap-error" id="e-protocols" hidden></span></fieldset>
-<label class="ap-choice"><input class="ap-switch" type="checkbox" name="compression"${src.compression ? ' checked' : ''}><span class="ap-choice-text"><span>Compression</span><span class="ap-help">Off by default. Turn it on only for public, static content.</span></span></label>
-<label class="ap-choice"><input class="ap-switch" type="checkbox" name="caching"${src.caching ? ' checked' : ''}><span class="ap-choice-text"><span>Caching</span><span class="ap-help">Stores only what the target allows with Cache-Control.</span></span></label>
-<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 120.' })}</div>
+<section class="ap-panel" aria-labelledby="s3"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s3">Certificate</h2></div></div><div class="ap-panel-body ap-stack">
+<fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-sr">Certificate source</legend><div class="ap-stack" style="gap:10px">
+<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="auto"${src.cert !== 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Automatic</span><span class="ap-help">From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.</span></span></label>
+<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="uploaded"${src.cert === 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Uploaded certificate</span><span class="ap-help">For wildcards and internal certificate authorities.</span></span></label></div></fieldset>
+<div data-upl>${field({ name: 'certId', label: 'Uploaded certificate', control: select('certId', [['', 'Choose a certificate'], ...uploaded.map(c => [c.host, `${c.host} (expires ${fmtDate(c.expires, false)})`])], certId), help: 'Upload a certificate on the Certificates page first if yours isn’t listed.' })}</div>
 </div></section>
 
-<section class="ap-panel" aria-labelledby="s4"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s4">Certificate</h2></div></div><div class="ap-panel-body ap-stack">
-<fieldset class="ap-field" data-field="cert" style="border:0;margin:0;padding:0"><legend class="ap-sr">Certificate source</legend><div class="ap-stack" style="gap:10px">
-<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="auto"${src.cert === 'auto' ? ' checked' : ''}><span class="ap-choice-text"><span>Automatic</span><span class="ap-help">From Let's Encrypt, renewed 30 days before it expires. Needs the hostname to reach this cluster on port 80.</span></span></label>
-<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="uploaded"${src.cert === 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Uploaded certificate</span><span class="ap-help">For wildcards and internal certificate authorities.</span></span></label></div><span class="ap-error" id="e-cert" hidden></span></fieldset>
-<div data-upl>${field({ name: 'certId', label: 'Uploaded certificate', control: select('certId', [['', 'Choose a certificate'], ...uploaded.map(c => [c.host, `${c.host} (expires ${fmtDate(c.expires, false)})`])], src.cert === 'uploaded' ? (uploaded[0] || {}).host : ''), help: '<a href="#/certificates">Upload a certificate</a> first if yours isn’t listed.' })}</div>
+<section class="ap-panel" aria-labelledby="s4"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s4">Traffic rules</h2></div></div><div class="ap-panel-body ap-stack">
+<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', type: 'number', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 120.' })}</div>
+${rtChoice('compression', src.compression, 'Compression', 'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.')}
+${rtChoice('caching', src.caching, 'Caching', 'Stores only what the target allows with Cache-Control, in memory on each replica.')}
+${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.')}
+<div data-hsts${src.hsts ? '' : ' hidden'}>${rtChoice('hstsSub', src.hstsSub, 'Include subdomains', 'Also covers every subdomain of this hostname. Only turn it on when they all serve HTTPS.', 'ap-check', 'margin-left:40px')}</div>
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s5"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s5">Access</h2></div></div><div class="ap-panel-body ap-stack">
-${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8"'), help: 'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' })}
+${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8" spellcheck="false"'), help: 'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' })}
+${rtChoice('rateLimited', src.rateLimit != null, 'Limit requests per visitor', 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.')}
+<div style="max-width:280px;margin-left:40px" data-rate${src.rateLimit != null ? '' : ' hidden'}>${field({ name: 'rateLimit', label: 'Rate limit', type: 'number', value: src.rateLimit ?? 600, data: true, after: 'a&nbsp;minute', attrs: 'inputmode="numeric"', help: 'From 1 to 100,000.' })}</div>
 </div></section>
 
-<section class="ap-panel" aria-labelledby="s6"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s6">Maintenance window</h2><p class="ap-panel-desc">During the window, visitors get a 503 page with your message, and health checks pause.</p></div></div><div class="ap-panel-body ap-stack">
+<section class="ap-panel" aria-labelledby="s6"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s6">Maintenance window</h2><p class="ap-panel-desc">During the window, visitors get a 503 page with your message.</p></div></div><div class="ap-panel-body ap-stack">
 <label class="ap-choice"><input class="ap-switch" type="checkbox" name="maint"${m ? ' checked' : ''}><span>Schedule maintenance</span></label>
 <div class="ap-stack" data-maint${m ? '' : ' hidden'}>
-<div class="ap-grid-2">${dtpField({ name: 'mStart', label: 'Starts', value: m && m.start, min: NOW })}${dtpField({ name: 'mEnd', label: 'Ends', value: m && m.end, min: NOW, help: 'At most 7 days after it starts.' })}</div>
-${field({ name: 'mMsg', label: 'Message for visitors', optional: true, control: textarea('mMsg', m ? m.message : '', 'rows="2" placeholder="We’re upgrading the shop. Back by 00:30 UTC."', false), counter: 200 })}
+<div class="ap-grid-2">${dtpField({ name: 'mStart', label: 'Starts', value: m && m.start, min: Math.floor(NOW / HOUR) * HOUR, help: 'In UTC, like every time in Apiary.' })}${dtpField({ name: 'mEnd', label: 'Ends', value: m && m.end, min: Math.floor(NOW / HOUR) * HOUR, help: 'At most 7 days after it starts.' })}</div>
+${field({ name: 'mMsg', label: 'Message for visitors', optional: true, control: textarea('mMsg', m ? m.message : '', 'rows="2" placeholder="We’re upgrading the shop. Back by 00:30 UTC."', false), help: 'Up to 200 characters.' })}
 </div></div></section>
 
-${isNew ? `<div class="ap-row" style="justify-content:flex-end"><a class="ap-btn ap-btn-ghost" href="${projectId ? '#/projects/' + projectId : '#/routes'}">Cancel</a><button class="ap-btn ap-btn-primary" type="submit" data-busy="Adding…" data-write>Add route</button></div>`
-    : `<section class="ap-panel ap-panel-danger" aria-labelledby="s7"><div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="s7">Danger zone</h2></div><div class="ap-panel-body"><div class="ap-list">
-<div class="ap-list-row"><div class="ap-list-text"><strong>${r.disabled ? 'Enable' : 'Disable'} this route</strong><span class="ap-muted">${r.disabled ? 'Traffic flows again with the saved settings.' : 'Visitors get a 503. Settings and certificate are kept.'}</span></div><button class="ap-btn" type="button" data-disable data-write>${r.disabled ? 'Enable route' : 'Disable route…'}</button></div>
-<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests get a 404 at once. This can't be undone.</span></div><button class="ap-btn ap-btn-danger" type="button" data-delete data-write>Delete route…</button></div></div></div></section>
-<div data-savebar></div>`}
+${isNew ? '' : `<section class="ap-panel ap-panel-danger" aria-labelledby="s7"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s7">Danger zone</h2></div></div><div class="ap-panel-body ap-list">
+<div class="ap-list-row"><div class="ap-list-text"><strong>${r.disabled ? 'Enable' : 'Disable'} this route</strong><span class="ap-muted">${r.disabled ? 'Traffic flows again with the saved settings.' : 'Visitors get a 503. Settings and certificate are kept.'}</span></div><button class="ap-btn" type="button" data-disable data-write${ops ? '' : ' disabled'}>${r.disabled ? 'Enable route' : 'Disable route…'}</button></div>
+<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests to it get a 404 on every replica.</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-delete data-write${ops ? '' : ' disabled'}>Delete route…</button></div></div></section>`}
+${ops ? `<div class="ap-savebar"><a class="ap-btn ap-btn-ghost" href="#/routes">Cancel</a><button class="ap-btn ap-btn-primary" type="submit" data-busy="Saving…" data-write>${isNew ? 'Create route' : 'Save route'}</button></div>` : ''}
 </form>`;
 
   function mount(el) {
     const f = $('#rt-form', el);
     const rowsEl = $('[data-rows]', el);
     const syncTargets = () => { targets = targets.map((t, i) => ({ host: f.elements['t-host-' + i]?.value ?? t.host, port: f.elements['t-port-' + i]?.value ?? t.port, weight: f.elements['t-weight-' + i]?.value ?? t.weight })); };
+    const many = () => targets.length > 1;
+    const lastTarget = () => (f.elements['t-host-' + (targets.length - 1)]?.value || '').trim() || 'the last target';
     function drawRows() {
-      const many = targets.length > 1;
-      rowsEl.innerHTML = targets.map((t, i) => `<div class="ap-target-row"${many ? '' : ' style="grid-template-columns:minmax(0,2fr) minmax(84px,1fr) auto"'}>
-${field({ name: 't-host-' + i, label: many ? `Target ${i + 1}` : 'Target', value: t.host, data: true, placeholder: 'shop-v1', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"' })}
-${field({ name: 't-port-' + i, label: 'Port', value: t.port, data: true, attrs: 'inputmode="numeric"' })}
-${many ? field({ name: 't-weight-' + i, label: 'Weight', value: t.weight, data: true, after: '%', attrs: 'inputmode="numeric"' }) : ''}
-<button class="ap-btn ap-btn-icon ap-btn-ghost" type="button" data-remove="${i}" aria-label="Remove target ${i + 1}"${many ? '' : ' disabled'}>${icon('x')}</button></div>`).join('');
-      $('[data-add-target]', el).hidden = targets.length >= 5;
-      $('[data-canary]', el).innerHTML = many ? field({ name: 'canary', label: 'Canary header', optional: true, value: src.canary || '', data: true, placeholder: 'X-Canary: true', help: `Requests with this header always reach ${esc(targets[targets.length - 1].host || 'the last target')}.` }) : '';
+      rowsEl.innerHTML = targets.map((t, i) => `<div class="ap-row" style="gap:12px;align-items:flex-start;flex-wrap:wrap">
+<div style="flex:2 1 220px">${withLabel(field({ name: 't-host-' + i, label: 'Service or host', value: t.host, data: true, placeholder: 'shop-v1', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"' }), 'Target')}</div>
+<div style="flex:1 1 100px">${withLabel(field({ name: 't-port-' + i, label: 'Port', type: 'number', value: t.port, data: true, attrs: 'inputmode="numeric"' }), 'Target port')}</div>
+${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + i, label: 'Weight', type: 'number', value: t.weight, data: true, after: '%', attrs: 'inputmode="numeric"' }), 'Target weight')}</div>
+<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" style="margin-top:26px" data-remove="${i}" aria-label="Remove target ${i + 1}">${icon('x')}</button>` : ''}</div>`).join('');
+      $('[data-add-target]', el).hidden = targets.length >= MAX_TARGETS;
+      $('[data-many]', el).hidden = !many();
       paint();
       drawSplit();
+      drawCanary();
     }
     function drawSplit() {
       const box = $('[data-split]', el);
-      if (targets.length < 2) { box.innerHTML = ''; return; }
-      const ws = targets.map((t, i) => Math.max(0, parseInt(f.elements['t-weight-' + i]?.value ?? t.weight, 10) || 0));
-      const total = ws.reduce((a, b) => a + b, 0) || 1;
-      box.innerHTML = `<div class="ap-split" role="img" aria-label="Traffic split: ${targets.map((t, i) => `${esc(t.host || 'target ' + (i + 1))} ${ws[i]} percent`).join(', ')}">${targets.map((t, i) => ws[i] ? `<span style="flex:${ws[i] / total * 100}">${esc(t.host || 'Target ' + (i + 1))} · ${ws[i]}%</span>` : '').join('')}</div>`;
+      if (!many()) { box.innerHTML = ''; return; }
+      const line = targets.map((t, i) => `${(f.elements['t-host-' + i]?.value ?? t.host).trim() || 'target'} ${String(f.elements['t-weight-' + i]?.value ?? t.weight).trim() || 0}%`).join(' · ');
+      const err = $('#e-weights', box);
+      if (err) { $('[data-split-line]', box).textContent = line; return; }
+      box.innerHTML = `<div class="ap-field" data-field="weights" data-label="Weights"><span class="ap-label">Split</span><span class="ap-data ap-muted" data-split-line>${esc(line)}</span><span class="ap-error" id="e-weights" hidden></span></div>`;
+    }
+    function drawCanary() {
+      $('[data-canary-help]', el).textContent = `Requests with this header or cookie always reach ${lastTarget()}, so testers reach it on purpose.`;
+      $('[data-canary-fields]', el).hidden = f.elements.canarySource.value === 'none';
     }
     drawRows();
     $('[data-add-target]', el).addEventListener('click', () => {
       syncTargets();
-      const even = Math.floor(100 / (targets.length + 1));
-      targets.push({ host: '', port: targets[0].port, weight: targets.length === 1 ? 0 : even });
-      if (targets.length === 2 && +targets[0].weight === 100) { targets[0].weight = 90; targets[1].weight = 10; }
+      if (targets.length === 1 && +targets[0].weight === 100) targets = [{ ...targets[0], weight: 90 }, { host: '', port: targets[0].port, weight: 10 }];
+      else targets.push({ host: '', port: targets[0].port, weight: 0 });
       drawRows();
       f.elements['t-host-' + (targets.length - 1)].focus();
+      dirtyCheck();
     });
     rowsEl.addEventListener('click', e => {
       const b = e.target.closest('[data-remove]');
@@ -265,124 +360,115 @@ ${many ? field({ name: 't-weight-' + i, label: 'Weight', value: t.weight, data: 
       targets.splice(+b.dataset.remove, 1);
       if (targets.length === 1) targets[0].weight = 100;
       drawRows();
-      (f.elements['t-host-' + Math.max(0, +b.dataset.remove - 1)]).focus();
-      v.check('weights');
+      f.elements['t-host-' + Math.max(0, +b.dataset.remove - 1)].focus();
+      if (many()) v.check('weights');
       dirtyCheck();
     });
-    rowsEl.addEventListener('input', e => { if (/^t-(weight|host)-/.test(e.target.name)) drawSplit(); });
-    f.elements.host.addEventListener('change', e => { e.target.value = e.target.value.trim().toLowerCase(); });
+    rowsEl.addEventListener('input', e => { if (/^t-(weight|host)-/.test(e.target.name)) { drawSplit(); drawCanary(); } });
     const showUpl = () => { $('[data-upl]', el).hidden = f.elements.cert.value !== 'uploaded'; };
     showUpl();
-    f.addEventListener('change', e => { if (e.target.name === 'cert') showUpl(); if (e.target.name === 'maint') $('[data-maint]', el).hidden = !e.target.checked; });
+    f.addEventListener('change', e => {
+      const n = e.target.name;
+      if (n === 'cert') showUpl();
+      if (n === 'canarySource') drawCanary();
+      if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
+      if (n === 'rateLimited') $('[data-rate]', el).hidden = !e.target.checked;
+      if (n === 'maint') $('[data-maint]', el).hidden = !e.target.checked;
+    });
 
     const v = form(f, () => {
       const rules = {
         host: (val, all) => {
-          const msg = V.hostname(val);
+          const msg = checkHost(val);
           if (msg) return msg;
           const h = String(val).trim().toLowerCase(), p = String(all.path || '/').trim();
-          return api('read', 500).then(() => {
-            const clash = D.routes.find(x => x !== r && x.host === h && x.path === p);
-            return clash ? `${h}${p === '/' ? '' : p} is already a route in ${projectOf(clash.project).name}. Change the hostname or the path.` : { ok: 'No other route uses this hostname and path.' };
+          return api('read', 400).then(() => {
+            if (D.redirects.some(x => x.from === h)) return RM['route.redirectExists'];
+            return D.routes.some(x => x !== r && x.host === h && x.path === p) ? RM['route.duplicate'] : null;
           }).catch(() => null);
         },
-        path: val => (!/^\/[^\s?#]*$/.test(String(val).trim()) ? 'Start the path with /, without spaces, ? or #.' : null),
-        project: val => (!val ? 'Choose a project.' : null),
-        timeout: val => (!/^\d+$/.test(String(val).trim()) || +val < 1 || +val > 120 ? 'Enter a whole number of seconds from 1 to 120.' : null),
-        allow: val => {
-          const lines = String(val).split('\n').map(s => s.trim());
-          const bad = lines.findIndex(l => l && !V.cidr(l));
-          return bad >= 0 ? `Line ${bad + 1}, "${lines[bad]}", isn't an address or range. Use the form 10.0.0.0/8 or 2001:db8::/32.` : null;
+        path: val => {
+          const s = String(val).trim();
+          if (!s) return RM.required;
+          return s.startsWith('/') && !/[?#\s]|\.\.|\/\//.test(s) ? null : RM['path.invalid'];
         },
-        protocols: (_, all) => null,
-        cert: (val, all) => (val === 'auto' && String(all.host).trim().startsWith('*.') ? "Let's Encrypt can't issue wildcard certificates over HTTP-01. Upload a certificate for this hostname instead." : null),
+        project: val => (!val ? RM['project.notFound'] : null),
+        canaryName: (val, all) => (!many() || all.canarySource === 'none' || /^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,100}$/.test(String(val).trim()) ? null : RM['route.canaryName']),
+        canaryValue: (val, all) => {
+          if (!many() || all.canarySource === 'none') return null;
+          const s = String(val).trim();
+          return !s ? RM.required : s.length > 200 ? RM.tooLong(200) : null;
+        },
         certId: (val, all) => {
           if (all.cert !== 'uploaded') return null;
-          if (!val) return 'Choose an uploaded certificate.';
-          const h = String(all.host).trim().toLowerCase(), c = val.toLowerCase();
-          const covers = c === h || (c.startsWith('*.') && h.endsWith(c.slice(1)) && h.split('.').length === c.split('.').length);
-          return h && !covers ? `${val} doesn't cover ${h}. Choose a certificate for this hostname.` : null;
+          if (!val) return RM['certificate.choose'];
+          const h = String(all.host).trim().toLowerCase();
+          return h && !certCovers(val.toLowerCase(), h) ? RM['certificate.doesNotCover'] : null;
         },
-        mStart: (val, all) => {
-          if (!all.maint) return null;
-          const msg = V.date(val);
-          if (msg) return msg;
-          return parseDate(val) < NOW - 5 * MIN ? 'Choose a start in the future.' : null;
+        timeout: rtWhole(1, 120),
+        allow: val => {
+          const lines = String(val).split('\n').map(s => s.trim()).filter(Boolean);
+          if (lines.length > 100) return RM['ipRange.tooMany'];
+          return lines.some(l => !V.cidr(l)) ? RM['ipRange.invalid'] : null;
         },
+        rateLimit: (val, all) => (all.rateLimited ? rtWhole(1, 100000)(val) : null),
+        mStart: (val, all) => (all.maint && parseDate(val) === null ? RM['dateTime.format'] : null),
         mEnd: (val, all) => {
           if (!all.maint) return null;
-          const msg = V.date(val);
-          if (msg) return msg;
-          const s = parseDate(all.mStart), e = parseDate(val);
+          const e = parseDate(val), s = parseDate(all.mStart);
+          if (e === null) return RM['dateTime.format'];
           if (s === null) return null;
-          if (e <= s) return 'Choose an end after the start.';
-          if (e - s > 7 * DAY) return 'A maintenance window can last at most 7 days.';
-          return null;
+          if (e <= s) return RM['maintenance.endBeforeStart'];
+          if (e - s > 7 * DAY) return RM['maintenance.tooLong'];
+          return e <= NOW ? RM['maintenance.ended'] : null;
         },
-        mMsg: (val, all) => (all.maint && String(val).length > 200 ? 'Use 200 characters or fewer.' : null),
+        mMsg: (val, all) => (all.maint && String(val).length > 200 ? RM.tooLong(200) : null),
       };
       targets.forEach((_, i) => {
-        rules['t-host-' + i] = V.target;
-        rules['t-port-' + i] = val => V.port(val);
-        if (targets.length > 1) rules['t-weight-' + i] = val => (!/^\d+$/.test(String(val).trim()) || +val > 100 ? 'Enter 0 to 100.' : null);
+        rules['t-host-' + i] = checkTarget;
+        rules['t-port-' + i] = val => (String(val).trim() === '' ? RM['port.required'] : rtWhole(1, 65535)(val));
+        if (many()) rules['t-weight-' + i] = rtWhole(0, 100);
       });
       rules.weights = (_, all) => {
-        if (targets.length < 2) return null;
-        const ws = targets.map((t, i) => parseInt(all['t-weight-' + i], 10));
-        if (ws.some(isNaN)) return null;
-        const sum = ws.reduce((a, b) => a + b, 0);
-        return sum !== 100 ? `The weights add up to ${sum}%. Make them add up to 100%.` : null;
+        if (!many()) return null;
+        const total = targets.reduce((a, t, i) => a + (parseInt(all['t-weight-' + i], 10) || 0), 0);
+        return total !== 100 ? `The weights add up to ${total}%. Make them add up to 100%.` : null;
       };
       return rules;
     }, {
-      verb: isNew ? 'add this route' : 'save this route',
-      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['cert', 'certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : []),
+      verb: 'save',
+      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : []),
       submit: async val => {
         await api();
         syncTargets();
         const next = {
           host: val.host.trim().toLowerCase(), path: val.path.trim(), project: val.project,
-          targets: targets.map(t => ({ host: String(t.host).trim(), port: +t.port, weight: targets.length > 1 ? +t.weight : 100 })),
-          canary: val.canary || '', sticky: val.sticky, compression: val.compression, caching: val.caching,
-          protocols: ['HTTP/2', 'HTTP/3', 'WebSockets'].filter(p => val['proto-' + p]),
-          cert: val.cert, timeout: +val.timeout, allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean),
+          targets: targets.map(t => ({ host: String(t.host).trim(), port: +t.port, weight: many() ? +t.weight : 100 })),
+          canary: many() && val.canarySource !== 'none' ? { source: val.canarySource, name: val.canaryName.trim(), value: val.canaryValue.trim() } : null,
+          sticky: many() && val.sticky, compression: val.compression, caching: val.caching, hsts: val.hsts, hstsSub: val.hsts && val.hstsSub,
+          cert: val.cert, certId: val.cert === 'uploaded' ? val.certId : null, timeout: +val.timeout,
+          allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean), rateLimit: val.rateLimited ? +val.rateLimit : null,
           maintenance: val.maint ? { start: parseDate(val.mStart), end: parseDate(val.mEnd), message: val.mMsg.trim() } : null,
           changed: [NOW, D.me.email],
         };
         setGuard(null);
         if (isNew) {
-          const id = 'r' + Date.now().toString(36);
-          D.routes.push(Object.assign({ id, status: 'ok', rpm: 0 }, next));
+          D.routes.push(Object.assign({ id: 'r' + Date.now().toString(36), status: 'ok', rpm: 0 }, next));
           if (next.cert === 'auto' && !D.certs.some(c => c.host === next.host)) D.certs.push({ host: next.host, source: 'auto', issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now' });
-          go('/routes/' + id);
-          toast(next.cert === 'auto' ? 'Its certificate is being requested from Let’s Encrypt; until then, the route answers on HTTP only.' : `Live on ${replicasUp()} replicas.`, { title: `${routeLabel(next)} added` });
-        } else {
-          Object.assign(r, next);
-          refresh();
-          toast(`Applied on ${replicasUp()} replicas.`, { title: 'Route saved' });
-        }
+        } else Object.assign(r, next);
+        go('/routes');
+        toast(`${routeLabel(next)} saved. It applies on every replica now.`);
       },
     });
 
-    /* Unsaved changes: a bar appears, and leaving the page asks first */
     const snap = () => JSON.stringify(v.values());
     const initial = snap();
     let dirty = false;
-    function dirtyCheck() {
-      const now = snap() !== initial;
-      if (now === dirty) return;
-      dirty = now;
-      const bar = $('[data-savebar]', el);
-      if (!bar) return;
-      bar.innerHTML = dirty ? `<div class="ap-savebar" role="region" aria-label="Unsaved changes"><span>${icon('circle-dot')} You have unsaved changes</span><div class="ap-row"><button class="ap-btn ap-btn-ghost" type="button" data-discard>Discard</button><button class="ap-btn ap-btn-primary" type="submit" data-busy="Saving…" data-write>Save route</button></div></div>` : '';
-      paint();
-      applyWriteLock(bar);
-    }
-    setGuard(() => dirty || (isNew && snap() !== initial));
+    function dirtyCheck() { dirty = snap() !== initial; }
+    setGuard(() => dirty);
     f.addEventListener('input', dirtyCheck);
     f.addEventListener('change', dirtyCheck);
     el.addEventListener('click', e => {
-      if (e.target.closest('[data-discard]')) { setGuard(null); refresh(); toast('Changes discarded.', { tone: 'info' }); }
       if (e.target.closest('[data-delete]')) deleteRoutes([r], () => { setGuard(null); go('/routes'); });
       if (e.target.closest('[data-disable]')) setDisabled(r, !r.disabled);
     });
