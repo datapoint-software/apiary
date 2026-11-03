@@ -31,7 +31,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 ## Deployment
 
 - Apiary is deployed, upgraded and scaled with `docker stack deploy` and a compose file. The only step outside it is creating the root key secret once, before the first deploy (see [Cluster trust](#cluster-trust)).
-- Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. High availability needs **at least 3 replicas**, and there must be at least as many labelled edge nodes as replicas.
+- Apiary runs as a single Swarm service in `replicated` mode, with `max_replicas_per_node: 1` and a placement constraint on edge nodes marked with a node label. Scaling means changing `replicas:` and redeploying. High availability needs **at least 3 replicas**, and there must be at least as many labeled edge nodes as replicas.
 - Rolling updates replace one replica at a time (`parallelism: 1`, `order: stop-first`, since host-mode ports can't be shared on a node) and roll back on failure (`failure_action: rollback`).
 
   ```yaml
@@ -66,7 +66,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
   - Host network mode isn't needed for anything else: host publishing mode already gives Apiary the real client IP, and host network mode would stop Apiary from reaching containers by name.
   - Apps on the host can still be routed, as below, or run in a container on the shared network.
 
-  The cost is that an app that listens only on `127.0.0.1`, and can't be reconfigured or containerised, can't be routed. If that need comes up, revisit this as an opt-in.
+  The cost is that an app that listens only on `127.0.0.1`, and can't be reconfigured or containerized, can't be routed. If that need comes up, revisit this as an opt-in.
 - Apps on the same host are reached through the host's address on the Docker network, e.g. `host.docker.internal` (on Linux, add `extra_hosts: ["host.docker.internal:host-gateway"]`). They must listen on an address the container can reach, not only on `127.0.0.1`.
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
@@ -75,7 +75,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 ### Projects
 
 - Every route, stream route, redirect and uploaded certificate belongs to exactly one project. A new cluster starts with one project, "Default".
-- Projects organise and filter: per-project overviews, route lists grouped by project, and counts and status per project. They are **not an access boundary**: roles still apply to the whole cluster.
+- Projects organize and filter: per-project overviews, route lists grouped by project, and counts and status per project. They are **not an access boundary**: roles still apply to the whole cluster.
 - A project has a name, a one-line description and an icon. A project can only be deleted once it's empty: its routes are moved to another project or deleted first.
 - Management actions that list or create these objects take a project, and audit entries record the project of the object they affect.
 
@@ -117,10 +117,10 @@ By default a route has a single target group, and none of the following applies.
 
 ### Writes
 
-Every change is a Datapoint.Mediator command, applied through a transaction behaviour in Apiary that implements the library's `ITransactionContext`. The library needs no changes: its abstractions don't depend on EF Core.
+Every change is a Datapoint.Mediator command, applied through a transaction behavior in Apiary that implements the library's `ITransactionContext`. The library needs no changes: its abstractions don't depend on EF Core.
 
-- **Commands are forwarded, not HTTP requests.** On a follower, the behaviour sends the action name, its JSON arguments, the signed-in user and their IP address to the leader over the replicas' mutual TLS. Forwarding the HTTP request instead would hide the admin's IP address from the allowlist and audit log, and break MCP sessions on every leadership change.
-- **The leader decides.** It runs authorisation, validation and the handler against the latest state, so a user who was just demoted is refused.
+- **Commands are forwarded, not HTTP requests.** On a follower, the behavior sends the action name, its JSON arguments, the signed-in user and their IP address to the leader over the replicas' mutual TLS. Forwarding the HTTP request instead would hide the admin's IP address from the allowlist and audit log, and break MCP sessions on every leadership change.
+- **The leader decides.** It runs authorization, validation and the handler against the latest state, so a user who was just demoted is refused.
 - **One entry per command.** The command's changes and its audit entry are appended as a single Raft entry, so a change is never saved without its audit record. The caller gets its result once the entry is saved by a majority.
 - **Queries run locally**, on whichever replica receives them.
 - **Safe retries.** Each forwarded command carries a unique request ID. The leader remembers recently applied IDs and their results. When a leader fails before replying, the follower retries with the same ID against the new leader, which returns the stored result if the command was already applied, instead of applying it twice. Callers see "unknown" only if no leader returns before a timeout.
@@ -187,10 +187,10 @@ During the rolling update, each restarted replica rejoins with the certificate i
 
 Administrators manage and query Apiary in two ways: through the Angular UI, or through their AI agents over the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP).
 
-- Every management operation (e.g. create a route, list certificates) is a Datapoint.Mediator command or query, named with `[Action]`. The same action is mapped as an HTTP endpoint for the UI (`Datapoint.Mediator.AspNetCore`) and as an MCP tool for agents (`Datapoint.Mediator.ModelContextProtocol`), so both get the same validation and authorisation.
-- Authorisation is denied by default: every action needs an authoriser.
-- **Agents have the same permissions as the user who connected them.** Datapoint.Mediator marks queries as read-only and commands as possibly destructive (MCP's `readOnlyHint` and `destructiveHint`), so MCP clients that honour these hints ask the user before running a command. Whether they do is up to the client and its settings; Apiary can't enforce or verify it (see [risks.md](risks.md)). The UI lists each user's connected agents, and any of them can be disconnected, revoking its tokens.
-- The UI, its HTTP API and the MCP endpoint are all served on the admin port, which must **never be reachable from the internet**. Every replica serves it, so admins can use any edge node. It's protected by three independent layers (defence in depth), so it stays safe if one fails:
+- Every management operation (e.g. create a route, list certificates) is a Datapoint.Mediator command or query, named with `[Action]`. The same action is mapped as an HTTP endpoint for the UI (`Datapoint.Mediator.AspNetCore`) and as an MCP tool for agents (`Datapoint.Mediator.ModelContextProtocol`), so both get the same validation and authorization.
+- Authorization is denied by default: every action needs an authorizer.
+- **Agents have the same permissions as the user who connected them.** Datapoint.Mediator marks queries as read-only and commands as possibly destructive (MCP's `readOnlyHint` and `destructiveHint`), so MCP clients that honor these hints ask the user before running a command. Whether they do is up to the client and its settings; Apiary can't enforce or verify it (see [risks.md](risks.md)). The UI lists each user's connected agents, and any of them can be disconnected, revoking its tokens.
+- The UI, its HTTP API and the MCP endpoint are all served on the admin port, which must **never be reachable from the internet**. Every replica serves it, so admins can use any edge node. It's protected by three independent layers (defense in depth), so it stays safe if one fails:
   1. **A network firewall outside the hosts** (e.g. a cloud security group or the network's firewall) allows the admin port only from the VPN or internal address ranges. This is the main layer: Docker's iptables rules can't bypass it. Rules in Docker's [`DOCKER-USER` chain](https://docs.docker.com/engine/network/packet-filtering-firewalls/) on each node can add to it, but aren't relied on.
   2. **An allowlist inside Apiary.** The admin listener accepts connections only from configured address ranges, by default the private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` and `fc00::/7`. It checks the connection's own source address and never `X-Forwarded-For` or similar headers, which clients can set to anything.
   3. **Authentication**, for users and agents alike.
@@ -199,7 +199,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Sign-in.** Admins sign in either with a local account, stored in the replicated state, or through single sign-on with an OpenID Connect (OIDC) identity provider such as Entra ID or Keycloak.
   - Roles can be mapped from the identity provider's groups, so access is managed there and removed when people leave.
   - Local accounts stay available as a break-glass way in, for when the identity provider is down. That matters because the identity provider may itself be routed through Apiary.
-  - For MCP, Apiary stays the OAuth authorisation server, and sends users to the identity provider to sign in.
+  - For MCP, Apiary stays the OAuth authorization server, and sends users to the identity provider to sign in.
 - **Local accounts** guard the most powerful access, since they are also the break-glass way in. Following [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) and [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html):
   - **Password hashing:** PBKDF2-HMAC-SHA512, built into .NET, with OWASP's recommended iteration count (about 210,000). Each hash stores its algorithm and settings, so a stronger algorithm (e.g. Argon2id) can be adopted later by re-hashing each password at its user's next sign-in.
   - **Throttling:** each failed sign-in for the same account and IP address adds a growing delay. There is no hard lockout, which would let an attacker lock out the break-glass account on purpose. Delays are kept in memory on each replica, not in the replicated state, so sign-in doesn't depend on a majority. Repeated failures are audited and shown in the UI.
@@ -212,7 +212,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
   4. On start, Apiary logs where and until when setup is open (e.g. "Waiting for setup at https://edge-1:9443 until 14:35").
 
   If every Administrator is locked out, `docker exec <container> apiary users create-admin --name <name>` prints a one-time link, valid for about 15 minutes, where the new Administrator sets their password in the browser. Running `docker exec` already requires control of the host, and the action is audited.
-- **Roles.** Every user has one role, and every authoriser checks it:
+- **Roles.** Every user has one role, and every authorizer checks it:
 
   | Role | Can |
   | --- | --- |
@@ -223,7 +223,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Uploading private keys is UI only.** The certificate upload action isn't offered as an MCP tool, so private keys never pass through an AI agent or its model provider.
 - **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
 - The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period, 1 year by default, and can also be sent to the logs.
-- **Agents authenticate with OAuth**, as the [MCP authorisation specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorisation server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
+- **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
 
 ## Observability
 
@@ -243,7 +243,7 @@ Apiary reports what it's doing; alerting is left to the monitoring system that r
 
 ### Personal data
 
-- IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognises network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
+- IP addresses are logged in full by default, for security investigations and rate-limit tuning. The GDPR recognizes network and information security as a legitimate interest ([Recital 49](https://gdpr-info.eu/recitals/no-49/)). An option shortens them (e.g. `203.0.113.0` instead of `203.0.113.45`).
 - The audit log, which Apiary does store, keeps entries for a configurable period, 1 year by default. Older entries are deleted automatically.
 - **Signed off** by the data protection officer on 2026-11-02: full IP addresses by default, on the grounds of network and information security, and a default audit log retention of 1 year, long enough to investigate incidents found months later.
 

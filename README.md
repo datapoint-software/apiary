@@ -24,14 +24,14 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 
 See [CLAUDE.md](CLAUDE.md) for the conventions on branches, commits, merge requests and versions.
 
-## Licence
+## License
 
 Apiary is free software, licensed under the [GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0), with additional terms in [NOTICE](NOTICE):
 
-- You can use, change and share Apiary. If you share a modified version, or let others use it over a network, you must offer them its source code under the same licence.
+- You can use, change and share Apiary. If you share a modified version, or let others use it over a network, you must offer them its source code under the same license.
 - The admin interface must keep the "Based on Apiary by Datapoint" attribution and the Datapoint logo.
-- Modified versions must be marked as modified, and the licence grants no rights to the Datapoint name or logo beyond that attribution. See the [trademark policy](TRADEMARKS.md).
+- Modified versions must be marked as modified, and the license grants no rights to the Datapoint name or logo beyond that attribution. See the [trademark policy](TRADEMARKS.md).
 
-Contributors sign the [Contributor Licence Agreement](CLA.md) before their first contribution is merged.
+Contributors sign the [Contributor License Agreement](CLA.md) before their first contribution is merged.
 
 Copyright © 2026 Datapoint - Sistemas de Informação, Lda.

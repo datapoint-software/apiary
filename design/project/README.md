@@ -1,12 +1,12 @@
 Apiary's admin interface is where operators keep a reverse proxy cluster running: routes, certificates, replicas, users and the audit log. People open it to change something or to find out why something is wrong, often under pressure. The system is built for that: calm by default, so that what needs attention stands out.
 
-The look is clean and quiet, in the spirit of Apple's interfaces: system type, generous space, soft cards on a light grey ground, and solid surfaces throughout: nothing is translucent, so nothing competes with what you are reading. The name comes from the place where beehives are kept, and the system takes one shape from it: the hexagon, kept for the brand mark, the replicas in the cluster map and empty states. Nothing else is decorated.
+The look is clean and quiet, in the spirit of Apple's interfaces: system type, generous space, soft cards on a light gray ground, and solid surfaces throughout: nothing is translucent, so nothing competes with what you are reading. The name comes from the place where beehives are kept, and the system takes one shape from it: the hexagon, kept for the brand mark, the replicas in the cluster map and empty states. Nothing else is decorated.
 
 ## Principles
 
 1. **Traffic first.** Routes, certificates and replicas fill the screen. No illustrations, no decorative cards, no hero banners.
 2. **One primary action per view.** Each page has one title (`title-1`) and at most one button in `honey`.
-3. **State is visible without reading, and readable without colour.** Every state has a dot and a word. `ok` and `critical` have similar lightness, so colour alone never carries meaning.
+3. **State is visible without reading, and readable without color.** Every state has a dot and a word. `ok` and `critical` have similar lightness, so color alone never carries meaning.
 4. **Solid, never translucent.** Everything is opaque. What floats above the page (menus, popovers, dialogs, toasts) is a solid `surface` with `shadow-float`, so text behind it never shows through.
 5. **Say what happens to the cluster.** Every change reports how many replicas applied it, and every risky action says what still works and what stops.
 
@@ -22,16 +22,16 @@ The look is clean and quiet, in the spirit of Apple's interfaces: system type, g
 - No emoji and no exclamation marks.
 - Never show secrets in the interface: no private keys, passwords, tokens or the root key, not even masked.
 
-## Colour
+## Color
 
-The palette is Apple's light neutral greys (and true black in the dark theme) with one warm colour: **honey**.
+The palette is Apple's light neutral greys (and true black in the dark theme) with one warm color: **honey**.
 
 - Page background in `ground`. Cards, tables and forms in `surface`, with `shadow-card` and no border. Secondary buttons, segmented controls, tags and code in `sunken`.
 - Text in `ink`; secondary text and icons in `ink-2`; placeholders, captions and timestamps in `ink-3`.
 - `honey` is the brand and the primary action: the primary button, checked boxes, the highlighted menu item, the leader replica, the canary group, sparklines. It is a fill only: text on it is always `on-honey`, and honey text uses `honey-text`. Selected rows and the current navigation item use `honey-soft`.
 - States: `ok`, `warn`, `critical` and `info` for dots and their words; the `-soft` variants for banner backgrounds. `warn` is a burnt orange, darker than honey, so the two never compete.
 - Proportion on a typical screen: about 90% neutrals, the rest honey and states. If a screen looks yellow, there is too much honey.
-- The dark theme is not an inversion: a true black `ground`, surfaces that get lighter as they come closer (`ground` < `surface` < `sunken`), honey stays honey, and state colours brighten to keep their contrast.
+- The dark theme is not an inversion: a true black `ground`, surfaces that get lighter as they come closer (`ground` < `surface` < `sunken`), honey stays honey, and state colors brighten to keep their contrast.
 
 ## Surfaces
 
@@ -70,7 +70,7 @@ Rules:
 - Buttons are pills, filled, without borders.
 - Cards: `surface`, `radius-3`, `shadow-card`, no border.
 - Shadows: `shadow-card` for cards, `shadow-float` for everything that floats. Nothing else.
-- The status dot: 8px, centred on the x-height, 6px from its word.
+- The status dot: 8px, centered on the x-height, 6px from its word.
 - The hexagon: flat-topped, only for the brand mark (18 × 16px), replicas in the cluster map (52 × 46px) and the empty-state mark.
 
 ## Motion
@@ -89,13 +89,13 @@ Rules:
 
 ## Projects
 
-- Every route, stream route, redirect and uploaded certificate belongs to one project. Projects organise and filter; they don't limit access.
+- Every route, stream route, redirect and uploaded certificate belongs to one project. Projects organize and filter; they don't limit access.
 - Projects appear as cards on the Overview (ProjectCard), as a sidebar group with their route counts, and as groups in route tables (Table).
-- Each project has a name, a one-line description and a Lucide icon chosen from a short list. No project colours: status already uses colour.
+- Each project has a name, a one-line description and a Lucide icon chosen from a short list. No project colors: status already uses color.
 
 ## Iconography
 
-- **Lucide** (lucide.dev, ISC licence), 16px, stroke 1.75, colour inherited from the text (`currentColor`).
+- **Lucide** (lucide.dev, ISC license), 16px, stroke 1.75, color inherited from the text (`currentColor`).
 - Icons go with words. Icon-only buttons are for toolbars and table rows, with `aria-label` and a tooltip.
 - Status uses dots, not icons. Lucide's `hexagon` names the Replicas page only.
 - No emoji.
@@ -104,7 +104,7 @@ Rules:
 
 Apiary has no logo yet. Until it does, write the name in the display face, bold, in `ink`, after a honey hexagon (Shell's `ap-brand`). Don't draw a bee.
 
-**Attribution is required.** Apiary's licence (NOTICE, term 1) requires every version of the admin interface to show "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", linking to https://datapoint.software/, with the Datapoint logo next to it. Shell puts it in the sidebar footer. Use the logo from the Logos group; inline its SVG so it takes the text colour (`ink-2`) in both themes. The logo's use is governed by TRADEMARKS.md.
+**Attribution is required.** Apiary's license (NOTICE, term 1) requires every version of the admin interface to show "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", linking to https://datapoint.software/, with the Datapoint logo next to it. Shell puts it in the sidebar footer. Use the logo from the Logos group; inline its SVG so it takes the text color (`ink-2`) in both themes. The logo's use is governed by TRADEMARKS.md.
 
 ## Accessibility
 
@@ -113,10 +113,10 @@ Apiary targets WCAG 2.2 level AA. Operators manage infrastructure under pressure
 **Built into every component:**
 
 - **Contrast:** text meets 4.5:1 on the grounds named in each token's note, in both themes (checked). Control borders, icons and the focus ring meet 3:1. `honey` is 1.9:1 on `surface` in the light theme, so it never carries text or meaning alone.
-- **Not by colour alone:** states pair a dot with a word; invalid fields have an icon and a message; the selected row has a checked box.
+- **Not by color alone:** states pair a dot with a word; invalid fields have an icon and a message; the selected row has a checked box.
 - **Keyboard:** everything works without a mouse, in reading order. A skip link opens every page. Tabs move with the arrow keys, Home and End; menus with the arrow keys; Escape closes the topmost menu, popover, dialog or drawer. Dialogs and the phone drawer keep focus inside and return it to whatever opened them. Ctrl or ⌘ + B collapses the sidebar.
 - **Focus:** a solid 2px `focus` ring on every focusable element, 3px with more contrast.
-- **Screen readers:** landmarks (`header`, `nav` per group, `main`, `aside`), labelled icon-only buttons, `aria-current` in navigation, `aria-expanded` on everything that opens, tables with a caption and column headers, decorative dots, hexagons and icons hidden with `aria-hidden`, and toasts announced through a polite live region.
+- **Screen readers:** landmarks (`header`, `nav` per group, `main`, `aside`), labeled icon-only buttons, `aria-current` in navigation, `aria-expanded` on everything that opens, tables with a caption and column headers, decorative dots, hexagons and icons hidden with `aria-hidden`, and toasts announced through a polite live region.
 - **Text size and zoom:** font sizes are in `rem`, so the browser's text size and Display settings scale them; pages reflow at 400% zoom (320px wide) without sideways scrolling, except inside tables.
 - **Targets:** controls are at least 28px (dense tables) and 36px by default, 44px in touch layouts, which meets WCAG 2.2's 24px minimum.
 - **Language:** the root element declares `lang="en"`.
@@ -127,7 +127,7 @@ Apiary targets WCAG 2.2 level AA. Operators manage infrastructure under pressure
 - **Text size:** default, large (112.5%) or larger (125%).
 - **Contrast:** `prefers-contrast: more`, or More in settings, makes secondary text darker, hairlines solid, cards and buttons outlined, and the focus ring thicker.
 - **Motion:** `prefers-reduced-motion`, or Reduced, makes every transition instant.
-- **Forced colours:** in Windows high contrast and similar modes, controls and cards get system-colored borders, and the selected and primary states use the system highlight.
+- **Forced colors:** in Windows high contrast and similar modes, controls and cards get system-colored borders, and the selected and primary states use the system highlight.
 
 ## Scrollbars
 

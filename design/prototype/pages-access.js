@@ -278,7 +278,7 @@ function totpDialog() {
 route('/account/sessions', () => ({
   title: 'Active sessions',
   html: `${pageHead({ crumbs: [['Your account', '#/account']], title: 'Active sessions' })}${accountTabs('/account/sessions')}
-<section class="ap-panel" aria-labelledby="se-t" style="max-width:760px"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="se-t">Where you're signed in</h2><p class="ap-panel-desc">If you don't recognise one, sign it out and change your password.</p></div>${D.sessions.length > 1 ? '<button class="ap-btn ap-btn-sm" type="button" data-all>Sign out of all others…</button>' : ''}</div><div class="ap-panel-body"><div class="ap-list">
+<section class="ap-panel" aria-labelledby="se-t" style="max-width:760px"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="se-t">Where you're signed in</h2><p class="ap-panel-desc">If you don't recognize one, sign it out and change your password.</p></div>${D.sessions.length > 1 ? '<button class="ap-btn ap-btn-sm" type="button" data-all>Sign out of all others…</button>' : ''}</div><div class="ap-panel-body"><div class="ap-list">
 ${D.sessions.map(s => `<div class="ap-list-row"><div style="display:flex;gap:12px;align-items:flex-start;flex:1 1 300px"><span class="ap-project-mark">${icon(/iPhone/.test(s.device) ? 'smartphone' : 'monitor')}</span><div class="ap-list-text"><strong>${esc(s.device)}${s.current ? ' <span class="ap-tag ap-tag-honey">This browser</span>' : ''}</strong><span class="ap-muted"><span class="ap-data">${s.ip}</span> · signed in ${fmtDate(s.started)} UTC · active ${ago(s.last)}</span></div></div>${s.current ? '' : `<button class="ap-btn ap-btn-sm" type="button" data-out="${s.id}">Sign out</button>`}</div>`).join('')}
 </div></div></section>`,
   mount(el) {

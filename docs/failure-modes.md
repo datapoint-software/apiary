@@ -1,6 +1,6 @@
 # Failure modes
 
-What happens to Apiary when replicas, nodes or the network fail, or when the cluster is scaled. The rules behind these behaviours are in [architecture.md](architecture.md#replicated-state); the risks they leave are in [risks.md](risks.md).
+What happens to Apiary when replicas, nodes or the network fail, or when the cluster is scaled. The rules behind these behaviors are in [architecture.md](architecture.md#replicated-state); the risks they leave are in [risks.md](risks.md).
 
 ## Key ideas
 
@@ -44,7 +44,7 @@ The result is a cluster of one, with no high availability, as in a one-node Swar
 
 ## Scaling up
 
-Raising `replicas:` and redeploying, with enough labelled edge nodes:
+Raising `replicas:` and redeploying, with enough labeled edge nodes:
 
 1. Swarm starts a replica on a new edge node and mounts the root key.
 2. The replica finds the others through Swarm DNS and proves it has the root key.

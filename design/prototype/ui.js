@@ -1,4 +1,4 @@
-/* Shared behaviour: formatting, toasts, dialogs, menus, busy buttons, form validation and the date and time picker. */
+/* Shared behavior: formatting, toasts, dialogs, menus, busy buttons, form validation and the date and time picker. */
 'use strict';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));

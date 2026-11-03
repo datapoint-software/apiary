@@ -540,7 +540,7 @@
   :root:not([data-motion="standard"]) .ap *, :root:not([data-motion="standard"]) .ap *::before, :root:not([data-motion="standard"]) .ap *::after { transition: none !important; animation: none !important; }
 }
 
-/* Windows high contrast and other forced colour modes */
+/* Windows high contrast and other forced color modes */
 @media (forced-colors: active) {
   .ap-btn, .ap-panel, .ap-tag, .ap-seg, .ap-menu, .ap-dialog, .ap-toast, .ap-popover, .ap-banner, .ap-copy { border: 1px solid CanvasText; }
   .ap-btn-primary, .ap-seg button[aria-pressed="true"], .ap .ap-nav-item[aria-current="page"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }

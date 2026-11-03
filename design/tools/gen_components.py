@@ -212,7 +212,7 @@ C["Status"] = ("Status", 120, """
 
 A status is a small dot and a word.
 
-- Always both: the dot for scanning, the word for meaning. `ok` and `critical` have similar lightness, so colour alone is never enough.
+- Always both: the dot for scanning, the word for meaning. `ok` and `critical` have similar lightness, so color alone is never enough.
 - Tones: `ap-status-ok` (Healthy, Valid, Approved), `ap-status-warn` (Degraded, Expires in N days), `ap-status-critical` (Down, Failed, Refused), `ap-status-info` (Catching up, Follower), `ap-status-off` (Disabled, Not configured), `ap-status-honey` (Leader only).
 - A ring (`ap-dot-ring`) instead of a dot means not yet in effect: pending approval, draft, waiting for a deploy.
 - Words describe the state from the user's side: "Expires in 9 days", not "WARN".
@@ -388,7 +388,7 @@ Tables list objects of one kind (routes, certificates, users) so people can scan
 - **Grouped by project:** each project starts with a group row (`ap-group`) holding a disclosure button (`ap-group-title`, `aria-expanded`), the project name and a summary ("2 routes · 8 205 req/min"). Collapsing a group hides its rows.
 - The first column names the object in the data face (a hostname), with its secondary detail under it in `caption`.
 - Numbers align right in `ap-num` (data face, tabular figures). Missing values show "—".
-- Status columns use Status, never colour alone. Feature lists use Tags.
+- Status columns use Status, never color alone. Feature lists use Tags.
 - Selection: a checkbox column; selected rows get `aria-selected="true"` and `honey-soft`. Bulk actions appear above the table when something is selected.
 - Row actions sit in a last ⋯ column opening a Menu. Clicking the row itself opens the object's detail.
 - Sortable headers use `ap-sort` with `aria-sort`.
@@ -417,9 +417,9 @@ def project_cards(limit=None):
 
 C["ProjectCard"] = ("Apiary", 260, project_cards(), """# ProjectCard
 
-A project card summarises one project: its health, how many routes it has, and its traffic. Cards link to the project's routes.
+A project card summarizes one project: its health, how many routes it has, and its traffic. Cards link to the project's routes.
 
-- A project groups routes, stream routes, redirects and uploaded certificates for organising and filtering. It is not an access boundary: roles apply to the whole cluster.
+- A project groups routes, stream routes, redirects and uploaded certificates for organizing and filtering. It is not an access boundary: roles apply to the whole cluster.
 - Head: a Lucide icon chosen for the project on a `sunken` tile, and the project's worst status as a Status ("1 route down").
 - Name in `title-3`, a one-line description, then the counts in `ink`.
 - The whole card is the link; it lifts slightly on hover.
