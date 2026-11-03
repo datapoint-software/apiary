@@ -139,9 +139,30 @@ The rest of the route editor in the prototype.
 
 - TCP and UDP routes on the published port range, TLS passthrough by SNI, UDP idle timeouts, and the stream routes page.
 
-## 13. Release
+## 13. Finishing the product
 
-- Security reviews of the join protocol and the OAuth server, as [risks.md](risks.md) requires.
+What the review after milestone 12 found missing, agreed on 2026-11-03.
+
+- Stream routes: address allowlists and a disable switch, like HTTP routes.
+- English descriptions of every error code for MCP agents, as [engineering.md](engineering.md#errors-are-codes-not-messages) requires.
+- Form checks that need the server, shown as "Checking…" while you type.
+- HTTPS on the admin port from the first start, with a self-signed certificate that Administrators can replace from the UI.
+- Sessions that end after a configurable idle time, 15 minutes by default.
+- The recovery wizard on the Replicas page, as the prototype shows it.
+- The rest of the prototype: the overview's "Get started" checklist and its request, latency and error charts, the stream routes' Status column, drop zones for certificate uploads, and the audit log's remaining filters.
+- The UI's Source link pointing at the public repository, the public pages using the design tokens, and the Let's Encrypt Subscriber Agreement stated in the deployment docs and on the Certificates page.
+
+## 14. Security review
+
+- Reviews of the join protocol and the OAuth server, as [risks.md](risks.md) requires.
+
+## 15. Tests
+
+- The architecture tests, the error catalog and shared rule tests, and unit and integration tests for the backend and the frontend.
+
+## 16. Release
+
+- `ng-package.json` listing the component library's styles as assets, so a published package includes them.
 - Tests of the failure modes in [failure-modes.md](failure-modes.md) on a real Swarm.
 - CI, publishing the image to `hub.datapoint.software/datapoint/apiary`.
 - `1.0.0`.

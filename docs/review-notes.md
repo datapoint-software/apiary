@@ -4,6 +4,8 @@ Decisions made and findings noted while building the milestones without review, 
 
 ## Deviations from engineering.md
 
+Confirmed by the team on 2026-11-03: the hand-written API client, reflection-based JSON for the admin API, and every replica voting.
+
 - **The admin API uses reflection-based JSON**, not source generation. Mediator maps the actions and serializes their results itself. The replicated state and the access logs use source generation.
 - **The UI's API client is written by hand** (`src/web/projects/apiary/src/app/api/api.ts`), not generated from the OpenAPI document. Every action is a `POST /api/<area>/<action>` with a JSON body, so a generator would add little for now. Revisit when the API stabilizes.
 - **Component styles are global**, in `@datapoint/apiary-ui`'s `apiary.css`, as the design system ships them, instead of per-component styles. Moving them into components would split the design system's single stylesheet.
@@ -104,7 +106,7 @@ Decisions made and findings noted while building the milestones without review, 
 - **Fixed: backups, recovery and private keys stay off MCP** (`backups.export`, `backups.restore`, `setup.restore`, `certificates.check`, `certificates.upload`), as milestone 5 asked.
 - **Fixed: other sites could frame the admin interface** (clickjacking). It now sends `X-Frame-Options: DENY` and `frame-ancestors 'none'`. That mattered more once the agent consent page existed. A full Content Security Policy would help too; the design system's inline styles need checking first.
 - **Anyone on the internal network can register an MCP client with any name**, such as "Claude Code", and send someone a link to approve it. The consent page shows where the browser returns, and warns when that isn't the user's own computer. The code is useless without the token endpoint, which is on the admin port too, so this matters only for attackers already inside. Showing the client's name as unverified, or allowing only loopback return addresses, would narrow it further; decide whether web-based agents need to connect at all.
-- **Agents stay connected when their user changes their password** or two-step sign-in. They stop when the user is disabled or deleted, or when the cluster is restored or recovered. Decide whether a password change should disconnect them too, as it might after a compromised account.
+- **Agents stay connected when their user changes their password** or two-step sign-in. Decided on 2026-11-03: they stay connected. They stop when the user is disabled or deleted, when the cluster is restored or recovered, or when someone disconnects them.
 - **The `resource` parameter (RFC 8707) isn't checked.** Apiary's tokens work only on its own MCP endpoint, so there's no other audience to confuse.
 - **The MCP endpoint and OAuth run on the plain-HTTP admin port** like the rest (see above). Claude Code accepts that on localhost; other clients may refuse OAuth over HTTP elsewhere, which the admin certificate decision would settle.
 - **The leader trusts the user a follower forwards.** A forwarded command carries the user's claims. For a session or an agent the leader rebuilds the user from the state, but other sign-in types (the local operator token) are taken as sent. Any replica can already read the whole state with the root key, so this adds little, but it's worth knowing when reviewing the cluster port.
