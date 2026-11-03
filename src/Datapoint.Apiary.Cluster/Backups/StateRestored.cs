@@ -13,6 +13,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
     {
         Projects = Restored.Projects,
         Routes = Restored.Routes,
+        Redirects = Restored.Redirects,
         Users = Restored.Users,
         Certificates = Restored.Certificates,
         AcmeAccounts = Restored.AcmeAccounts,
