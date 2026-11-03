@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Audit;
+using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
@@ -42,6 +43,8 @@ public sealed record ApiaryState
     public ImmutableDictionary<Guid, AppliedRequest> AppliedRequests { get; init; } = ImmutableDictionary<Guid, AppliedRequest>.Empty;
 
     public bool SetupCompleted { get; init; }
+
+    public LastBackup? LastBackup { get; init; }
 
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

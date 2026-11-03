@@ -167,3 +167,22 @@ export interface ClusterView {
   readonly replicaId?: string;
   readonly members: readonly MemberView[];
 }
+
+export interface BackupFile {
+  readonly name: string;
+  readonly content: string;
+  readonly index: number;
+}
+
+export interface BackupStatus {
+  readonly lastAt?: string;
+  readonly lastBy?: string;
+  readonly changesSince: number;
+}
+
+export interface RestoredBackup {
+  readonly takenAt: string;
+  readonly routes: number;
+  readonly users: number;
+  readonly certificates: number;
+}

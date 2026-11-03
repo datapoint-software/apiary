@@ -13,6 +13,7 @@ public static class ClusterServiceCollectionExtensions
         services.Configure<ClusterOptions>(configuration);
         services.AddSingleton<StateEncryption>();
         services.AddSingleton<JoinProtocol>();
+        services.AddSingleton<Backups.BackupSealer>();
         services.AddSingleton<ClusterClient>();
         services.AddSingleton<PeerDiscovery>();
         services.AddSingleton<RaftClusterState>();

@@ -36,6 +36,16 @@
               {{ details().submitting() ? 'Checking…' : 'Continue' }}
             </button>
           </form>
+          <p class="ap-caption" style="margin: 0; text-align: center">
+            Moving from another Apiary with the same root key?
+            <input #backupFile type="file" accept=".backup" class="ap-sr" id="setup-backup" (change)="restore(backupFile)" />
+            <button apButton="ghost" size="small" type="button" [disabled]="restoring()" (click)="backupFile.click()">
+              {{ restoring() ? 'Restoring…' : 'Restore a backup instead' }}
+            </button>
+          </p>
+          @if (restoreFailure()) {
+            <ap-banner tone="critical" role="alert">{{ restoreFailure() }}</ap-banner>
+          }
         }
         @case ('enroll') {
           <form class="ap-form" style="gap: 16px" [apForm]="code" #codeForm="apForm" (submit)="complete(codeForm)">

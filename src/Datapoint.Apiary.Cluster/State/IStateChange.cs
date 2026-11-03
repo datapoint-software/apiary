@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Audit;
+using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
@@ -31,6 +32,8 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(ClusterCreated), "cluster.created")]
 [JsonDerivedType(typeof(ReplicaSaved), "replica.saved")]
 [JsonDerivedType(typeof(ReplicaRemoved), "replica.removed")]
+[JsonDerivedType(typeof(BackupExported), "backup.exported")]
+[JsonDerivedType(typeof(StateRestored), "state.restored")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

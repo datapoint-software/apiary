@@ -48,4 +48,5 @@ export const appMessages: MessageCatalog = {
   'user.sameRole': () => 'They already have this role. Choose another role, or cancel.',
   'user.notInvited': () => 'They already accepted their invite.',
   'session.notFound': () => 'That session already ended.',
+  'backup.unreadable': () => 'This file isn’t a backup this cluster can open. Choose a file Apiary exported, from a cluster with the same root key.',
 };

@@ -1,0 +1,52 @@
+<ap-page-head heading="Backups">
+  <span pageSub>A backup holds every project, route, certificate, user and the audit log. Take one before each upgrade and after big changes.</span>
+  <button pageActions apWrite apButton="primary" type="button" [disabled]="exporting()" (click)="backUp()">
+    <ap-icon [icon]="icons.archive" />{{ exporting() ? 'Backing up…' : 'Back up now' }}
+  </button>
+</ap-page-head>
+
+@if (stale()) {
+  <ap-banner tone="warn" [heading]="status.value()?.lastAt ? 'The last backup is ' + timeAgo(status.value()!.lastAt!) : 'There are no backups yet'">
+    If the cluster were lost now, every change since then would be lost with it.
+  </ap-banner>
+}
+<ap-banner tone="info" heading="Keep the root key with your backups">
+  Backups are encrypted with the root key, and include certificates’ private keys. Without the key a backup can’t be restored, so store a copy of the
+  key apart from the cluster, and the backups where only administrators can read them.
+</ap-banner>
+
+<section class="ap-panel" aria-labelledby="last-backup">
+  <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="last-backup">Last backup</h2></div>
+  <div class="ap-panel-body">
+    @if (status.value(); as s) {
+      @if (s.lastAt) {
+        <dl class="ap-kv">
+          <dt>Taken</dt>
+          <dd><span class="ap-data">{{ utcDateTime(s.lastAt) }} UTC</span>, {{ timeAgo(s.lastAt) }}</dd>
+          <dt>By</dt>
+          <dd>{{ s.lastBy ?? 'Apiary' }}</dd>
+          <dt>Changes since</dt>
+          <dd>{{ s.changesSince }}</dd>
+        </dl>
+      } @else {
+        <p class="ap-muted" style="margin: 0">None yet. Apiary doesn’t keep backups itself: each one is downloaded when you take it.</p>
+      }
+    }
+  </div>
+</section>
+
+<section class="ap-panel" aria-labelledby="restore">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="restore">Restore a backup</h2>
+      <p class="ap-panel-desc">
+        Replaces the whole configuration on every replica. Use it to go back after a mistake, or to move a configuration to a new cluster with the same
+        root key.
+      </p>
+    </div>
+  </div>
+  <div class="ap-panel-body">
+    <input #file type="file" accept=".backup" class="ap-sr" id="backup-file" (change)="restore(file)" />
+    <button apWrite apButton type="button" (click)="file.click()"><ap-icon [icon]="icons.file" />Choose a backup file…</button>
+  </div>
+</section>

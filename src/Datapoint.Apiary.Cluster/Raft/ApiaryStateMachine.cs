@@ -61,7 +61,7 @@ public sealed class ApiaryStateMachine(DirectoryInfo location, StateEncryption e
 
     private bool SnapshotDue(StateEntry entry)
     {
-        if (++_sinceSnapshot < snapshotEvery && !entry.Changes.Any(c => c is ClusterCreated or ReplicaSaved or ReplicaRemoved))
+        if (++_sinceSnapshot < snapshotEvery && !entry.Changes.Any(c => c is ClusterCreated or ReplicaSaved or ReplicaRemoved or Backups.StateRestored))
         {
             return false;
         }

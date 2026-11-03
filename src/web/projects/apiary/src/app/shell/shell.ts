@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
-import { Hexagon, LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
+import { Archive, Hexagon, LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
 import { needsAttention } from '../certificates/certificate-status';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView } from '../api/models';
@@ -82,7 +82,10 @@ export class Shell {
       },
       {
         title: 'Cluster',
-        items: [{ icon: Hexagon, label: 'Replicas', link: '/replicas', warn: this.cluster.reachable() < this.cluster.voters().length }],
+        items: [
+          { icon: Hexagon, label: 'Replicas', link: '/replicas', warn: this.cluster.reachable() < this.cluster.voters().length },
+          ...(this.auth.canAdminister() ? [{ icon: Archive, label: 'Backups', link: '/backups' }] : []),
+        ],
       },
     ];
   });

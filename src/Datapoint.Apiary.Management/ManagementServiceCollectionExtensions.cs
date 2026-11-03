@@ -1,5 +1,6 @@
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Audit;
+using Datapoint.Apiary.Management.Backups;
 using Datapoint.Apiary.Management.Authorization;
 using Datapoint.Apiary.Management.Setup;
 using Datapoint.Apiary.Management.Transactions;
@@ -22,6 +23,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddScoped<Sessions>();
         services.AddScoped<Invitations>();
         services.AddScoped<AuditLog>();
+        services.AddScoped<BackupRestorer>();
         services.AddSingleton<Challenges>();
         services.AddSingleton<SignInThrottle>();
         services.AddSingleton<SetupWindow>();

@@ -18,6 +18,7 @@ public sealed class StateTransactionBehavior(
     ForwardedRequest forwarded,
     TimeProvider time) : IBehavior
 {
+    private const int MaxRememberedResult = 16 * 1024;
     private static readonly ConcurrentDictionary<Type, string> s_actionNames = new();
 
     public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
@@ -45,12 +46,14 @@ public sealed class StateTransactionBehavior(
         using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         var result = await next(ct);
-        await CommitAsync(command, forwarded.RequestId is null ? null : forwarder.Serialize(result), ct);
+        await CommitAsync(command, forwarded.RequestId is null ? null : Remembered(forwarder.Serialize(result)), ct);
         return result;
     }
 
     public static string ActionName(Type type) =>
         s_actionNames.GetOrAdd(type, t => t.GetCustomAttribute<ActionAttribute>()?.Name ?? t.Name);
+
+    private static string? Remembered(string? result) => result is { Length: <= MaxRememberedResult } ? result : null;
 
     private void EnsureWritable()
     {

@@ -73,6 +73,7 @@ public static class ErrorCodes
     public const string UserSameRole = "user.sameRole";
     public const string UserNotInvited = "user.notInvited";
     public const string SessionNotFound = "session.notFound";
+    public const string BackupUnreadable = "backup.unreadable";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -87,6 +88,6 @@ public static class ErrorCodes
         CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,
         EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
-        UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound,
+        UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
     ];
 }
