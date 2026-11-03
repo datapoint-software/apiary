@@ -25,5 +25,9 @@ public sealed record Route(
 
     public bool Caching { get; init; }
 
+    public bool StrictTransport { get; init; }
+
+    public bool StrictTransportSubdomains { get; init; }
+
     public DateTimeOffset? CachePurgedAt { get; init; }
 }

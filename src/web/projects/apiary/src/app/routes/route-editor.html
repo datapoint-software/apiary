@@ -149,6 +149,22 @@
             <span class="ap-help">Stores only what the target allows with Cache-Control, in memory on each replica.</span>
           </span>
         </label>
+        <label class="ap-choice">
+          <input class="ap-switch" type="checkbox" [formField]="route.strictTransport" />
+          <span class="ap-choice-text">
+            <span>HTTPS only (HSTS)</span>
+            <span class="ap-help">Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.</span>
+          </span>
+        </label>
+        @if (route.strictTransport().value()) {
+          <label class="ap-choice" style="margin-left: 40px">
+            <input class="ap-check" type="checkbox" [formField]="route.strictTransportSubdomains" />
+            <span class="ap-choice-text">
+              <span>Include subdomains</span>
+              <span class="ap-help">Also covers every subdomain of this hostname. Only turn it on when they all serve HTTPS.</span>
+            </span>
+          </label>
+        }
       </div>
     </section>
 

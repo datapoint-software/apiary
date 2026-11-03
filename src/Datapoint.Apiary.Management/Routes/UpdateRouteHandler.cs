@@ -30,6 +30,8 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             Sticky = command.Sticky,
             Compression = command.Compression,
             Caching = command.Caching,
+            StrictTransport = command.StrictTransport,
+            StrictTransportSubdomains = command.StrictTransport && command.StrictTransportSubdomains,
             ChangedAt = time.GetUtcNow(),
             ChangedBy = principals.Principal?.Identity?.Name,
         };

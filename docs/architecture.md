@@ -90,6 +90,7 @@ By default a route has a single target group, and none of the following applies.
 ### Compression and caching
 
 - **Compression** (Brotli and gzip) is set per route and **off by default**. Compressing HTTPS responses that mix secrets with text an attacker can influence allows the [BREACH attack](https://www.breachattack.com/), which is why ASP.NET Core disables it for HTTPS unless enabled. Responses that are already compressed (images, archives) are skipped.
+- **HSTS** (`Strict-Transport-Security`) is set per route and **off by default**, optionally with `includeSubDomains`. Browsers keep it for a year, for the whole hostname on every port, and turning it off doesn't reach browsers that already have it, so it's turned on deliberately.
 - **Caching** is set per route and **off by default**. Apiary caches only what the target allows through `Cache-Control` (`max-age` or `s-maxage`), and never responses to requests with `Authorization` or cookies unless the target explicitly marks them `public`. Responses that set cookies are never cached. The cache runs after the route's checks, so a cached response never bypasses an allowlist, a disabled route or a maintenance window.
 - Each replica keeps its own cache in memory. Admins can purge a route's cache, which clears it on every replica.
 

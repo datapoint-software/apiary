@@ -21,6 +21,8 @@ export interface RouteView {
   readonly sticky: boolean;
   readonly compression: boolean;
   readonly caching: boolean;
+  readonly strictTransport: boolean;
+  readonly strictTransportSubdomains: boolean;
   readonly cachePurgedAt?: string;
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;

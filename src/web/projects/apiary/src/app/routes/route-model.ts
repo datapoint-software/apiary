@@ -34,6 +34,8 @@ export interface RouteModel {
   sticky: boolean;
   compression: boolean;
   caching: boolean;
+  strictTransport: boolean;
+  strictTransportSubdomains: boolean;
 }
 
 function noCanary(): CanaryModel {
@@ -45,7 +47,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -70,5 +72,7 @@ export function routeModel(route: RouteView): RouteModel {
     sticky: route.sticky,
     compression: route.compression,
     caching: route.caching,
+    strictTransport: route.strictTransport,
+    strictTransportSubdomains: route.strictTransportSubdomains,
   };
 }

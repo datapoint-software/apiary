@@ -78,7 +78,7 @@ export class AdminCertificatePanel {
   protected async reset(): Promise<void> {
     const done = await this.confirmer.confirm({
       heading: 'Use a self-signed certificate?',
-      text: 'Every replica switches to a new self-signed certificate. Browsers warn about it until each person checks its fingerprint and accepts it.',
+      text: 'Every replica switches to a new self-signed certificate. Browsers warn about it until each person checks its fingerprint and accepts it. Browsers that opened this interface by its hostname with the current certificate remember to require a trusted one (HSTS), and refuse the self-signed one for up to a year.',
       confirm: 'Use a self-signed one',
       busy: 'Switching…',
       action: async () => {

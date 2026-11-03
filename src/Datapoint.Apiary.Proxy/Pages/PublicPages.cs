@@ -38,7 +38,9 @@ public static class PublicPages
         "Down for maintenance",
         WebUtility.HtmlEncode(message ?? string.Create(CultureInfo.InvariantCulture, $"This site is being worked on. Try again after {end:yyyy-MM-dd HH:mm} UTC.")));
 
-    private static IResult Page(int status, string title, string heading, string text) => Results.Content(
+    private const string Policy = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+
+    private static SecuredPage Page(int status, string title, string heading, string text) => new SecuredPage(Results.Content(
         $$$"""
         <!doctype html>
         <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -49,12 +51,22 @@ public static class PublicPages
         <body><main><h1>{{{heading}}}</h1><p>{{{text}}}</p></main></body></html>
         """,
         "text/html; charset=utf-8",
-        statusCode: status);
+        statusCode: status));
 
     private static string ReadTokens()
     {
         using var stream = typeof(PublicPages).Assembly.GetManifestResourceStream("tokens.css") ?? throw new InvalidOperationException("tokens.css isn't embedded in the assembly.");
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    private sealed class SecuredPage(IResult page) : IResult
+    {
+        public Task ExecuteAsync(HttpContext httpContext)
+        {
+            httpContext.Response.Headers.ContentSecurityPolicy = Policy;
+            httpContext.Response.Headers.XContentTypeOptions = "nosniff";
+            return page.ExecuteAsync(httpContext);
+        }
     }
 }

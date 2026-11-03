@@ -27,4 +27,8 @@ public interface IRouteFields
     bool Compression { get; }
 
     bool Caching { get; }
+
+    bool StrictTransport { get; }
+
+    bool StrictTransportSubdomains { get; }
 }

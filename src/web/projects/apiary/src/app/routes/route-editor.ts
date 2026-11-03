@@ -141,6 +141,8 @@ export class RouteEditor implements HasUnsavedChanges {
       sticky: value.targets.length > 1 && value.sticky,
       compression: value.compression,
       caching: value.caching,
+      strictTransport: value.strictTransport,
+      strictTransportSubdomains: value.strictTransportSubdomains,
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));

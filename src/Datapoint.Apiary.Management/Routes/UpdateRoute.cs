@@ -21,5 +21,7 @@ public sealed record UpdateRoute(
     [property: Description("Sends requests that carry this header or cookie (source header or cookie, name and value) to the last target, so testers reach a new version on purpose. Needs two or more targets.")] RouteCanary? Canary = null,
     [property: Description("Keeps each visitor on the target they first reached, for 1 hour, with a cookie.")] bool Sticky = false,
     [property: Description("Compresses responses with Brotli or gzip. Leave it off for pages that mix secrets with text visitors can influence (the BREACH attack).")] bool Compression = false,
-    [property: Description("Caches responses in memory on each replica, only as the target allows with Cache-Control.")] bool Caching = false)
+    [property: Description("Caches responses in memory on each replica, only as the target allows with Cache-Control.")] bool Caching = false,
+    [property: Description("Sends Strict-Transport-Security for a year, so browsers that visited the hostname over HTTPS refuse plain HTTP to it, on any port. Hard to undo: browsers keep it until it expires.")] bool StrictTransport = false,
+    [property: Description("With strictTransport, also covers every subdomain of the hostname. Only turn it on when they all serve HTTPS.")] bool StrictTransportSubdomains = false)
     : ICommand, IRouteFields;

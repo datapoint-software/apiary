@@ -28,6 +28,8 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             Sticky = command.Sticky,
             Compression = command.Compression,
             Caching = command.Caching,
+            StrictTransport = command.StrictTransport,
+            StrictTransportSubdomains = command.StrictTransport && command.StrictTransportSubdomains,
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);
