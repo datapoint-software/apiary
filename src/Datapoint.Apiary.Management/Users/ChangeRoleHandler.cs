@@ -10,6 +10,7 @@ public sealed class ChangeRoleHandler(StateTransaction transaction) : ICommandHa
     public ValueTask HandleAsync(ChangeRole command, CancellationToken ct = default)
     {
         var user = UserGuards.Find(transaction.State, command.Id);
+        UserGuards.NotManagedBySso(user);
         if (user.Role == command.Role)
         {
             throw FieldErrors.For(nameof(ChangeRole.Role), ErrorCodes.UserSameRole);

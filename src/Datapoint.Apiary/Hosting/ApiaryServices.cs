@@ -9,7 +9,9 @@ using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
 using Datapoint.Apiary.Management.Routes;
+using Datapoint.Apiary.Management.SingleSignOn;
 using Datapoint.Apiary.Replication;
+using Datapoint.Apiary.SingleSignOn;
 using Datapoint.Apiary.Telemetry;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -35,7 +37,10 @@ public static class ApiaryServices
         services.AddApiaryCertificates(section.GetSection("Acme"));
         services.AddHostedService<StartupTasks>();
         services.AddSingleton<IRouteTelemetry, ClusterRouteTelemetry>();
+        var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
+        services.AddSingleton(new SsoIssuerPolicy(options.AllowHttpSsoIssuer));
         services.AddApiaryManagement();
+        services.AddApiarySso();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
         services.AddScoped<ICommandForwarder, CommandForwarder>();
         services.AddHttpPrincipalAccessor();
@@ -48,7 +53,6 @@ public static class ApiaryServices
             .AddBehavior<StateTransactionBehavior>());
         services.AddApiaryMcp();
 
-        var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddApiaryProxy(options.OwnPorts, section.GetSection("AccessLogs"));
         services.AddApiaryTelemetry(section.GetSection("Telemetry"));
         return services;

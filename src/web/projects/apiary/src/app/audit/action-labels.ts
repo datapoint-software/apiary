@@ -29,6 +29,8 @@ const labels: Record<string, string> = {
   'auth.verify': 'signed in',
   'auth.sign-in': 'failed to sign in several times',
   'auth.sign-out': 'signed out',
+  'auth.sso': 'signed in with single sign-on',
+  'sso.update': 'changed single sign-on',
   'invites.accept': 'accepted an invite',
   'users.invite': 'invited someone',
   'users.renew-invite': 'made a new invite link',

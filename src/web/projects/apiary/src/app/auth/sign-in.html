@@ -1,6 +1,13 @@
 <ap-auth-page heading="Sign in to Apiary">
   @switch (step()) {
     @case ('password') {
+      @if (ssoError()) {
+        <ap-banner tone="critical" heading="Single sign-on didn’t work">{{ ssoError() }}</ap-banner>
+      }
+      @if (options.value()?.singleSignOn; as provider) {
+        <a apButton="primary" class="ap-btn-lg" [href]="ssoLink()">Sign in with {{ provider }}</a>
+        <div class="ap-divider-text" role="separator"><span>or with your Apiary password</span></div>
+      }
       <form class="ap-form" style="gap: 16px" [apForm]="credentials" #signInForm="apForm" (submit)="signIn(signInForm)">
         <ap-error-summary verb="sign in" />
         <ap-field label="Email" [field]="credentials.email">

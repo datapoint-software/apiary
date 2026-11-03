@@ -92,5 +92,7 @@ public sealed record ApiaryState
 
     public LastBackup? LastBackup { get; init; }
 
+    public SingleSignOn.SsoSettings? SingleSignOn { get; init; }
+
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

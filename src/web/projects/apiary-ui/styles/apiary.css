@@ -683,6 +683,8 @@
 .ap-auth-brand { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
 .ap-auth-brand .ap-brand-mark { width: 36px; height: 32px; }
 .ap-auth .ap-attribution { align-items: center; text-align: center; }
+.ap-divider-text { display: flex; align-items: center; gap: var(--space-3); font-size: 0.75rem; color: var(--ink-3); }
+.ap-divider-text::before, .ap-divider-text::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 @media (max-width: 639px) {
   .ap-target-row { grid-template-columns: 1fr 1fr; }
   .ap-target-row > :first-child { grid-column: 1 / -1; }

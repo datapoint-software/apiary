@@ -29,10 +29,27 @@ export class UserList {
   private readonly messages = inject(ErrorMessages);
   protected readonly auth = inject(Auth);
   protected readonly users = httpResource<UserView[]>(() => this.api.query('users.list'), { defaultValue: [] });
-  protected readonly withoutTwoStep = computed(() => this.users.value().filter((u) => u.status === 'active' && !u.twoStepOn).length);
+  protected readonly withoutTwoStep = computed(() => this.users.value().filter((u) => u.status === 'active' && !u.twoStepOn && !u.singleSignOn).length);
   protected readonly roleNames = roleNames;
   protected readonly roles = Object.entries(roleDescriptions) as [Role, string][];
   protected readonly timeAgo = timeAgo;
+
+  protected tags(user: UserView): readonly string[] {
+    return [
+      ...(user.id === this.auth.user()?.id ? ['You'] : []),
+      ...(user.singleSignOn ? ['Single sign-on'] : []),
+    ];
+  }
+
+  protected twoStep(user: UserView): readonly ['ok' | 'warn' | undefined, string] {
+    if (user.status === 'invited') {
+      return [undefined, '–'];
+    }
+    if (user.singleSignOn) {
+      return [undefined, 'At the identity provider'];
+    }
+    return user.twoStepOn ? ['ok', 'On'] : ['warn', 'Not set up'];
+  }
   protected readonly timeUntil = timeUntil;
   protected readonly icons = {
     invite: UserPlus,

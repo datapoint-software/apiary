@@ -10,8 +10,9 @@ public sealed record UserView(
     UserStatus Status,
     bool TwoStepOn,
     DateTimeOffset? LastSignInAt,
-    DateTimeOffset? InviteExpiresAt)
+    DateTimeOffset? InviteExpiresAt,
+    bool SingleSignOn)
 {
     public static UserView From(User user) => new(
-        user.Id, user.Name, user.Email, user.Role, user.Status, user.TwoStep is not null, user.LastSignInAt, user.Invite?.ExpiresAt);
+        user.Id, user.Name, user.Email, user.Role, user.Status, user.TwoStep is not null, user.LastSignInAt, user.Invite?.ExpiresAt, user.ExternalId is not null);
 }

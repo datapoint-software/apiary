@@ -9,6 +9,7 @@ using Datapoint.Apiary.Proxy.Redirects;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Recovery;
 using Datapoint.Apiary.Replication;
+using Datapoint.Apiary.SingleSignOn;
 using Datapoint.Apiary.Telemetry;
 
 namespace Datapoint.Apiary.Hosting;
@@ -46,6 +47,7 @@ public static class ApiaryPipeline
         admin.MapGroup("/operator").MapApiaryOperator();
         admin.MapOpenApi();
         admin.MapApiaryOAuth();
+        admin.MapApiarySso();
         admin.MapApiaryMcp();
         admin.MapActions("/api", o =>
         {

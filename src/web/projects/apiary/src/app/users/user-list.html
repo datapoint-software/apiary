@@ -37,8 +37,8 @@
                 <div class="ap-cell-main">
                   <span style="font-weight: 500">
                     {{ user.name }}
-                    @if (user.id === auth.user()?.id) {
-                      <span class="ap-tag">You</span>
+                    @for (tag of tags(user); track tag) {
+                      <span class="ap-tag">{{ tag }}</span>
                     }
                   </span>
                   <span class="ap-caption">{{ user.email }}</span>
@@ -47,12 +47,11 @@
             </td>
             <td>{{ roleNames[user.role] }}</td>
             <td>
-              @if (user.status === 'invited') {
-                <span class="ap-muted">–</span>
-              } @else if (user.twoStepOn) {
-                <ap-status tone="ok">On</ap-status>
+              @let state = twoStep(user);
+              @if (state[0]) {
+                <ap-status [tone]="state[0]">{{ state[1] }}</ap-status>
               } @else {
-                <ap-status tone="warn">Not set up</ap-status>
+                <span class="ap-muted">{{ state[1] }}</span>
               }
             </td>
             <td class="ap-muted">{{ user.lastSignInAt ? timeAgo(user.lastSignInAt) : 'Never' }}</td>
@@ -91,7 +90,7 @@
                       <ap-icon [icon]="icons.revoke" />Revoke invite…
                     </button>
                   } @else {
-                    <button class="ap-menu-item" cdkMenuItem type="button" (cdkMenuItemTriggered)="changeRole(user)">
+                    <button class="ap-menu-item" cdkMenuItem type="button" [cdkMenuItemDisabled]="user.singleSignOn" (cdkMenuItemTriggered)="changeRole(user)">
                       <ap-icon [icon]="icons.role" />Change role…
                     </button>
                     <button

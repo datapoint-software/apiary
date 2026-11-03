@@ -18,6 +18,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
         AcmeAccounts = Restored.AcmeAccounts,
         SetupCompleted = Restored.SetupCompleted,
         Audit = Restored.Audit,
+        SingleSignOn = Restored.SingleSignOn,
         Sessions = ImmutableDictionary<Guid, Session>.Empty,
         Agents = ImmutableDictionary<Guid, Agent>.Empty,
         Locks = ImmutableDictionary<string, StateLock>.Empty,

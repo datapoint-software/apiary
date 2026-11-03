@@ -11,6 +11,7 @@ public sealed class UpdateProfileHandler(StateTransaction transaction, CurrentUs
     public ValueTask HandleAsync(UpdateProfile command, CancellationToken ct = default)
     {
         var user = current.Require(transaction.State);
+        Users.UserGuards.NotManagedBySso(user);
         var email = Emails.Normalize(command.Email);
         if (UserLookup.IsEmailTaken(transaction.State, email, except: user.Id))
         {

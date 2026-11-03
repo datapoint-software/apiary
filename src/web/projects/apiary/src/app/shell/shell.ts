@@ -14,6 +14,7 @@ import {
   Archive,
   Bot,
   CornerUpRight,
+  DoorOpen,
   FolderOpen,
   Hexagon,
   KeyRound,
@@ -137,7 +138,12 @@ export class Shell {
       {
         title: 'Access',
         items: [
-          ...(this.auth.canAdminister() ? [{ icon: Users, label: 'Users', link: '/users' }] : []),
+          ...(this.auth.canAdminister()
+            ? [
+                { icon: Users, label: 'Users', link: '/users' },
+                { icon: DoorOpen, label: 'Single sign-on', link: '/single-sign-on' },
+              ]
+            : []),
           { icon: Bot, label: 'Connected agents', link: '/agents' },
           { icon: ScrollText, label: 'Audit log', link: '/audit' },
         ],

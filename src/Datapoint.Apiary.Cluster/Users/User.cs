@@ -10,4 +10,7 @@ public sealed record User(
     TwoStepSetup? TwoStep,
     Invite? Invite,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? LastSignInAt);
+    DateTimeOffset? LastSignInAt)
+{
+    public string? ExternalId { get; init; }
+}

@@ -105,6 +105,16 @@ public static class ErrorCodes
     public const string AgentRedirectInvalid = "agent.redirectInvalid";
     public const string AgentChallengeInvalid = "agent.challengeInvalid";
     public const string AgentTooMany = "agent.tooMany";
+    public const string SsoIssuerInvalid = "sso.issuerInvalid";
+    public const string SsoGroupsRequired = "sso.groupsRequired";
+    public const string SsoGroupsTooMany = "sso.groupsTooMany";
+    public const string SsoOff = "sso.off";
+    public const string SsoFailed = "sso.failed";
+    public const string SsoNoRole = "sso.noRole";
+    public const string SsoNoEmail = "sso.noEmail";
+    public const string SsoEmailTaken = "sso.emailTaken";
+    public const string SsoDisabled = "sso.disabled";
+    public const string UserManagedBySso = "user.managedBySso";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -124,5 +134,7 @@ public static class ErrorCodes
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
         ReplicaNotFound, ReplicaNotPending, ReplicaReachable,
         AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany,
+        SsoIssuerInvalid, SsoGroupsRequired, SsoGroupsTooMany, SsoOff, SsoFailed, SsoNoRole, SsoNoEmail, SsoEmailTaken, SsoDisabled,
+        UserManagedBySso,
     ];
 }

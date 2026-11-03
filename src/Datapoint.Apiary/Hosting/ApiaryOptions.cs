@@ -18,6 +18,8 @@ public sealed class ApiaryOptions
 
     public string KeyDirectory { get; set; } = "keys";
 
+    public bool AllowHttpSsoIssuer { get; set; }
+
     public IReadOnlyList<string> AdminAllowlist { get; set; } =
         ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7", "127.0.0.0/8", "::1/128"];
 

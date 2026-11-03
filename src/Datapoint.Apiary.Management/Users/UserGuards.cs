@@ -22,6 +22,16 @@ public static class UserGuards
         throw ActionFailedException.Conflict(ErrorCodes.UserLastAdministrator);
     }
 
+    public static void NotManagedBySso(User user)
+    {
+        if (user.ExternalId is null)
+        {
+            return;
+        }
+
+        throw ActionFailedException.Conflict(ErrorCodes.UserManagedBySso);
+    }
+
     public static void NotSelf(CurrentUser current, User user)
     {
         if (current.UserId != user.Id)

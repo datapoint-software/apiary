@@ -1,28 +1,40 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { httpResource } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-import { ApiProblem, Button, ErrorSummary, Field, Form, PasswordReveal, Toaster, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Banner, Button, ErrorMessages, ErrorSummary, Field, Form, PasswordReveal, Toaster, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
-import { SignInStep } from '../api/models';
+import { SignInOptions, SignInStep } from '../api/models';
 import { Auth } from './auth';
 import { AuthPage } from './auth-page';
 import { RecoveryCodes } from './recovery-codes';
 import { TwoStepSetup } from './two-step-setup';
 
+const orEmpty = (value: string | undefined) => value ?? '';
+
 type Step = 'password' | 'code' | 'enroll' | 'codes';
 
 @Component({
   selector: 'ap-sign-in',
-  imports: [AuthPage, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, TwoStepSetup, RecoveryCodes],
+  imports: [AuthPage, Banner, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, TwoStepSetup, RecoveryCodes],
   templateUrl: './sign-in.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignIn {
-  readonly next = input('');
+  readonly next = input('', { transform: orEmpty });
+  readonly error = input('', { transform: orEmpty });
   private readonly api = inject(Api);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
+  private readonly messages = inject(ErrorMessages);
+
+  protected readonly options = httpResource<SignInOptions>(() => this.api.query('auth.options'));
+  protected readonly ssoError = computed(() => (this.error() ? this.messages.describe(this.error()) : ''));
+  protected readonly ssoLink = computed(() => {
+    const next = this.next().startsWith('/') ? this.next() : '/';
+    return `/auth/sso/start?next=${encodeURIComponent(next)}`;
+  });
 
   protected readonly step = signal<Step>('password');
   protected readonly signInStep = signal<SignInStep | null>(null);

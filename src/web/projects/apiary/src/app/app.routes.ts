@@ -66,6 +66,12 @@ export const routes: Routes = [
         loadComponent: () => import('./users/user-list').then((m) => m.UserList),
       },
       {
+        path: 'single-sign-on',
+        title: 'Single sign-on · Apiary',
+        canActivate: [requiresRole('administrator')],
+        loadComponent: () => import('./sso/sso-settings').then((m) => m.SsoSettings),
+      },
+      {
         path: 'backups',
         title: 'Backups · Apiary',
         canActivate: [requiresRole('administrator')],

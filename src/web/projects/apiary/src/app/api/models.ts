@@ -74,6 +74,24 @@ export interface SignedInUser {
   readonly role: Role;
   readonly twoStepSetUpAt?: string;
   readonly recoveryCodesLeft: number;
+  readonly singleSignOn: boolean;
+}
+
+export interface SignInOptions {
+  readonly singleSignOn?: string;
+}
+
+export interface SsoSettingsView {
+  readonly enabled: boolean;
+  readonly displayName: string;
+  readonly issuer: string;
+  readonly clientId: string;
+  readonly hasClientSecret: boolean;
+  readonly groupsClaim: string;
+  readonly administratorGroups: readonly string[];
+  readonly operatorGroups: readonly string[];
+  readonly viewerGroups: readonly string[];
+  readonly changedAt?: string;
 }
 
 export interface TwoStepEnrollment {
@@ -114,6 +132,7 @@ export interface UserView {
   readonly twoStepOn: boolean;
   readonly lastSignInAt?: string;
   readonly inviteExpiresAt?: string;
+  readonly singleSignOn: boolean;
 }
 
 export interface AgentView {

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormField, form, required } from '@angular/forms/signals';
 import {
   ApiProblem,
+  Banner,
   Button,
   Confirmer,
   ErrorSummary,
@@ -28,7 +29,7 @@ import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-security',
-  imports: [WriteLock, PageHead, AccountTabs, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, PasswordChecklist, Status],
+  imports: [WriteLock, PageHead, AccountTabs, Banner, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, PasswordChecklist, Status],
   templateUrl: './security.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

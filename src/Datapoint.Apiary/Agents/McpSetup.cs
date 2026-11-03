@@ -13,7 +13,7 @@ public static class McpSetup
 {
     public const string Policy = "agents";
 
-    private static readonly string[] s_withheldPrefixes = ["auth.", "account.", "setup.", "invites.", "oauth."];
+    private static readonly string[] s_withheldPrefixes = ["auth.", "account.", "setup.", "invites.", "oauth.", "sso."];
     private static readonly HashSet<string> s_withheld = new(StringComparer.Ordinal)
     {
         "certificates.upload",
