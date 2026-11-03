@@ -40,6 +40,8 @@ export const routeRules = (id: () => string | undefined) => schema<RouteModel>((
   });
   wholeNumber(route.timeoutSeconds, 1, 120);
   ipRanges(route.allowedAddresses);
+  hidden(route.rateLimit, ({ valueOf }) => !valueOf(route.rateLimited));
+  wholeNumber(route.rateLimit, 1, 100000);
   for (const path of [route.maintenance.start, route.maintenance.end, route.maintenance.message]) {
     hidden(path, ({ valueOf }) => !valueOf(route.maintenance.scheduled));
   }

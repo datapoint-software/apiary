@@ -12,7 +12,6 @@ import {
   Form,
   PageHead,
   Status,
-  parseUtc,
   Toaster,
   problemErrors,
 } from '@datapoint/apiary-ui';
@@ -21,9 +20,10 @@ import { CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
-import { RouteModel, emptyRoute, routeModel } from './route-model';
+import { RouteModel, emptyRoute, maintenanceWindow, routeModel } from './route-model';
 import { routeRules } from './route-rules';
 import { perMinute, routeStatus } from './route-status';
+import { AccessSection } from './access-section';
 import { MaintenanceSection } from './maintenance-section';
 import { TargetsSection } from './targets-section';
 import { RouteDangerZone } from './route-danger-zone';
@@ -32,7 +32,7 @@ import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, MaintenanceSection, TargetsSection, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, TargetsSection, RouterLink],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -128,13 +128,8 @@ export class RouteEditor implements HasUnsavedChanges {
       timeoutSeconds: value.timeoutSeconds,
       certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
       allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
-      maintenance: value.maintenance.scheduled
-        ? {
-            start: new Date(parseUtc(value.maintenance.start) ?? 0).toISOString(),
-            end: new Date(parseUtc(value.maintenance.end) ?? 0).toISOString(),
-            message: value.maintenance.message.trim() || null,
-          }
-        : null,
+      rateLimit: value.rateLimited ? value.rateLimit : null,
+      maintenance: maintenanceWindow(value.maintenance),
       canary: value.targets.length > 1 && value.canary.source !== 'none'
         ? { source: value.canary.source, name: value.canary.name.trim(), value: value.canary.value.trim() }
         : null,

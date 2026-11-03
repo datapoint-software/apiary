@@ -15,6 +15,8 @@ public sealed record Route(
 
     public IReadOnlyList<string>? AllowedAddresses { get; init; }
 
+    public int? RateLimit { get; init; }
+
     public MaintenanceWindow? Maintenance { get; init; }
 
     public RouteCanary? Canary { get; init; }

@@ -16,6 +16,7 @@ export interface RouteView {
   readonly changedBy?: string;
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
+  readonly rateLimit?: number;
   readonly maintenance?: MaintenanceWindow;
   readonly canary?: RouteCanary;
   readonly sticky: boolean;

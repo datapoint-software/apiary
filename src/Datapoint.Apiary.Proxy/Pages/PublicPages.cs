@@ -32,6 +32,12 @@ public static class PublicPages
         "You can't open this site from here",
         "It only accepts visitors from certain networks. If you need it, contact whoever runs it.");
 
+    public static IResult TooManyRequests() => Page(
+        StatusCodes.Status429TooManyRequests,
+        "Too many requests",
+        "Too many requests",
+        "This site got too many requests from your network. Wait a moment, then try again.");
+
     public static IResult Maintenance(string? message, DateTimeOffset end) => Page(
         StatusCodes.Status503ServiceUnavailable,
         "Maintenance",

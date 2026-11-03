@@ -94,6 +94,14 @@ By default a route has a single target group, and none of the following applies.
 - **Caching** is set per route and **off by default**. Apiary caches only what the target allows through `Cache-Control` (`max-age` or `s-maxage`), and never responses to requests with `Authorization` or cookies unless the target explicitly marks them `public`. Responses that set cookies are never cached. The cache runs after the route's checks, so a cached response never bypasses an allowlist, a disabled route or a maintenance window.
 - Each replica keeps its own cache in memory. Admins can purge a route's cache, which clears it on every replica.
 
+### Rate limits
+
+- **A rate limit** is set per route and **off by default**: the most requests a minute from each client address, from 1 to 100,000. IPv6 clients are counted per /64 network, since one host usually owns a whole /64 and could otherwise rotate addresses.
+- It's a token bucket: a client can spend the whole minute's budget at once, then it refills evenly. Beyond it, clients get a 429 page with `Retry-After`, after the allowlist, disabled and maintenance checks.
+- **Each replica counts on its own**, in memory, so a client spread over 3 replicas can make up to 3 times the limit. Sharing the counters would cost a write to the replicated state per request. Counters start over when a replica restarts or the limit changes.
+- It needs the real client address: with the host-mode ports in `deploy/stack.yaml`, Apiary sees it. Behind another proxy or load balancer, or Swarm's ingress network, every client shares that proxy's address and one budget, so leave limits off there.
+- Stream routes have no rate limit; they cap open connections per address instead.
+
 ### TCP and UDP
 
 - A stream route forwards raw TCP or UDP from a port on the edge nodes to a target host and port, for traffic that isn't HTTP (e.g. databases, SMTP, MQTT, game servers). YARP doesn't do this, so it's Apiary's own code.

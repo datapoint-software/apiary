@@ -25,6 +25,7 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             TimeoutSeconds = command.TimeoutSeconds,
             CertificateId = command.CertificateId,
             AllowedAddresses = RouteNormalization.Addresses(command.AllowedAddresses),
+            RateLimit = command.RateLimit,
             Maintenance = RouteNormalization.Maintenance(command.Maintenance),
             Canary = RouteNormalization.Canary(command.Canary, command.Targets.Count),
             Sticky = command.Sticky,

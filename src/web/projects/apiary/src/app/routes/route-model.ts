@@ -1,5 +1,5 @@
-import { formatUtc } from '@datapoint/apiary-ui';
-import { RouteView } from '../api/models';
+import { formatUtc, parseUtc } from '@datapoint/apiary-ui';
+import { MaintenanceWindow, RouteView } from '../api/models';
 
 export interface RouteTargetModel {
   host: string;
@@ -29,6 +29,8 @@ export interface RouteModel {
   certificate: 'automatic' | 'uploaded';
   certificateId: string;
   allowedAddresses: string;
+  rateLimited: boolean;
+  rateLimit: number | null;
   maintenance: MaintenanceModel;
   canary: CanaryModel;
   sticky: boolean;
@@ -47,7 +49,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -60,6 +62,8 @@ export function routeModel(route: RouteView): RouteModel {
     certificate: route.certificateId ? 'uploaded' : 'automatic',
     certificateId: route.certificateId ?? '',
     allowedAddresses: route.allowedAddresses.join('\n'),
+    rateLimited: route.rateLimit !== undefined,
+    rateLimit: route.rateLimit ?? 600,
     maintenance: route.maintenance
       ? {
           scheduled: true,
@@ -74,5 +78,16 @@ export function routeModel(route: RouteView): RouteModel {
     caching: route.caching,
     strictTransport: route.strictTransport,
     strictTransportSubdomains: route.strictTransportSubdomains,
+  };
+}
+
+export function maintenanceWindow(maintenance: MaintenanceModel): MaintenanceWindow | null {
+  if (!maintenance.scheduled) {
+    return null;
+  }
+  return {
+    start: new Date(parseUtc(maintenance.start) ?? 0).toISOString(),
+    end: new Date(parseUtc(maintenance.end) ?? 0).toISOString(),
+    message: maintenance.message.trim() || undefined,
   };
 }

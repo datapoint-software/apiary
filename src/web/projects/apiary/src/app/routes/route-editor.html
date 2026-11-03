@@ -168,21 +168,7 @@
       </div>
     </section>
 
-    <section class="ap-panel" aria-labelledby="access-title">
-      <div class="ap-panel-head">
-        <div><h2 class="ap-h ap-h-3" id="access-title">Access</h2></div>
-      </div>
-      <div class="ap-panel-body ap-stack">
-        <ap-field
-          label="Allowed addresses"
-          [field]="route.allowedAddresses"
-          [optional]="true"
-          help="One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403."
-        >
-          <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="route.allowedAddresses"></textarea>
-        </ap-field>
-      </div>
-    </section>
+    <ap-access-section [route]="route" [rateLimited]="model().rateLimited" />
 
     <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
 

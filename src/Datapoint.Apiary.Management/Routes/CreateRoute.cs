@@ -16,6 +16,7 @@ public sealed record CreateRoute(
     [property: Description("How long to wait for the target, in seconds, from 1 to 120.")] int TimeoutSeconds = 30,
     [property: Description("The id of an uploaded certificate that covers the hostname, or null for an automatic certificate from Let's Encrypt.")] Guid? CertificateId = null,
     [property: Description("The addresses and ranges allowed to use the route, such as 10.0.0.0/8 or 2001:db8::/32. Anyone else gets a 403. Leave it empty to allow everyone.")] IReadOnlyList<string>? AllowedAddresses = null,
+    [property: Description("The most requests a minute from each client address (each /64 network for IPv6), counted on each replica, from 1 to 100000. Beyond it, clients get a 429 page with Retry-After. Leave it null for no limit.")] int? RateLimit = null,
     [property: Description("A maintenance window, or null for none. During the window, visitors get a 503 page with the message (at most 200 characters). It can last at most 7 days and must end in the future.")] MaintenanceWindow? Maintenance = null,
     [property: Description("Sends requests that carry this header or cookie (source header or cookie, name and value) to the last target, so testers reach a new version on purpose. Needs two or more targets.")] RouteCanary? Canary = null,
     [property: Description("Keeps each visitor on the target they first reached, for 1 hour, with a cookie.")] bool Sticky = false,

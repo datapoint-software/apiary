@@ -18,6 +18,8 @@ public interface IRouteFields
 
     IReadOnlyList<string>? AllowedAddresses { get; }
 
+    int? RateLimit { get; }
+
     MaintenanceWindow? Maintenance { get; }
 
     RouteCanary? Canary { get; }
