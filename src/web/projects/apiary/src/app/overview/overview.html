@@ -1,4 +1,9 @@
 <ap-page-head [heading]="heading()">
+  <div pageActions class="ap-seg" role="group" aria-label="Time range">
+    @for (option of ranges; track option[0]) {
+      <button type="button" [attr.aria-pressed]="range() === option[0]" (click)="range.set(option[0])">{{ option[1] }}</button>
+    }
+  </div>
   @if (auth.canOperate()) {
     <a apWrite pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />Add route</a>
   }
@@ -24,6 +29,8 @@
 }
 @if (firstRun()) {
   <ap-get-started [projectCount]="projects.value().length" />
+} @else {
+  <ap-activity-stats [range]="range()" />
 }
 <section class="ap-section" aria-labelledby="projects-title">
   <div class="ap-section-head">

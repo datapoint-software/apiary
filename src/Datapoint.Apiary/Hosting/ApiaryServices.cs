@@ -6,6 +6,7 @@ using Datapoint.Apiary.Certificates;
 using Datapoint.Apiary.Cluster;
 using Datapoint.Apiary.Keys;
 using Datapoint.Apiary.Management;
+using Datapoint.Apiary.Management.Activity;
 using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
@@ -41,6 +42,7 @@ public static class ApiaryServices
         services.AddSingleton<AdminCertificates>();
         services.AddHostedService<AdminCertificateKeeper>();
         services.AddSingleton<IRouteTelemetry, ClusterRouteTelemetry>();
+        services.AddSingleton<IActivityTelemetry, ClusterActivityTelemetry>();
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddSingleton(new SsoIssuerPolicy(options.AllowHttpSsoIssuer));
         services.AddSingleton(new StreamPortPolicy(options.OwnPorts));

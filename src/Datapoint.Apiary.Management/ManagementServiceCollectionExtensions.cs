@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Management.Activity;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Audit;
@@ -23,6 +24,7 @@ public static class ManagementServiceCollectionExtensions
     public static IServiceCollection AddApiaryManagement(this IServiceCollection services)
     {
         services.TryAddSingleton<IRouteTelemetry, NoRouteTelemetry>();
+        services.TryAddSingleton<IActivityTelemetry, NoActivityTelemetry>();
         services.AddScoped<StateTransaction>();
         services.AddScoped<ForwardedRequest>();
         services.AddScoped<CurrentUser>();

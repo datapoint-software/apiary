@@ -346,3 +346,18 @@ export interface RestoredBackup {
   readonly users: number;
   readonly certificates: number;
 }
+
+export type ActivityRange = 'hour' | 'day';
+
+export interface ActivityPoint {
+  readonly at: string;
+  readonly requests: number;
+  readonly errors: number;
+  readonly p95Milliseconds?: number;
+}
+
+export interface ActivityView {
+  readonly minutesPerPoint: number;
+  readonly points: readonly ActivityPoint[];
+  readonly p95Milliseconds?: number;
+}

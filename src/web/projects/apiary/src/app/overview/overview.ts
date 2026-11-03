@@ -1,16 +1,17 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Banner, Button, Icon, PageHead } from '@datapoint/apiary-ui';
 import { Plus } from 'lucide';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, RouteView } from '../api/models';
+import { ActivityRange, CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { daysLeft, needsAttention } from '../certificates/certificate-status';
 import { ClusterStatus } from '../cluster/cluster-status';
 import { WriteLock } from '../cluster/write-lock';
 import { ProjectCards } from '../projects/project-cards';
+import { ActivityStats } from './activity-stats';
 import { CertificateMeters } from './certificate-meters';
 import { GetStarted } from './get-started';
 import { RecentActivity } from './recent-activity';
@@ -25,7 +26,7 @@ function greeting(hour: number): string {
 
 @Component({
   selector: 'ap-overview',
-  imports: [WriteLock, PageHead, RouterLink, Icon, Button, Banner, ProjectCards, GetStarted, ReplicaPanel, CertificateMeters, RecentActivity],
+  imports: [WriteLock, PageHead, RouterLink, Icon, Button, Banner, ProjectCards, GetStarted, ActivityStats, ReplicaPanel, CertificateMeters, RecentActivity],
   templateUrl: './overview.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -34,6 +35,11 @@ export class Overview {
   protected readonly auth = inject(Auth);
   protected readonly cluster = inject(ClusterStatus);
   protected readonly plus = Plus;
+  protected readonly ranges: readonly [ActivityRange, string][] = [
+    ['hour', '1 h'],
+    ['day', '24 h'],
+  ];
+  protected readonly range = signal<ActivityRange>('day');
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   private readonly projectsRefresh = reloadEvery(this.projects);
   private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {

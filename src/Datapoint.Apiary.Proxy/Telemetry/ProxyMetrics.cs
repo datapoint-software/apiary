@@ -25,9 +25,13 @@ public sealed class ProxyMetrics
             advice: new InstrumentAdvice<double> { HistogramBucketBoundaries = s_durationBuckets });
     }
 
+    public ActivityHistory Activity { get; } = new();
+
     public void Record(string route, string host, int status, TimeSpan elapsed)
     {
-        _rates.GetOrAdd(route, static _ => new RateWindow()).Add(_time.GetUtcNow().ToUnixTimeSeconds());
+        var now = _time.GetUtcNow().ToUnixTimeSeconds();
+        _rates.GetOrAdd(route, static _ => new RateWindow()).Add(now);
+        Activity.Add(now, status, elapsed);
         var tags = new TagList { { "apiary.route.id", route }, { "server.address", host } };
         _duration.Record(elapsed.TotalSeconds, tags);
         tags.Add("http.response.status_code", status);

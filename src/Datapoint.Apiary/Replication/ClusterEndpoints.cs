@@ -30,6 +30,10 @@ public static class ClusterEndpoints
             cluster.KeysFor(http.Connection.ClientCertificate) is { } ring ? Results.Json(ring, ClusterWireJsonContext.Default.SharedKeyRing) : Results.StatusCode(StatusCodes.Status403Forbidden));
         replicas.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView));
         replicas.MapGet("/" + ClusterRouteTelemetry.Path, (RouteTelemetrySource source) => Results.Json(source.Snapshot(), ApiJson.Options));
+        replicas.MapGet("/" + ClusterActivityTelemetry.Path, (long until, int points, int step, ProxyMetrics metrics) =>
+            points is > 0 and <= ActivityHistory.Minutes && step > 0 && (long)points * step <= ActivityHistory.Minutes
+                ? Results.Json(metrics.Activity.Read(until, points, step), ApiJson.Options)
+                : Results.BadRequest());
         replicas.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
             cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge) ? Results.Json(challenge, ClusterWireJsonContext.Default.AcmeChallenge) : Results.NotFound());
         return group;
