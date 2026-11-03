@@ -12,6 +12,7 @@ public sealed class ResetTwoStepHandler(StateTransaction transaction, Sessions s
         var user = UserGuards.Find(transaction.State, command.Id);
         transaction.Record(new UserSaved(user with { TwoStep = null }));
         sessions.EndAll(user.Id);
+        sessions.DisconnectAgents(user.Id);
         transaction.Affects(user.Id);
         return ValueTask.CompletedTask;
     }

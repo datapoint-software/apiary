@@ -100,7 +100,7 @@ export class UserList {
   protected async resetTwoStep(user: UserView): Promise<void> {
     const done = await this.confirmer.confirm({
       heading: `Reset two-step sign-in for ${user.name}?`,
-      text: 'Use this when they lost their phone. They’re signed out everywhere, and set it up again at their next sign-in. Check it’s really them first.',
+      text: 'Use this when they lost their phone. They’re signed out everywhere, their agents are disconnected, and they set it up again at their next sign-in. Check it’s really them first.',
       confirm: 'Reset two-step sign-in',
       busy: 'Resetting…',
       action: () => this.api.send('users.reset-two-step', { id: user.id }),

@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Transactions;
@@ -36,5 +37,16 @@ public sealed class Sessions(StateTransaction transaction, ISessionCookie cookie
         }
 
         transaction.Record(new SessionsEnded(ids));
+    }
+
+    public int DisconnectAgents(Guid userId)
+    {
+        var ids = transaction.State.Agents.Values.Where(a => a.UserId == userId).Select(a => a.Id).ToList();
+        if (ids.Count > 0)
+        {
+            transaction.Record(new AgentsRemoved(ids));
+        }
+
+        return ids.Count;
     }
 }

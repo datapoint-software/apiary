@@ -50,10 +50,10 @@ export class Security {
   protected readonly setUpOn = computed(() => this.auth.user()?.twoStepSetUpAt?.slice(0, 10) ?? '');
 
   protected async changePassword(apForm: Form): Promise<void> {
-    let others = 0;
+    let ended = { sessions: 0, agents: 0 };
     const changed = await apForm.submit(async () => {
       try {
-        others = await this.api.send<number>('account.change-password', { current: this.model().current, next: this.model().next });
+        ended = await this.api.send<{ sessions: number; agents: number }>('account.change-password', { current: this.model().current, next: this.model().next });
         return undefined;
       } catch (problem) {
         return problemErrors(problem as ApiProblem, this.password);
@@ -63,8 +63,9 @@ export class Security {
       this.model.set({ current: '', next: '', again: '' });
       this.password().reset();
       apForm.attempted.set(false);
-      const signedOut = others === 0 ? '' : ` Your ${others === 1 ? 'other session was' : `${others} other sessions were`} signed out.`;
-      this.toaster.show(`You stay signed in here.${signedOut}`, { heading: 'Password changed' });
+      const signedOut = ended.sessions === 0 ? '' : ` Your ${ended.sessions === 1 ? 'other session was' : `${ended.sessions} other sessions were`} signed out.`;
+      const disconnected = ended.agents === 0 ? '' : ` ${ended.agents === 1 ? 'Your agent was' : `${ended.agents} agents were`} disconnected; connect them again.`;
+      this.toaster.show(`You stay signed in here.${signedOut}${disconnected}`, { heading: 'Password changed' });
     }
   }
 
