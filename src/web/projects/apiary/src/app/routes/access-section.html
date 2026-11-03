@@ -12,18 +12,18 @@
       <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="route().allowedAddresses"></textarea>
     </ap-field>
     <label class="ap-choice">
-      <input class="ap-check" type="checkbox" [formField]="route().rateLimited" />
+      <input class="ap-switch" type="checkbox" [formField]="route().rateLimited" />
       <span class="ap-choice-text">
         <span>Limit requests per visitor</span>
         <span class="ap-help">Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.</span>
       </span>
     </label>
-    @if (rateLimited()) {
+    @if (route().rateLimited().value()) {
       <div style="max-width: 280px; margin-left: 40px">
         <ap-field label="Rate limit" [field]="route().rateLimit" help="From 1 to 100,000.">
           <div class="ap-affix">
             <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="route().rateLimit" />
-            <span class="ap-affix-text">a minute</span>
+            <span class="ap-affix-text">a&nbsp;minute</span>
           </div>
         </ap-field>
       </div>

@@ -11,5 +11,4 @@ import { RouteModel } from './route-model';
 })
 export class AccessSection {
   readonly route = input.required<FieldTree<RouteModel>>();
-  readonly rateLimited = input(false);
 }
