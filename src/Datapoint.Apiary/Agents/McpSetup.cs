@@ -22,6 +22,7 @@ public static class McpSetup
         "backups.export",
         "backups.restore",
         "agents.connect",
+        "agents.update-policy",
         "agents.client",
         "routes.check",
         "redirects.check",

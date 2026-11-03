@@ -109,6 +109,8 @@ public static class ErrorCodes
     public const string AgentRedirectInvalid = "agent.redirectInvalid";
     public const string AgentChallengeInvalid = "agent.challengeInvalid";
     public const string AgentTooMany = "agent.tooMany";
+    public const string AgentOriginInvalid = "agent.originInvalid";
+    public const string AgentOriginsTooMany = "agent.originsTooMany";
     public const string SsoIssuerInvalid = "sso.issuerInvalid";
     public const string SsoGroupsRequired = "sso.groupsRequired";
     public const string SsoGroupsTooMany = "sso.groupsTooMany";
@@ -142,7 +144,7 @@ public static class ErrorCodes
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
         ReplicaNotFound, ReplicaNotPending, ReplicaReachable,
-        AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany,
+        AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany, AgentOriginInvalid, AgentOriginsTooMany,
         SsoIssuerInvalid, SsoGroupsRequired, SsoGroupsTooMany, SsoOff, SsoFailed, SsoNoRole, SsoNoEmail, SsoEmailTaken, SsoDisabled,
         UserManagedBySso,
         StreamNotFound, StreamPortReserved, StreamPortTaken, StreamServerNamesUdp, StreamServerNamesTooMany,

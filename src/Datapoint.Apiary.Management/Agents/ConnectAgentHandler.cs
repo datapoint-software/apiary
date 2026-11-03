@@ -17,7 +17,7 @@ public sealed class ConnectAgentHandler(StateTransaction transaction, AgentClien
             throw ActionFailedException.Forbidden(ErrorCodes.Forbidden);
         }
 
-        var client = clients.Read(command.ClientId, command.RedirectUri);
+        var client = clients.Read(command.ClientId, command.RedirectUri, AgentPolicy.TrustedOriginsOf(transaction.State));
         var user = current.Require(transaction.State);
         var now = time.GetUtcNow();
         var mine = transaction.State.Agents.Values.Where(a => a.UserId == user.Id).ToList();

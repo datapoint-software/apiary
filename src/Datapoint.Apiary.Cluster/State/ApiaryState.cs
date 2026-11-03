@@ -105,5 +105,7 @@ public sealed record ApiaryState
 
     public SessionPolicy? SessionPolicy { get; init; }
 
+    public AgentPolicy? AgentPolicy { get; init; }
+
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

@@ -15,8 +15,8 @@
       </p>
       @if (!client.returnsToThisComputer) {
         <ap-banner tone="warn" heading="It returns to a website">
-          This agent runs on <span class="ap-data">{{ client.returnsTo }}</span>, not on this computer. Connect it only if
-          you trust that site and started connecting it yourself.
+          This agent runs on <span class="ap-data">{{ client.returnsTo }}</span>, a site your Administrators trust, not on this
+          computer. Connect it only if you started connecting it yourself.
         </ap-banner>
       }
       @if (failure()) {

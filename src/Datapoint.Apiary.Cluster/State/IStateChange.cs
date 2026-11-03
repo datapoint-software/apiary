@@ -56,6 +56,7 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(Streams.StreamRouteDeleted), "stream.deleted")]
 [JsonDerivedType(typeof(AdminCertificateSaved), "admin-certificate.saved")]
 [JsonDerivedType(typeof(SessionPolicySaved), "session-policy.saved")]
+[JsonDerivedType(typeof(AgentPolicySaved), "agent-policy.saved")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

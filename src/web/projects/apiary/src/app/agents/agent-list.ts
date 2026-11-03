@@ -8,10 +8,11 @@ import { Auth } from '../auth/auth';
 import { CopyText } from '../auth/copy-text';
 import { roleNames } from '../auth/roles';
 import { WriteLock } from '../cluster/write-lock';
+import { TrustedOriginsPanel } from './trusted-origins-panel';
 
 @Component({
   selector: 'ap-agent-list',
-  imports: [WriteLock, PageHead, Banner, Button, EmptyState, CopyText],
+  imports: [WriteLock, PageHead, Banner, Button, EmptyState, CopyText, TrustedOriginsPanel],
   templateUrl: './agent-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

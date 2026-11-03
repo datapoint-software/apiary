@@ -65,3 +65,6 @@
     </ol>
   </div>
 </section>
+@if (auth.canAdminister()) {
+  <ap-trusted-origins-panel />
+}

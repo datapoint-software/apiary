@@ -231,6 +231,10 @@ export interface CertificateDetails {
   readonly addedBy?: string;
 }
 
+export interface AgentPolicyView {
+  readonly trustedOrigins: readonly string[];
+}
+
 export interface SessionPolicyView {
   readonly idleMinutes: number;
 }

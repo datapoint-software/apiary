@@ -1,4 +1,6 @@
 using System.Text.Json.Serialization;
+using Datapoint.Apiary.Cluster.Agents;
+using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Mediator;
@@ -55,19 +57,22 @@ public static class OAuthEndpoints
             s_none));
     }
 
-    private static IResult Register(RegistrationRequest request, AgentClients clients, TimeProvider time)
+    private static IResult Register(RegistrationRequest request, AgentClients clients, IClusterState cluster, TimeProvider time)
     {
         try
         {
-            var clientId = clients.Register(request.ClientName, request.RedirectUris);
-            var client = clients.Read(clientId, request.RedirectUris?[0]);
+            var origins = AgentPolicy.TrustedOriginsOf(cluster.Current);
+            var clientId = clients.Register(request.ClientName, request.RedirectUris, origins);
+            var client = clients.Read(clientId, request.RedirectUris?[0], origins);
             return Results.Json(
                 new RegistrationResponse(clientId, time.GetUtcNow().ToUnixTimeSeconds(), client.Name, client.RedirectUris, s_grantTypes, s_responseTypes, "none"),
                 statusCode: StatusCodes.Status201Created);
         }
         catch (ActionFailedException)
         {
-            return Error("invalid_redirect_uri", StatusCodes.Status400BadRequest);
+            return Results.Json(
+                new ErrorResponse("invalid_redirect_uri", "Redirect URIs must point at this computer (localhost), or at an HTTPS origin an Apiary Administrator trusts on the Connected agents page."),
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -154,5 +159,7 @@ public static class OAuthEndpoints
         [property: JsonPropertyName("expires_in")] int ExpiresIn,
         [property: JsonPropertyName("refresh_token")] string RefreshToken);
 
-    private sealed record ErrorResponse([property: JsonPropertyName("error")] string Error);
+    private sealed record ErrorResponse(
+        [property: JsonPropertyName("error")] string Error,
+        [property: JsonPropertyName("error_description"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Description = null);
 }
