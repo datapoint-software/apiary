@@ -37,7 +37,7 @@ public sealed partial class RaftClusterState
             .OrderBy(u => u.Email, StringComparer.Ordinal)
             .Select(u => new RecoveryUser(u.Name, u.Email, u.Role.ToString(), u.Status.ToString()))
             .ToList();
-        var unreachable = Describe().Members.Where(m => !m.Reachable).Select(m => m.Node ?? m.Address).ToList();
+        var unreachable = (await DescribeAsync(cancellationToken)).Members.Where(m => !m.Reachable).Select(m => m.Node ?? m.Address).ToList();
         return new RecoveryPlan(discovery.IsSwarm && IsReady && !IsWritable, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users);
     }
 
