@@ -23,7 +23,7 @@ public static class ProxyServiceCollectionExtensions
     private const long CacheSizeLimit = 256L * 1024 * 1024;
     private const long CacheMaximumBody = 8L * 1024 * 1024;
 
-    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IReadOnlySet<int> internalPorts, IConfiguration accessLogs)
+    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IReadOnlySet<int> internalPorts, IReadOnlySet<string> adminCookies, IConfiguration accessLogs)
     {
         services.Configure<AccessLogOptions>(accessLogs);
         services.AddSingleton(new OwnEndpoints(ownPorts, internalPorts));
@@ -57,7 +57,7 @@ public static class ProxyServiceCollectionExtensions
         });
         services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
         services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
-        services.AddReverseProxy();
+        services.AddReverseProxy().AddTransforms(new AdminCookieFilter(adminCookies).Apply);
         return services;
     }
 }
