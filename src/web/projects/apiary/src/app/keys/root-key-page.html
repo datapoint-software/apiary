@@ -96,22 +96,30 @@
             Rotate the key if it may have leaked, or as your policy requires.
           </p>
           <div class="ap-field">
-            <span class="ap-label">1. Create the new key on a manager node</span>
+            <span class="ap-label">1. If your secret store doesn’t have the current key, save it from a node running a replica</span>
+            <ap-copy-text [text]="saveCommand" />
+          </div>
+          <div class="ap-field">
+            <span class="ap-label">2. Create the new key on a manager node</span>
             <ap-copy-text [text]="createCommand" />
           </div>
           <p style="margin: 0">
-            2. Change the secret’s name in the stack file, then run
+            3. Copy the file <span class="ap-code">apiary_root_key_2</span> into your secret store,
+            then delete it. Swarm never shows a secret again.
+          </p>
+          <p style="margin: 0">
+            4. Change the secret’s name in the stack file, then run
             <span class="ap-code">docker stack deploy</span>.
           </p>
           <p style="margin: 0">
-            3. Once every replica uses it, Apiary forgets the old key on its own. Then remove the
-            old secret with
-            <span class="ap-code">docker secret rm</span>.
+            5. Once every replica uses it, Apiary forgets the old key on its own. Remove the old
+            secret with <span class="ap-code">docker secret rm</span>, and export a new backup.
           </p>
           <p class="ap-caption" style="margin: 0">
-            Backups taken before a rotation can only be restored with the key they were taken with,
-            so keep a copy of the old key with them. It needs at least two replicas: a single
-            replica can’t fetch the data keys from another.
+            Backups can only be restored with the key they were taken with. Keep the old key in your
+            secret store, apart from the backups, for as long as you keep backups taken with it.
+            Rotation needs at least two replicas: a single replica can’t fetch the data keys from
+            another.
           </p>
         }
       </div>

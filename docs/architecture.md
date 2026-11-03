@@ -157,10 +157,11 @@ Security steps that admins have to remember get skipped, so Apiary rotates every
 - Operators create one Swarm secret, once, before the first deploy: the **root key**, a random value that Apiary generates:
 
   ```bash
-  docker run --rm hub.datapoint.software/datapoint/apiary:<version> secrets init | docker secret create apiary_root_key_1 -
+  (umask 077 && docker run --rm hub.datapoint.software/datapoint/apiary:<version> secrets init > apiary_root_key_1)
+  docker secret create apiary_root_key_1 apiary_root_key_1
   ```
 
-  The key goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.
+  Then copy the file into the organization's secret store (e.g. a password manager or Vault) and delete it. Swarm keeps the key encrypted and never shows it again, and without a copy, losing the Swarm (all its managers) means losing every backup, which can only be restored with the root key it was made with. Keep the key apart from the backups: together, they reveal everything in them. The compose file references the secret with `external: true`.
 - From the root key, Apiary derives the key that protects the state at rest, and the credential a brand-new replica uses to prove it's genuine when it first joins.
 - Swarm mounts the secret into every Apiary task, including new ones, so replicas can join automatically and nothing else on the network can.
 - The root key is kept apart from the volume holding the state, so a copy of a node's disk doesn't expose certificate private keys. This is why Apiary doesn't generate its own root key in Swarm, even on one node.
@@ -180,11 +181,13 @@ Security steps that admins have to remember get skipped, so Apiary rotates every
 
 ### Rotating the root key
 
-One step, with nothing to remember in between:
+Three steps, all at once, with nothing to remember in between:
 
-1. Create a new secret with `secrets init` (e.g. `apiary_root_key_2`), change the secret's name in the compose file, and run `docker stack deploy`.
+1. If the secret store doesn't have the current key yet, save it from a node running a replica: `docker exec <apiary container> cat /run/secrets/apiary_root_key`. Once every replica is on the new key, it can't be read back anymore.
+2. Create the new key as above (e.g. `apiary_root_key_2`), copy it into the secret store and delete the file.
+3. Change the secret's name in the compose file and run `docker stack deploy`.
 
-During the rolling update, each restarted replica rejoins with the certificate it already has, so it doesn't need the old root key. It re-protects its data with the new key and reports that to the cluster, which then also accepts the new key from brand-new replicas. Once every replica runs the new key, Apiary forgets the old one by itself. The admin UI shows the progress (e.g. "2 of 3 replicas on the new key") and warns if it stalls. Remove the old Swarm secret afterwards.
+During the rolling update, each restarted replica rejoins with the certificate it already has, so it doesn't need the old root key. It re-protects its data with the new key and reports that to the cluster, which then also accepts the new key from brand-new replicas. Once every replica runs the new key, Apiary forgets the old one by itself. The admin UI shows the progress (e.g. "2 of 3 replicas on the new key") and warns if it stalls. Afterwards, remove the old Swarm secret and export a new backup. Keep the old key in the secret store for as long as backups made with it are kept: they can only be restored with it.
 
 Connected agents must connect again, during the update or after it: their client registrations, codes and tokens are sealed with a key derived from the root key, so a replica on the other key refuses them. The same goes for a restore into a cluster with another root key.
 
