@@ -6,6 +6,7 @@ src/Datapoint.Apiary/wwwroot/
 .git/
 .claude/
 data/
+keys/
 design/
 docs/
 deploy/
