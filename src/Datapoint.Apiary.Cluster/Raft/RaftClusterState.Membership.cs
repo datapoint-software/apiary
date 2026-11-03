@@ -16,8 +16,8 @@ public sealed partial class RaftClusterState
     private static readonly TimeSpan s_monitorInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan s_leaveTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan s_peerWaitTimeout = TimeSpan.FromSeconds(15);
-    private static readonly TimeSpan s_leaderlessTimeout = TimeSpan.FromSeconds(45);
-    private DateTimeOffset? _leaderlessSince;
+    private static readonly TimeSpan s_stuckTimeout = TimeSpan.FromSeconds(45);
+    private DateTimeOffset? _stuckSince;
     private readonly SemaphoreSlim _membership = new(1, 1);
     private static readonly TimeSpan s_pendingExpiry = TimeSpan.FromMinutes(1);
     private readonly ConcurrentDictionary<IPEndPoint, DateTimeOffset> _missingSince = [];
@@ -387,14 +387,14 @@ public sealed partial class RaftClusterState
     private async Task CheckMovedPeersAsync(CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
-        if (LeaderAddress is not null)
+        if (LeaderAddress is not null && IsReady)
         {
-            _leaderlessSince = null;
+            _stuckSince = null;
             return;
         }
 
-        _leaderlessSince ??= now;
-        if (now - _leaderlessSince < s_leaderlessTimeout)
+        _stuckSince ??= now;
+        if (now - _stuckSince < s_stuckTimeout)
         {
             return;
         }
@@ -417,11 +417,24 @@ public sealed partial class RaftClusterState
 
             if (Moved(view) is { } moved)
             {
-                LogPeerMoved(moved.Node ?? moved.Id.ToString(), moved.Address);
-                _leaderlessSince = now;
+                NoteMoved(moved, now);
                 return;
             }
         }
+    }
+
+    private void NoteMoved(Replica moved, DateTimeOffset now)
+    {
+        var node = moved.Node ?? moved.Id.ToString();
+        if (!IsReady)
+        {
+            LogRestartingForMovedPeer(node, moved.Address);
+            lifetime.StopApplication();
+            return;
+        }
+
+        LogPeerMoved(node, moved.Address);
+        _stuckSince = now;
     }
 
     private bool IsRemoved(ClusterView? view)
@@ -435,7 +448,7 @@ public sealed partial class RaftClusterState
     private Replica? Moved(ClusterView? view)
     {
         var address = view?.Members.FirstOrDefault(m => m.Local)?.Address;
-        if (view?.ReplicaId is not { } id || address is null || !Current.Replicas.TryGetValue(id, out var known) || known.Address == address)
+        if (view?.ReplicaId is not { } id || address is null || !Current.Replicas.TryGetValue(id, out var known))
         {
             return null;
         }
@@ -506,6 +519,9 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "No leader for a while, and the replica on {Node} now runs at {Address}, which this replica's member list doesn't have. If replicas restarted while the cluster had no majority, restart the whole service so every replica updates its member list")]
     private partial void LogPeerMoved(string node, string address);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Still not ready, and the replica on {Node} now runs at {Address}, which this replica's member list doesn't have. Restarting to learn the replicas' new addresses")]
+    private partial void LogRestartingForMovedPeer(string node, string address);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Removed the replica at {Address}, missing from Swarm for longer than the timeout")]
     private partial void LogRemovedMissing(string address);
