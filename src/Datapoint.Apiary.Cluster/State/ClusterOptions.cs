@@ -21,4 +21,8 @@ public sealed class ClusterOptions
     public TimeSpan MissingTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
     public TimeSpan DataKeyLifetime { get; set; } = TimeSpan.FromDays(90);
+
+    public TimeSpan ClusterCaRenewBefore { get; set; } = TimeSpan.FromDays(180);
+
+    public TimeSpan ClusterCaOverlap { get; set; } = TimeSpan.FromDays(1);
 }

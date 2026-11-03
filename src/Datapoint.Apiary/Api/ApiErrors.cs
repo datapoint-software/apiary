@@ -14,6 +14,7 @@ public static class ApiErrors
         ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code, Params: failed.Params).ToResult(),
         ForwardedProblemException forwarded => forwarded.ToResult(),
         ClusterUnavailableException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.NoQuorum).ToResult(),
+        ClusterUpgradingException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.Upgrading).ToResult(),
         _ => null,
     };
 

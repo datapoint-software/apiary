@@ -88,6 +88,11 @@ public sealed partial class RaftClusterState(
     public async ValueTask AppendLocalAsync(StateEntry entry, CancellationToken cancellationToken)
     {
         var raft = _raft ?? throw new ClusterUnavailableException();
+        if (StateSchema.Required(entry) > StateSchema.Supported(Current))
+        {
+            throw new ClusterUpgradingException();
+        }
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(s_writeTimeout);
         try

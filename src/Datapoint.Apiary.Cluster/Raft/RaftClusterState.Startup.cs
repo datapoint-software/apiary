@@ -106,6 +106,11 @@ public sealed partial class RaftClusterState
             Applied = entry =>
             {
                 LogApplied(Current.Index, new ChangeNames(entry));
+                if (ChangesTrust(entry))
+                {
+                    RefreshCredentials();
+                }
+
                 NotifyChanged();
             },
         };
@@ -180,7 +185,7 @@ public sealed partial class RaftClusterState
 
         if (Current.ClusterCa is { } ca)
         {
-            UseCredentials(new ReplicaCredentials(key, ClusterAuthority.Issue(ca, key.ExportSubjectPublicKeyInfo(), Identity!.Id, time.GetUtcNow()), ca.CertificatePem));
+            UseCredentials(new ReplicaCredentials(key, ClusterAuthority.Issue(ca, key.ExportSubjectPublicKeyInfo(), Identity!.Id, time.GetUtcNow()), TrustedAuthorities(Current)));
             return true;
         }
 
@@ -281,8 +286,8 @@ public sealed partial class RaftClusterState
             LoggerFactory = loggers,
             SslOptions = new SslOptions
             {
-                ServerOptions = Credentials!.ServerOptions(requireClientCertificate: true),
-                ClientOptions = Credentials.ClientOptions(),
+                ServerOptions = ReplicaCredentials.ServerOptions(() => Credentials),
+                ClientOptions = ReplicaCredentials.ClientOptions(() => Credentials),
             },
         };
         _raft = new RaftCluster(configuration) { AuditTrail = _log! };
@@ -328,7 +333,7 @@ public sealed partial class RaftClusterState
         [
             new ClusterCreated(Guid.CreateVersion7(now), _bootstrapCa!),
             new ProjectSaved(new Project(Guid.CreateVersion7(now), "Default", "Routes that don't belong to another project yet.", "folder")),
-            new ReplicaSaved(new Replica(Identity!.Id, NodeName, Address!.ToString(), now)),
+            new ReplicaSaved(new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current)),
         ];
         return new StateEntry(Guid.CreateVersion7(now), now, changes);
     }

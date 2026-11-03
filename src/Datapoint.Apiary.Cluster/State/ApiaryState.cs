@@ -41,6 +41,12 @@ public sealed record ApiaryState
 
     public ClusterCa? ClusterCa { get; init; }
 
+    public ClusterCa? NextClusterCa { get; init; }
+
+    public ClusterCa? RetiringClusterCa { get; init; }
+
+    public DateTimeOffset? ClusterCaChangedAt { get; init; }
+
     public ImmutableList<Guid> PreviousClusterIds
     {
         get => _previousClusterIds ?? [];

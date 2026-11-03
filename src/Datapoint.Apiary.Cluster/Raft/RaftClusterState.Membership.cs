@@ -48,10 +48,11 @@ public sealed partial class RaftClusterState
         }
 
         var ca = state.ClusterCa!;
+        var authorities = TrustedAuthorities(state);
 
         var certificate = ClusterAuthority.Issue(ca, publicKey, request.ReplicaId, now);
         var keys = protocol.SealKeys(encryption.Export(), request.Nonce);
-        return protocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, ca.CertificatePem, certificate, keys, state.PreviousClusterIds), request.Nonce);
+        return protocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, authorities, certificate, keys, state.PreviousClusterIds), request.Nonce);
     }
 
     private static JoinStatus? Refusal(ApiaryState state, JoinRequest request) => (state.ClusterCa, request.ClusterId) switch
@@ -149,7 +150,7 @@ public sealed partial class RaftClusterState
             IStateChange[] changes =
             [
                 .. stale.Where(r => r.Id != announcement.ReplicaId).Select(r => new ReplicaRemoved(r.Id)),
-                new ReplicaSaved(new Replica(announcement.ReplicaId, announcement.Node, announcement.Address, now)),
+                new ReplicaSaved(new Replica(announcement.ReplicaId, announcement.Node, announcement.Address, now, announcement.Schema)),
             ];
             await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, changes), cancellationToken);
             LogAdmitted(announcement.Node, announcement.Address);
@@ -257,7 +258,7 @@ public sealed partial class RaftClusterState
     private async Task<IReadOnlyList<IPAddress>> AnnouncementTargetsAsync(CancellationToken cancellationToken) =>
         LeaderAddress is { } leader && !IsLeader ? [leader] : await discovery.PeersAsync(Address!.Address, cancellationToken);
 
-    private ReplicaAnnouncement Announcement() => new(Identity!.Id, NodeName, Address!.ToString());
+    private ReplicaAnnouncement Announcement() => new(Identity!.Id, NodeName, Address!.ToString(), StateSchema.Current);
 
     private async Task<bool> RelayToLeaderAsync(string path, ReplicaAnnouncement announcement, CancellationToken cancellationToken)
     {

@@ -20,6 +20,7 @@ public static class ClusterServiceCollectionExtensions
         services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<RaftClusterState>());
         services.AddHostedService(provider => provider.GetRequiredService<RaftClusterState>());
         services.AddHostedService<Keys.DataKeyRotation>();
+        services.AddHostedService<Trust.ClusterCaRotation>();
         return services;
     }
 }

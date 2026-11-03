@@ -19,11 +19,23 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
         RemoteCertificateValidationCallback = (_, _, _, _) => true,
     });
     private HttpClient? _trusted;
+    private ReplicaCredentials? _credentials;
 
     public void Use(ReplicaCredentials credentials)
     {
-        var previous = Interlocked.Exchange(ref _trusted, Create(credentials.ClientOptions(), credentials));
-        previous?.Dispose();
+        _credentials = credentials;
+        if (_trusted is not null)
+        {
+            return;
+        }
+
+        var trusted = Create(ReplicaCredentials.ClientOptions(() => _credentials));
+        if (Interlocked.CompareExchange(ref _trusted, trusted, null) is null)
+        {
+            return;
+        }
+
+        trusted.Dispose();
     }
 
     public async Task<JoinResponse?> JoinAsync(IPAddress peer, JoinRequest request, CancellationToken cancellationToken)
@@ -75,13 +87,8 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
     private Uri Uri(IPAddress peer, string path) =>
         new(string.Create(CultureInfo.InvariantCulture, $"https://{new IPEndPoint(peer, options.Value.ClusterPort)}/cluster/{path}"));
 
-    private static HttpClient Create(SslClientAuthenticationOptions ssl, ReplicaCredentials? credentials = null)
+    private static HttpClient Create(SslClientAuthenticationOptions ssl)
     {
-        if (credentials is not null)
-        {
-            ssl.ClientCertificates = [credentials.Certificate];
-        }
-
         var handler = new SocketsHttpHandler
         {
             SslOptions = ssl,
