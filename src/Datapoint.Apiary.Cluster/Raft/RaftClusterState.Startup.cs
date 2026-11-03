@@ -144,7 +144,7 @@ public sealed partial class RaftClusterState
         {
             var peers = await discovery.PeersAsync(Address!.Address, cancellationToken);
             var answers = WithoutSuperseded(await Task.WhenAll(peers.Select(peer => AskToJoinAsync(peer, key, cancellationToken))));
-            var settled = answers.All(a => a is not null) || time.GetUtcNow() - started > s_peerWait;
+            var settled = (answers.All(a => a is not null) && KnowsEveryMember()) || time.GetUtcNow() - started > s_peerWait;
             if (answers.Any(a => a?.Status is JoinStatus.Superseded))
             {
                 return null;
@@ -162,6 +162,16 @@ public sealed partial class RaftClusterState
             }
 
             await Task.Delay(s_joinRetry, time, cancellationToken);
+        }
+    }
+
+    private bool KnowsEveryMember()
+    {
+        var history = AddressHistory.Load(HistoryFile);
+        var members = MemberAddressBook.Read(MembersFile).Select(m => history.ReplicaAt(m.ToString())).OfType<Guid>();
+        lock (_peerAddresses)
+        {
+            return members.All(id => id == Identity!.Id || _peerAddresses.ContainsKey(id));
         }
     }
 

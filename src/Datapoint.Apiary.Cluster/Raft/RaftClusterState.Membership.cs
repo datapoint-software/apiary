@@ -26,14 +26,14 @@ public sealed partial class RaftClusterState
     public JoinResponse? AnswerJoin(JoinRequest request, IPAddress? remote)
     {
         var now = time.GetUtcNow();
-        if (Genuine(request, remote, now) is not { } joinKeys || Base64Url.TryDecode(request.PublicKey) is not { } publicKey)
+        if (Address is null || Genuine(request, remote, now) is not { } joinKeys || Base64Url.TryDecode(request.PublicKey) is not { } publicKey)
         {
             return null;
         }
 
         var state = Current;
         var self = Identity?.Id ?? Guid.Empty;
-        var address = Address?.ToString() ?? "";
+        var address = Address.ToString();
         if (Refusal(state, request) is { } refusal)
         {
             return JoinProtocol.Sign(new JoinResponse(refusal, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce, joinKeys);
