@@ -8,7 +8,7 @@ using Datapoint.Apiary.Proxy.Telemetry;
 
 namespace Datapoint.Apiary.Telemetry;
 
-public sealed class ClusterRouteTelemetry(RaftClusterState cluster, ClusterClient client, RouteTelemetrySource local, TimeProvider time)
+public sealed partial class ClusterRouteTelemetry(RaftClusterState cluster, ClusterClient client, RouteTelemetrySource local, TimeProvider time, ILogger<ClusterRouteTelemetry> logger)
     : IRouteTelemetry
 {
     public const string Path = "routes";
@@ -30,10 +30,7 @@ public sealed class ClusterRouteTelemetry(RaftClusterState cluster, ClusterClien
 
     private async Task<IReadOnlyDictionary<Guid, RouteTelemetry>> GatherAsync()
     {
-        var peers = cluster.Describe().Members
-            .Where(m => !m.Local && m.Reachable)
-            .Select(m => IPEndPoint.TryParse(m.Address, out var endpoint) ? endpoint.Address : null)
-            .OfType<IPAddress>();
+        var peers = await ReplicaPeers.ReachableAsync(cluster);
         var remote = await Task.WhenAll(peers.Select(FetchAsync));
         return RouteTelemetryMerger.Merge([local.Snapshot(), .. remote.OfType<IReadOnlyList<RouteSnapshot>>()]);
     }
@@ -43,15 +40,26 @@ public sealed class ClusterRouteTelemetry(RaftClusterState cluster, ClusterClien
         try
         {
             using var response = await client.GetAsync(peer, Path, CancellationToken.None);
-            return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<List<RouteSnapshot>>(ApiJson.Options)
-                : null;
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<RouteSnapshot>>(ApiJson.Options);
+            }
+
+            LogPeerRefused(logger, peer, (int)response.StatusCode);
+            return null;
         }
         catch (Exception exception) when (exception is HttpRequestException or ClusterUnavailableException or OperationCanceledException)
         {
+            LogPeerFailed(logger, peer, exception.Message);
             return null;
         }
     }
 
     private sealed record Reading(DateTimeOffset At, Task<IReadOnlyDictionary<Guid, RouteTelemetry>> Result);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Replica {Peer} answered {Status} when asked for its route telemetry, so it isn't counted")]
+    private static partial void LogPeerRefused(ILogger logger, IPAddress peer, int status);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't ask replica {Peer} for its route telemetry, so it isn't counted: {Reason}")]
+    private static partial void LogPeerFailed(ILogger logger, IPAddress peer, string reason);
 }

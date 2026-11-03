@@ -30,10 +30,7 @@ public sealed partial class ClusterActivityTelemetry(RaftClusterState cluster, C
 
     private async Task<ActivityView> GatherAsync(ActivityWindow window)
     {
-        var peers = cluster.Describe().Members
-            .Where(m => !m.Local && m.Reachable)
-            .Select(m => IPEndPoint.TryParse(m.Address, out var endpoint) ? endpoint.Address : null)
-            .OfType<IPAddress>();
+        var peers = await ReplicaPeers.ReachableAsync(cluster);
         var remote = await Task.WhenAll(peers.Select(peer => FetchAsync(peer, window)));
         var local = metrics.Activity.Read(window.UntilMinute, window.Points, window.Step);
         return ActivityMerger.Merge(window, [local, .. remote.OfType<IReadOnlyList<ActivitySample>>()]);
