@@ -8,8 +8,12 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimeProvider time) : ICommandHandler<IssueAgentToken, AgentTokenResult>
+public sealed class IssueAgentTokenHandler(StateTransaction transaction, SealedTokens sealedTokens, TimeProvider time) : ICommandHandler<IssueAgentToken, AgentTokenResult>
 {
+    private const string RefreshPurpose = "apiary.agent-refresh";
+    private const int IdSize = 16;
+    private const int RefreshNonceSize = 32;
+
     public ValueTask<AgentTokenResult> HandleAsync(IssueAgentToken command, CancellationToken ct = default)
     {
         transaction.Unaudited = true;
@@ -31,18 +35,25 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimePro
         var now = time.GetUtcNow();
         var hash = SecretTokens.Hash(command.Code);
         var agent = transaction.State.Agents.Values.FirstOrDefault(a => a.Code?.Hash == hash);
-        if (agent?.Code is not { } code || code.ExpiresAt <= now)
+        if (agent is null && transaction.State.Agents.Values.FirstOrDefault(a => a.UsedCodeHash == hash) is { } reused)
         {
-            return AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
+            return Disconnect(reused);
         }
 
+        return agent?.Code is { } code && code.ExpiresAt > now
+            ? Exchange(agent, code, command, now)
+            : AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
+    }
+
+    private AgentTokenResult Exchange(Agent agent, AgentCode code, IssueAgentToken command, DateTimeOffset now)
+    {
         if (!Matches(agent, command) || !Verifies(command.CodeVerifier, code.Challenge) || !IsActive(agent))
         {
             transaction.Record(new AgentsRemoved([agent.Id]));
             return AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
         }
 
-        return Issue(agent, previousRefreshHash: null, now);
+        return Issue(agent with { UsedCodeHash = code.Hash }, previousRefreshHash: null, now);
     }
 
     private AgentTokenResult Refresh(IssueAgentToken command)
@@ -54,13 +65,12 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimePro
 
         var now = time.GetUtcNow();
         var hash = SecretTokens.Hash(command.RefreshToken);
-        if (transaction.State.Agents.Values.FirstOrDefault(a => a.Tokens?.PreviousRefreshHash == hash) is { } reused)
+        var agent = transaction.State.Agents.Values.FirstOrDefault(a => a.Tokens?.RefreshHash == hash);
+        if (agent is null && Issuer(command.RefreshToken) is { } reused)
         {
-            transaction.Record(new AgentsRemoved([reused.Id]));
-            return AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
+            return Disconnect(reused);
         }
 
-        var agent = transaction.State.Agents.Values.FirstOrDefault(a => a.Tokens?.RefreshHash == hash);
         if (agent?.Tokens is not { } tokens || tokens.RefreshExpiresAt <= now || !IsActive(agent))
         {
             return AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
@@ -74,12 +84,31 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimePro
     private AgentTokenResult Issue(Agent agent, string? previousRefreshHash, DateTimeOffset now)
     {
         var access = SecretTokens.New();
-        var refresh = SecretTokens.New();
+        var refresh = sealedTokens.Seal(RefreshPurpose, [.. agent.Id.ToByteArray(), .. RandomNumberGenerator.GetBytes(RefreshNonceSize)]);
         var ends = agent.ConnectedAt + AgentLifetimes.Connection;
         var accessExpiresAt = Earliest(now + AgentLifetimes.Access, ends);
         var tokens = new AgentTokens(SecretTokens.Hash(access), accessExpiresAt, SecretTokens.Hash(refresh), Earliest(now + AgentLifetimes.Refresh, ends), previousRefreshHash);
         transaction.Record(new AgentSaved(agent with { Code = null, Tokens = tokens, LastUsedAt = now }));
         return new AgentTokenResult(access, refresh, (int)(accessExpiresAt - now).TotalSeconds, Error: null);
+    }
+
+    private Agent? Issuer(string refreshToken)
+    {
+        if (sealedTokens.Open(RefreshPurpose, refreshToken) is not { Length: IdSize + RefreshNonceSize } payload)
+        {
+            return transaction.State.Agents.Values.FirstOrDefault(a => a.Tokens?.PreviousRefreshHash == SecretTokens.Hash(refreshToken));
+        }
+
+        return transaction.State.Agents.GetValueOrDefault(new Guid(payload.AsSpan(0, IdSize)));
+    }
+
+    private AgentTokenResult Disconnect(Agent agent)
+    {
+        transaction.Record(new AgentsRemoved([agent.Id]));
+        transaction.Unaudited = false;
+        transaction.ActingAs = transaction.State.Users.GetValueOrDefault(agent.UserId)?.Email;
+        transaction.Affects(agent.Id);
+        return AgentTokenResult.Failed(AgentTokenResult.InvalidGrant);
     }
 
     private static DateTimeOffset Earliest(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
@@ -90,9 +119,9 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimePro
     private static bool Matches(Agent agent, IssueAgentToken command) =>
         agent.ClientId == command.ClientId && agent.RedirectUri == command.RedirectUri;
 
-    private static bool Verifies(string verifier, string challenge)
+    private static bool Verifies(string? verifier, string challenge)
     {
-        if (verifier.Length is < 43 or > 128)
+        if (verifier is not { Length: >= 43 and <= 128 })
         {
             return false;
         }

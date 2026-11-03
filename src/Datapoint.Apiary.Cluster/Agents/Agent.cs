@@ -9,4 +9,5 @@ public sealed record Agent(
     DateTimeOffset ConnectedAt,
     DateTimeOffset LastUsedAt,
     AgentCode? Code,
-    AgentTokens? Tokens);
+    AgentTokens? Tokens,
+    string? UsedCodeHash = null);

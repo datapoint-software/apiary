@@ -58,6 +58,7 @@ const labels: Record<string, string> = {
   'agents.disconnect': 'disconnected an agent',
   'agents.update-policy': 'changed which sites agents can connect from',
   'oauth.revoke': 'disconnected an agent from the agent itself',
+  'oauth.token': 'disconnected an agent whose code or token was used again',
 };
 
 export function actionLabel(action: string): string {
