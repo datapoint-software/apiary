@@ -27,7 +27,7 @@ public sealed partial class StreamListeners(
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Reconcile(cluster.Current);
+                await ReconcileAsync(cluster.Current);
                 await _changed.WaitAsync(s_retryEvery, stoppingToken);
             }
         }
@@ -51,15 +51,16 @@ public sealed partial class StreamListeners(
         base.Dispose();
     }
 
-    private void Reconcile(ApiaryState state)
+    private async Task ReconcileAsync(ApiaryState state)
     {
         var wanted = state.StreamRoutes.Values
             .GroupBy(s => (s.Protocol, s.ListenPort))
             .ToDictionary(g => g.Key, g => (IReadOnlyList<StreamRoute>)[.. g.OrderBy(s => s.Id)]);
         foreach (var key in _listeners.Keys.Where(key => !wanted.ContainsKey(key)).ToList())
         {
-            _ = _listeners[key].DisposeAsync().AsTask();
+            var listener = _listeners[key];
             _listeners.Remove(key);
+            await listener.DisposeAsync();
         }
 
         foreach (var (key, routes) in wanted)
