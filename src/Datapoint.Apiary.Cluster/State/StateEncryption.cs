@@ -95,5 +95,5 @@ public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
 
     private byte[] Unwrap(WrappedDataKey wrapped) =>
         _wrapping.Open(WrapPurpose(wrapped.Id), wrapped.Key)
-            ?? throw new InvalidDataException("The state's data keys can't be decrypted with this root key. Mount the root key this cluster was created with.");
+            ?? throw new WrongRootKeyException();
 }

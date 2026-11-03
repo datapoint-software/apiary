@@ -191,6 +191,20 @@ export interface BackupFile {
   readonly index: number;
 }
 
+export interface ReplicaRootKey {
+  readonly id: string;
+  readonly node: string;
+  readonly rootKeyId?: string;
+}
+
+export interface RootKeyStatus {
+  readonly current: string;
+  readonly currentSince?: string;
+  readonly target?: string;
+  readonly targetSince?: string;
+  readonly replicas: readonly ReplicaRootKey[];
+}
+
 export interface BackupStatus {
   readonly lastAt?: string;
   readonly lastBy?: string;

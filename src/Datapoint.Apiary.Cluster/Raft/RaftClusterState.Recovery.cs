@@ -83,7 +83,7 @@ public sealed partial class RaftClusterState
         var previous = Current.ClusterId;
         IStateChange[] changes =
         [
-            new ClusterRecovered(Guid.CreateVersion7(now), _recoveryCa!, new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current)),
+            new ClusterRecovered(Guid.CreateVersion7(now), _recoveryCa!, new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current, protocol.OwnKeys.RootKeyId)),
             new AuditRecorded(new AuditEntry(Guid.CreateVersion7(now), now, null, "Operator", null, RecoverAction, [NodeName], null, AuditOutcome.Succeeded)),
         ];
         await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, changes), cancellationToken);

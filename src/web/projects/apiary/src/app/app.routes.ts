@@ -51,6 +51,12 @@ export const routes: Routes = [
         loadComponent: () => import('./backups/backup-page').then((m) => m.BackupPage),
       },
       {
+        path: 'root-key',
+        title: 'Root key · Apiary',
+        canActivate: [requiresRole('administrator')],
+        loadComponent: () => import('./keys/root-key-page').then((m) => m.RootKeyPage),
+      },
+      {
         path: 'replicas',
         title: 'Replicas · Apiary',
         loadComponent: () => import('./cluster/replica-list').then((m) => m.ReplicaList),

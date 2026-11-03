@@ -33,7 +33,7 @@ public sealed partial class RaftClusterState
         Directory.CreateDirectory(StateDirectory);
         Directory.CreateDirectory(RaftDirectory);
         Identity = await ReplicaIdentity.LoadOrCreateAsync(DataDirectory, time.GetUtcNow(), cancellationToken);
-        if (await encryption.LoadAsync(StateDirectory, cancellationToken))
+        if (await LoadKeysAsync(cancellationToken))
         {
             await OpenLogAsync(cancellationToken);
         }
@@ -46,18 +46,24 @@ public sealed partial class RaftClusterState
         try
         {
             Address = await discovery.OwnEndPointAsync(cancellationToken);
+            if (_rekeying)
+            {
+                await RekeyAsync(cancellationToken);
+            }
+
             var recovering = IsRecovering;
             if (recovering)
             {
                 PrepareRecovery();
             }
-            else if (await ObtainCredentialsAsync(cancellationToken) is not { } bootstrapping)
+            else if (!_rekeying)
             {
-                ArchiveSupersededState();
-                return;
-            }
-            else
-            {
+                if (await ObtainCredentialsAsync(cancellationToken) is not { } bootstrapping)
+                {
+                    ArchiveSupersededState();
+                    return;
+                }
+
                 _bootstrapping = bootstrapping;
             }
 
@@ -111,6 +117,11 @@ public sealed partial class RaftClusterState
                     RefreshCredentials();
                 }
 
+                if (ChangesRootKeys(entry))
+                {
+                    AcceptRootKeys();
+                }
+
                 NotifyChanged();
             },
         };
@@ -118,6 +129,7 @@ public sealed partial class RaftClusterState
         _log = new WriteAheadLog(new WriteAheadLog.Options { Location = Path.Combine(RaftDirectory, "log") }, _machine);
         await _log.InitializeAsync(cancellationToken);
         LogLoaded(Current.Index);
+        AcceptRootKeys();
         NotifyChanged();
     }
 
@@ -249,6 +261,7 @@ public sealed partial class RaftClusterState
     {
         Credentials = credentials;
         client.Use(credentials);
+        SaveCredentials(credentials);
     }
 
     private void RewriteAddresses()
@@ -333,7 +346,8 @@ public sealed partial class RaftClusterState
         [
             new ClusterCreated(Guid.CreateVersion7(now), _bootstrapCa!),
             new ProjectSaved(new Project(Guid.CreateVersion7(now), "Default", "Routes that don't belong to another project yet.", "folder")),
-            new ReplicaSaved(new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current)),
+            new ReplicaSaved(new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current, protocol.OwnKeys.RootKeyId)),
+            new Keys.RootKeyRegistered(protocol.OwnKeys, now),
         ];
         return new StateEntry(Guid.CreateVersion7(now), now, changes);
     }

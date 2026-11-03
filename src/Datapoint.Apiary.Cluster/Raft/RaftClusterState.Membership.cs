@@ -15,6 +15,7 @@ public sealed partial class RaftClusterState
 {
     private static readonly TimeSpan s_monitorInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan s_leaveTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan s_peerWaitTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan s_leaderlessTimeout = TimeSpan.FromSeconds(45);
     private DateTimeOffset? _leaderlessSince;
     private readonly SemaphoreSlim _membership = new(1, 1);
@@ -25,7 +26,7 @@ public sealed partial class RaftClusterState
     public JoinResponse? AnswerJoin(JoinRequest request, IPAddress? remote)
     {
         var now = time.GetUtcNow();
-        if (!IsGenuine(request, remote, now) || Base64Url.TryDecode(request.PublicKey) is not { } publicKey)
+        if (Genuine(request, remote, now) is not { } joinKeys || Base64Url.TryDecode(request.PublicKey) is not { } publicKey)
         {
             return null;
         }
@@ -35,7 +36,7 @@ public sealed partial class RaftClusterState
         var address = Address?.ToString() ?? "";
         if (Refusal(state, request) is { } refusal)
         {
-            return protocol.Sign(new JoinResponse(refusal, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce);
+            return JoinProtocol.Sign(new JoinResponse(refusal, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce, joinKeys);
         }
 
         if (!IsAdmitted(state, request.ReplicaId))
@@ -44,15 +45,15 @@ public sealed partial class RaftClusterState
                 request.ReplicaId,
                 id => new PendingReplica(id, request.Node, request.Address, now, now),
                 (_, pending) => pending with { Node = request.Node, Address = request.Address, LastSeen = now });
-            return protocol.Sign(new JoinResponse(JoinStatus.Pending, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce);
+            return JoinProtocol.Sign(new JoinResponse(JoinStatus.Pending, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce, joinKeys);
         }
 
         var ca = state.ClusterCa!;
         var authorities = TrustedAuthorities(state);
 
         var certificate = ClusterAuthority.Issue(ca, publicKey, request.ReplicaId, now);
-        var keys = protocol.SealKeys(encryption.Export(), request.Nonce);
-        return protocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, authorities, certificate, keys, state.PreviousClusterIds), request.Nonce);
+        var keys = JoinProtocol.SealKeys(encryption.Export(), request.Nonce, joinKeys);
+        return JoinProtocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, authorities, certificate, keys, state.PreviousClusterIds), request.Nonce, joinKeys);
     }
 
     private static JoinStatus? Refusal(ApiaryState state, JoinRequest request) => (state.ClusterCa, request.ClusterId) switch
@@ -109,11 +110,12 @@ public sealed partial class RaftClusterState
         }
     }
 
-    private bool IsGenuine(JoinRequest request, IPAddress? remote, DateTimeOffset now) =>
-        protocol.Verify(request, now)
-        && IPEndPoint.TryParse(request.Address, out var claimed)
+    private JoinKeySet? Genuine(JoinRequest request, IPAddress? remote, DateTimeOffset now) =>
+        IPEndPoint.TryParse(request.Address, out var claimed)
         && remote is not null
-        && claimed.Address.Equals(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote);
+        && claimed.Address.Equals(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote)
+            ? protocol.Verify(request, now)
+            : null;
 
     public async Task<bool> AdmitAsync(ReplicaAnnouncement announcement, CancellationToken cancellationToken)
     {
@@ -150,7 +152,8 @@ public sealed partial class RaftClusterState
             IStateChange[] changes =
             [
                 .. stale.Where(r => r.Id != announcement.ReplicaId).Select(r => new ReplicaRemoved(r.Id)),
-                new ReplicaSaved(new Replica(announcement.ReplicaId, announcement.Node, announcement.Address, now, announcement.Schema)),
+                new ReplicaSaved(new Replica(announcement.ReplicaId, announcement.Node, announcement.Address, now, announcement.Schema, announcement.RootKey?.RootKeyId)),
+                .. RootKeyChanges(announcement.RootKey, now),
             ];
             await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, changes), cancellationToken);
             LogAdmitted(announcement.Node, announcement.Address);
@@ -195,6 +198,7 @@ public sealed partial class RaftClusterState
     {
         if (_raft is not null && discovery.IsSwarm && IsReady)
         {
+            await WaitForPeersAsync(cancellationToken);
             await LeaveAsync(cancellationToken);
         }
 
@@ -208,6 +212,37 @@ public sealed partial class RaftClusterState
         await _raft.StopAsync(cancellationToken);
     }
 
+    private async Task WaitForPeersAsync(CancellationToken cancellationToken)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(s_peerWaitTimeout);
+        try
+        {
+            if (await PeersReadyAsync(timeout.Token))
+            {
+                return;
+            }
+
+            LogWaitingForPeers();
+            do
+            {
+                await Task.Delay(s_joinRetry, time, timeout.Token);
+            }
+            while (!await PeersReadyAsync(timeout.Token));
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogPeersNotReady();
+        }
+    }
+
+    private async Task<bool> PeersReadyAsync(CancellationToken cancellationToken)
+    {
+        var peers = await discovery.PeersAsync(Address!.Address, cancellationToken);
+        var views = await Task.WhenAll(peers.Select(peer => FetchViewAsync(peer, cancellationToken)));
+        return views.All(view => view?.Ready is true);
+    }
+
     private async Task LeaveAsync(CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -216,8 +251,16 @@ public sealed partial class RaftClusterState
         {
             if (IsLeader && _raft!.Members.Count > 1)
             {
-                await ((DotNext.Net.Cluster.ICluster)_raft).ResignAsync(timeout.Token);
-                await WaitForAsync(_ => _raft.Leader is { IsRemote: true }, timeout.Token);
+                do
+                {
+                    if (IsLeader)
+                    {
+                        await ((DotNext.Net.Cluster.ICluster)_raft).ResignAsync(timeout.Token);
+                    }
+
+                    await WaitForNewLeaderAsync(timeout.Token);
+                }
+                while (_raft.Leader is not { IsRemote: true });
             }
 
             if (LeaderAddress is { } leader && !IsLeader)
@@ -229,6 +272,19 @@ public sealed partial class RaftClusterState
         catch (Exception exception) when (exception is OperationCanceledException or HttpRequestException or ClusterUnavailableException)
         {
             LogLeaveFailed(exception);
+        }
+    }
+
+    private async Task WaitForNewLeaderAsync(CancellationToken cancellationToken)
+    {
+        using var attempt = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        attempt.CancelAfter(s_joinRetry);
+        try
+        {
+            await WaitForAsync(_ => _raft!.Leader is { IsRemote: true }, attempt.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
         }
     }
 
@@ -258,7 +314,7 @@ public sealed partial class RaftClusterState
     private async Task<IReadOnlyList<IPAddress>> AnnouncementTargetsAsync(CancellationToken cancellationToken) =>
         LeaderAddress is { } leader && !IsLeader ? [leader] : await discovery.PeersAsync(Address!.Address, cancellationToken);
 
-    private ReplicaAnnouncement Announcement() => new(Identity!.Id, NodeName, Address!.ToString(), StateSchema.Current);
+    private ReplicaAnnouncement Announcement() => new(Identity!.Id, NodeName, Address!.ToString(), StateSchema.Current, protocol.OwnKeys);
 
     private async Task<bool> RelayToLeaderAsync(string path, ReplicaAnnouncement announcement, CancellationToken cancellationToken)
     {
@@ -290,6 +346,7 @@ public sealed partial class RaftClusterState
                 }
 
                 await RemoveMissingAsync(cancellationToken);
+                await ForgetOldRootKeysAsync(cancellationToken);
                 await CheckMovedPeersAsync(cancellationToken);
             }
             catch (Exception exception) when (exception is ClusterUnavailableException or InvalidOperationException or HttpRequestException)
@@ -434,6 +491,12 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Left the cluster before stopping (confirmed: {Confirmed})")]
     private partial void LogLeaving(bool confirmed);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Waiting for the other replicas to be ready before leaving, so the cluster keeps its majority")]
+    private partial void LogWaitingForPeers();
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Leaving although some replicas aren't ready yet; the cluster may lose its majority until they are")]
+    private partial void LogPeersNotReady();
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't leave the cluster cleanly before stopping")]
     private partial void LogLeaveFailed(Exception exception);

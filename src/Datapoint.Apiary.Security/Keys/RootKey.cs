@@ -25,6 +25,8 @@ public sealed class RootKey
         return Base64Url.TryDecode(trimmed[Prefix.Length..]) is { Length: KeySize } value ? new RootKey(value) : null;
     }
 
+    public string Id => Base64Url.Encode(Derive(KeyPurposes.KeyId, 9));
+
     public string Format() => Prefix + Base64Url.Encode(_value);
 
     public byte[] Derive(string purpose, int length = KeySize) =>

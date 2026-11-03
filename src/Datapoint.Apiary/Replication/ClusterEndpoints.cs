@@ -24,6 +24,8 @@ public static class ClusterEndpoints
             Membership(() => cluster.ReleaseAsync(announcement, ct)));
         replicas.MapPost("/entries", AppendAsync);
         replicas.MapPost("/" + CommandForwarder.Path, CommandAsync);
+        replicas.MapGet("/keys", (HttpContext http, RaftClusterState cluster) =>
+            cluster.KeysFor(http.Connection.ClientCertificate) is { } ring ? Results.Json(ring, ClusterWireJsonContext.Default.SharedKeyRing) : Results.StatusCode(StatusCodes.Status403Forbidden));
         replicas.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView));
         replicas.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
             cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge) ? Results.Json(challenge, ClusterWireJsonContext.Default.AcmeChallenge) : Results.NotFound());

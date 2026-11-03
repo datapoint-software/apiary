@@ -1,0 +1,155 @@
+<ap-page-head heading="Root key">
+  <span pageSub>
+    The root key protects the stored configuration and backups. Swarm gives it to every replica as a
+    secret; Apiary never stores it.
+  </span>
+</ap-page-head>
+
+@if (status.value(); as s) {
+  @if (s.target && stalled()) {
+    <ap-banner tone="warn" heading="The rotation hasn’t finished">
+      It started {{ timeAgo(s.targetSince!) }}, and {{ behind().length }} of {{ total() }} replicas
+      still use another key. Check that the stack was deployed with the new secret, and that these
+      replicas restarted:
+      {{
+        behind()
+          .map((r) => r.node)
+          .join(', ')
+      }}.
+    </ap-banner>
+  }
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+      gap: 20px;
+      align-items: start;
+    "
+  >
+    <section class="ap-panel" aria-labelledby="current-key">
+      <div class="ap-panel-head">
+        <h2 class="ap-h ap-h-3" id="current-key">This replica’s key</h2>
+        <ap-status tone="ok">In use</ap-status>
+      </div>
+      <div class="ap-panel-body">
+        <dl class="ap-kv">
+          <dt>Key ID</dt>
+          <dd class="ap-data">{{ s.current }}</dd>
+          @if (s.currentSince) {
+            <dt>Known since</dt>
+            <dd>
+              <span class="ap-data">{{ utcDateTime(s.currentSince) }} UTC</span>,
+              {{ timeAgo(s.currentSince) }}
+            </dd>
+          }
+          <dt>Replicas using it</dt>
+          <dd>{{ onCurrent() }} of {{ total() }}</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="ap-panel" aria-labelledby="rotation">
+      <div class="ap-panel-head">
+        <h2 class="ap-h ap-h-3" id="rotation">Rotation</h2>
+        @if (s.target) {
+          <ap-status tone="info">In progress</ap-status>
+        } @else {
+          <ap-status tone="off">Not running</ap-status>
+        }
+      </div>
+      <div class="ap-panel-body ap-stack">
+        @if (s.target) {
+          <ol class="ap-steps" aria-label="Root key rotation">
+            <li class="ap-step ap-step-done">New key deployed</li>
+            <li class="ap-step" aria-current="step">Rolling update</li>
+            <li class="ap-step">Old key forgotten</li>
+          </ol>
+          <div class="ap-meter ap-meter-info">
+            <div class="ap-meter-head">
+              <span
+                >Replicas on <span class="ap-data">{{ s.target }}</span></span
+              >
+              <span class="ap-data">{{ onTarget() }} of {{ total() }}</span>
+            </div>
+            <div
+              class="ap-meter-track"
+              role="progressbar"
+              aria-valuemin="0"
+              [attr.aria-valuemax]="total()"
+              [attr.aria-valuenow]="onTarget()"
+              aria-label="Replicas on the new root key"
+            >
+              <div
+                class="ap-meter-fill"
+                [style.width.%]="total() ? (onTarget() / total()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+          <p class="ap-caption" style="margin: 0">
+            Swarm restarts the replicas one by one. Each fetches the data keys from the others and
+            protects them with the new key. Traffic continues, and Apiary forgets the old key once
+            every replica uses the new one.
+          </p>
+        } @else {
+          <p class="ap-muted" style="margin: 0">
+            Rotate the key if it may have leaked, or as your policy requires.
+          </p>
+          <div class="ap-field">
+            <span class="ap-label">1. Create the new key on a manager node</span>
+            <ap-copy-text [text]="createCommand" />
+          </div>
+          <p style="margin: 0">
+            2. Change the secret’s name in the stack file, then run
+            <span class="ap-code">docker stack deploy</span>.
+          </p>
+          <p style="margin: 0">
+            3. Once every replica uses it, Apiary forgets the old key on its own. Then remove the
+            old secret with
+            <span class="ap-code">docker secret rm</span>.
+          </p>
+          <p class="ap-caption" style="margin: 0">
+            Backups taken before a rotation can only be restored with the key they were taken with,
+            so keep a copy of the old key with them. It needs at least two replicas: a single
+            replica can’t fetch the data keys from another.
+          </p>
+        }
+      </div>
+    </section>
+  </div>
+
+  <section class="ap-panel" aria-labelledby="replica-keys">
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="replica-keys">Replicas</h2></div>
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">
+          Root key of each replica
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Replica</th>
+            <th scope="col">Root key</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (replica of s.replicas; track replica.id) {
+            <tr>
+              <td class="ap-data" style="font-weight: 500">{{ replica.node }}</td>
+              <td>
+                @if (!replica.rootKeyId) {
+                  <span class="ap-muted">Not reported yet; it reports when it restarts</span>
+                } @else if (s.target && replica.rootKeyId !== s.target) {
+                  <ap-status tone="warn"
+                    ><span class="ap-data">{{ replica.rootKeyId }}</span> (old)</ap-status
+                  >
+                } @else {
+                  <span class="ap-data">{{ replica.rootKeyId }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

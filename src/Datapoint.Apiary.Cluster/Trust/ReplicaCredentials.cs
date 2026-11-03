@@ -8,14 +8,13 @@ public sealed class ReplicaCredentials : IDisposable
 {
     private readonly X509Certificate2 _certificate;
     private readonly X509Certificate2Collection _authorities = [];
-    private readonly string _certificatePem;
 
     public ReplicaCredentials(ECDsa key, string certificatePem, string authorityPems)
     {
         using var issued = X509Certificate2.CreateFromPem(certificatePem);
         using var withKey = issued.CopyWithPrivateKey(key);
         _certificate = X509CertificateLoader.LoadPkcs12(withKey.Export(X509ContentType.Pkcs12), null);
-        _certificatePem = certificatePem;
+        CertificatePem = certificatePem;
         _authorities.ImportFromPem(authorityPems);
         AuthorityPems = authorityPems;
     }
@@ -25,6 +24,14 @@ public sealed class ReplicaCredentials : IDisposable
     public DateTimeOffset NotAfter => new(_certificate.NotAfter);
 
     public string AuthorityPems { get; }
+
+    public string CertificatePem { get; }
+
+    public byte[] ExportPrivateKey()
+    {
+        using var key = _certificate.GetECDsaPrivateKey()!;
+        return key.ExportPkcs8PrivateKey();
+    }
 
     public static SslServerAuthenticationOptions ServerOptions(Func<ReplicaCredentials?> current) => new()
     {
@@ -43,7 +50,7 @@ public sealed class ReplicaCredentials : IDisposable
     public ReplicaCredentials WithAuthorities(string authorityPems)
     {
         using var key = _certificate.GetECDsaPrivateKey()!;
-        return new ReplicaCredentials(key, _certificatePem, authorityPems);
+        return new ReplicaCredentials(key, CertificatePem, authorityPems);
     }
 
     public bool IsIssuedBy(string authorityPem)

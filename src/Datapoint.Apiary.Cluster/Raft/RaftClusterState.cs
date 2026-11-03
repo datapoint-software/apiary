@@ -49,6 +49,9 @@ public sealed partial class RaftClusterState(
 
     public bool IsHealthy => IsReady || (discovery.IsSwarm && !_run.IsCompleted);
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "_ready completes when this instance's startup finishes.")]
+    public async Task WaitUntilReadyAsync(CancellationToken cancellationToken) => await _ready.Task.WaitAsync(cancellationToken);
+
     public bool IsLeader => _raft?.Leader is { IsRemote: false };
 
     public bool IsWritable => _raft is { } raft && (IsLeader || (raft.Leader is not null && !raft.ConsensusToken.IsCancellationRequested));

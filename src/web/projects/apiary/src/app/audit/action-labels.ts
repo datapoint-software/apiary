@@ -4,6 +4,8 @@ const labels: Record<string, string> = {
   'routes.delete': 'deleted a route',
   'certificates.issue': 'requested a certificate',
   'certificates.renew': 'renewed a certificate',
+  'keys.rotate-root-key': 'finished rotating the root key and forgot the old one',
+  'cluster.rotate-ca': 'started rotating the certificate authority replicas use to trust each other',
   'keys.rotate-data-key': 'started using a new key to encrypt the stored configuration',
   'certificates.upload': 'uploaded a certificate',
   'certificates.delete': 'deleted a certificate',

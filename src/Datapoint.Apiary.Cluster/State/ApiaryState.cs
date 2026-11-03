@@ -16,6 +16,7 @@ public sealed record ApiaryState
 {
     private readonly ImmutableList<Guid>? _previousClusterIds;
     private readonly ImmutableHashSet<Guid>? _approvedReplicas;
+    private readonly ImmutableList<Keys.RegisteredRootKey>? _rootKeys;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -61,6 +62,12 @@ public sealed record ApiaryState
     {
         get => _approvedReplicas ?? [];
         init => _approvedReplicas = value;
+    }
+
+    public ImmutableList<Keys.RegisteredRootKey> RootKeys
+    {
+        get => _rootKeys ?? [];
+        init => _rootKeys = value;
     }
 
     public ImmutableDictionary<Guid, AppliedRequest> AppliedRequests { get; init; } = ImmutableDictionary<Guid, AppliedRequest>.Empty;

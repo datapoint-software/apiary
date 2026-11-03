@@ -11,23 +11,31 @@ namespace Datapoint.Apiary.Cluster.Join;
 public sealed class JoinProtocol(RootKey rootKey)
 {
     public static readonly TimeSpan MaxClockSkew = TimeSpan.FromMinutes(5);
-    private readonly byte[] _macKey = rootKey.Derive(KeyPurposes.Join);
-    private readonly SealedTokens _transport = new(new SealingKey(rootKey.Derive(KeyPurposes.JoinTransport)));
+    private readonly JoinKeySet _own = new(new JoinKeys(
+        rootKey.Id, Base64Url.Encode(rootKey.Derive(KeyPurposes.Join)), Base64Url.Encode(rootKey.Derive(KeyPurposes.JoinTransport))));
+    private IReadOnlyList<JoinKeySet> _accepted = [];
 
-    public JoinRequest Sign(JoinRequest request) => request with { Mac = Mac("request", Fields(request)) };
+    public JoinKeys OwnKeys => _own.Keys;
 
-    public bool Verify(JoinRequest request, DateTimeOffset now) =>
-        (now - request.At).Duration() <= MaxClockSkew && Equal(request.Mac, Mac("request", Fields(request)));
+    public void Accept(IEnumerable<JoinKeys> keys) =>
+        _accepted = [.. keys.Where(k => k.RootKeyId != _own.Keys.RootKeyId).Select(k => new JoinKeySet(k))];
 
-    public JoinResponse Sign(JoinResponse response, string nonce) => response with { Mac = Mac("response", Fields(response, nonce)) };
+    public JoinRequest Sign(JoinRequest request) => request with { Mac = _own.Mac("request", Fields(request)) };
 
-    public bool Verify(JoinResponse response, string nonce) => Equal(response.Mac, Mac("response", Fields(response, nonce)));
+    public JoinKeySet? Verify(JoinRequest request, DateTimeOffset now) =>
+        (now - request.At).Duration() > MaxClockSkew
+            ? null
+            : new[] { _own }.Concat(_accepted).FirstOrDefault(k => Equal(request.Mac, k.Mac("request", Fields(request))));
 
-    public string SealKeys(SharedKeyRing keys, string nonce) =>
-        _transport.Seal("apiary/join-keys/" + nonce, JsonSerializer.SerializeToUtf8Bytes(keys, ClusterWireJsonContext.Default.SharedKeyRing));
+    public static JoinResponse Sign(JoinResponse response, string nonce, JoinKeySet keys) => response with { Mac = keys.Mac("response", Fields(response, nonce)) };
+
+    public bool Verify(JoinResponse response, string nonce) => Equal(response.Mac, _own.Mac("response", Fields(response, nonce)));
+
+    public static string SealKeys(SharedKeyRing ring, string nonce, JoinKeySet keys) =>
+        keys.Transport.Seal("apiary/join-keys/" + nonce, JsonSerializer.SerializeToUtf8Bytes(ring, ClusterWireJsonContext.Default.SharedKeyRing));
 
     public SharedKeyRing? OpenKeys(string sealedKeys, string nonce) =>
-        _transport.Open("apiary/join-keys/" + nonce, sealedKeys) is { } json
+        _own.Transport.Open("apiary/join-keys/" + nonce, sealedKeys) is { } json
             ? JsonSerializer.Deserialize(json, ClusterWireJsonContext.Default.SharedKeyRing)
             : null;
 
@@ -43,12 +51,6 @@ public sealed class JoinProtocol(RootKey rootKey)
         r.AuthorityPem ?? "", r.CertificatePem ?? "", r.Keys ?? "",
         string.Join(',', (r.Supersedes ?? []).Select(id => id.ToString("N"))),
     ];
-
-    private string Mac(string kind, string[] fields)
-    {
-        var text = kind + "\n" + string.Join('\n', fields.Select(f => f.Length.ToString(CultureInfo.InvariantCulture) + ":" + f));
-        return Base64Url.Encode(HMACSHA256.HashData(_macKey, Encoding.UTF8.GetBytes(text)));
-    }
 
     private static bool Equal(string a, string b) =>
         CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(a), Encoding.UTF8.GetBytes(b));

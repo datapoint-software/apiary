@@ -11,4 +11,6 @@ public static class KeyPurposes
     public const string JoinTransport = "apiary/join-transport/1";
 
     public const string Backups = "apiary/backups/1";
+
+    public const string KeyId = "apiary/root-key-id/1";
 }

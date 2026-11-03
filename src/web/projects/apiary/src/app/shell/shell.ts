@@ -1,9 +1,29 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
-import { Archive, Hexagon, LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
+import {
+  Archive,
+  Hexagon,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  MonitorSmartphone,
+  PanelLeft,
+  Route,
+  ScrollText,
+  ShieldCheck,
+  UserRound,
+  Users,
+} from 'lucide';
 import { needsAttention } from '../certificates/certificate-status';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView } from '../api/models';
@@ -14,11 +34,24 @@ import { DatapointLogo } from './datapoint-logo';
 import { NavGroup } from './nav-item';
 import { projectIcon } from './project-icons';
 import { readCollapsed, saveCollapsed } from './sidebar-preference';
+import { version } from '../version';
 
 @Component({
   selector: 'ap-shell',
   host: { '(document:keydown.escape)': 'closeDrawer()' },
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Button, Banner, Status, DatapointLogo, CdkMenu, CdkMenuItem, CdkMenuTrigger],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    Icon,
+    Button,
+    Banner,
+    Status,
+    DatapointLogo,
+    CdkMenu,
+    CdkMenuItem,
+    CdkMenuTrigger,
+  ],
   templateUrl: './shell.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,20 +69,34 @@ export class Shell {
       .slice(0, 2)
       .toUpperCase(),
   );
-  protected readonly accountIcons = { profile: UserRound, security: ShieldCheck, sessions: MonitorSmartphone, signOut: LogOut };
-  protected readonly version = '0.1.0';
+  protected readonly accountIcons = {
+    profile: UserRound,
+    security: ShieldCheck,
+    sessions: MonitorSmartphone,
+    signOut: LogOut,
+  };
+  protected readonly version = version;
   protected readonly collapsed = signal(readCollapsed());
   protected readonly drawerOpen = signal(false);
   private readonly phone = matchMedia('(max-width: 639px)');
   protected readonly isPhone = signal(this.phone.matches);
-  protected readonly sidebarExpanded = computed(() => (this.isPhone() ? this.drawerOpen() : !this.collapsed()));
+  protected readonly sidebarExpanded = computed(() =>
+    this.isPhone() ? this.drawerOpen() : !this.collapsed(),
+  );
   protected readonly sidebarLabel = computed(() => {
-    const labels = this.isPhone() ? ['Open menu', 'Close menu'] : ['Expand sidebar', 'Collapse sidebar'];
+    const labels = this.isPhone()
+      ? ['Open menu', 'Close menu']
+      : ['Expand sidebar', 'Collapse sidebar'];
     return labels[this.sidebarExpanded() ? 1 : 0];
   });
   protected readonly panelIcon = PanelLeft;
-  private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
-  private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), { defaultValue: [] });
+  private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), {
+    defaultValue: [],
+  });
+  private readonly certificates = httpResource<CertificateSummary[]>(
+    () => this.api.query('certificates.list'),
+    { defaultValue: [] },
+  );
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
     const projects = this.projects.value();
@@ -70,7 +117,12 @@ export class Shell {
         title: 'Traffic',
         items: [
           { icon: Route, label: 'All routes', link: '/routes', count: routes || undefined },
-          { icon: ShieldCheck, label: 'Certificates', link: '/certificates', warn: this.certificates.value().some(needsAttention) },
+          {
+            icon: ShieldCheck,
+            label: 'Certificates',
+            link: '/certificates',
+            warn: this.certificates.value().some(needsAttention),
+          },
         ],
       },
       {
@@ -83,8 +135,18 @@ export class Shell {
       {
         title: 'Cluster',
         items: [
-          { icon: Hexagon, label: 'Replicas', link: '/replicas', warn: this.cluster.reachable() < this.cluster.voters().length },
-          ...(this.auth.canAdminister() ? [{ icon: Archive, label: 'Backups', link: '/backups' }] : []),
+          {
+            icon: Hexagon,
+            label: 'Replicas',
+            link: '/replicas',
+            warn: this.cluster.reachable() < this.cluster.voters().length,
+          },
+          ...(this.auth.canAdminister()
+            ? [
+                { icon: Archive, label: 'Backups', link: '/backups' },
+                { icon: KeyRound, label: 'Root key', link: '/root-key' },
+              ]
+            : []),
         ],
       },
     ];

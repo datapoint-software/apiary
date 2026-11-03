@@ -1,20 +1,21 @@
 using Datapoint.Apiary.Auth;
-using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Management.Setup;
 using Microsoft.Extensions.Options;
 
 namespace Datapoint.Apiary.Hosting;
 
 public sealed partial class StartupTasks(
-    IClusterState cluster,
+    RaftClusterState cluster,
     LocalOperatorToken operatorToken,
     SetupWindow setup,
     IOptions<ApiaryOptions> options,
-    ILogger<StartupTasks> logger) : IHostedService
+    ILogger<StartupTasks> logger) : BackgroundService
 {
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await operatorToken.WriteAsync(cancellationToken);
+        await operatorToken.WriteAsync(stoppingToken);
+        await cluster.WaitUntilReadyAsync(stoppingToken);
         if (!setup.IsOpen(cluster.Current))
         {
             return;
@@ -22,8 +23,6 @@ public sealed partial class StartupTasks(
 
         LogSetupOpen(Environment.MachineName, options.Value.AdminPort, setup.ClosesAt);
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Waiting for setup at http://{Host}:{Port} until {ClosesAt:HH:mm} UTC. Whoever opens it first creates the first administrator.")]
     private partial void LogSetupOpen(string host, int port, DateTimeOffset closesAt);
