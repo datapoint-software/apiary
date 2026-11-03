@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster.Raft;
@@ -13,6 +14,8 @@ namespace Datapoint.Apiary.Recovery;
 
 public static class RecoveryEndpoints
 {
+    private static readonly ConcurrentDictionary<Guid, long> s_usedSteps = new();
+
     public static RouteGroupBuilder MapApiaryRecovery(this RouteGroupBuilder api)
     {
         var recovery = api.MapGroup("/cluster").AddEndpointFilter(RequireAdministratorAsync);
@@ -53,7 +56,9 @@ public static class RecoveryEndpoints
             return Invalid(nameof(RecoverCluster.Password), ErrorCodes.PasswordIncorrect);
         }
 
-        if (Totp.Verify(twoStep.Secret, request.Code ?? "", time.GetUtcNow(), twoStep.LastUsedStep) is null)
+        var lastUsed = Math.Max(twoStep.LastUsedStep, s_usedSteps.GetValueOrDefault(user.Id));
+        if (Totp.Verify(twoStep.Secret, request.Code ?? "", time.GetUtcNow(), lastUsed) is not { } step
+            || !ClaimStep(user.Id, step))
         {
             throttle.Failed(key);
             return Invalid(nameof(RecoverCluster.Code), ErrorCodes.CodeInvalid);
@@ -68,6 +73,28 @@ public static class RecoveryEndpoints
         catch (RecoveryRefusedException refused)
         {
             return new ApiProblem(StatusCodes.Status409Conflict, refused.Code).ToResult();
+        }
+    }
+
+    private static bool ClaimStep(Guid userId, long step)
+    {
+        while (true)
+        {
+            if (!s_usedSteps.TryGetValue(userId, out var used))
+            {
+                if (s_usedSteps.TryAdd(userId, step))
+                {
+                    return true;
+                }
+            }
+            else if (used >= step)
+            {
+                return false;
+            }
+            else if (s_usedSteps.TryUpdate(userId, step, used))
+            {
+                return true;
+            }
         }
     }
 
