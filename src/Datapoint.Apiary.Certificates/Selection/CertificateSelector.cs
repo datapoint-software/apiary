@@ -67,20 +67,30 @@ public sealed partial class CertificateSelector : IDisposable
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.Material!.NotAfter).First(), StringComparer.Ordinal);
             var contexts = new Dictionary<string, SslStreamCertificateContext>(StringComparer.Ordinal);
             var byHost = new Dictionary<string, SslStreamCertificateContext>(StringComparer.Ordinal);
-            foreach (var route in state.Routes.Values)
+            foreach (var (host, certificate) in Served(state, automatic))
             {
-                var certificate = route.CertificateId is { } id
-                    ? state.Certificates.GetValueOrDefault(id)
-                    : automatic.GetValueOrDefault(route.Host);
-                if (certificate?.Material is { } material && material.Covers(route.Host) && ContextFor(certificate.Name, material, contexts) is { } context)
+                if (certificate?.Material is { } material && material.Covers(host) && ContextFor(certificate.Name, material, contexts) is { } context)
                 {
-                    byHost[route.Host] = context;
+                    byHost[host] = context;
                 }
             }
 
             _contexts = contexts;
             _byHost = byHost.ToFrozenDictionary(StringComparer.Ordinal);
             _builtAt = state.Index;
+        }
+    }
+
+    private static IEnumerable<(string Host, Certificate? Certificate)> Served(ApiaryState state, Dictionary<string, Certificate> automatic)
+    {
+        foreach (var route in state.Routes.Values)
+        {
+            yield return (route.Host, route.CertificateId is { } id ? state.Certificates.GetValueOrDefault(id) : automatic.GetValueOrDefault(route.Host));
+        }
+
+        foreach (var redirect in state.Redirects.Values)
+        {
+            yield return (redirect.From, automatic.GetValueOrDefault(redirect.From));
         }
     }
 

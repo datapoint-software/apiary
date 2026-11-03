@@ -38,6 +38,14 @@ public static class ErrorCodes
     public const string RouteNotFound = "route.notFound";
     public const string RouteDuplicate = "route.duplicate";
     public const string RouteTargetsRequired = "route.targetsRequired";
+    public const string RouteRedirectExists = "route.redirectExists";
+    public const string RedirectNotFound = "redirect.notFound";
+    public const string RedirectDuplicate = "redirect.duplicate";
+    public const string RedirectRouteExists = "redirect.routeExists";
+    public const string RedirectWildcard = "redirect.wildcard";
+    public const string RedirectTargetInvalid = "redirect.targetInvalid";
+    public const string RedirectLoop = "redirect.loop";
+    public const string RedirectStatusCode = "redirect.statusCode";
     public const string MaintenanceEndBeforeStart = "maintenance.endBeforeStart";
     public const string MaintenanceTooLong = "maintenance.tooLong";
     public const string MaintenanceEnded = "maintenance.ended";
@@ -92,7 +100,8 @@ public static class ErrorCodes
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
-        MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded,
+        MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
+        RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
         CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,

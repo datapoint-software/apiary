@@ -1,0 +1,53 @@
+<ap-page-head heading="Redirects">
+  <span pageSub>Send one hostname to another address, such as www.example.com to example.com.</span>
+  @if (auth.canOperate() && redirects.value().length > 0) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="add()"><ap-icon [icon]="icons.add" />Add redirect</button>
+  }
+</ap-page-head>
+
+<section class="ap-panel">
+  @if (isLoading()) {
+    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  } @else if (redirects.value().length === 0) {
+    <ap-empty-state heading="No redirects yet">
+      A redirect sends one hostname to another, such as <span class="ap-code">www.example.com</span> to <span class="ap-code">example.com</span>, with a 308 or 307.
+      @if (auth.canOperate()) {
+        <button apWrite emptyActions apButton="primary" type="button" (click)="add()"><ap-icon [icon]="icons.add" />Add redirect</button>
+      }
+    </ap-empty-state>
+  } @else {
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">Redirects</caption>
+        <thead>
+          <tr>
+            <th scope="col">From</th>
+            <th scope="col">To</th>
+            <th scope="col">Status code</th>
+            <th scope="col">Path</th>
+            <th scope="col">Project</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (redirect of redirects.value(); track redirect.id) {
+            <tr>
+              <td class="ap-data">{{ redirect.from }}</td>
+              <td class="ap-data ap-muted">{{ redirect.to }}</td>
+              <td><span class="ap-tag">{{ redirect.statusCode }}</span> <span class="ap-muted">{{ statusLabels[redirect.statusCode] }}</span></td>
+              <td class="ap-muted">{{ redirect.keepPath ? 'Kept' : 'Dropped' }}</td>
+              <td class="ap-muted">{{ projectNames().get(redirect.projectId) }}</td>
+              <td class="ap-col-actions">
+                @if (auth.canOperate()) {
+                  <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete redirect from ' + redirect.from" (click)="delete(redirect)">
+                    <ap-icon [icon]="icons.delete" />
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

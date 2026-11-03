@@ -12,6 +12,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
 import {
   Archive,
+  CornerUpRight,
   Hexagon,
   KeyRound,
   LayoutDashboard,
@@ -123,6 +124,7 @@ export class Shell {
             link: '/certificates',
             warn: this.certificates.value().some(needsAttention),
           },
+          { icon: CornerUpRight, label: 'Redirects', link: '/redirects' },
         ],
       },
       {

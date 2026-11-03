@@ -34,6 +34,11 @@ export const routes: Routes = [
         loadComponent: () => import('./certificates/certificate-list').then((m) => m.CertificateList),
       },
       {
+        path: 'redirects',
+        title: 'Redirects · Apiary',
+        loadComponent: () => import('./redirects/redirect-list').then((m) => m.RedirectList),
+      },
+      {
         path: 'certificates/:id',
         title: 'Certificate · Apiary',
         loadComponent: () => import('./certificates/certificate-details').then((m) => m.CertificateDetails),

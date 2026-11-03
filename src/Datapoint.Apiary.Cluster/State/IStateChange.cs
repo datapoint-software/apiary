@@ -5,6 +5,7 @@ using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Redirects;
 using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
@@ -16,6 +17,8 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(ProjectSaved), "project.saved")]
 [JsonDerivedType(typeof(RouteSaved), "route.saved")]
 [JsonDerivedType(typeof(RouteDeleted), "route.deleted")]
+[JsonDerivedType(typeof(RedirectSaved), "redirect.saved")]
+[JsonDerivedType(typeof(RedirectDeleted), "redirect.deleted")]
 [JsonDerivedType(typeof(UserSaved), "user.saved")]
 [JsonDerivedType(typeof(UserDeleted), "user.deleted")]
 [JsonDerivedType(typeof(SetupCompleted), "setup.completed")]

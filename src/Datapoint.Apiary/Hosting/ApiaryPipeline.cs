@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
 using Datapoint.Apiary.Proxy.Pages;
+using Datapoint.Apiary.Proxy.Redirects;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Recovery;
 using Datapoint.Apiary.Replication;
@@ -18,7 +19,7 @@ public static class ApiaryPipeline
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
         app.UseWhen(c => !Listener.IsCluster(c), serving => serving.UseReadinessGate(app.Services.GetRequiredService<RaftClusterState>()));
         app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
-        app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>());
+        app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
         app.UseRouting();
         MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
         app.MapGroup("/cluster").WithMetadata(ListenerMetadata.Cluster).MapApiaryCluster();

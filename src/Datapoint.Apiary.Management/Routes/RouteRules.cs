@@ -18,7 +18,9 @@ public static class RouteRules
     {
         validator.RuleFor(r => r.ProjectId)
             .Must(id => cluster.Current.Projects.ContainsKey(id)).WithErrorCode(ErrorCodes.ProjectNotFound);
-        validator.RuleFor(r => r.Host).Hostname();
+        validator.RuleFor(r => r.Host).Cascade(CascadeMode.Stop)
+            .Hostname()
+            .Must(host => !Redirects.CreateRedirectValidator.IsRedirect(cluster.Current, host)).WithErrorCode(ErrorCodes.RouteRedirectExists);
         validator.RuleFor(r => r.Path).Path();
         validator.RuleFor(r => r.TimeoutSeconds).InclusiveBetween(1, MaximumTimeoutSeconds).WithErrorCode(ErrorCodes.Range);
         validator.RuleFor(r => r.Targets).NotEmpty().WithErrorCode(ErrorCodes.RouteTargetsRequired);

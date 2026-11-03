@@ -6,6 +6,7 @@ using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Replicas;
+using Datapoint.Apiary.Cluster.Redirects;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.Users;
@@ -16,6 +17,7 @@ public sealed record ApiaryState
 {
     private readonly ImmutableList<Guid>? _previousClusterIds;
     private readonly ImmutableHashSet<Guid>? _approvedReplicas;
+    private readonly ImmutableDictionary<Guid, Redirect>? _redirects;
     private readonly ImmutableList<Keys.RegisteredRootKey>? _rootKeys;
 
     public static ApiaryState Empty { get; } = new();
@@ -25,6 +27,12 @@ public sealed record ApiaryState
     public ImmutableDictionary<Guid, Project> Projects { get; init; } = ImmutableDictionary<Guid, Project>.Empty;
 
     public ImmutableDictionary<Guid, Route> Routes { get; init; } = ImmutableDictionary<Guid, Route>.Empty;
+
+    public ImmutableDictionary<Guid, Redirect> Redirects
+    {
+        get => _redirects ?? ImmutableDictionary<Guid, Redirect>.Empty;
+        init => _redirects = value;
+    }
 
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;
 

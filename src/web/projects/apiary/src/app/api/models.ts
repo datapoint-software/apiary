@@ -25,6 +25,17 @@ export interface MaintenanceWindow {
   readonly message?: string;
 }
 
+export interface RedirectView {
+  readonly id: string;
+  readonly projectId: string;
+  readonly from: string;
+  readonly to: string;
+  readonly statusCode: number;
+  readonly keepPath: boolean;
+  readonly changedAt: string;
+  readonly changedBy?: string;
+}
+
 export interface ProjectView {
   readonly id: string;
   readonly name: string;

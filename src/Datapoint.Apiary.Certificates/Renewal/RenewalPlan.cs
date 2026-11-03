@@ -8,7 +8,10 @@ public static class RenewalPlan
     public static readonly TimeSpan KeepUnused = TimeSpan.FromDays(30);
 
     public static IReadOnlySet<string> WantedHosts(ApiaryState state) =>
-        state.Routes.Values.Where(r => r.CertificateId is null && !IsLocal(r.Host)).Select(r => r.Host).ToHashSet(StringComparer.Ordinal);
+        state.Routes.Values.Where(r => r.CertificateId is null).Select(r => r.Host)
+            .Concat(state.Redirects.Values.Select(r => r.From))
+            .Where(host => !IsLocal(host))
+            .ToHashSet(StringComparer.Ordinal);
 
     public static Certificate? Automatic(ApiaryState state, string host) =>
         state.Certificates.Values.FirstOrDefault(c => c.Source == CertificateSource.Automatic && c.Name == host);
