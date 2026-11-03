@@ -12,6 +12,9 @@
     <PackageReference Include="Datapoint.Mediator.FluentValidation.DependencyInjection" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <ProjectReference Include="..\Datapoint.Apiary.Management\Datapoint.Apiary.Management.csproj" />
     <ProjectReference Include="..\Datapoint.Apiary.Proxy\Datapoint.Apiary.Proxy.csproj" />
   </ItemGroup>

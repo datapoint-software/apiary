@@ -8,6 +8,7 @@ using Datapoint.Apiary.Proxy.Redirects;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Recovery;
 using Datapoint.Apiary.Replication;
+using Datapoint.Apiary.Telemetry;
 
 namespace Datapoint.Apiary.Hosting;
 
@@ -15,13 +16,16 @@ public static class ApiaryPipeline
 {
     public static WebApplication UseApiary(this WebApplication app)
     {
+        app.Services.StartApiaryMeters();
         app.UseExceptionHandler(handler => handler.Run(context =>
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
         app.UseWhen(c => !Listener.IsCluster(c), serving => serving.UseReadinessGate(app.Services.GetRequiredService<RaftClusterState>()));
         app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
         app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
         app.UseRouting();
-        MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
+        var admin = app.MapGroup("").WithMetadata(ListenerMetadata.Admin);
+        admin.MapApiaryMetrics(app.Configuration.GetSection("Apiary:Telemetry"));
+        MapAdmin(admin);
         app.MapGroup("/cluster").WithMetadata(ListenerMetadata.Cluster).MapApiaryCluster();
         app.MapReverseProxy(proxy =>
         {

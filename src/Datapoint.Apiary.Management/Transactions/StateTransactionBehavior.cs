@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Claims;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Cluster.Telemetry;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Mediator;
 using Datapoint.Mediator.Authorization;
@@ -16,6 +17,7 @@ public sealed class StateTransactionBehavior(
     IRequestOrigin origin,
     ICommandForwarder forwarder,
     ForwardedRequest forwarded,
+    ClusterMetrics metrics,
     TimeProvider time) : IBehavior
 {
     private const int MaxRememberedResult = 16 * 1024;
@@ -62,6 +64,7 @@ public sealed class StateTransactionBehavior(
             return;
         }
 
+        metrics.WriteFailed(ErrorCodes.NoQuorum);
         throw new ActionFailedException(ErrorCodes.NoQuorum, FailureKind.Unavailable);
     }
 
@@ -84,6 +87,14 @@ public sealed class StateTransactionBehavior(
             transaction.ProjectId,
             AuditOutcome.Succeeded));
         var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, audit], result);
-        await cluster.AppendAsync(entry, ct);
+        try
+        {
+            await cluster.AppendAsync(entry, ct);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            metrics.WriteFailed(exception.GetType().Name);
+            throw;
+        }
     }
 }

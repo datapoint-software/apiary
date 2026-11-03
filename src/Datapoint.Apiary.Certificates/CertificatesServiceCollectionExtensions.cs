@@ -2,6 +2,7 @@ using Datapoint.Apiary.Certificates.Acme;
 using Datapoint.Apiary.Certificates.Challenges;
 using Datapoint.Apiary.Certificates.Renewal;
 using Datapoint.Apiary.Certificates.Selection;
+using Datapoint.Apiary.Certificates.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,7 @@ public static class CertificatesServiceCollectionExtensions
             return new AcmeClient(http, provider.GetRequiredService<TimeProvider>());
         });
         services.AddSingleton<CertificateSelector>();
+        services.AddSingleton<CertificateMetrics>();
         services.AddSingleton<CertificateIssuer>();
         services.AddSingleton<AcmeChallengeResponder>();
         services.AddHostedService<CertificateRenewal>();

@@ -48,6 +48,7 @@ public static class ApiaryServices
 
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddApiaryProxy(options.OwnPorts, section.GetSection("AccessLogs"));
+        services.AddApiaryTelemetry(section.GetSection("Telemetry"));
         return services;
     }
 

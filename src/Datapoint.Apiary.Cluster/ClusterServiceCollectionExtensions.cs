@@ -1,6 +1,7 @@
 using Datapoint.Apiary.Cluster.Join;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Cluster.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,7 @@ public static class ClusterServiceCollectionExtensions
         services.AddSingleton<PeerDiscovery>();
         services.AddSingleton<RaftClusterState>();
         services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<RaftClusterState>());
+        services.AddSingleton<ClusterMetrics>();
         services.AddHostedService(provider => provider.GetRequiredService<RaftClusterState>());
         services.AddHostedService<Keys.DataKeyRotation>();
         services.AddHostedService<Trust.ClusterCaRotation>();
