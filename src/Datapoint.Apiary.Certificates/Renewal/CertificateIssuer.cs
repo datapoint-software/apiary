@@ -28,9 +28,16 @@ public sealed partial class CertificateIssuer(
     {
         var lockName = "certificate:" + host;
         var now = time.GetUtcNow();
-        var certificate = RenewalPlan.Automatic(cluster.Current, host)
+        if (IsHeldByOther(lockName, now))
+        {
+            return null;
+        }
+
+        var existing = RenewalPlan.Automatic(cluster.Current, host);
+        var certificate = existing
             ?? new Certificate(Guid.CreateVersion7(now), CertificateSource.Automatic, host, null, null, [], null, 0, null, now, user);
-        await AppendAsync([new LockTaken(new StateLock(lockName, _holder, now + s_lockLifetime), now), new CertificateSaved(certificate)], cancellationToken);
+        var taken = new LockTaken(new StateLock(lockName, _holder, now + s_lockLifetime), now);
+        await AppendAsync(existing is null ? [taken, new CertificateSaved(certificate)] : [taken], cancellationToken);
         if (cluster.Current.Locks.GetValueOrDefault(lockName)?.Holder != _holder)
         {
             return null;
@@ -60,6 +67,9 @@ public sealed partial class CertificateIssuer(
             return await FailedAsync(certificate, exception, user, action, lockName, tokens, cancellationToken);
         }
     }
+
+    private bool IsHeldByOther(string lockName, DateTimeOffset now) =>
+        cluster.Current.Locks.TryGetValue(lockName, out var held) && held.Holder != _holder && held.ExpiresAt > now;
 
     private static byte[] SigningRequest(string host, ECDsa key)
     {
