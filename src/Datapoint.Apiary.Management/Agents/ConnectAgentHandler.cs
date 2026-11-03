@@ -7,7 +7,7 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-public sealed class ConnectAgentHandler(StateTransaction transaction, AgentClients clients, CurrentUser current, TimeProvider time)
+public sealed class ConnectAgentHandler(StateTransaction transaction, AgentClients clients, AgentGrants grants, CurrentUser current, TimeProvider time)
     : ICommandHandler<ConnectAgent, ConnectedAgent>
 {
     public ValueTask<ConnectedAgent> HandleAsync(ConnectAgent command, CancellationToken ct = default)
@@ -32,9 +32,10 @@ public sealed class ConnectAgentHandler(StateTransaction transaction, AgentClien
             transaction.Record(new AgentsRemoved(replaced));
         }
 
-        var code = SecretTokens.New();
+        var id = Guid.CreateVersion7(now);
+        var code = grants.NewCode(id);
         var agent = new Agent(
-            Guid.CreateVersion7(now),
+            id,
             user.Id,
             client.Name,
             command.ClientId,

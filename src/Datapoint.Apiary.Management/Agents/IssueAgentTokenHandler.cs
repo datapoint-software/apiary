@@ -8,12 +8,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-public sealed class IssueAgentTokenHandler(StateTransaction transaction, SealedTokens sealedTokens, TimeProvider time) : ICommandHandler<IssueAgentToken, AgentTokenResult>
+public sealed class IssueAgentTokenHandler(StateTransaction transaction, AgentGrants grants, TimeProvider time) : ICommandHandler<IssueAgentToken, AgentTokenResult>
 {
-    private const string RefreshPurpose = "apiary.agent-refresh";
-    private const int IdSize = 16;
-    private const int RefreshNonceSize = 32;
-
     public ValueTask<AgentTokenResult> HandleAsync(IssueAgentToken command, CancellationToken ct = default)
     {
         transaction.Unaudited = true;
@@ -83,8 +79,8 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, SealedT
 
     private AgentTokenResult Issue(Agent agent, string? previousRefreshHash, DateTimeOffset now)
     {
-        var access = SecretTokens.New();
-        var refresh = sealedTokens.Seal(RefreshPurpose, [.. agent.Id.ToByteArray(), .. RandomNumberGenerator.GetBytes(RefreshNonceSize)]);
+        var access = grants.NewAccess(agent.Id);
+        var refresh = grants.NewRefresh(agent.Id);
         var ends = agent.ConnectedAt + AgentLifetimes.Connection;
         var accessExpiresAt = Earliest(now + AgentLifetimes.Access, ends);
         var tokens = new AgentTokens(SecretTokens.Hash(access), accessExpiresAt, SecretTokens.Hash(refresh), Earliest(now + AgentLifetimes.Refresh, ends), previousRefreshHash);
@@ -92,15 +88,8 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, SealedT
         return new AgentTokenResult(access, refresh, (int)(accessExpiresAt - now).TotalSeconds, Error: null);
     }
 
-    private Agent? Issuer(string refreshToken)
-    {
-        if (sealedTokens.Open(RefreshPurpose, refreshToken) is not { Length: IdSize + RefreshNonceSize } payload)
-        {
-            return transaction.State.Agents.Values.FirstOrDefault(a => a.Tokens?.PreviousRefreshHash == SecretTokens.Hash(refreshToken));
-        }
-
-        return transaction.State.Agents.GetValueOrDefault(new Guid(payload.AsSpan(0, IdSize)));
-    }
+    private Agent? Issuer(string refreshToken) =>
+        grants.RefreshAgent(refreshToken) is { } id ? transaction.State.Agents.GetValueOrDefault(id) : null;
 
     private AgentTokenResult Disconnect(Agent agent)
     {

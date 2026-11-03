@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Mediator;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 
@@ -112,16 +113,25 @@ public static class OAuthEndpoints
             Value(form, "code_verifier"),
             Value(form, "redirect_uri"),
             Value(form, "refresh_token"));
-        var result = await mediator.SendAsync(command, context.RequestAborted);
         context.Response.Headers.CacheControl = "no-store";
-        return result switch
+        try
+        {
+            return TokenResult(await mediator.SendAsync(command, context.RequestAborted));
+        }
+        catch (ValidationException refused)
+        {
+            return Error(refused.Errors.First().ErrorCode, StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private static IResult TokenResult(AgentTokenResult result) =>
+        result switch
         {
             { Error: AgentTokenResult.InvalidClient } => Error(AgentTokenResult.InvalidClient, StatusCodes.Status401Unauthorized),
             { Error: { } error } => Error(error, StatusCodes.Status400BadRequest),
             { AccessToken: { } access, RefreshToken: { } refresh } => Results.Json(new TokenResponse(access, "Bearer", result.ExpiresIn, refresh)),
             _ => Error("server_error", StatusCodes.Status500InternalServerError),
         };
-    }
 
     private static async Task<IResult> RevokeAsync(HttpContext context, IMediator mediator)
     {
@@ -138,7 +148,14 @@ public static class OAuthEndpoints
 
         if (Value(form, "token") is { } token)
         {
-            await mediator.SendAsync(new RevokeAgentToken(token, clientId), context.RequestAborted);
+            try
+            {
+                await mediator.SendAsync(new RevokeAgentToken(token, clientId), context.RequestAborted);
+            }
+            catch (ValidationException)
+            {
+                return Results.Ok();
+            }
         }
 
         return Results.Ok();

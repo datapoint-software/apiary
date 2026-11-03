@@ -36,6 +36,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddScoped<BackupRestorer>();
         services.AddSingleton<Challenges>();
         services.AddSingleton<AgentClients>();
+        services.AddSingleton<AgentGrants>();
         services.AddSingleton<SsoAssertions>();
         services.TryAddSingleton(new SsoIssuerPolicy(AllowHttp: false));
         services.TryAddSingleton(new StreamPortPolicy(new HashSet<int>()));
