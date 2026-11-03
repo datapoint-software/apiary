@@ -12,5 +12,5 @@ public sealed record CreateRoute(
     [property: Description("The hostname requests are sent to, such as shop.example.com.")] string Host,
     [property: Description("The path prefix, starting with /. Use / for the whole site.")] string Path,
     [property: Description("Where requests go: a hostname or IP address and a port, such as a Swarm service name. Loopback and link-local addresses are refused.")] IReadOnlyList<RouteTarget> Targets,
-    [property: Description("How long to wait for the target, in seconds, from 1 to 3600.")] int TimeoutSeconds = 30)
+    [property: Description("How long to wait for the target, in seconds, from 1 to 120.")] int TimeoutSeconds = 30)
     : ICommand<Guid>, IRouteFields;

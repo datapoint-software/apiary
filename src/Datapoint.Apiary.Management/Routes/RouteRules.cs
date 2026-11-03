@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public static class RouteRules
 {
-    public const int MaximumTimeoutSeconds = 3600;
+    public const int MaximumTimeoutSeconds = 120;
 
     public static void AddRouteRules<T>(this AbstractValidator<T> validator, IClusterState cluster, Func<T, Guid?> existingId)
         where T : IRouteFields

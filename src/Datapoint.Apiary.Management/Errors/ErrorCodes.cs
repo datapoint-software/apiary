@@ -13,11 +13,18 @@ public static class ErrorCodes
     public const string Range = "range";
     public const string Invalid = "invalid";
 
+    public const string HostnameRequired = "hostname.required";
     public const string HostnameInvalid = "hostname.invalid";
     public const string HostnameTooLong = "hostname.tooLong";
     public const string HostnameConsecutiveDots = "hostname.consecutiveDots";
     public const string HostnameLabel = "hostname.label";
+    public const string HostnameScheme = "hostname.scheme";
+    public const string HostnamePath = "hostname.path";
+    public const string HostnameAddress = "hostname.address";
+    public const string HostnameNotFull = "hostname.notFull";
+    public const string TargetPort = "target.port";
     public const string PathInvalid = "path.invalid";
+    public const string TargetRequired = "target.required";
     public const string TargetInvalid = "target.invalid";
     public const string TargetLoopback = "target.loopback";
     public const string TargetLinkLocal = "target.linkLocal";
@@ -33,8 +40,9 @@ public static class ErrorCodes
     [
         Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum,
         Required, TooLong, Range, Invalid,
-        HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, PathInvalid,
-        TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid,
+        HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
+        HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
+        TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
     ];
 }

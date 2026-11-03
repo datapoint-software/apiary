@@ -9,15 +9,20 @@ public static class RuleExtensions
 {
     public static IRuleBuilderOptions<T, string> Hostname<T>(this IRuleBuilderInitial<T, string> rule) =>
         rule.Cascade(CascadeMode.Stop)
-            .NotEmpty().WithErrorCode(ErrorCodes.Required)
+            .NotEmpty().WithErrorCode(ErrorCodes.HostnameRequired)
+            .Must(HostnameRules.HasNoScheme).WithErrorCode(ErrorCodes.HostnameScheme)
+            .Must(HostnameRules.HasNoPath).WithErrorCode(ErrorCodes.HostnamePath)
+            .Must(HostnameRules.IsNotAddress).WithErrorCode(ErrorCodes.HostnameAddress)
             .MaximumLength(HostnameRules.MaximumLength).WithErrorCode(ErrorCodes.HostnameTooLong)
-            .Must(HostnameRules.HasOnlyAllowedCharacters).WithErrorCode(ErrorCodes.HostnameInvalid)
+            .Must(HostnameRules.IsFull).WithErrorCode(ErrorCodes.HostnameNotFull)
             .Must(HostnameRules.HasNoConsecutiveDots).WithErrorCode(ErrorCodes.HostnameConsecutiveDots)
+            .Must(HostnameRules.HasOnlyAllowedCharacters).WithErrorCode(ErrorCodes.HostnameLabel)
             .Must(HostnameRules.HasValidLabels).WithErrorCode(ErrorCodes.HostnameLabel);
 
     public static IRuleBuilderOptions<T, string> Target<T>(this IRuleBuilderInitial<T, string> rule) =>
         rule.Cascade(CascadeMode.Stop)
-            .NotEmpty().WithErrorCode(ErrorCodes.Required)
+            .NotEmpty().WithErrorCode(ErrorCodes.TargetRequired)
+            .Must(TargetRules.HasNoPort).WithErrorCode(ErrorCodes.TargetPort)
             .Must(host => TargetRules.Classify(host) is not AddressKind.Loopback).WithErrorCode(ErrorCodes.TargetLoopback)
             .Must(host => TargetRules.Classify(host) is not AddressKind.LinkLocal).WithErrorCode(ErrorCodes.TargetLinkLocal)
             .Must(host => TargetRules.Classify(host) is not AddressKind.Unspecified).WithErrorCode(ErrorCodes.TargetUnspecified)
@@ -38,7 +43,8 @@ public static class RuleExtensions
         host.Length <= HostnameRules.MaximumLength
         && HostnameRules.HasOnlyAllowedCharacters(host)
         && HostnameRules.HasNoConsecutiveDots(host)
-        && HostnameRules.HasValidLabels(host);
+        && HostnameRules.HasValidLabels(host)
+        && !host.StartsWith('.');
 
     private static bool IsPath(string path)
     {
