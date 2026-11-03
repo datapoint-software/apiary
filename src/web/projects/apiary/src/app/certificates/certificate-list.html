@@ -1,5 +1,5 @@
 <ap-page-head heading="Certificates">
-  <span pageSub>Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs.</span>
+  <span pageSub>Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs. Using automatic certificates means accepting Let’s Encrypt’s <a href="https://letsencrypt.org/repository/">Subscriber Agreement</a>, which Apiary accepts for you.</span>
   @if (auth.canOperate()) {
     <button apWrite pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
   }

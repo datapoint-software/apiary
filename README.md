@@ -40,6 +40,8 @@ curl --cacert pebble-root.pem --resolve shop.apiary.test:443:127.0.0.1 https://s
 
 Without Pebble, Apiary asks Let's Encrypt's staging environment (`Apiary__Acme__DirectoryUrl`), which needs a public hostname pointing at your machine.
 
+To issue automatic certificates, Apiary creates an account with the certificate authority and accepts its terms of service on behalf of whoever deploys it. For Let's Encrypt that's the [Subscriber Agreement](https://letsencrypt.org/repository/): by deploying Apiary with automatic certificates, you agree to it.
+
 To try a cluster, use a Swarm. One node is enough to see replicas join, lose a leader and lose quorum; three nodes show it for real. On one node (`docker swarm init` first), with a root key and the image built locally:
 
 ```bash

@@ -121,12 +121,12 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 
 ## Regulatory findings
 
-- **AGPL section 13.** The UI's "Source" link points to `sources.internal`, which people using a deployment outside Datapoint can't reach. The AGPL requires offering the source to every user who interacts with the software over a network, so the link needs a public URL before release (or a setting for each deployment).
+- **AGPL section 13.** The UI's "Source" link, in the sidebar and on the sign-in pages, points to the tag of the running version on `https://github.com/datapoint-software/apiary`. Before release, that repository must be public and the tag must exist, holding the code that's deployed.
 - **Personal data:** the audit log shows email and IP addresses to every role, as the architecture allows, and the audit page says so.
 
 - **The sticky sessions cookie** (`apiary_affinity`, 1 hour, HttpOnly) is set on the visitors of the sites behind Apiary, not on admins. It only keeps a visitor on one version, so it should count as strictly necessary under the ePrivacy rules and need no consent, but the sites' cookie notices should list it. It holds a hash of the target, nothing about the visitor.
 
-- **Let's Encrypt's Subscriber Agreement.** Apiary agrees to the ACME server's terms of service when it creates its account, on the operator's behalf. Say so in the deployment docs and the Certificates page before release. An `Apiary:Acme:Email`, if set, is personal data sent to Let's Encrypt.
+- **Let's Encrypt's Subscriber Agreement.** Apiary agrees to the ACME server's terms of service when it creates its account, on the operator's behalf. The README and the Certificates page say so, with a link to the agreement.
 
 ## Known issues
 
@@ -141,7 +141,7 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 
 - **Mediator's known issue (English messages in error responses) is fixed for HTTP** by stripping title and detail in `ProblemDetailsCodes`, and for MCP by returning the error codes as JSON (`McpSetup`). The MCP package still puts "An error occurred invoking '<tool>':" in front, which agents read fine.
 - **Claude Code itself wasn't tried against the MCP endpoint**: its sign-in had expired in the environment milestone 9 was built in. The same flow was tried with a script acting as the client (registration, approval in the browser, code exchange with PKCE, MCP calls on every replica, refresh, reuse refused, disconnect). Try `claude mcp add --transport http apiary http://<admin host>:<port>/mcp`, then `/mcp` in Claude Code to sign in.
-- **The public 404 page's colors** are hard-coded rather than taken from the design tokens.
+- **Fixed: the public pages' colors were hard-coded.** The 403, 404 and 503 pages now embed the design tokens, so they follow the design system, in light and dark mode.
 - **Fixed: routes answered 404 after a restart** until the next change, because loading the state didn't signal the proxy. Found while trying milestone 3; it existed since milestone 1.
 - **HTTP/3 isn't verified.** Kestrel listens on UDP 8443 and advertises it, but no HTTP/3 client was available to try it. Check with `curl --http3` against a real deployment.
 - **Fixed: a certificate lock held by a stopped leader made the new leader loop.** It wrote a state change on every try, and each change woke the renewal check again, about 100 entries a second until the lock expired after 10 minutes. It now checks the lock before writing. The same could happen on a single node after a restart during an issuance.
