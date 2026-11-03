@@ -114,10 +114,38 @@ Commands and queries are validated with [FluentValidation](https://docs.fluentva
   - `.Target()`, which refuses loopback and link-local addresses.
   - `.IpRange()`.
 - **Rules that need the current state run on the leader,** such as "this hostname and path are already a route". The leader validates against the latest state, as [architecture.md](architecture.md#writes) describes.
-- **Messages say what to do, with an example,** in the prototype's words: "Enter a hostname, such as shop.example.com", not "Invalid hostname". Agents and the UI receive the same text.
-- **Errors are a 400 ProblemDetails, keyed by field.** The field names match the form's, so `@datapoint/apiary-ui` can attach each error to its field and list them in the error summary.
-- **Never echo the attempted value.** It's untrusted input: responses and logs carry only the field name and the message.
 - **The server decides.** Forms repeat the simple checks for instant feedback, but every rule is enforced by its validator.
+
+### Errors are codes, not messages
+
+No text written in .NET reaches a client: not validation messages, and not exception messages. The API returns error codes; the UI turns them into words, so it can be translated without changing the API.
+
+- **Every failure has a code,** with parameters when the text needs them, such as `{ "field": "timeout", "code": "range", "params": { "min": 1, "max": 120 } }`.
+  - Validators set codes with FluentValidation's `WithErrorCode`.
+  - Expected failures elsewhere are codes too: `route.notFound`, `route.duplicate`, `cluster.noQuorum`, `auth.forbidden`.
+- **Codes are a contract.**
+  - Lowercase words separated by dots, stable once released.
+  - A code is never renamed or reused; one that's no longer produced is marked deprecated.
+  - They're defined in one place in `Management` and published in the OpenAPI document, so the generated client knows them.
+- **Validation failures** are a 400 ProblemDetails with an `errors` list of `{ field, code, params }`. Field names match the form's, so `@datapoint/apiary-ui` attaches each error to its field and lists them in the error summary.
+- **Other failures** are a ProblemDetails with a `code` and the matching status: 404, 409, 403, or 503 while writes are paused.
+- **Unexpected exceptions** are a 500 with the code `internal` and the request's trace ID. The exception's message and stack trace go to the log only.
+- **No human text in ProblemDetails:** `title` and `detail` are left out.
+- **Never echo the attempted value.** It's untrusted input: responses and logs carry the field and the code, never what was sent.
+
+Where the words come from:
+
+- **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalog is ready for Angular's internationalization when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
+- **MCP** agents have no UI, so the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters. It's never an exception message, and it can later share the UI's translations.
+- **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalog.
+
+**Gap in Datapoint.Mediator 4.0.0-beta.3:** its adapters still produce English text in three places:
+
+- An argument that fails to bind (malformed JSON, a wrong type) returns a 400 with the exception's message.
+- 401 and 403 have English titles.
+- The MCP adapter passes the same message to agents.
+
+FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. For the rest, Datapoint.Mediator needs a change: codes and field paths for argument errors, and a way to shape its 400, 401 and 403 responses. We make that change in the Mediator repository, not here.
 
 ### Security APIs
 
