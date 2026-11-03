@@ -23,7 +23,9 @@
           >
             <ap-icon [icon]="item.icon" />
             <span class="ap-nav-label">{{ item.label }}</span>
-            @if (item.count) {
+            @if (item.warn) {
+              <span class="ap-dot" style="color: var(--warn)" aria-hidden="true"></span><span class="ap-sr">, needs attention</span>
+            } @else if (item.count) {
               <span class="ap-count"><span class="ap-sr">, </span>{{ item.count }}</span>
             }
           </a>

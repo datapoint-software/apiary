@@ -1,0 +1,43 @@
+@if (details.error()) {
+  <ap-page-head heading="Certificate" [crumbs]="[{ label: 'Certificates', link: '/certificates' }]" />
+  <ap-banner tone="critical" heading="This certificate doesn’t exist">
+    {{ describe('certificate.notFound') }}
+    <a bannerActions apButton size="small" routerLink="/certificates">All certificates</a>
+  </ap-banner>
+} @else if (details.value(); as value) {
+  @let c = value.certificate;
+  <ap-page-head [heading]="c.name" [crumbs]="[{ label: 'Certificates', link: '/certificates' }]">
+    <span pageSub><ap-status [tone]="statusTone(c)">{{ statusText(c) }}</ap-status> &nbsp;·&nbsp; {{ sourceName(c) }}</span>
+    @if (auth.canOperate() && c.source === 'automatic') {
+      <button pageActions apButton="primary" type="button" [disabled]="renewing()" (click)="renew()">
+        <ap-icon [icon]="icons.renew" />{{ renewing() ? 'Renewing…' : 'Renew now' }}
+      </button>
+    }
+    @if (auth.canOperate() && c.source === 'uploaded') {
+      <button pageActions apButton type="button" (click)="replace()"><ap-icon [icon]="icons.upload" />Replace…</button>
+    }
+  </ap-page-head>
+
+  @if (lastFailure(); as failure) {
+    <ap-banner tone="critical" [heading]="c.notAfter ? 'Renewal is failing' : 'Apiary can’t get this certificate yet'">
+      {{ failure.code ? describe(failure.code) : '' }}
+      @if (failure.detail) {
+        <span class="ap-code" style="display: block; margin-top: 6px">{{ failure.detail }}</span>
+      }
+      @if (c.nextAttemptAt) {
+        <span style="display: block; margin-top: 6px">Apiary tries again at {{ utcDateTime(c.nextAttemptAt) }} UTC. Fix the cause, then renew now.</span>
+      }
+    </ap-banner>
+  } @else if (c.status === 'pending') {
+    <ap-banner tone="info" heading="Requesting the certificate">
+      Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.
+    </ap-banner>
+  }
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; align-items: start">
+    <ap-certificate-facts [details]="value" [project]="project()" [canDelete]="auth.canOperate()" (delete)="delete()" />
+    <ap-certificate-history [events]="value.history" [heading]="c.source === 'automatic' ? 'Renewal log' : 'History'" />
+  </div>
+} @else {
+  <div class="ap-panel" style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+}

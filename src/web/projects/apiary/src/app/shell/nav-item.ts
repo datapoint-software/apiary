@@ -6,6 +6,7 @@ export interface NavItem {
   readonly link: string;
   readonly query?: Readonly<Record<string, string>>;
   readonly count?: number;
+  readonly warn?: boolean;
 }
 
 export interface NavGroup {

@@ -11,6 +11,7 @@ export interface RouteView {
   readonly path: string;
   readonly targets: readonly RouteTarget[];
   readonly timeoutSeconds: number;
+  readonly certificateId?: string;
   readonly changedAt: string;
   readonly changedBy?: string;
 }
@@ -93,4 +94,55 @@ export interface AuditEntry {
   readonly affected: readonly string[];
   readonly projectId?: string;
   readonly outcome: 'succeeded' | 'failed' | 'denied';
+}
+
+export type CertificateStatus = 'ok' | 'pending' | 'failing' | 'expiring' | 'expired';
+
+export interface CertificateSummary {
+  readonly id: string;
+  readonly source: 'automatic' | 'uploaded';
+  readonly name: string;
+  readonly hosts: readonly string[];
+  readonly projectId?: string;
+  readonly issuer?: string;
+  readonly notBefore?: string;
+  readonly notAfter?: string;
+  readonly renewsFrom?: string;
+  readonly status: CertificateStatus;
+  readonly failureCode?: string;
+  readonly nextAttemptAt?: string;
+  readonly routeCount: number;
+  readonly unusedSince?: string;
+}
+
+export interface CertificateEvent {
+  readonly at: string;
+  readonly kind: 'issued' | 'renewed' | 'uploaded' | 'replaced' | 'failed';
+  readonly code?: string;
+  readonly detail?: string;
+  readonly by?: string;
+}
+
+export interface CertificateDetails {
+  readonly certificate: CertificateSummary;
+  readonly chainLength: number;
+  readonly routes: readonly { readonly id: string; readonly host: string; readonly path: string }[];
+  readonly history: readonly CertificateEvent[];
+  readonly addedAt: string;
+  readonly addedBy?: string;
+}
+
+export interface CertificatePreview {
+  readonly hosts: readonly string[];
+  readonly issuer: string;
+  readonly notBefore: string;
+  readonly notAfter: string;
+  readonly chainLength: number;
+}
+
+export interface RenewResult {
+  readonly renewed: boolean;
+  readonly notAfter?: string;
+  readonly failureCode?: string;
+  readonly failureDetail?: string;
 }

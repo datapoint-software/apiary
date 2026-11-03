@@ -106,23 +106,38 @@ public sealed record CertificateBundle(CertificateMaterial? Material, Certificat
             return CertificateProblem.KeyEncrypted;
         }
 
-        try
-        {
-            using var withKey = WithKey(leaf, keyPem);
-            return withKey is null ? CertificateProblem.KeyInvalid : CertificateProblem.None;
-        }
-        catch (ArgumentException)
+        if (!IsKey(keyPem))
         {
             return CertificateProblem.KeyInvalid;
         }
-        catch (CryptographicException)
+
+        try
+        {
+            using var withKey = WithKey(leaf, keyPem);
+            return withKey is null ? CertificateProblem.KeyMismatch : CertificateProblem.None;
+        }
+        catch (Exception exception) when (exception is ArgumentException or CryptographicException)
         {
             return CertificateProblem.KeyMismatch;
         }
-        catch (InvalidOperationException)
+    }
+
+    private static bool IsKey(string keyPem)
+    {
+        foreach (var create in new Func<AsymmetricAlgorithm>[] { ECDsa.Create, RSA.Create })
         {
-            return CertificateProblem.KeyMismatch;
+            using var key = create();
+            try
+            {
+                key.ImportFromPem(keyPem);
+                return true;
+            }
+            catch (Exception exception) when (exception is ArgumentException or CryptographicException)
+            {
+            }
         }
+
+        return false;
     }
 
     public static X509Certificate2? WithKey(X509Certificate2 leaf, string keyPem)

@@ -16,7 +16,7 @@ import {
   problemErrors,
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
-import { ProjectView, RouteView } from '../api/models';
+import { CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
@@ -43,6 +43,10 @@ export class RouteEditor implements HasUnsavedChanges {
 
   protected readonly isNew = computed(() => !this.id());
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
+  protected readonly uploaded = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {
+    defaultValue: [],
+    parse: (value) => (value as CertificateSummary[]).filter((c) => c.source === 'uploaded'),
+  });
   private readonly existing = httpResource<RouteView>(() => {
     const id = this.id();
     return id ? { url: '/api/routes/get', method: 'POST', body: { id } } : undefined;
@@ -127,6 +131,7 @@ export class RouteEditor implements HasUnsavedChanges {
       path: value.path.trim(),
       targets: value.targets.map((t) => ({ host: t.host.trim(), port: t.port, weight: t.weight })),
       timeoutSeconds: value.timeoutSeconds,
+      certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));

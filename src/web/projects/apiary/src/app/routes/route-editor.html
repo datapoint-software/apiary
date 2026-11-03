@@ -106,6 +106,43 @@
       </div>
     </section>
 
+    <section class="ap-panel" aria-labelledby="certificate-title">
+      <div class="ap-panel-head">
+        <div><h2 class="ap-h ap-h-3" id="certificate-title">Certificate</h2></div>
+      </div>
+      <div class="ap-panel-body ap-stack">
+        <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+          <legend class="ap-sr">Certificate source</legend>
+          <div class="ap-stack" style="gap: 10px">
+            <label class="ap-choice">
+              <input class="ap-radio" type="radio" value="automatic" [formField]="route.certificate" />
+              <span class="ap-choice-text">
+                <span>Automatic</span>
+                <span class="ap-help">From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.</span>
+              </span>
+            </label>
+            <label class="ap-choice">
+              <input class="ap-radio" type="radio" value="uploaded" [formField]="route.certificate" />
+              <span class="ap-choice-text">
+                <span>Uploaded certificate</span>
+                <span class="ap-help">For wildcards and internal certificate authorities.</span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        @if (model().certificate === 'uploaded') {
+          <ap-field label="Uploaded certificate" [field]="route.certificateId" help="Upload a certificate on the Certificates page first if yours isn’t listed.">
+            <select class="ap-select" [formField]="route.certificateId">
+              <option value="">Choose a certificate</option>
+              @for (certificate of uploaded.value(); track certificate.id) {
+                <option [value]="certificate.id">{{ certificate.hosts.join(', ') }} (expires {{ certificate.notAfter?.slice(0, 10) }})</option>
+              }
+            </select>
+          </ap-field>
+        }
+      </div>
+    </section>
+
     <section class="ap-panel" aria-labelledby="rules-title">
       <div class="ap-panel-head">
         <div><h2 class="ap-h ap-h-3" id="rules-title">Traffic rules</h2></div>

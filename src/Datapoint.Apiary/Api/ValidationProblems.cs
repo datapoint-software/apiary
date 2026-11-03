@@ -16,6 +16,7 @@ public static class ValidationProblems
         ["MinLength"] = "min",
         ["MaxLength"] = "max",
         ["ComparisonValue"] = "value",
+        ["Hosts"] = "hosts",
     };
 
     public static ApiProblem From(ValidationException exception) =>

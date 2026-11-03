@@ -51,6 +51,7 @@ public static class ErrorCodes
     public const string CertificateNotYetValid = "certificate.notYetValid";
     public const string CertificateNoHostnames = "certificate.noHostnames";
     public const string CertificateTooLarge = "certificate.tooLarge";
+    public const string CertificateRenewing = "certificate.renewing";
 
     public const string EmailInvalid = "email.invalid";
     public const string EmailTaken = "email.taken";
@@ -83,7 +84,7 @@ public static class ErrorCodes
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
-        CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge,
+        CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,
         EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound,

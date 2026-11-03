@@ -29,6 +29,16 @@ export const routes: Routes = [
         canDeactivate: [unsavedChanges],
       },
       {
+        path: 'certificates',
+        title: 'Certificates · Apiary',
+        loadComponent: () => import('./certificates/certificate-list').then((m) => m.CertificateList),
+      },
+      {
+        path: 'certificates/:id',
+        title: 'Certificate · Apiary',
+        loadComponent: () => import('./certificates/certificate-details').then((m) => m.CertificateDetails),
+      },
+      {
         path: 'users',
         title: 'Users · Apiary',
         canActivate: [requiresRole('administrator')],

@@ -13,6 +13,7 @@ public sealed partial class CertificateRenewal(
     ILogger<CertificateRenewal> logger) : BackgroundService
 {
     public const string RenewAction = "certificates.renew";
+    public const string IssueAction = "certificates.issue";
     private static readonly TimeSpan s_interval = TimeSpan.FromMinutes(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,7 +50,8 @@ public sealed partial class CertificateRenewal(
 
         foreach (var host in RenewalPlan.Due(cluster.Current, time.GetUtcNow()))
         {
-            await issuer.IssueAsync(host, user: null, RenewAction, cancellationToken);
+            var action = RenewalPlan.Automatic(cluster.Current, host)?.Material is null ? IssueAction : RenewAction;
+            await issuer.IssueAsync(host, user: null, action, cancellationToken);
         }
 
         await MarkUnusedAsync(cancellationToken);

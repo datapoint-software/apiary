@@ -4,8 +4,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Button, Icon } from '@datapoint/apiary-ui';
 import { LayoutDashboard, LogOut, MonitorSmartphone, PanelLeft, Route, ScrollText, ShieldCheck, UserRound, Users } from 'lucide';
+import { needsAttention } from '../certificates/certificate-status';
 import { Api } from '../api/api';
-import { ProjectView } from '../api/models';
+import { CertificateSummary, ProjectView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
@@ -46,6 +47,7 @@ export class Shell {
   });
   protected readonly panelIcon = PanelLeft;
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
+  private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), { defaultValue: [] });
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
     const projects = this.projects.value();
@@ -62,7 +64,13 @@ export class Shell {
           count: p.routeCount || undefined,
         })),
       },
-      { title: 'Traffic', items: [{ icon: Route, label: 'All routes', link: '/routes', count: routes || undefined }] },
+      {
+        title: 'Traffic',
+        items: [
+          { icon: Route, label: 'All routes', link: '/routes', count: routes || undefined },
+          { icon: ShieldCheck, label: 'Certificates', link: '/certificates', warn: this.certificates.value().some(needsAttention) },
+        ],
+      },
       {
         title: 'Access',
         items: [
