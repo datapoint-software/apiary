@@ -1,7 +1,14 @@
 <ap-page-head [heading]="heading()" [crumbs]="[{ label: 'All routes', link: '/routes' }]">
-  <span pageSub>{{
-    isNew() ? 'Send requests for a hostname to services on the shared network.' : changed()
-  }}</span>
+  <span pageSub>
+    @if (isNew()) {
+      Send requests for a hostname to services on the shared network.
+    } @else {
+      @if (status(); as status) {
+        <ap-status [tone]="status[0]">{{ status[1] }}</ap-status> &nbsp;·&nbsp;
+      }
+      {{ changed() }}
+    }
+  </span>
 </ap-page-head>
 
 @if (loadError()) {
@@ -164,29 +171,8 @@
       </div>
     </section>
 
-    @if (!isNew()) {
-      <section class="ap-panel ap-panel-danger" aria-labelledby="danger-title">
-        <div class="ap-panel-head">
-          <div><h2 class="ap-h ap-h-3" id="danger-title">Delete</h2></div>
-        </div>
-        <div class="ap-panel-body">
-          <div class="ap-list-row">
-            <div class="ap-list-text">
-              <strong>Delete this route</strong>
-              <span class="ap-muted">Requests to it get a 404 on every replica.</span>
-            </div>
-            <button apWrite
-              apButton
-              type="button"
-              style="color: var(--critical)"
-              [disabled]="!auth.canOperate()"
-              (click)="delete()"
-            >
-              Delete route…
-            </button>
-          </div>
-        </div>
-      </section>
+    @if (existing.value(); as current) {
+      <ap-route-danger-zone [route]="current" (deleted)="leave()" />
     }
 
     @if (auth.canOperate()) {

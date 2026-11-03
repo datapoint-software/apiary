@@ -11,8 +11,9 @@ public sealed record RouteView(
     int TimeoutSeconds,
     Guid? CertificateId,
     DateTimeOffset ChangedAt,
-    string? ChangedBy)
+    string? ChangedBy,
+    bool Disabled)
 {
     public static RouteView From(Route route) =>
-        new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy);
+        new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy, route.Disabled);
 }

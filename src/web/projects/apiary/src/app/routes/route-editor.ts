@@ -1,17 +1,17 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormField, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import {
   ApiProblem,
   Banner,
   Button,
-  Confirmer,
   ErrorMessages,
   ErrorSummary,
   Field,
   Form,
   PageHead,
+  Status,
   Toaster,
   problemErrors,
 } from '@datapoint/apiary-ui';
@@ -22,12 +22,14 @@ import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
 import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
+import { routeStatus } from './route-status';
+import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, RouterLink],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,7 +40,6 @@ export class RouteEditor implements HasUnsavedChanges {
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
-  private readonly confirmer = inject(Confirmer);
   private readonly messages = inject(ErrorMessages);
   private saved = false;
 
@@ -48,9 +49,13 @@ export class RouteEditor implements HasUnsavedChanges {
     defaultValue: [],
     parse: (value) => (value as CertificateSummary[]).filter((c) => c.source === 'uploaded'),
   });
-  private readonly existing = httpResource<RouteView>(() => {
+  protected readonly existing = httpResource<RouteView>(() => {
     const id = this.id();
-    return id ? { url: '/api/routes/get', method: 'POST', body: { id } } : undefined;
+    return id ? this.api.query('routes.get', { id }) : undefined;
+  });
+  protected readonly status = computed(() => {
+    const route = this.existing.value();
+    return route ? routeStatus(route) : undefined;
   });
 
   protected readonly model = signal<RouteModel>(emptyRoute(''));
@@ -71,7 +76,7 @@ export class RouteEditor implements HasUnsavedChanges {
   constructor() {
     effect(() => {
       const route = this.existing.value();
-      if (route) {
+      if (route && !untracked(() => this.route().dirty())) {
         this.model.set(routeModel(route));
       }
     });
@@ -104,24 +109,9 @@ export class RouteEditor implements HasUnsavedChanges {
     }
   }
 
-  protected async delete(): Promise<void> {
-    const route = this.existing.value();
-    if (!route) {
-      return;
-    }
-    const deleted = await this.confirmer.confirm({
-      heading: `Delete route ${routeLabel(route)}?`,
-      text: 'Requests to this hostname and path get a 404 on every replica as soon as you confirm.',
-      confirm: 'Delete route',
-      busy: 'Deleting…',
-      typeToConfirm: route.host,
-      action: () => this.api.send('routes.delete', { id: route.id }),
-    });
-    if (deleted) {
-      this.saved = true;
-      this.toaster.show(`${routeLabel(route)} deleted.`);
-      await this.router.navigate(['/routes']);
-    }
+  protected async leave(): Promise<void> {
+    this.saved = true;
+    await this.router.navigate(['/routes']);
   }
 
   private async persist(): Promise<void> {

@@ -9,4 +9,7 @@ public sealed record Route(
     int TimeoutSeconds,
     Guid? CertificateId,
     DateTimeOffset ChangedAt,
-    string? ChangedBy);
+    string? ChangedBy)
+{
+    public bool Disabled { get; init; }
+}

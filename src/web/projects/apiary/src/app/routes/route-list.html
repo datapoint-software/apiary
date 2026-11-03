@@ -35,6 +35,11 @@
           (input)="filter.set($any($event.target).value)"
         />
       </div>
+      <div class="ap-seg" role="group" aria-label="Status">
+        @for (option of statuses; track option[0]) {
+          <button type="button" [attr.aria-pressed]="statusFilter() === option[0]" (click)="statusFilter.set(option[0])">{{ option[1] }}</button>
+        }
+      </div>
       <select class="ap-select" aria-label="Project" [value]="projectFilter()" (change)="chooseProject($any($event.target).value)">
         <option value="">All projects</option>
         @for (project of projectOptions(); track project.id) {
@@ -55,6 +60,7 @@
             <tr>
               <th scope="col">Hostname</th>
               <th scope="col">Target</th>
+              <th scope="col">Status</th>
               <th scope="col">Certificate</th>
               <th scope="col" class="ap-num">Timeout</th>
               <th scope="col">Changed</th>
@@ -64,7 +70,7 @@
           @for (group of groups(); track group.project.id) {
             <tbody>
               <tr class="ap-group">
-                <td colspan="6">
+                <td colspan="7">
                   <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }}</span></span>
                 </td>
               </tr>
@@ -77,14 +83,16 @@
                     </div>
                   </td>
                   <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
+                  <td>
+                    @let status = routeStatus(route);
+                    <ap-status [tone]="status[0]">{{ status[1] }}</ap-status>
+                  </td>
                   <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
                   <td class="ap-num">{{ route.timeoutSeconds }} s</td>
                   <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
                   <td class="ap-col-actions">
                     @if (auth.canOperate()) {
-                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + routeLabel(route)" (click)="delete(route)">
-                        <ap-icon [icon]="icons.delete" />
-                      </button>
+                      <ap-route-row-actions [route]="route" />
                     }
                   </td>
                 </tr>

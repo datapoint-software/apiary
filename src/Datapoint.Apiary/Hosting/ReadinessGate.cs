@@ -1,6 +1,7 @@
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Proxy.Pages;
 
 namespace Datapoint.Apiary.Hosting;
 

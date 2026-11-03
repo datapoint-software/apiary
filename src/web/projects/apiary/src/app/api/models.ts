@@ -14,6 +14,7 @@ export interface RouteView {
   readonly certificateId?: string;
   readonly changedAt: string;
   readonly changedBy?: string;
+  readonly disabled: boolean;
 }
 
 export interface ProjectView {

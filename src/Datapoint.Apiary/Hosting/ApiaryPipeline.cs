@@ -3,6 +3,8 @@ using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
+using Datapoint.Apiary.Proxy.Pages;
+using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Recovery;
 using Datapoint.Apiary.Replication;
 
@@ -20,7 +22,13 @@ public static class ApiaryPipeline
         app.UseRouting();
         MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
         app.MapGroup("/cluster").WithMetadata(ListenerMetadata.Cluster).MapApiaryCluster();
-        app.MapReverseProxy().WithMetadata(ListenerMetadata.Public);
+        app.MapReverseProxy(proxy =>
+        {
+            proxy.UseMiddleware<RouteGate>();
+            proxy.UseSessionAffinity();
+            proxy.UseLoadBalancing();
+            proxy.UsePassiveHealthChecks();
+        }).WithMetadata(ListenerMetadata.Public);
         app.MapFallback(PublicPages.NotFound).WithMetadata(ListenerMetadata.Public);
         return app;
     }

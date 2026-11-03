@@ -1,19 +1,21 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Button, Confirmer, EmptyState, Icon, PageHead, Toaster } from '@datapoint/apiary-ui';
-import { Plus, Search, Trash2 } from 'lucide';
+import { Button, EmptyState, Icon, PageHead, Status } from '@datapoint/apiary-ui';
+import { Plus, Search } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
+import { routeStatus } from './route-status';
+import { RouteRowActions } from './route-row-actions';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouterLink],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, Status, RouteRowActions, RouterLink],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -22,14 +24,15 @@ export class RouteList {
   private readonly api = inject(Api);
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
-  private readonly confirmer = inject(Confirmer);
-  private readonly toaster = inject(Toaster);
-  protected readonly icons = { plus: Plus, search: Search, delete: Trash2 };
+  protected readonly icons = { plus: Plus, search: Search };
+  protected readonly statuses = [['all', 'All'], ['disabled', 'Disabled']] as const;
+  protected readonly routeStatus = routeStatus;
   protected readonly routeLabel = routeLabel;
   protected readonly targetLabel = targetLabel;
   protected readonly timeAgo = timeAgo;
   protected readonly filter = linkedSignal(() => '');
   protected readonly projectFilter = linkedSignal(() => this.project());
+  protected readonly statusFilter = linkedSignal<string>(() => 'all');
 
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
@@ -40,9 +43,10 @@ export class RouteList {
   protected readonly shown = computed(() => {
     const text = this.filter().trim().toLowerCase();
     const project = this.projectFilter();
+    const disabledOnly = this.statusFilter() === 'disabled';
     return this.routes.value().filter((r) => {
       const matchesText = !text || `${r.host}${r.path} ${r.targets.map((t) => t.host).join(' ')}`.includes(text);
-      return matchesText && (!project || r.projectId === project);
+      return matchesText && (!project || r.projectId === project) && (!disabledOnly || r.disabled);
     });
   });
 
@@ -60,21 +64,7 @@ export class RouteList {
 
   protected clearFilters(): void {
     this.filter.set('');
+    this.statusFilter.set('all');
     this.chooseProject('');
-  }
-
-  protected async delete(route: RouteView): Promise<void> {
-    const label = routeLabel(route);
-    const deleted = await this.confirmer.confirm({
-      heading: `Delete route ${label}?`,
-      text: 'Requests to this hostname and path get a 404 on every replica as soon as you confirm.',
-      confirm: 'Delete route',
-      busy: 'Deleting…',
-      typeToConfirm: route.host,
-      action: () => this.api.send('routes.delete', { id: route.id }),
-    });
-    if (deleted) {
-      this.toaster.show(`${label} deleted.`);
-    }
   }
 }

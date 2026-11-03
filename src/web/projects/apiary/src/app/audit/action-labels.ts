@@ -2,6 +2,8 @@ const labels: Record<string, string> = {
   'routes.create': 'created a route',
   'routes.update': 'changed a route',
   'routes.delete': 'deleted a route',
+  'routes.disable': 'disabled a route',
+  'routes.enable': 'enabled a route',
   'certificates.issue': 'requested a certificate',
   'certificates.renew': 'renewed a certificate',
   'keys.rotate-root-key': 'finished rotating the root key and forgot the old one',
