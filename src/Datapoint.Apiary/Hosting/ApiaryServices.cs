@@ -61,7 +61,7 @@ public static class ApiaryServices
             .AddBehavior<StateTransactionBehavior>());
         services.AddApiaryMcp();
 
-        services.AddApiaryProxy(options.OwnPorts, section.GetSection("AccessLogs"));
+        services.AddApiaryProxy(options.OwnPorts, options.InternalPorts, section.GetSection("AccessLogs"));
         services.AddApiaryTelemetry(section.GetSection("Telemetry"));
         return services;
     }

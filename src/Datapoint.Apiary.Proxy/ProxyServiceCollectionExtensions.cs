@@ -23,10 +23,10 @@ public static class ProxyServiceCollectionExtensions
     private const long CacheSizeLimit = 256L * 1024 * 1024;
     private const long CacheMaximumBody = 8L * 1024 * 1024;
 
-    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IConfiguration accessLogs)
+    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IReadOnlySet<int> internalPorts, IConfiguration accessLogs)
     {
         services.Configure<AccessLogOptions>(accessLogs);
-        services.AddSingleton(new OwnEndpoints(ownPorts));
+        services.AddSingleton(new OwnEndpoints(ownPorts, internalPorts));
         services.AddSingleton<TargetConnector>();
         services.AddSingleton<IForwarderHttpClientFactory, GuardedForwarderHttpClientFactory>();
         services.AddSingleton<IProxyConfigProvider, StateProxyConfigProvider>();

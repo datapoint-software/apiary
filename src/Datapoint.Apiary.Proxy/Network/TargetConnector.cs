@@ -49,6 +49,6 @@ public sealed partial class TargetConnector(OwnEndpoints own, ILogger<TargetConn
     private bool IsAllowed(IPAddress address, int port) =>
         AddressPolicy.Classify(address) is AddressKind.Routable && !own.IsOwn(address, port);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Refused a connection to {Host}:{Port}, which resolves to Apiary itself, loopback or a link-local address")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Refused a connection to {Host}:{Port}, which resolves to Apiary itself, loopback or a link-local address, or is Apiary's admin, Raft or cluster port")]
     private partial void LogRefused(string host, int port);
 }

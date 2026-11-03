@@ -29,5 +29,7 @@ public sealed class ApiaryOptions
 
     public IReadOnlyList<string> AdminRanges => AdminAllowlist is [] ? DefaultAdminAllowlist : AdminAllowlist;
 
+    public IReadOnlySet<int> InternalPorts => new HashSet<int> { AdminPort, RaftPort, ClusterPort };
+
     public IReadOnlySet<int> OwnPorts => new HashSet<int> { HttpPort, HttpsPort, AdminPort, RaftPort, ClusterPort };
 }

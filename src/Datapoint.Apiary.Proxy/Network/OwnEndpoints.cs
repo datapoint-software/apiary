@@ -3,14 +3,14 @@ using System.Net.NetworkInformation;
 
 namespace Datapoint.Apiary.Proxy.Network;
 
-public sealed class OwnEndpoints(IReadOnlySet<int> ports)
+public sealed class OwnEndpoints(IReadOnlySet<int> ports, IReadOnlySet<int> internalPorts)
 {
     private readonly Lazy<HashSet<IPAddress>> _addresses = new(LocalAddresses);
 
     public bool IsOwn(IPAddress address, int port)
     {
         var mapped = address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
-        return ports.Contains(port) && _addresses.Value.Contains(mapped);
+        return internalPorts.Contains(port) || (ports.Contains(port) && _addresses.Value.Contains(mapped));
     }
 
     private static HashSet<IPAddress> LocalAddresses() =>
