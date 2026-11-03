@@ -8,9 +8,11 @@ public sealed class ReplicaCredentials : IDisposable
 {
     private readonly X509Certificate2 _certificate;
     private readonly X509Certificate2Collection _authorities = [];
+    private readonly byte[] _privateKey;
 
     public ReplicaCredentials(ECDsa key, string certificatePem, string authorityPems)
     {
+        _privateKey = key.ExportPkcs8PrivateKey();
         using var issued = X509Certificate2.CreateFromPem(certificatePem);
         using var withKey = issued.CopyWithPrivateKey(key);
         _certificate = X509CertificateLoader.LoadPkcs12(withKey.Export(X509ContentType.Pkcs12), null);
@@ -27,11 +29,7 @@ public sealed class ReplicaCredentials : IDisposable
 
     public string CertificatePem { get; }
 
-    public byte[] ExportPrivateKey()
-    {
-        using var key = _certificate.GetECDsaPrivateKey()!;
-        return key.ExportPkcs8PrivateKey();
-    }
+    public byte[] ExportPrivateKey() => [.. _privateKey];
 
     public static SslServerAuthenticationOptions ServerOptions(Func<ReplicaCredentials?> current) => new()
     {
@@ -49,7 +47,8 @@ public sealed class ReplicaCredentials : IDisposable
 
     public ReplicaCredentials WithAuthorities(string authorityPems)
     {
-        using var key = _certificate.GetECDsaPrivateKey()!;
+        using var key = ECDsa.Create();
+        key.ImportPkcs8PrivateKey(_privateKey, out _);
         return new ReplicaCredentials(key, CertificatePem, authorityPems);
     }
 
@@ -82,6 +81,7 @@ public sealed class ReplicaCredentials : IDisposable
 
     public void Dispose()
     {
+        CryptographicOperations.ZeroMemory(_privateKey);
         _certificate.Dispose();
         foreach (var authority in _authorities)
         {
