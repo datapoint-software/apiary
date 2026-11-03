@@ -19,6 +19,9 @@ export interface RouteView {
   readonly maintenance?: MaintenanceWindow;
   readonly canary?: RouteCanary;
   readonly sticky: boolean;
+  readonly compression: boolean;
+  readonly caching: boolean;
+  readonly cachePurgedAt?: string;
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;
   readonly targetsDown: number;

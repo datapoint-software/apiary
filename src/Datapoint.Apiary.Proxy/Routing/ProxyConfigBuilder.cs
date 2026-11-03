@@ -1,6 +1,7 @@
 using System.Globalization;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Proxy.Caching;
 using Datapoint.Apiary.Proxy.Health;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
@@ -48,6 +49,7 @@ public static class ProxyConfigBuilder
             Path = route.Path == "/" ? "/{**rest}" : route.Path + "/{**rest}",
         },
         Metadata = new Dictionary<string, string>(StringComparer.Ordinal) { [RouteIdMetadata] = route.Id.ToString() },
+        OutputCachePolicy = route.Caching ? HttpCachePolicy.PolicyName : null,
     };
 
     private static ClusterConfig BuildCluster(Route route) => new()

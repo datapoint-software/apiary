@@ -64,6 +64,22 @@ export class RouteActions {
     return deleted;
   }
 
+  async purge(routes: readonly RouteView[]): Promise<boolean> {
+    const cached = routes.filter((r) => r.caching);
+    if (cached.length === 0) {
+      this.toaster.show(routes.length === 1 ? 'Caching is off for this route, so there’s nothing to purge.' : 'None of these routes has caching on.', { tone: 'error' });
+      return false;
+    }
+    try {
+      await this.api.send('routes.purge-cache', { ids: cached.map((r) => r.id) });
+      this.toaster.show(cached.length === 1 ? `Cache of ${routeLabel(cached[0])} purged on every replica.` : `Cache of ${cached.length} routes purged on every replica.`);
+      return true;
+    } catch (problem) {
+      this.toaster.show(this.messages.describe((problem as ApiProblem).code), { tone: 'error' });
+      return false;
+    }
+  }
+
   async enable(route: RouteView): Promise<boolean> {
     const label = routeLabel(route);
     try {

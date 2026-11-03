@@ -135,6 +135,20 @@
             </div>
           </ap-field>
         </div>
+        <label class="ap-choice">
+          <input class="ap-switch" type="checkbox" [formField]="route.compression" />
+          <span class="ap-choice-text">
+            <span>Compression</span>
+            <span class="ap-help">Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.</span>
+          </span>
+        </label>
+        <label class="ap-choice">
+          <input class="ap-switch" type="checkbox" [formField]="route.caching" />
+          <span class="ap-choice-text">
+            <span>Caching</span>
+            <span class="ap-help">Stores only what the target allows with Cache-Control, in memory on each replica.</span>
+          </span>
+        </label>
       </div>
     </section>
 

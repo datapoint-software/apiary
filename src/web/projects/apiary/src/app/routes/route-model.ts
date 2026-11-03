@@ -32,6 +32,8 @@ export interface RouteModel {
   maintenance: MaintenanceModel;
   canary: CanaryModel;
   sticky: boolean;
+  compression: boolean;
+  caching: boolean;
 }
 
 function noCanary(): CanaryModel {
@@ -43,7 +45,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -66,5 +68,7 @@ export function routeModel(route: RouteView): RouteModel {
       : noMaintenance(),
     canary: route.canary ? { ...route.canary } : noCanary(),
     sticky: route.sticky,
+    compression: route.compression,
+    caching: route.caching,
   };
 }

@@ -139,6 +139,8 @@ export class RouteEditor implements HasUnsavedChanges {
         ? { source: value.canary.source, name: value.canary.name.trim(), value: value.canary.value.trim() }
         : null,
       sticky: value.targets.length > 1 && value.sticky,
+      compression: value.compression,
+      caching: value.caching,
     };
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));

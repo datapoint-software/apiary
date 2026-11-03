@@ -19,5 +19,7 @@ public sealed record UpdateRoute(
     [property: Description("The addresses and ranges allowed to use the route, such as 10.0.0.0/8 or 2001:db8::/32. Anyone else gets a 403. Leave it empty to allow everyone.")] IReadOnlyList<string>? AllowedAddresses = null,
     [property: Description("A maintenance window, or null for none. During the window, visitors get a 503 page with the message (at most 200 characters). It can last at most 7 days and must end in the future.")] MaintenanceWindow? Maintenance = null,
     [property: Description("Sends requests that carry this header or cookie (source header or cookie, name and value) to the last target, so testers reach a new version on purpose. Needs two or more targets.")] RouteCanary? Canary = null,
-    [property: Description("Keeps each visitor on the target they first reached, for 1 hour, with a cookie.")] bool Sticky = false)
+    [property: Description("Keeps each visitor on the target they first reached, for 1 hour, with a cookie.")] bool Sticky = false,
+    [property: Description("Compresses responses with Brotli or gzip. Leave it off for pages that mix secrets with text visitors can influence (the BREACH attack).")] bool Compression = false,
+    [property: Description("Caches responses in memory on each replica, only as the target allows with Cache-Control.")] bool Caching = false)
     : ICommand, IRouteFields;

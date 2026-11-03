@@ -26,6 +26,8 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             Maintenance = RouteNormalization.Maintenance(command.Maintenance),
             Canary = RouteNormalization.Canary(command.Canary, command.Targets.Count),
             Sticky = command.Sticky,
+            Compression = command.Compression,
+            Caching = command.Caching,
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);

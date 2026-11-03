@@ -20,4 +20,10 @@ public sealed record Route(
     public RouteCanary? Canary { get; init; }
 
     public bool Sticky { get; init; }
+
+    public bool Compression { get; init; }
+
+    public bool Caching { get; init; }
+
+    public DateTimeOffset? CachePurgedAt { get; init; }
 }

@@ -5,6 +5,7 @@ const labels: Record<string, string> = {
   'routes.disable': 'disabled a route',
   'routes.enable': 'enabled a route',
   'routes.move': 'moved routes to another project',
+  'routes.purge-cache': 'purged the cache of routes',
   'projects.create': 'created a project',
   'projects.update': 'changed a project',
   'projects.delete': 'deleted a project',

@@ -23,4 +23,8 @@ public interface IRouteFields
     RouteCanary? Canary { get; }
 
     bool Sticky { get; }
+
+    bool Compression { get; }
+
+    bool Caching { get; }
 }

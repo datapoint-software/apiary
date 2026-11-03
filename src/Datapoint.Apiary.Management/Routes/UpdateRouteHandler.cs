@@ -28,6 +28,8 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             Maintenance = RouteNormalization.Maintenance(command.Maintenance),
             Canary = RouteNormalization.Canary(command.Canary, command.Targets.Count),
             Sticky = command.Sticky,
+            Compression = command.Compression,
+            Caching = command.Caching,
             ChangedAt = time.GetUtcNow(),
             ChangedBy = principals.Principal?.Identity?.Name,
         };
