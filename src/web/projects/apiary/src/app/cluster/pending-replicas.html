@@ -1,0 +1,55 @@
+@if (pending().length > 0) {
+  <section class="ap-panel" aria-labelledby="pending-title">
+    <div class="ap-panel-head">
+      <div>
+        <h2 class="ap-h ap-h-3" id="pending-title">Waiting for approval</h2>
+        <p class="ap-panel-desc">
+          These replicas have the root key and ask to join. Approve the ones you deployed; the
+          others keep waiting.
+        </p>
+      </div>
+    </div>
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">
+          Replicas waiting for approval
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Replica</th>
+            <th scope="col">Address</th>
+            <th scope="col">Asking since</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (replica of pending(); track replica.id) {
+            <tr>
+              <td>
+                <div class="ap-cell-main">
+                  <span class="ap-data" style="font-weight: 500">{{ replica.node }}</span>
+                  <span class="ap-caption ap-data">{{ replica.id }}</span>
+                </div>
+              </td>
+              <td class="ap-data ap-muted">{{ replica.address }}</td>
+              <td class="ap-muted">{{ timeAgo(replica.since) }}</td>
+              <td class="ap-col-actions">
+                @if (auth.canAdminister()) {
+                  <button
+                    apWrite
+                    apButton="primary"
+                    type="button"
+                    [disabled]="approving() === replica.id"
+                    (click)="approve(replica)"
+                  >
+                    {{ approving() === replica.id ? 'Approving…' : 'Approve' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

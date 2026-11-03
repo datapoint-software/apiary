@@ -111,7 +111,7 @@ public sealed partial class RaftClusterState(
         }
 
         var own = Address?.ToString();
-        return local with { Members = [.. view.Members.Select(m => m with { Local = m.Address == own })] };
+        return local with { Members = [.. view.Members.Select(m => m with { Local = m.Address == own })], Pending = view.Pending };
     }
 
     private async Task<ClusterView?> FetchViewAsync(IPAddress peer, CancellationToken cancellationToken)
@@ -138,9 +138,9 @@ public sealed partial class RaftClusterState(
             var address = m.EndPoint.ToString() ?? "";
             var replica = state.Replicas.Values.FirstOrDefault(r => r.Address == address);
             var role = m.IsLeader ? MemberRole.Leader : MemberRole.Voter;
-            return new MemberView(replica?.Id, replica?.Node, address, role, !m.IsRemote || m.Status is ClusterMemberStatus.Available, !m.IsRemote, replica?.JoinedAt);
+            return new MemberView(replica?.Id, replica?.Node, address, role, !m.IsRemote || m.Status is ClusterMemberStatus.Available, !m.IsRemote, replica?.JoinedAt, MissingSince(address));
         }).ToList() ?? [];
-        return new ClusterView(options.Value.Mode.ToString(), IsReady, IsWritable, state.Index, Identity?.Id, members);
+        return new ClusterView(options.Value.Mode.ToString(), IsReady, IsWritable, state.Index, Identity?.Id, members, Membership, Pending);
     }
 
     public async Task<AcmeChallenge?> FindChallengeAsync(string token, CancellationToken cancellationToken)

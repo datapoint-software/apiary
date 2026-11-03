@@ -56,7 +56,7 @@
         <ap-icon [icon]="panelIcon" />
       </button>
       <div class="ap-top-end">
-        @if (cluster.view.value()?.mode === 'Swarm') {
+        @if (cluster.view()?.mode === 'Swarm') {
           <a routerLink="/replicas" style="text-decoration: none">
             <ap-status [tone]="cluster.locked() ? 'critical' : cluster.reachable() < cluster.voters().length ? 'warn' : 'ok'">
               {{ cluster.reachable() }} of {{ cluster.voters().length }} replicas<span class="ap-sr"

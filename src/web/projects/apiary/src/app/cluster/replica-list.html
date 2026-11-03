@@ -1,20 +1,28 @@
 <ap-page-head heading="Replicas">
   <span pageSub>
-    @if (cluster.view.value()?.mode === 'Standalone') {
-      Apiary runs as one instance, so there’s nothing to replicate. Deploy it as a Swarm stack to run several replicas.
+    @if (cluster.view()?.mode === 'Standalone') {
+      Apiary runs as one instance, so there’s nothing to replicate. Deploy it as a Swarm stack to
+      run several replicas.
     } @else {
-      Every replica keeps a copy of the configuration and serves traffic. A majority of them must agree on each change.
+      Every replica keeps a copy of the configuration and serves traffic. A majority of them must
+      agree on each change.
     }
   </span>
 </ap-page-head>
 
+<ap-pending-replicas />
+
 <section class="ap-panel">
-  @if (cluster.view.isLoading() && members().length === 0) {
-    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  @if (cluster.isLoading() && members().length === 0) {
+    <div style="padding: 24px" aria-busy="true" aria-label="Loading">
+      <span class="ap-skel" style="width: 60%; height: 14px"></span>
+    </div>
   } @else {
     <div class="ap-table-wrap">
       <table class="ap-table">
-        <caption class="ap-sr">Replicas</caption>
+        <caption class="ap-sr">
+          Replicas
+        </caption>
         <thead>
           <tr>
             <th scope="col">Replica</th>
@@ -22,6 +30,7 @@
             <th scope="col">Role</th>
             <th scope="col">Status</th>
             <th scope="col">Joined</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -43,8 +52,17 @@
               </td>
               <td class="ap-data ap-muted">{{ member.address }}</td>
               <td>{{ roles[member.role] }}</td>
-              <td><ap-status [tone]="state[0]">{{ state[1] }}</ap-status></td>
+              <td>
+                <ap-status [tone]="state[0]">{{ state[1] }}</ap-status>
+              </td>
               <td class="ap-muted">{{ member.joinedAt ? timeAgo(member.joinedAt) : '—' }}</td>
+              <td class="ap-col-actions">
+                @if (!member.reachable && member.id && auth.canAdminister()) {
+                  <button apWrite apButton="ghost" type="button" (click)="remove(member)">
+                    Remove now…
+                  </button>
+                }
+              </td>
             </tr>
           }
         </tbody>
@@ -53,4 +71,78 @@
   }
 </section>
 
-<p class="ap-caption">Log index {{ cluster.view.value()?.index ?? 0 }}. Replicas that stay missing are removed after a while, so they don’t count against the majority.</p>
+@if (isSwarm()) {
+  <form
+    class="ap-panel"
+    aria-labelledby="membership-title"
+    [apForm]="membership"
+    #membershipForm="apForm"
+    (submit)="save(membershipForm)"
+  >
+    <div class="ap-panel-head">
+      <div>
+        <h2 class="ap-h ap-h-3" id="membership-title">Membership</h2>
+        <p class="ap-panel-desc">
+          How replicas join and leave. Either way, a replica must prove it has the root key before
+          it can join.
+        </p>
+      </div>
+    </div>
+    <div class="ap-panel-body ap-stack">
+      <ap-error-summary verb="save the membership" />
+      <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+        <legend class="ap-sr">Membership</legend>
+        <div class="ap-stack" style="gap: 10px">
+          <label class="ap-choice">
+            <input class="ap-radio" type="radio" value="automatic" [formField]="membership.mode" />
+            <span class="ap-choice-text">
+              <span>Automatic</span>
+              <span class="ap-help"
+                >New replicas join on their own, so the cluster grows and shrinks with the
+                stack.</span
+              >
+            </span>
+          </label>
+          <label class="ap-choice">
+            <input class="ap-radio" type="radio" value="manual" [formField]="membership.mode" />
+            <span class="ap-choice-text">
+              <span>Manual</span>
+              <span class="ap-help"
+                >New replicas wait here until an administrator approves them, and missing ones stay
+                until removed.</span
+              >
+            </span>
+          </label>
+        </div>
+      </fieldset>
+      @if (membership.mode().value() === 'automatic') {
+        <div style="max-width: 300px">
+          <ap-field
+            label="Remove missing replicas after"
+            [field]="membership.removeMissingAfterMinutes"
+            help="From 5 to 1440 minutes."
+          >
+            <div class="ap-affix">
+              <input
+                class="ap-input ap-data"
+                type="number"
+                inputmode="numeric"
+                [formField]="membership.removeMissingAfterMinutes"
+              />
+              <span class="ap-affix-text">minutes</span>
+            </div>
+          </ap-field>
+        </div>
+      }
+    </div>
+    @if (auth.canAdminister()) {
+      <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
+        <button apWrite apButton="primary" type="submit" [disabled]="membership().submitting()">
+          {{ membership().submitting() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    }
+  </form>
+}
+
+<p class="ap-caption">Log index {{ cluster.view()?.index ?? 0 }}.</p>

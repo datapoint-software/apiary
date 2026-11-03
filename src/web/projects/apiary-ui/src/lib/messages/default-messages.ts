@@ -7,6 +7,7 @@ export const defaultMessages: MessageCatalog = {
   'auth.required': () => 'Your session has ended. Sign in again to continue.',
   'auth.forbidden': () => 'Your role doesn’t allow this. Ask an Administrator if you need it.',
   'cluster.noQuorum': () => 'Changes are paused while the cluster can’t reach a majority of voters. Try again once it recovers.',
+  'cluster.notReady': () => 'This replica is still joining the cluster. Try again in a minute, or use another replica’s address.',
   'network.offline': () => 'Apiary didn’t answer. Check your connection and try again.',
   required: () => 'Fill this in.',
   invalid: () => 'Check this value.',

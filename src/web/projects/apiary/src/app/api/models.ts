@@ -157,6 +157,21 @@ export interface MemberView {
   readonly reachable: boolean;
   readonly local: boolean;
   readonly joinedAt?: string;
+  readonly missingSince?: string;
+}
+
+export type MembershipMode = 'automatic' | 'manual';
+
+export interface MembershipSettings {
+  readonly mode: MembershipMode;
+  readonly removeMissingAfterMinutes: number;
+}
+
+export interface PendingReplica {
+  readonly id: string;
+  readonly node: string;
+  readonly address: string;
+  readonly since: string;
 }
 
 export interface ClusterView {
@@ -166,6 +181,8 @@ export interface ClusterView {
   readonly index: number;
   readonly replicaId?: string;
   readonly members: readonly MemberView[];
+  readonly membership: MembershipSettings;
+  readonly pending: readonly PendingReplica[];
 }
 
 export interface BackupFile {

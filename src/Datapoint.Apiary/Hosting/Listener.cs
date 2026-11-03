@@ -15,5 +15,7 @@ public static class Listener
 
     public static bool IsAdmin(HttpContext context) => Kind(context) is ListenerKind.Admin;
 
+    public static bool IsCluster(HttpContext context) => Kind(context) is ListenerKind.Cluster;
+
     public static bool IsPublic(HttpContext context) => Kind(context) is ListenerKind.Public;
 }

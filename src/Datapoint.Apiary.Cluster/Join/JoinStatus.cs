@@ -6,4 +6,5 @@ public enum JoinStatus
     NoCluster,
     WrongCluster,
     Superseded,
+    Pending,
 }

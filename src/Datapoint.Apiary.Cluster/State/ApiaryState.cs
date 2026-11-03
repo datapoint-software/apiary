@@ -15,6 +15,7 @@ namespace Datapoint.Apiary.Cluster.State;
 public sealed record ApiaryState
 {
     private readonly ImmutableList<Guid>? _previousClusterIds;
+    private readonly ImmutableHashSet<Guid>? _approvedReplicas;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -47,6 +48,14 @@ public sealed record ApiaryState
     }
 
     public ImmutableDictionary<Guid, Replica> Replicas { get; init; } = ImmutableDictionary<Guid, Replica>.Empty;
+
+    public MembershipSettings? Membership { get; init; }
+
+    public ImmutableHashSet<Guid> ApprovedReplicas
+    {
+        get => _approvedReplicas ?? [];
+        init => _approvedReplicas = value;
+    }
 
     public ImmutableDictionary<Guid, AppliedRequest> AppliedRequests { get; init; } = ImmutableDictionary<Guid, AppliedRequest>.Empty;
 

@@ -117,6 +117,7 @@ public sealed partial class RaftClusterState
     }
 
     private bool _bootstrapping;
+    private bool _waitingForApproval;
 
     private async Task<bool?> ObtainCredentialsAsync(CancellationToken cancellationToken)
     {
@@ -137,6 +138,7 @@ public sealed partial class RaftClusterState
                 throw new InvalidOperationException("Another Apiary cluster answers on this network with the same root key. This replica's state belongs to a different cluster; remove its volume to join the running one.");
             }
 
+            NoteWaitingForApproval(answers);
             if (settled && await TryUseAsync(answers, key, cancellationToken))
             {
                 return _bootstrapCa is not null;
@@ -144,6 +146,17 @@ public sealed partial class RaftClusterState
 
             await Task.Delay(s_joinRetry, time, cancellationToken);
         }
+    }
+
+    private void NoteWaitingForApproval(JoinResponse?[] answers)
+    {
+        if (_waitingForApproval || !answers.Any(a => a?.Status is JoinStatus.Pending) || answers.Any(a => a?.Status is JoinStatus.Joined))
+        {
+            return;
+        }
+
+        _waitingForApproval = true;
+        LogWaitingForApproval(Identity!.Id);
     }
 
     private JoinResponse?[] WithoutSuperseded(JoinResponse?[] answers)
@@ -156,14 +169,13 @@ public sealed partial class RaftClusterState
     {
         if (answers.FirstOrDefault(a => a?.Status is JoinStatus.Joined) is { } joined)
         {
-            if (!encryption.IsLoaded)
-            {
-                await encryption.ImportAsync(StateDirectory, _joinKeys[joined.ClusterId!.Value], cancellationToken);
-            }
-
-            UseCredentials(new ReplicaCredentials(key, joined.CertificatePem!, joined.AuthorityPem!));
-            LogJoined(joined.Address);
+            await UseJoinedAsync(joined, key, cancellationToken);
             return true;
+        }
+
+        if (answers.Any(a => a?.Status is JoinStatus.Pending))
+        {
+            return false;
         }
 
         if (Current.ClusterCa is { } ca)
@@ -183,6 +195,17 @@ public sealed partial class RaftClusterState
         UseCredentials(new ReplicaCredentials(key, ClusterAuthority.Issue(_bootstrapCa, key.ExportSubjectPublicKeyInfo(), Identity!.Id, time.GetUtcNow()), _bootstrapCa.CertificatePem));
         LogBootstrapping();
         return true;
+    }
+
+    private async Task UseJoinedAsync(JoinResponse joined, ECDsa key, CancellationToken cancellationToken)
+    {
+        if (!encryption.IsLoaded)
+        {
+            await encryption.ImportAsync(StateDirectory, _joinKeys[joined.ClusterId!.Value], cancellationToken);
+        }
+
+        UseCredentials(new ReplicaCredentials(key, joined.CertificatePem!, joined.AuthorityPem!));
+        LogJoined(joined.Address);
     }
 
     private readonly Dictionary<Guid, SharedKeyRing> _joinKeys = [];
@@ -323,6 +346,9 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Information, Message = "No cluster found, so this replica creates one")]
     private partial void LogBootstrapping();
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The cluster uses manual membership, so this replica ({ReplicaId}) waits until an administrator approves it on the Replicas page")]
+    private partial void LogWaitingForApproval(Guid replicaId);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Waiting for the first replica to create the cluster")]
     private partial void LogWaitingForCluster();

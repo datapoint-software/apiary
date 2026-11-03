@@ -7,6 +7,7 @@ public static class ErrorCodes
     public const string AuthenticationRequired = "auth.required";
     public const string Forbidden = "auth.forbidden";
     public const string NoQuorum = "cluster.noQuorum";
+    public const string NotReady = "cluster.notReady";
 
     public const string Required = "required";
     public const string TooLong = "tooLong";
@@ -74,10 +75,13 @@ public static class ErrorCodes
     public const string UserNotInvited = "user.notInvited";
     public const string SessionNotFound = "session.notFound";
     public const string BackupUnreadable = "backup.unreadable";
+    public const string ReplicaNotFound = "replica.notFound";
+    public const string ReplicaNotPending = "replica.notPending";
+    public const string ReplicaReachable = "replica.reachable";
 
     public static IReadOnlyList<string> All { get; } =
     [
-        Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum,
+        Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum, NotReady,
         Required, TooLong, Range, Invalid,
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
@@ -89,5 +93,6 @@ public static class ErrorCodes
         EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
+        ReplicaNotFound, ReplicaNotPending, ReplicaReachable,
     ];
 }

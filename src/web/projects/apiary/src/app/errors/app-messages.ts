@@ -48,5 +48,8 @@ export const appMessages: MessageCatalog = {
   'user.sameRole': () => 'They already have this role. Choose another role, or cancel.',
   'user.notInvited': () => 'They already accepted their invite.',
   'session.notFound': () => 'That session already ended.',
+  'replica.notFound': () => 'This replica was already removed. The list now shows the current replicas.',
+  'replica.notPending': () => 'This replica stopped asking to join, or was already approved. The list now shows the current replicas.',
+  'replica.reachable': () => 'This replica can be reached again, so it stays. Only unreachable replicas can be removed.',
   'backup.unreadable': () => 'This file isn’t a backup this cluster can open. Choose a file Apiary exported, from a cluster with the same root key.',
 };

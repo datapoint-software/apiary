@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
 using Datapoint.Apiary.Cluster.Join;
@@ -5,6 +6,7 @@ using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Trust;
 using Datapoint.Apiary.Security.Tokens;
+using DotNext.Net.Cluster;
 using Microsoft.Extensions.Logging;
 
 namespace Datapoint.Apiary.Cluster.Raft;
@@ -16,7 +18,9 @@ public sealed partial class RaftClusterState
     private static readonly TimeSpan s_leaderlessTimeout = TimeSpan.FromSeconds(45);
     private DateTimeOffset? _leaderlessSince;
     private readonly SemaphoreSlim _membership = new(1, 1);
-    private readonly Dictionary<IPEndPoint, DateTimeOffset> _missingSince = [];
+    private static readonly TimeSpan s_pendingExpiry = TimeSpan.FromMinutes(1);
+    private readonly ConcurrentDictionary<IPEndPoint, DateTimeOffset> _missingSince = [];
+    private readonly ConcurrentDictionary<Guid, PendingReplica> _pending = [];
 
     public JoinResponse? AnswerJoin(JoinRequest request, IPAddress? remote)
     {
@@ -34,6 +38,15 @@ public sealed partial class RaftClusterState
             return protocol.Sign(new JoinResponse(refusal, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce);
         }
 
+        if (!IsAdmitted(state, request.ReplicaId))
+        {
+            _pending.AddOrUpdate(
+                request.ReplicaId,
+                id => new PendingReplica(id, request.Node, request.Address, now, now),
+                (_, pending) => pending with { Node = request.Node, Address = request.Address, LastSeen = now });
+            return protocol.Sign(new JoinResponse(JoinStatus.Pending, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce);
+        }
+
         var ca = state.ClusterCa!;
 
         var certificate = ClusterAuthority.Issue(ca, publicKey, request.ReplicaId, now);
@@ -49,6 +62,52 @@ public sealed partial class RaftClusterState
         _ => null,
     };
 
+    private static bool IsAdmitted(ApiaryState state, Guid replicaId) =>
+        state.Membership?.Mode is not MembershipMode.Manual
+        || state.Replicas.ContainsKey(replicaId)
+        || state.ApprovedReplicas.Contains(replicaId);
+
+    public MembershipSettings Membership =>
+        Current.Membership ?? new MembershipSettings(MembershipMode.Automatic, (int)Math.Ceiling(options.Value.MissingTimeout.TotalMinutes));
+
+    public IReadOnlyList<PendingReplica> Pending
+    {
+        get
+        {
+            var now = time.GetUtcNow();
+            var state = Current;
+            foreach (var stale in _pending.Values.Where(p => now - p.LastSeen > s_pendingExpiry || IsAdmitted(state, p.Id)))
+            {
+                _pending.TryRemove(stale.Id, out _);
+            }
+
+            return [.. _pending.Values.OrderBy(p => p.Since)];
+        }
+    }
+
+    public DateTimeOffset? MissingSince(string address) =>
+        IPEndPoint.TryParse(address, out var endPoint) && _missingSince.TryGetValue(endPoint, out var since) ? since : null;
+
+    public bool IsReachable(Replica replica) =>
+        replica.Address == Address?.ToString()
+        || _raft?.Members.Any(m => m.EndPoint.ToString() == replica.Address && m.Status is ClusterMemberStatus.Available) is true;
+
+    public async Task RemoveReplicaAsync(Replica replica, CancellationToken cancellationToken)
+    {
+        await _membership.WaitAsync(cancellationToken);
+        try
+        {
+            var address = IPEndPoint.Parse(replica.Address);
+            await RemoveMemberAsync(address, cancellationToken);
+            _missingSince.TryRemove(address, out _);
+            LogRemoved(replica.Node, replica.Address);
+        }
+        finally
+        {
+            _membership.Release();
+        }
+    }
+
     private bool IsGenuine(JoinRequest request, IPAddress? remote, DateTimeOffset now) =>
         protocol.Verify(request, now)
         && IPEndPoint.TryParse(request.Address, out var claimed)
@@ -60,6 +119,11 @@ public sealed partial class RaftClusterState
         if (!IsLeader)
         {
             return await RelayToLeaderAsync("announce", announcement, cancellationToken);
+        }
+
+        if (!IsAdmitted(Current, announcement.ReplicaId))
+        {
+            return false;
         }
 
         var address = IPEndPoint.Parse(announcement.Address);
@@ -115,7 +179,7 @@ public sealed partial class RaftClusterState
 
             await RemoveMemberAsync(address, cancellationToken);
             var now = time.GetUtcNow();
-            await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, [new ReplicaRemoved(announcement.ReplicaId)]), cancellationToken);
+            await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, [new ReplicaLeft(announcement.ReplicaId)]), cancellationToken);
             LogLeft(announcement.Node, announcement.Address);
             return true;
         }
@@ -242,18 +306,20 @@ public sealed partial class RaftClusterState
             return;
         }
 
+        var membership = Membership;
+        var timeout = Current.Membership is null ? options.Value.MissingTimeout : TimeSpan.FromMinutes(membership.RemoveMissingAfterMinutes);
         var running = await discovery.ResolveAsync(cancellationToken);
         var now = time.GetUtcNow();
         foreach (var member in _raft!.Members.Where(m => m.IsRemote).Select(m => (IPEndPoint)m.EndPoint))
         {
             if (running.Contains(member.Address))
             {
-                _missingSince.Remove(member);
+                _missingSince.TryRemove(member, out _);
                 continue;
             }
 
             var since = _missingSince.TryAdd(member, now) ? now : _missingSince[member];
-            if (now - since >= options.Value.MissingTimeout)
+            if (membership.Mode is MembershipMode.Automatic && now - since >= timeout)
             {
                 await RemoveMissingMemberAsync(member, cancellationToken);
             }
@@ -283,13 +349,29 @@ public sealed partial class RaftClusterState
 
         foreach (var peer in await discovery.PeersAsync(Address!.Address, cancellationToken))
         {
-            if (Moved(await FetchViewAsync(peer, cancellationToken)) is { } moved)
+            var view = await FetchViewAsync(peer, cancellationToken);
+            if (IsRemoved(view))
+            {
+                LogRemovedFromCluster();
+                lifetime.StopApplication();
+                return;
+            }
+
+            if (Moved(view) is { } moved)
             {
                 LogPeerMoved(moved.Node ?? moved.Id.ToString(), moved.Address);
                 _leaderlessSince = now;
                 return;
             }
         }
+    }
+
+    private bool IsRemoved(ClusterView? view)
+    {
+        var own = Address?.ToString();
+        return view is not null
+            && view.Members.Any(m => m.Role is MemberRole.Leader)
+            && view.Members.All(m => m.Address != own && m.Id != Identity?.Id);
     }
 
     private Replica? Moved(ClusterView? view)
@@ -309,7 +391,7 @@ public sealed partial class RaftClusterState
         try
         {
             await RemoveMemberAsync(member, cancellationToken);
-            _missingSince.Remove(member);
+            _missingSince.TryRemove(member, out _);
             var replica = Current.Replicas.Values.FirstOrDefault(r => r.Address == member.ToString());
             var now = time.GetUtcNow();
             if (replica is not null)
@@ -339,6 +421,12 @@ public sealed partial class RaftClusterState
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Added the replica on {Node} at {Address} to the cluster")]
     private partial void LogAdmitted(string node, string address);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Removed the replica on {Node} at {Address} from the cluster, as an administrator asked")]
+    private partial void LogRemoved(string node, string address);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "This replica was removed from the cluster while it was unreachable. Apiary stops now, and joins again as a new replica when it restarts")]
+    private partial void LogRemovedFromCluster();
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The replica on {Node} at {Address} left the cluster")]
     private partial void LogLeft(string node, string address);
