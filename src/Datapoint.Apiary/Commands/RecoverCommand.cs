@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Cluster.Recovery;
 
@@ -7,6 +8,8 @@ namespace Datapoint.Apiary.Commands;
 public static class RecoverCommand
 {
     private const string Confirmation = "recover";
+
+    private static readonly JsonSerializerOptions PlanJson = new(ApiJson.Options) { RespectRequiredConstructorParameters = false };
 
     public static async Task<int> RunAsync(IReadOnlyList<string> args)
     {
@@ -28,7 +31,7 @@ public static class RecoverCommand
             return 1;
         }
 
-        var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(ApiJson.Options))!;
+        var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(PlanJson))!;
         Describe(plan);
         if (!plan.Needed)
         {
