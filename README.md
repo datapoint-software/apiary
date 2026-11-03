@@ -2,7 +2,7 @@
 
 Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engine/swarm/) clusters that must stay available. It routes incoming HTTP and HTTPS requests to Swarm services and manages TLS certificates automatically through [Let's Encrypt](https://letsencrypt.org/).
 
-> **Status: initial design.** Nothing is implemented yet. The documentation below records the decisions made so far and those still open. Expect it to change as they are settled.
+> **Status: in development.** Milestones 0 to 4 of the [implementation plan](docs/implementation-plan.md) are built: routing, sign-in and users, HTTPS with automatic certificates, and replication across a Swarm. Decisions made along the way wait for review in [docs/review-notes.md](docs/review-notes.md).
 
 ## Goals
 
@@ -39,6 +39,21 @@ curl --cacert pebble-root.pem --resolve shop.apiary.test:443:127.0.0.1 https://s
 ```
 
 Without Pebble, Apiary asks Let's Encrypt's staging environment (`Apiary__Acme__DirectoryUrl`), which needs a public hostname pointing at your machine.
+
+To try a cluster, use a Swarm. One node is enough to see replicas join, lose a leader and lose quorum; three nodes show it for real. On one node (`docker swarm init` first), with a root key and the image built locally:
+
+```bash
+docker build -t apiary:dev .
+docker run --rm apiary:dev secrets init | docker secret create apiary_root_key_1 -
+docker node update --label-add apiary.edge=true $(docker node ls -q)
+APIARY_VERSION=dev docker stack deploy -c deploy/stack.yaml apiary
+```
+
+`deploy/stack.yaml` pulls `hub.datapoint.software/datapoint/apiary`, so for a local image change its `image:` to `apiary:dev`. It runs one replica per node, so on one node only one starts; to see three, run them with `docker service create` instead, with a volume per replica (`type=volume,source=apiary-data-{{.Task.Slot}},target=/data`), as stack files can't template volume names. Then:
+
+- Open Replicas in the admin UI to see the leader and the other replicas.
+- Stop the leader's container (`docker kill`) and keep changing routes: one change waits 2 or 3 seconds for a new leader, and Swarm starts a new replica that joins by itself.
+- Stop two of three replicas for a while (`docker pause` keeps Swarm from replacing them): the UI says "Changes are paused" and refuses changes, while routes keep working with the last configuration. Through Swarm's ingress ports, requests that land on a paused replica hang; that's the test, not Apiary.
 
 For development without Docker, run `dotnet run --project src/Datapoint.Apiary` and, in `src/web`, `npm start`, which serves the UI on `http://localhost:4200`.
 
