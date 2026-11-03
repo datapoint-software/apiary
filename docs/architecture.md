@@ -99,6 +99,7 @@ By default a route has a single target group, and none of the following applies.
 - Swarm ports can only be published in the compose file, not at runtime. So the compose file publishes a **range of ports** in `host` mode for stream routes (e.g. `10000-10099`, TCP and UDP), and each stream route takes a port from that range. Widening the range means redeploying.
 - TCP routes are chosen by port. A TCP route can also choose by TLS server name (SNI) without decrypting (TLS passthrough), so several TLS services can share one port. UDP routes are chosen by port only, with a configurable idle timeout for each client's session.
 - An open TCP connection or UDP session stays on the replica that accepted it. If that replica stops, the client must reconnect.
+- In the first version, any port other than Apiary's own can be used, and the Stream routes page shows the line to add to the stack file for each new port.
 
 ## Replicated state
 
