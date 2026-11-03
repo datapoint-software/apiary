@@ -1,0 +1,91 @@
+<ap-page-head heading="All routes">
+  <span pageSub>Every HTTP route in the cluster, grouped by project.</span>
+  <a pageActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: projectFilter() || null }">
+    <ap-icon [icon]="icons.plus" />Add route
+  </a>
+</ap-page-head>
+
+@if (isLoading()) {
+  <div class="ap-panel" style="padding: 24px" aria-busy="true" aria-label="Loading">
+    <span class="ap-skel" style="width: 60%; height: 14px"></span>
+  </div>
+} @else if (total() === 0) {
+  <section class="ap-panel">
+    <ap-empty-state heading="No routes yet">
+      A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.
+      <a emptyActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="icons.plus" />Add route</a>
+    </ap-empty-state>
+  </section>
+} @else {
+  <section class="ap-panel" aria-labelledby="routes-title">
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-2 ap-sr" id="routes-title">Routes</h2></div>
+    <div class="ap-toolbar" role="search" aria-label="Filter routes" style="padding-top: 4px">
+      <div class="ap-filter">
+        <ap-icon [icon]="icons.search" />
+        <input
+          class="ap-input"
+          type="search"
+          placeholder="Filter by hostname or target"
+          aria-label="Filter by hostname or target"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+        />
+      </div>
+      <select class="ap-select" aria-label="Project" [value]="projectFilter()" (change)="chooseProject($any($event.target).value)">
+        <option value="">All projects</option>
+        @for (project of projectOptions(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select>
+    </div>
+    @if (groups().length === 0) {
+      <ap-empty-state heading="No routes match">
+        Try another word, or clear the filters to see every route.
+        <button emptyActions apButton type="button" (click)="clearFilters()">Clear filters</button>
+      </ap-empty-state>
+    } @else {
+      <div class="ap-table-wrap">
+        <table class="ap-table">
+          <caption class="ap-sr">Routes, grouped by project</caption>
+          <thead>
+            <tr>
+              <th scope="col">Hostname</th>
+              <th scope="col">Target</th>
+              <th scope="col" class="ap-num">Timeout</th>
+              <th scope="col">Changed</th>
+              <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+            </tr>
+          </thead>
+          @for (group of groups(); track group.project.id) {
+            <tbody>
+              <tr class="ap-group">
+                <td colspan="5">
+                  <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }}</span></span>
+                </td>
+              </tr>
+              @for (route of group.routes; track route.id) {
+                <tr>
+                  <td>
+                    <div class="ap-cell-main">
+                      <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}</a>
+                      <span class="ap-caption ap-data">{{ route.path }}</span>
+                    </div>
+                  </td>
+                  <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
+                  <td class="ap-num">{{ route.timeoutSeconds }} s</td>
+                  <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
+                  <td class="ap-col-actions">
+                    <button apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + routeLabel(route)" (click)="delete(route)">
+                      <ap-icon [icon]="icons.delete" />
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          }
+        </table>
+      </div>
+    }
+    <div class="ap-panel-foot"><div class="ap-pager"><span aria-live="polite">{{ shown().length }} of {{ total() }} {{ total() === 1 ? 'route' : 'routes' }}</span></div></div>
+  </section>
+}

@@ -1,6 +1,6 @@
 """Builds the Prototype card: the clickable Apiary prototype, as one self-contained page.
 
-It compiles design/project/tokens.json into CSS variables, adds the design system's styles,
+It compiles the tokens in src/web/projects/apiary-ui/styles/tokens.json into CSS variables, adds the design system's styles,
 and inlines the shell and the prototype's scripts.
 
 It's written to design/project/components/Prototype/preview.html, which opens on its own too.
@@ -17,6 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DESIGN = os.path.dirname(HERE)
 REPO = os.path.dirname(DESIGN)
 PROJECT = os.path.join(DESIGN, "project")
+STYLES = os.path.join(REPO, "src", "web", "projects", "apiary-ui", "styles")
 LUCIDE = "https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"
 SCRIPTS = ["data.js", "ui.js", "shell.js", "pages-projects.js", "pages-routes.js", "pages-traffic.js", "pages-cluster.js", "pages-access.js"]
 
@@ -27,7 +28,7 @@ def read(*parts):
 
 
 def token_css():
-    tokens = json.loads(read(PROJECT, "tokens.json"))
+    tokens = json.loads(read(STYLES, "tokens.json"))
     light, dark, other = [], [], []
     for fam in ("color", "shadow"):
         for t in tokens[fam]["tokens"]:
@@ -62,7 +63,7 @@ def logo():
 
 
 def build():
-    css = read(PROJECT, "components", "bundle.css") + "\n" + read(HERE, "prototype.css")
+    css = read(STYLES, "apiary.css") + "\n" + read(HERE, "prototype.css")
     shell = read(HERE, "shell.html").replace("{{LOGO}}", logo())
     js = "\n".join(read(HERE, name) for name in SCRIPTS) + "\nrender(currentPath(), false);\n"
     return f"""<title>Apiary Prototype</title>

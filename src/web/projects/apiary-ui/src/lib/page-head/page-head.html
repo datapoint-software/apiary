@@ -1,0 +1,15 @@
+<div class="ap-stack" style="gap: 4px">
+  <nav class="ap-crumbs" aria-label="Breadcrumb">
+    @for (crumb of crumbs(); track crumb.link) {
+      <a [routerLink]="crumb.link">{{ crumb.label }}</a><span aria-hidden="true">/</span>
+    }
+    <span aria-current="page">{{ heading() }}</span>
+  </nav>
+  <div class="ap-page-head">
+    <div style="min-width: 0">
+      <h1 class="ap-h ap-h-1">{{ heading() }}</h1>
+      <p class="ap-sub"><ng-content select="[pageSub]" /></p>
+    </div>
+    <div class="ap-row" style="gap: 12px"><ng-content select="[pageActions]" /></div>
+  </div>
+</div>

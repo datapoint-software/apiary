@@ -1,0 +1,13 @@
+@if (isShown()) {
+  <div class="ap-banner ap-banner-critical ap-error-summary" tabindex="-1" role="alert" #banner>
+    <ap-icon [icon]="icon" />
+    <div class="ap-banner-body">
+      <span class="ap-banner-title">{{ heading() }}</span>
+      <ul>
+        @for (item of items(); track item.key) {
+          <li><a href="#" (click)="go($event, item)">{{ item.text }}</a></li>
+        }
+      </ul>
+    </div>
+  </div>
+}

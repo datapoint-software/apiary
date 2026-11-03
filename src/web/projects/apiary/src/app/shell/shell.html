@@ -1,0 +1,62 @@
+<a class="ap-skip" href="#main">Skip to content</a>
+<div class="ap-shell" [attr.data-collapsed]="collapsed()" [attr.data-drawer]="drawerOpen() ? 'open' : 'closed'">
+  <aside class="ap-side" id="side" aria-label="Sidebar">
+    <div class="ap-side-head">
+      <a class="ap-brand" routerLink="/" aria-label="Apiary, Overview">
+        <span class="ap-brand-mark" aria-hidden="true"></span><span class="ap-brand-name">Apiary</span>
+      </a>
+    </div>
+    @for (group of groups(); track group.title) {
+      <nav class="ap-nav" [attr.aria-label]="group.title || 'Main'">
+        @if (group.title) {
+          <span class="ap-overline" aria-hidden="true">{{ group.title }}</span>
+        }
+        @for (item of group.items; track item.label) {
+          <a
+            class="ap-nav-item"
+            [routerLink]="item.link"
+            [queryParams]="item.query"
+            routerLinkActive
+            ariaCurrentWhenActive="page"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [attr.data-label]="item.label"
+          >
+            <ap-icon [icon]="item.icon" />
+            <span class="ap-nav-label">{{ item.label }}</span>
+            @if (item.count) {
+              <span class="ap-count"><span class="ap-sr">, </span>{{ item.count }}</span>
+            }
+          </a>
+        }
+      </nav>
+    }
+    <div class="ap-side-foot">
+      <div class="ap-attribution">
+        <a href="https://datapoint.software/" aria-label="Datapoint Software" style="color: inherit"><ap-datapoint-logo /></a>
+        <span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
+        <span>Version {{ version }} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> · <a href="https://sources.internal/datapoint/apiary">Source</a></span>
+      </div>
+    </div>
+  </aside>
+  <div class="ap-side-scrim" aria-hidden="true" (click)="closeDrawer()"></div>
+  <div style="min-width: 0">
+    <header class="ap-top">
+      <button
+        apButton="ghost"
+        [iconOnly]="true"
+        class="ap-sidebar-btn"
+        type="button"
+        aria-controls="side"
+        [attr.aria-expanded]="sidebarExpanded()"
+        [attr.aria-label]="sidebarLabel()"
+        (click)="toggleSidebar()"
+      >
+        <ap-icon [icon]="panelIcon" />
+      </button>
+      <div class="ap-top-end"></div>
+    </header>
+    <main class="ap-content" id="main" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

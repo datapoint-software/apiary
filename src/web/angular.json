@@ -1,0 +1,127 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "npm",
+    "analytics": false
+  },
+  "newProjectRoot": "projects",
+  "projects": {
+    "apiary-ui": {
+      "projectType": "library",
+      "root": "projects/apiary-ui",
+      "sourceRoot": "projects/apiary-ui/src",
+      "prefix": "ap",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/apiary-ui/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/apiary-ui/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/apiary-ui/tsconfig.spec.json"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/apiary-ui/**/*.ts",
+              "projects/apiary-ui/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "apiary": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/apiary",
+      "sourceRoot": "projects/apiary/src",
+      "prefix": "ap",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/apiary/src/main.ts",
+            "tsConfig": "projects/apiary/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/apiary/public"
+              }
+            ],
+            "styles": [
+              "projects/apiary-ui/styles/tokens.css",
+              "projects/apiary-ui/styles/apiary.css",
+              "projects/apiary/src/styles.css"
+            ],
+            "outputPath": {
+              "base": "../Datapoint.Apiary/wwwroot",
+              "browser": ""
+            }
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "800kB",
+                  "maximumError": "1.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "apiary:build:production"
+            },
+            "development": {
+              "buildTarget": "apiary:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "projects/apiary/proxy.conf.json"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/apiary/**/*.ts",
+              "projects/apiary/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

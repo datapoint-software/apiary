@@ -1,0 +1,18 @@
+<ap-page-head heading="Overview">
+  <span pageSub>{{ routeCount() }} {{ routeCount() === 1 ? 'route' : 'routes' }} in {{ projects.value().length }} {{ projects.value().length === 1 ? 'project' : 'projects' }}.</span>
+  <a pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />Add route</a>
+</ap-page-head>
+<div class="ap-grid-2">
+  @for (project of projects.value(); track project.id) {
+    <a class="ap-panel" style="padding: 20px; text-decoration: none; color: inherit" routerLink="/routes" [queryParams]="{ project: project.id }">
+      <div class="ap-row" style="gap: 12px">
+        <ap-icon [icon]="projectIcon(project.icon)" />
+        <div class="ap-stack" style="gap: 2px">
+          <strong>{{ project.name }}</strong>
+          <span class="ap-muted">{{ project.description }}</span>
+          <span class="ap-caption">{{ project.routeCount }} {{ project.routeCount === 1 ? 'route' : 'routes' }}</span>
+        </div>
+      </div>
+    </a>
+  }
+</div>

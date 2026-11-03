@@ -1,0 +1,26 @@
+<div class="ap-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+  <div class="ap-dialog-head">
+    @if (data.tone !== 'primary') {
+      <span class="ap-dialog-mark ap-dialog-mark-critical"><ap-icon [icon]="icon" /></span>
+    }
+    <h2 class="ap-h ap-h-2" id="confirm-title">{{ data.heading }}</h2>
+  </div>
+  <div class="ap-dialog-body" id="confirm-text">
+    <p style="margin: 0">{{ data.text }}</p>
+    @if (failure()) {
+      <ap-banner tone="critical" role="alert">{{ failure() }}</ap-banner>
+    }
+    @if (data.typeToConfirm) {
+      <div class="ap-field">
+        <label class="ap-label" for="confirm-type">Type <span class="ap-data">{{ data.typeToConfirm }}</span> to confirm</label>
+        <input class="ap-input ap-data" id="confirm-type" autocomplete="off" spellcheck="false" [value]="typed()" (input)="typed.set($any($event.target).value)" />
+      </div>
+    }
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="cancel()" cdkFocusInitial>Cancel</button>
+    <button [apButton]="data.tone ?? 'danger'" type="button" [disabled]="isBlocked()" (click)="confirm()">
+      {{ working() ? (data.busy ?? 'Working…') : data.confirm }}
+    </button>
+  </div>
+</div>

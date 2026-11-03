@@ -1,0 +1,24 @@
+@for (toast of toaster.toasts(); track toast.id) {
+  <div
+    class="ap-toast"
+    [class]="'ap-toast-' + toast.tone"
+    [attr.role]="toast.tone === 'error' ? 'alert' : 'status'"
+    (mouseenter)="toaster.pause(toast.id)"
+    (mouseleave)="toaster.resume(toast.id)"
+    (focusin)="toaster.pause(toast.id)"
+  >
+    <ap-icon [icon]="icons[toast.tone]" />
+    <span class="ap-toast-text">
+      @if (toast.heading) {
+        <span class="ap-toast-title">{{ toast.heading }}</span>
+      }
+      {{ toast.text }}
+    </span>
+    @if (toast.action) {
+      <button apButton size="small" type="button" (click)="act(toast)">{{ toast.action.label }}</button>
+    }
+    <button apButton="ghost" size="small" [iconOnly]="true" class="ap-toast-close" type="button" aria-label="Dismiss" (click)="toaster.dismiss(toast.id)">
+      <ap-icon [icon]="close" />
+    </button>
+  </div>
+}

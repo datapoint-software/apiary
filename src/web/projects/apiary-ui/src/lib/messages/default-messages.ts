@@ -1,0 +1,36 @@
+import { MessageCatalog } from './message-catalog';
+
+export const defaultMessages: MessageCatalog = {
+  internal: () => 'Something went wrong on the server. Try again; if it keeps happening, check Apiary’s logs.',
+  'request.invalid': () => 'The request couldn’t be read. Reload the page and try again.',
+  'request.notFound': () => 'That doesn’t exist anymore. Reload the page to see what’s there now.',
+  'auth.required': () => 'Your session has ended. Sign in again to continue.',
+  'auth.forbidden': () => 'Your role doesn’t allow this. Ask an Administrator if you need it.',
+  'cluster.noQuorum': () => 'Changes are paused while the cluster can’t reach a majority of voters. Try again once it recovers.',
+  'network.offline': () => 'Apiary didn’t answer. Check your connection and try again.',
+  required: () => 'Fill this in.',
+  invalid: () => 'Check this value.',
+  tooLong: (p) => `Use at most ${p['max']} characters.`,
+  range: (p) => `Enter a number from ${p['min']} to ${p['max']}.`,
+  'hostname.required': () => 'Enter a hostname, such as shop.example.com.',
+  'hostname.invalid': () => 'Enter a hostname, such as shop.example.com.',
+  'hostname.scheme': () => 'Enter the hostname only, without http:// or https://.',
+  'hostname.path': () => 'Enter the hostname only. Add a path in the Path field.',
+  'hostname.address': () => 'Use a hostname, not an IP address: certificates can’t be issued for IP addresses.',
+  'hostname.tooLong': () => 'A hostname can be at most 253 characters long.',
+  'hostname.notFull': () => 'Enter a full hostname, such as shop.example.com.',
+  'hostname.consecutiveDots': () => 'A hostname has no empty parts: check for two dots in a row.',
+  'hostname.label': () =>
+    'Use letters, digits and hyphens in each part of the hostname, not starting or ending with a hyphen.',
+  'port.required': () => 'Enter a port, such as 8080.',
+  'path.invalid': () => 'Enter a path that starts with /, such as /api, without ? or #.',
+  'target.required': () => 'Enter a target, such as the service name shop-v1.',
+  'target.invalid': () => 'Use a service name, hostname or IP address.',
+  'target.port': () => 'Enter the port in the Port field.',
+  'target.loopback': () =>
+    'Apiary doesn’t route to loopback addresses. Use the service’s name on the shared network, such as shop-v1.',
+  'target.linkLocal': () =>
+    'Apiary doesn’t route to link-local addresses. Use the service’s name on the shared network.',
+  'target.unspecified': () => 'Use the service’s own address, not 0.0.0.0 or ::.',
+  'ipRange.invalid': () => 'Enter an IPv4 or IPv6 address or range, such as 10.0.0.0/8.',
+};
