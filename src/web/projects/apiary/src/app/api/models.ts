@@ -298,6 +298,21 @@ export interface ClusterView {
   readonly pending: readonly PendingReplica[];
 }
 
+export interface RecoverySurvivor {
+  readonly node?: string;
+  readonly address: string;
+  readonly index: number;
+}
+
+export interface RecoveryPlan {
+  readonly needed: boolean;
+  readonly node?: string;
+  readonly index: number;
+  readonly lastChangeAt?: string;
+  readonly survivors: readonly RecoverySurvivor[];
+  readonly unreachable: readonly string[];
+}
+
 export interface BackupFile {
   readonly name: string;
   readonly content: string;

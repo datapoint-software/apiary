@@ -145,4 +145,21 @@
   </form>
 }
 
+@if (isSwarm() && auth.canAdminister()) {
+  <section class="ap-panel ap-panel-danger" aria-labelledby="recovery-zone-title">
+    <div class="ap-panel-head">
+      <div><h2 class="ap-h ap-h-3" id="recovery-zone-title">Danger zone</h2></div>
+    </div>
+    <div class="ap-panel-body ap-list">
+      <div class="ap-list-row">
+        <div class="ap-list-text">
+          <strong>Recover from a lost majority</strong>
+          <span class="ap-muted">Only when most voters are gone for good. This replica becomes the only voter, and anything only the lost voters had is lost.</span>
+        </div>
+        <button apButton="danger" type="button" (click)="recover()">Start recovery…</button>
+      </div>
+    </div>
+  </section>
+}
+
 <p class="ap-caption">Log index {{ cluster.view()?.index ?? 0 }}.</p>

@@ -9,6 +9,9 @@ public static class ErrorCodes
     public const string NoQuorum = "cluster.noQuorum";
     public const string NotReady = "cluster.notReady";
     public const string Upgrading = "cluster.upgrading";
+    public const string RecoveryNotNeeded = "cluster.recoveryNotNeeded";
+    public const string NotMostRecent = "cluster.notMostRecent";
+    public const string OtherReplica = "cluster.otherReplica";
 
     public const string Required = "required";
     public const string TooLong = "tooLong";
@@ -124,7 +127,7 @@ public static class ErrorCodes
 
     public static IReadOnlyList<string> All { get; } =
     [
-        Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum, NotReady, Upgrading,
+        Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum, NotReady, Upgrading, RecoveryNotNeeded, NotMostRecent, OtherReplica,
         Required, TooLong, Range, Invalid,
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,

@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -27,6 +28,8 @@ import { timeAgo } from '../api/time-ago';
 import { Auth } from '../auth/auth';
 import { ClusterStatus } from './cluster-status';
 import { PendingReplicas } from './pending-replicas';
+import { RecoveryDialog } from './recovery-dialog';
+import { openDialog } from '../shell/open-dialog';
 import { WriteLock } from './write-lock';
 
 const roles = { leader: 'Leader', voter: 'Voter', joining: 'Joining' } as const;
@@ -55,6 +58,7 @@ interface MembershipModel {
 export class ReplicaList {
   private readonly api = inject(Api);
   private readonly confirmer = inject(Confirmer);
+  private readonly dialog = inject(Dialog);
   private readonly toaster = inject(Toaster);
   protected readonly cluster = inject(ClusterStatus);
   protected readonly roles = roles;
@@ -122,6 +126,10 @@ export class ReplicaList {
         { heading: 'Membership saved' },
       );
     }
+  }
+
+  protected async recover(): Promise<void> {
+    await openDialog<void, null>(this.dialog, RecoveryDialog, null);
   }
 
   protected async remove(member: MemberView): Promise<void> {

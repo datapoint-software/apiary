@@ -1,0 +1,127 @@
+@switch (step()) {
+  @case ('check') {
+    <div class="ap-dialog ap-dialog-lg" role="alertdialog" aria-labelledby="recovery-title">
+      <div class="ap-dialog-head">
+        <div class="ap-dialog-mark" aria-hidden="true"><ap-icon [icon]="alert" /></div>
+        <h2 class="ap-h ap-h-2" id="recovery-title">Recover the cluster from {{ node() || 'this replica' }}</h2>
+      </div>
+      <div class="ap-dialog-body ap-stack">
+        <ol class="ap-steps" aria-label="Recovery">
+          <li class="ap-step" aria-current="step">Check</li>
+          <li class="ap-step">Confirm</li>
+          <li class="ap-step">Recover</li>
+        </ol>
+        @if (plan.value(); as current) {
+          @if (!current.needed) {
+            <ap-banner tone="info" heading="Recovery isn’t needed">
+              A majority of voters can be reached, so the cluster still agrees on changes. Recovery is only for when a majority is lost for good.
+            </ap-banner>
+          } @else if (ahead(); as other) {
+            <ap-banner tone="critical" [heading]="'Recover from ' + (other.node ?? other.address) + ' instead'">
+              It has changes up to {{ other.index }}, and this replica only up to {{ current.index }}. Open the admin interface on {{ other.node ?? other.address }} and recover from there, so nothing more is lost.
+            </ap-banner>
+          } @else {
+            <p style="margin: 0">
+              @if (lost()) {
+                {{ lost() }} can’t be reached.
+              }
+              If they can come back, wait for them instead: recovery can’t be undone. This replica has every change up to
+              <span class="ap-data">{{ current.index }}</span>@if (current.lastChangeAt) {, the last one at <span class="ap-data">{{ utcDateTime(current.lastChangeAt) }}</span> UTC}.
+            </p>
+            <div class="ap-stack" style="gap: 10px">
+              <label class="ap-choice">
+                <input class="ap-check" type="checkbox" [checked]="checks()[0]" (change)="toggle(0, $event)" />
+                <span>I checked that the missing replicas’ nodes are gone, not only slow or restarting</span>
+              </label>
+              <label class="ap-choice">
+                <input class="ap-check" type="checkbox" [checked]="checks()[1]" (change)="toggle(1, $event)" />
+                <span>I understand that changes only the missing replicas had are lost, and that everyone is signed out</span>
+              </label>
+              <label class="ap-choice">
+                <input class="ap-check" type="checkbox" [checked]="checks()[2]" (change)="toggle(2, $event)" />
+                <span>I have a recent backup, or accept running without one</span>
+              </label>
+            </div>
+          }
+        } @else if (plan.error()) {
+          <ap-banner tone="critical" heading="Couldn’t check the cluster">The replica that took this request didn’t answer. Try again, or open the admin interface of a surviving replica directly.</ap-banner>
+        } @else {
+          <span class="ap-skel" style="width: 60%; height: 14px" aria-busy="true" aria-label="Loading"></span>
+        }
+      </div>
+      <div class="ap-dialog-foot">
+        <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+        @if (plan.error()) {
+          <button apButton type="button" (click)="plan.reload()">Try again</button>
+        }
+        @if (plan.value()?.needed && !ahead()) {
+          <button apButton="primary" type="button" [disabled]="!checked()" (click)="step.set('confirm')">Continue</button>
+        }
+      </div>
+    </div>
+  }
+  @case ('confirm') {
+    <form class="ap-dialog ap-dialog-lg" role="alertdialog" aria-labelledby="recovery-title" [apForm]="confirmation" #recoveryForm="apForm" (submit)="recover(recoveryForm)">
+      <div class="ap-dialog-head">
+        <div class="ap-dialog-mark" aria-hidden="true"><ap-icon [icon]="alert" /></div>
+        <h2 class="ap-h ap-h-2" id="recovery-title">Recover the cluster from {{ node() }}</h2>
+      </div>
+      <div class="ap-dialog-body ap-form" style="gap: 16px">
+        <ol class="ap-steps" aria-label="Recovery">
+          <li class="ap-step ap-step-done">Check</li>
+          <li class="ap-step" aria-current="step">Confirm</li>
+          <li class="ap-step">Recover</li>
+        </ol>
+        <p style="margin: 0">
+          {{ node() }} becomes the only voter, and changes resume. Then add voters back: the other replicas rejoin as new ones when their nodes return,
+          or deploy the stack again on 3 nodes.
+        </p>
+        @if (failure()) {
+          <ap-banner tone="critical" role="alert">{{ failure() }}</ap-banner>
+        }
+        <ap-error-summary verb="recover" />
+        <ap-field [label]="'Type ' + node() + ' to confirm'" [field]="confirmation.node">
+          <input class="ap-input ap-data" [formField]="confirmation.node" autocomplete="off" spellcheck="false" autocapitalize="none" cdkFocusInitial />
+        </ap-field>
+        <ap-field label="Your password" [field]="confirmation.password">
+          <div class="ap-affix">
+            <input class="ap-input" type="password" #password [formField]="confirmation.password" autocomplete="current-password" />
+            <ap-password-reveal [target]="password" />
+          </div>
+        </ap-field>
+        <ap-field label="Code from your authenticator app" [field]="confirmation.code" help="Recovery codes don’t work here.">
+          <input class="ap-input ap-otp" [formField]="confirmation.code" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" />
+        </ap-field>
+      </div>
+      <div class="ap-dialog-foot">
+        <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+        <button apButton="danger" type="submit" [disabled]="confirmation().submitting()">
+          {{ confirmation().submitting() ? 'Recovering…' : 'Recover cluster' }}
+        </button>
+      </div>
+    </form>
+  }
+  @case ('done') {
+    <div class="ap-dialog ap-dialog-lg" role="alertdialog" aria-labelledby="recovery-title">
+      <div class="ap-dialog-head">
+        <h2 class="ap-h ap-h-2" id="recovery-title">{{ node() }} is restarting</h2>
+      </div>
+      <div class="ap-dialog-body ap-stack">
+        <ol class="ap-steps" aria-label="Recovery">
+          <li class="ap-step ap-step-done">Check</li>
+          <li class="ap-step ap-step-done">Confirm</li>
+          <li class="ap-step" aria-current="step">Recover</li>
+        </ol>
+        <p style="margin: 0">When it’s back, in a minute or so, it’s the only voter of a new cluster and accepts changes again. Everyone was signed out.</p>
+        <ol style="margin: 0; padding-left: 20px">
+          <li>Sign in again.</li>
+          <li>Review users and roles, and redo recent changes that are missing.</li>
+          <li>Take a backup.</li>
+        </ol>
+      </div>
+      <div class="ap-dialog-foot">
+        <button apButton="primary" type="button" (click)="signIn()">Go to sign-in</button>
+      </div>
+    </div>
+  }
+}

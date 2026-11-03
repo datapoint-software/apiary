@@ -16,7 +16,7 @@ public static class OperatorEndpoints
         {
             try
             {
-                await cluster.RequestRecoveryAsync(ct);
+                await cluster.RequestRecoveryAsync(node: null, requestedBy: null, address: null, ct);
                 return Results.Accepted();
             }
             catch (RecoveryRefusedException refused)

@@ -2,6 +2,11 @@ import { MessageCatalog } from '@datapoint/apiary-ui';
 
 export const appMessages: MessageCatalog = {
   'validation.failed': () => 'Some fields need attention.',
+  'cluster.recoveryNotNeeded': () => 'A majority of voters can be reached again, so the cluster doesn’t need recovering.',
+  'cluster.notMostRecent': () => 'Another reachable replica has more changes. Recover from that one instead.',
+  'cluster.otherReplica': () => 'This request reached a different replica from the one you checked, so nothing changed. Close this and start again.',
+  'recovery.nodeRequired': () => 'Type the replica’s name to confirm.',
+  'recovery.nodeMismatch': () => 'That isn’t this replica’s name. Type it exactly as shown.',
   'project.notFound': () => 'Choose a project.',
   'project.nameTaken': () => 'There’s already a project with this name. Choose another.',
   'project.iconUnknown': () => 'Choose one of the icons.',

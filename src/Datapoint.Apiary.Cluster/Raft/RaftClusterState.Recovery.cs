@@ -37,17 +37,26 @@ public sealed partial class RaftClusterState
             .OrderBy(u => u.Email, StringComparer.Ordinal)
             .Select(u => new RecoveryUser(u.Name, u.Email, u.Role.ToString(), u.Status.ToString()))
             .ToList();
-        return new RecoveryPlan(discovery.IsSwarm && IsReady && !IsWritable, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, users);
+        var unreachable = Describe().Members.Where(m => !m.Reachable).Select(m => m.Node ?? m.Address).ToList();
+        return new RecoveryPlan(discovery.IsSwarm && IsReady && !IsWritable, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users);
     }
 
-    public async Task RequestRecoveryAsync(CancellationToken cancellationToken)
+    public async Task RequestRecoveryAsync(string? node, string? requestedBy, string? address, CancellationToken cancellationToken)
     {
+        if (node is not null && !string.Equals(node, NodeName, StringComparison.Ordinal))
+        {
+            throw new RecoveryRefusedException($"This request reached the replica on {NodeName}, not the one on {node}. Check again from the replica that answers.")
+            {
+                Code = RecoveryRefusedException.OtherReplica,
+            };
+        }
+
         var plan = await PlanRecoveryAsync(cancellationToken);
         if (!plan.Needed)
         {
             throw new RecoveryRefusedException("The cluster has a majority, or this replica isn't running in Swarm, so there's nothing to recover.")
             {
-                Code = "cluster.recoveryNotNeeded",
+                Code = RecoveryRefusedException.NotNeeded,
             };
         }
 
@@ -55,11 +64,11 @@ public sealed partial class RaftClusterState
         {
             throw new RecoveryRefusedException($"The replica on {ahead.Node} at {ahead.Address} has more changes. Recover from that one instead.")
             {
-                Code = "cluster.notMostRecent",
+                Code = RecoveryRefusedException.NotMostRecent,
             };
         }
 
-        var request = new RecoveryRequest(time.GetUtcNow(), plan.Index);
+        var request = new RecoveryRequest(time.GetUtcNow(), plan.Index) { RequestedBy = requestedBy, Address = address };
         await File.WriteAllBytesAsync(RecoveryFile, JsonSerializer.SerializeToUtf8Bytes(request, ClusterJsonContext.Default.RecoveryRequest), cancellationToken);
         LogRecoveryRequested(plan.Index);
         lifetime.StopApplication();
@@ -81,14 +90,28 @@ public sealed partial class RaftClusterState
         await _raft!.WaitForLeadershipAsync(cancellationToken);
         var now = time.GetUtcNow();
         var previous = Current.ClusterId;
+        var request = await ReadRecoveryRequestAsync(cancellationToken);
         IStateChange[] changes =
         [
             new ClusterRecovered(Guid.CreateVersion7(now), _recoveryCa!, new Replica(Identity!.Id, NodeName, Address!.ToString(), now, StateSchema.Current, protocol.OwnKeys.RootKeyId)),
-            new AuditRecorded(new AuditEntry(Guid.CreateVersion7(now), now, null, "Operator", null, RecoverAction, [NodeName], null, AuditOutcome.Succeeded)),
+            new AuditRecorded(new AuditEntry(Guid.CreateVersion7(now), now, request?.RequestedBy, request?.RequestedBy is null ? "Operator" : null, request?.Address, RecoverAction, [NodeName], null, AuditOutcome.Succeeded)),
         ];
         await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, changes), cancellationToken);
         File.Delete(RecoveryFile);
         LogRecovered(previous, Current.ClusterId);
+    }
+
+    private async Task<RecoveryRequest?> ReadRecoveryRequestAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var stream = File.OpenRead(RecoveryFile);
+            return await JsonSerializer.DeserializeAsync(stream, ClusterJsonContext.Default.RecoveryRequest, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private async Task<bool> IsSupersededAsync(bool outsidersOnly, CancellationToken cancellationToken)

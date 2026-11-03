@@ -6,4 +6,5 @@ public sealed record RecoveryPlan(
     long Index,
     DateTimeOffset? LastChangeAt,
     IReadOnlyList<Survivor> Survivors,
+    IReadOnlyList<string> Unreachable,
     IReadOnlyList<RecoveryUser> Users);

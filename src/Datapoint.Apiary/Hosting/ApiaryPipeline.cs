@@ -45,6 +45,7 @@ public static class ApiaryPipeline
     {
         admin.MapApiaryHealth();
         admin.MapGroup("/operator").MapApiaryOperator();
+        admin.MapGroup("/api").MapApiaryRecovery();
         admin.MapOpenApi();
         admin.MapApiaryOAuth();
         admin.MapApiarySso();
