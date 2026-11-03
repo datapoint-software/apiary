@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Trust;
 using Microsoft.Extensions.Logging;
@@ -34,6 +35,20 @@ public sealed partial class RaftClusterState
             }
         }
     }
+
+    public bool IsTrustedReplica(X509Certificate? certificate) =>
+        certificate is X509Certificate2 replica && Credentials?.IsTrusted(replica) is true && !IsRevoked(replica, Current);
+
+    public bool IsCurrentReplica(X509Certificate? certificate) =>
+        IsTrustedReplica(certificate) && CertificateReplicaId(certificate) is { } id && Current.Replicas.ContainsKey(id);
+
+    public static Guid? CertificateReplicaId(X509Certificate? certificate) =>
+        certificate is X509Certificate2 replica ? ClusterAuthority.ReplicaId(replica) : null;
+
+    private static bool IsRevoked(X509Certificate2 certificate, ApiaryState state) =>
+        ClusterAuthority.ReplicaId(certificate) is { } id
+        && state.RemovedReplicas.TryGetValue(id, out var removedAt)
+        && ClusterAuthority.IssuedAt(certificate) <= removedAt;
 
     private static string TrustedAuthorities(ApiaryState state) =>
         string.Join('\n', new[] { state.ClusterCa, state.NextClusterCa, state.RetiringClusterCa }.OfType<Replicas.ClusterCa>().Select(c => c.CertificatePem));

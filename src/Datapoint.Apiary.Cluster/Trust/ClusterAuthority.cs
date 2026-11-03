@@ -39,5 +39,7 @@ public static class ClusterAuthority
     public static Guid? ReplicaId(X509Certificate2 certificate) =>
         Guid.TryParseExact(certificate.GetNameInfo(X509NameType.SimpleName, forIssuer: false), "N", out var id) ? id : null;
 
+    public static DateTimeOffset IssuedAt(X509Certificate2 certificate) => new DateTimeOffset(certificate.NotBefore) + s_clockSkew;
+
     private static DateTimeOffset Min(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
 }

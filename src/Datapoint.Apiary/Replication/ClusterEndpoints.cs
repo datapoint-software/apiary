@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
@@ -19,22 +20,24 @@ public static class ClusterEndpoints
     public static RouteGroupBuilder MapApiaryCluster(this RouteGroupBuilder group)
     {
         group.MapPost("/join", JoinAsync);
+        group.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView))
+            .AddEndpointFilter(RequireClusterCertificateAsync);
         var replicas = group.MapGroup("").AddEndpointFilter(RequireReplicaAsync);
-        replicas.MapPost("/announce", (ReplicaAnnouncement announcement, RaftClusterState cluster, CancellationToken ct) =>
-            Membership(() => cluster.AdmitAsync(announcement, ct)));
-        replicas.MapPost("/leave", (ReplicaAnnouncement announcement, RaftClusterState cluster, CancellationToken ct) =>
-            Membership(() => cluster.ReleaseAsync(announcement, ct)));
-        replicas.MapPost("/entries", AppendAsync);
-        replicas.MapPost("/" + CommandForwarder.Path, CommandAsync);
+        replicas.MapPost("/announce", (ReplicaAnnouncement announcement, HttpContext http, RaftClusterState cluster, CancellationToken ct) =>
+            SpeaksFor(http, cluster, announcement) ? Membership(() => cluster.AdmitAsync(announcement, ct)) : Task.FromResult(Forbidden()));
+        replicas.MapPost("/leave", (ReplicaAnnouncement announcement, HttpContext http, RaftClusterState cluster, CancellationToken ct) =>
+            SpeaksFor(http, cluster, announcement) ? Membership(() => cluster.ReleaseAsync(announcement, ct)) : Task.FromResult(Forbidden()));
         replicas.MapGet("/keys", (HttpContext http, RaftClusterState cluster) =>
-            cluster.KeysFor(http.Connection.ClientCertificate) is { } ring ? Results.Json(ring, ClusterWireJsonContext.Default.SharedKeyRing) : Results.StatusCode(StatusCodes.Status403Forbidden));
-        replicas.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView));
-        replicas.MapGet("/" + ClusterRouteTelemetry.Path, (RouteTelemetrySource source) => Results.Json(source.Snapshot(), ApiJson.Options));
-        replicas.MapGet("/" + ClusterActivityTelemetry.Path, (long until, int points, int step, ProxyMetrics metrics) =>
+            cluster.KeysFor(http.Connection.ClientCertificate) is { } ring ? Results.Json(ring, ClusterWireJsonContext.Default.SharedKeyRing) : Forbidden());
+        var members = group.MapGroup("").AddEndpointFilter(RequireMemberAsync);
+        members.MapPost("/entries", AppendAsync);
+        members.MapPost("/" + CommandForwarder.Path, CommandAsync);
+        members.MapGet("/" + ClusterRouteTelemetry.Path, (RouteTelemetrySource source) => Results.Json(source.Snapshot(), ApiJson.Options));
+        members.MapGet("/" + ClusterActivityTelemetry.Path, (long until, int points, int step, ProxyMetrics metrics) =>
             points is > 0 and <= ActivityHistory.Minutes && step > 0 && (long)points * step <= ActivityHistory.Minutes
                 ? Results.Json(metrics.Activity.Read(until, points, step), ApiJson.Options)
                 : Results.BadRequest());
-        replicas.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
+        members.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
             cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge) ? Results.Json(challenge, ClusterWireJsonContext.Default.AcmeChallenge) : Results.NotFound());
         return group;
     }
@@ -47,14 +50,30 @@ public static class ClusterEndpoints
             : Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    private static async ValueTask<object?> RequireReplicaAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    private static ValueTask<object?> RequireClusterCertificateAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
+        Require(context, next, (cluster, certificate) => cluster.Credentials?.IsTrusted(certificate) is true);
+
+    private static ValueTask<object?> RequireReplicaAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
+        Require(context, next, (cluster, certificate) => cluster.IsTrustedReplica(certificate));
+
+    private static ValueTask<object?> RequireMemberAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next) =>
+        Require(context, next, (cluster, certificate) => cluster.IsCurrentReplica(certificate));
+
+    private static async ValueTask<object?> Require(
+        EndpointFilterInvocationContext context, EndpointFilterDelegate next, Func<RaftClusterState, X509Certificate2?, bool> allows)
     {
         var http = context.HttpContext;
         var cluster = http.RequestServices.GetRequiredService<RaftClusterState>();
-        return cluster.Credentials?.IsTrusted(http.Connection.ClientCertificate) is true
-            ? await next(context)
-            : Results.StatusCode(StatusCodes.Status403Forbidden);
+        return allows(cluster, http.Connection.ClientCertificate) ? await next(context) : Forbidden();
     }
+
+    private static bool SpeaksFor(HttpContext http, RaftClusterState cluster, ReplicaAnnouncement announcement)
+    {
+        var certificate = http.Connection.ClientCertificate;
+        return RaftClusterState.CertificateReplicaId(certificate) == announcement.ReplicaId || cluster.IsCurrentReplica(certificate);
+    }
+
+    private static IResult Forbidden() => Results.StatusCode(StatusCodes.Status403Forbidden);
 
     private static async Task<IResult> Membership(Func<Task<bool>> change)
     {

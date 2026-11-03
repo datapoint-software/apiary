@@ -309,7 +309,7 @@ public sealed partial class RaftClusterState
             LoggerFactory = loggers,
             SslOptions = new SslOptions
             {
-                ServerOptions = ReplicaCredentials.ServerOptions(() => Credentials),
+                ServerOptions = ReplicaCredentials.ServerOptions(() => Credentials, IsTrustedReplica),
                 ClientOptions = ReplicaCredentials.ClientOptions(() => Credentials),
             },
         };

@@ -151,7 +151,7 @@ public sealed partial class RaftClusterState
             var now = time.GetUtcNow();
             IStateChange[] changes =
             [
-                .. stale.Where(r => r.Id != announcement.ReplicaId).Select(r => new ReplicaRemoved(r.Id)),
+                .. stale.Where(r => r.Id != announcement.ReplicaId).Select(r => new ReplicaRemoved(r.Id, now)),
                 new ReplicaSaved(new Replica(announcement.ReplicaId, announcement.Node, announcement.Address, now, announcement.Schema, announcement.RootKey?.RootKeyId)),
                 .. RootKeyChanges(announcement.RootKey, now),
             ];
@@ -467,7 +467,7 @@ public sealed partial class RaftClusterState
             var now = time.GetUtcNow();
             if (replica is not null)
             {
-                await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, [new ReplicaRemoved(replica.Id)]), cancellationToken);
+                await AppendLocalAsync(new StateEntry(Guid.CreateVersion7(now), now, [new ReplicaRemoved(replica.Id, now)]), cancellationToken);
             }
 
             LogRemovedMissing(member.ToString());

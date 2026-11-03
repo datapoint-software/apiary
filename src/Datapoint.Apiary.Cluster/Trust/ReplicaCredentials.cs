@@ -31,11 +31,11 @@ public sealed class ReplicaCredentials : IDisposable
 
     public byte[] ExportPrivateKey() => [.. _privateKey];
 
-    public static SslServerAuthenticationOptions ServerOptions(Func<ReplicaCredentials?> current) => new()
+    public static SslServerAuthenticationOptions ServerOptions(Func<ReplicaCredentials?> current, Func<X509Certificate?, bool> isTrusted) => new()
     {
         ServerCertificateSelectionCallback = (_, _) => current()?.Certificate!,
         ClientCertificateRequired = true,
-        RemoteCertificateValidationCallback = (_, certificate, _, _) => current()?.IsTrusted(certificate) is true,
+        RemoteCertificateValidationCallback = (_, certificate, _, _) => isTrusted(certificate),
     };
 
     public static SslClientAuthenticationOptions ClientOptions(Func<ReplicaCredentials?> current) => new()
