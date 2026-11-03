@@ -6,6 +6,8 @@ namespace Datapoint.Apiary.Proxy.Pages;
 
 public static class PublicPages
 {
+    private static readonly Lazy<string> s_tokens = new(ReadTokens);
+
     public static IResult NotFound() => Page(
         StatusCodes.Status404NotFound,
         "Not found",
@@ -41,11 +43,18 @@ public static class PublicPages
         <!doctype html>
         <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{{title}}}</title>
-        <style>body{font:16px/1.5 system-ui,sans-serif;margin:0;display:grid;place-items:center;min-height:100vh;background:#faf8f3;color:#1d1b16}
-        main{max-width:32rem;padding:24px}h1{font-size:1.5rem;margin:0 0 8px}p{margin:0;color:#5f5a4f}
-        @media (prefers-color-scheme:dark){body{background:#16140f;color:#f3efe6}p{color:#b3ad9f}}</style></head>
+        <style>{{{s_tokens.Value}}}
+        body{font:16px/1.5 var(--font-text);margin:0;display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)}
+        main{max-width:32rem;padding:var(--space-6)}h1{font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)}p{margin:0;color:var(--ink-2)}</style></head>
         <body><main><h1>{{{heading}}}</h1><p>{{{text}}}</p></main></body></html>
         """,
         "text/html; charset=utf-8",
         statusCode: status);
+
+    private static string ReadTokens()
+    {
+        using var stream = typeof(PublicPages).Assembly.GetManifestResourceStream("tokens.css") ?? throw new InvalidOperationException("tokens.css isn't embedded in the assembly.");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 }
