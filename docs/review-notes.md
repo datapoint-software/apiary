@@ -22,10 +22,15 @@ Decisions made and findings noted while building the milestones without review, 
 - **`apiary users create-admin` needs `--email` as well as `--name`**, since the email is the sign-in name. It reaches the running server with a token that Apiary writes to `{data}/operator-token`, readable only by its own user, and accepts only over loopback.
 - **Users list:** Administrators only, since it lists everyone's email. The audit log stays readable by every role, as architecture.md says.
 
+- **The root key is text, `apiary-root-key-1:` and 32 random bytes in base64url**, so a wrong file (e.g. a password) is refused instead of being used as a key. Keys are derived from it with HKDF-SHA256, one purpose string each.
+- **State at rest:** `state/keys.json` holds the data key, wrapped with AES-GCM by a key derived from the root key. Every log entry and the snapshot are encrypted with the data key (AES-GCM, with a purpose string as associated data). There's no rotation yet (milestone 5).
+- **The generated root key lives in `/keys`**, a separate volume from `/data`, in the image and the Compose file.
+
 ## Security findings to resolve before 1.0
 
-- **The challenge key is random per process** until milestone 3 derives it from the root key. A sign-in whose two steps reach different replicas, or straddle a restart, fails and has to start again.
-- **TOTP secrets and recovery-code hashes are stored unencrypted** in the state until milestone 3's envelope encryption. Recovery codes are hashed with SHA-256; they have about 40 bits of entropy, so a stolen state file would let an attacker find them offline. Encrypting the state at rest closes this; a slow hash would too.
+- **Recovery codes are hashed with SHA-256.** They have about 40 bits of entropy, so someone holding both the state and the root key could find them offline. The state is now encrypted at rest, which covers a copy of the state volume on its own; a slow hash would cover the rest.
+- **The state log isn't bound to its order.** Each entry is encrypted and authenticated on its own, so someone who can write to the state volume can't forge or change entries, but could drop the last ones or replay a copy of the volume from earlier. Milestone 4's Raft log replaces this storage; bind each entry to its index there.
+- **Apiary generates a root key whenever none is mounted**, also in Swarm, until milestone 4 can tell the two apart. architecture.md says Swarm must refuse to start without the secret.
 - **The common-password list is short**, plus checks for repeated characters and keyboard or alphabet runs. Replace it with a real list (e.g. common passwords of 15 characters or more) before release.
 - **The admin port is plain HTTP** until milestone 3, so the session cookie isn't marked `Secure` yet. It is once the request arrives over HTTPS.
 

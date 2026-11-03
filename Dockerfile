@@ -24,15 +24,16 @@ RUN apt-get update \
     && apt-get purge -y curl \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir /data \
-    && chown app:app /data
+    && mkdir /data /keys \
+    && chown app:app /data /keys
 WORKDIR /app
 COPY --from=server /app/ ./
 ENV PATH="/app:${PATH}" \
     ASPNETCORE_ENVIRONMENT=Production \
-    Apiary__DataDirectory=/data
+    Apiary__DataDirectory=/data \
+    Apiary__KeyDirectory=/keys
 USER app
-VOLUME /data
+VOLUME /data /keys
 EXPOSE 8080 8443 8443/udp 9443
 HEALTHCHECK --interval=10s --timeout=6s --start-period=20s --retries=3 CMD ["apiary", "health"]
 ENTRYPOINT ["apiary"]

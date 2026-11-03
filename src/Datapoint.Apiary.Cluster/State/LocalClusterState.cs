@@ -5,10 +5,15 @@ using Microsoft.Extensions.Primitives;
 
 namespace Datapoint.Apiary.Cluster.State;
 
-public sealed partial class LocalClusterState(IOptions<ClusterOptions> options, ILogger<LocalClusterState> logger)
+public sealed partial class LocalClusterState(
+    IOptions<ClusterOptions> options,
+    StateEncryption encryption,
+    ILogger<LocalClusterState> logger)
     : IClusterState, IDisposable
 {
     private const int SnapshotVersion = 1;
+    private const string EntryPurpose = "apiary/state-entry";
+    private const string SnapshotPurpose = "apiary/state-snapshot";
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private CancellationTokenSource _changed = new();
     private long _entriesSinceSnapshot;
@@ -19,15 +24,16 @@ public sealed partial class LocalClusterState(IOptions<ClusterOptions> options, 
 
     private string Directory => Path.Combine(options.Value.DataDirectory, "state");
 
-    private string LogPath => Path.Combine(Directory, "entries.jsonl");
+    private string LogPath => Path.Combine(Directory, "entries.sealed");
 
-    private string SnapshotPath => Path.Combine(Directory, "snapshot.json");
+    private string SnapshotPath => Path.Combine(Directory, "snapshot.sealed");
 
     public IChangeToken GetChangeToken() => new CancellationChangeToken(_changed.Token);
 
     public async Task LoadAsync(CancellationToken cancellationToken)
     {
         System.IO.Directory.CreateDirectory(Directory);
+        await encryption.LoadAsync(Directory, cancellationToken);
         var state = await ReadSnapshotAsync(cancellationToken);
         var replayed = 0;
         foreach (var entry in await ReadLogAsync(cancellationToken))
@@ -72,8 +78,8 @@ public sealed partial class LocalClusterState(IOptions<ClusterOptions> options, 
             return ApiaryState.Empty;
         }
 
-        await using var stream = File.OpenRead(SnapshotPath);
-        var snapshot = await JsonSerializer.DeserializeAsync(stream, ClusterJsonContext.Default.StateSnapshot, cancellationToken);
+        var json = encryption.Open(SnapshotPurpose, await File.ReadAllTextAsync(SnapshotPath, cancellationToken));
+        var snapshot = JsonSerializer.Deserialize(json, ClusterJsonContext.Default.StateSnapshot);
         return snapshot?.State ?? ApiaryState.Empty;
     }
 
@@ -99,12 +105,12 @@ public sealed partial class LocalClusterState(IOptions<ClusterOptions> options, 
     }
 
     private StateEntry ParseEntry(string line) =>
-        JsonSerializer.Deserialize(line, ClusterJsonContext.Default.StateEntry)
+        JsonSerializer.Deserialize(encryption.Open(EntryPurpose, line), ClusterJsonContext.Default.StateEntry)
         ?? throw new InvalidDataException($"An empty entry in {LogPath}.");
 
     private async Task WriteEntryAsync(StateEntry entry, CancellationToken cancellationToken)
     {
-        var line = JsonSerializer.Serialize(entry, ClusterJsonContext.Default.StateEntry) + "\n";
+        var line = encryption.Seal(EntryPurpose, JsonSerializer.SerializeToUtf8Bytes(entry, ClusterJsonContext.Default.StateEntry)) + "\n";
         await using var stream = new FileStream(LogPath, FileMode.Append, FileAccess.Write, FileShare.Read);
         await stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(line), cancellationToken);
         stream.Flush(flushToDisk: true);
@@ -119,9 +125,10 @@ public sealed partial class LocalClusterState(IOptions<ClusterOptions> options, 
         }
 
         var temporary = SnapshotPath + ".tmp";
+        var json = JsonSerializer.SerializeToUtf8Bytes(new StateSnapshot(SnapshotVersion, Current), ClusterJsonContext.Default.StateSnapshot);
         await using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write))
         {
-            await JsonSerializer.SerializeAsync(stream, new StateSnapshot(SnapshotVersion, Current), ClusterJsonContext.Default.StateSnapshot, cancellationToken);
+            await stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(encryption.Seal(SnapshotPurpose, json)), cancellationToken);
             stream.Flush(flushToDisk: true);
         }
 

@@ -9,6 +9,7 @@ public static class ClusterServiceCollectionExtensions
     public static IServiceCollection AddApiaryCluster(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ClusterOptions>(configuration);
+        services.AddSingleton<StateEncryption>();
         services.AddSingleton<LocalClusterState>();
         services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<LocalClusterState>());
         services.AddHostedService<ClusterStateLoader>();

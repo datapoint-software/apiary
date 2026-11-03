@@ -12,4 +12,5 @@ dist/
 .angular/
 coverage/
 /data/
+/keys/
 src/Datapoint.Apiary/wwwroot/

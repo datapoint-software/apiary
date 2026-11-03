@@ -1,6 +1,7 @@
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster;
+using Datapoint.Apiary.Keys;
 using Datapoint.Apiary.Management;
 using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
@@ -23,6 +24,8 @@ public static class ApiaryServices
         services.AddOpenApi();
         services.ConfigureHttpJsonOptions(o => o.SerializerOptions.PropertyNamingPolicy = ApiJson.Options.PropertyNamingPolicy);
 
+        services.AddSingleton<RootKeyLoader>();
+        services.AddSingleton(provider => provider.GetRequiredService<RootKeyLoader>().Load());
         services.AddApiaryCluster(section);
         services.AddHostedService<StartupTasks>();
         services.AddApiaryManagement();

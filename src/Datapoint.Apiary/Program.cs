@@ -7,6 +7,11 @@ if (args is ["health"])
     return await HealthCommand.RunAsync();
 }
 
+if (args is ["secrets", "init"])
+{
+    return SecretsInitCommand.Run();
+}
+
 if (args is ["users", "create-admin", .. var options])
 {
     return await CreateAdminCommand.RunAsync(options);

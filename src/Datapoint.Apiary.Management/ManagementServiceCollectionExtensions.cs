@@ -4,6 +4,7 @@ using Datapoint.Apiary.Management.Authorization;
 using Datapoint.Apiary.Management.Setup;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Management.Users;
+using Datapoint.Apiary.Security.Keys;
 using Datapoint.Apiary.Security.Tokens;
 using Datapoint.Mediator.Authorization;
 using FluentValidation;
@@ -23,7 +24,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddSingleton<Challenges>();
         services.AddSingleton<SignInThrottle>();
         services.AddSingleton<SetupWindow>();
-        services.AddSingleton<SealingKey>();
+        services.AddSingleton(provider => new SealingKey(provider.GetRequiredService<RootKey>().Derive(KeyPurposes.Challenges)));
         services.AddSingleton<SealedTokens>();
         services.AddScoped(typeof(IAuthorizer<>), typeof(RoleAuthorizer<>));
         services.AddValidatorsFromAssemblyContaining<StateTransaction>(ServiceLifetime.Scoped, includeInternalTypes: false);

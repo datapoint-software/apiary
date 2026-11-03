@@ -8,4 +8,5 @@ namespace Datapoint.Apiary.Cluster.State;
     RespectNullableAnnotations = true)]
 [JsonSerializable(typeof(StateEntry))]
 [JsonSerializable(typeof(StateSnapshot))]
+[JsonSerializable(typeof(StateKeyRing))]
 public sealed partial class ClusterJsonContext : JsonSerializerContext;
