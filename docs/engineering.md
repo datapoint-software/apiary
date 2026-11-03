@@ -285,10 +285,11 @@ Short functions, full-word names, no comments, no side effects inside expression
 
 - `@datapoint/apiary-ui` is built with ng-packagr, and its selectors use the `ap` prefix: `[apButton]`, `<ap-calendar-button>`, `<ap-field>`.
 - It has a component where a card has behavior: buttons, fields and the error summary, banners, status, toasts, confirmations, the calendar button, the empty state, the page head and the password checks. Cards that are only styles (panels, tables, tabs, tags) are used as `ap-*` classes from the shared CSS. Apiary-specific pieces (ProjectCard, ClusterMap) stay in the app.
-- It holds the shared behavior too: validation and the error summary, toasts, confirmations, menus, and focus handling.
+- It holds the shared behavior too: validation and the error summary, toasts, confirmations, and focus handling.
 - **Accessibility primitives:**
-  - [Angular Aria](https://angular.dev/guide/aria/overview), stable since v22, for menus, tabs, select and listbox.
-  - The CDK for dialogs, overlays, focus traps and announcements. Aria has no dialog.
+  - The [Angular CDK](https://material.angular.dev/cdk/categories) for menus (`cdkMenu`), dialogs, overlays, focus traps and announcements.
+  - Native elements before custom widgets: `<select>`, not a custom listbox; links for tabs that change the URL.
+  - A combobox, like the search box, follows the [WAI-ARIA combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) by hand: `role="listbox"` and `aria-activedescendant`.
 - **Styles:** the default emulated encapsulation; never `::ng-deep`. Tokens ship as a CSS file of custom properties, listed in the package's `exports`, and components use them through `var()`. Themes and display settings switch the same `data-theme`, `data-text`, `data-contrast` and `data-motion` attributes as the prototype.
 
 ### Tools and tests
