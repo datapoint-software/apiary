@@ -1,9 +1,9 @@
-using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Cluster.Raft;
 using Microsoft.AspNetCore.Http;
 
 namespace Datapoint.Apiary.Certificates.Challenges;
 
-public sealed class AcmeChallengeResponder(IClusterState cluster)
+public sealed class AcmeChallengeResponder(RaftClusterState cluster)
 {
     public const string PathPrefix = "/.well-known/acme-challenge/";
 
@@ -15,7 +15,7 @@ public sealed class AcmeChallengeResponder(IClusterState cluster)
         var token = context.Request.Path.Value![PathPrefix.Length..];
         var host = context.Request.Host.Host;
         if (!HttpMethods.IsGet(context.Request.Method)
-            || !cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge)
+            || await cluster.FindChallengeAsync(token, context.RequestAborted) is not { } challenge
             || !string.Equals(challenge.Host, host, StringComparison.OrdinalIgnoreCase))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;

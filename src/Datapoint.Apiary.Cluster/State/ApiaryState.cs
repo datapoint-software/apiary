@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.Users;
@@ -31,6 +32,14 @@ public sealed record ApiaryState
     public ImmutableDictionary<string, AcmeChallenge> AcmeChallenges { get; init; } = ImmutableDictionary<string, AcmeChallenge>.Empty;
 
     public ImmutableDictionary<string, StateLock> Locks { get; init; } = ImmutableDictionary<string, StateLock>.Empty;
+
+    public Guid? ClusterId { get; init; }
+
+    public ClusterCa? ClusterCa { get; init; }
+
+    public ImmutableDictionary<Guid, Replica> Replicas { get; init; } = ImmutableDictionary<Guid, Replica>.Empty;
+
+    public ImmutableDictionary<Guid, AppliedRequest> AppliedRequests { get; init; } = ImmutableDictionary<Guid, AppliedRequest>.Empty;
 
     public bool SetupCompleted { get; init; }
 

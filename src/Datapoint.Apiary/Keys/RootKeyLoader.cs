@@ -1,10 +1,11 @@
+using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Hosting;
 using Datapoint.Apiary.Security.Keys;
 using Microsoft.Extensions.Options;
 
 namespace Datapoint.Apiary.Keys;
 
-public sealed partial class RootKeyLoader(IOptions<ApiaryOptions> options, ILogger<RootKeyLoader> logger)
+public sealed partial class RootKeyLoader(IOptions<ApiaryOptions> options, IOptions<ClusterOptions> cluster, ILogger<RootKeyLoader> logger)
 {
     private const string GeneratedFileName = "root-key";
 
@@ -15,6 +16,11 @@ public sealed partial class RootKeyLoader(IOptions<ApiaryOptions> options, ILogg
         {
             LogMounted(mounted);
             return Read(mounted);
+        }
+
+        if (cluster.Value.Mode is ClusterMode.Swarm)
+        {
+            throw new InvalidOperationException($"No root key is mounted at {mounted}. In Swarm, create one with `apiary secrets init | docker secret create apiary_root_key_1 -` and reference it in the stack file.");
         }
 
         var generated = Path.Combine(options.Value.KeyDirectory, GeneratedFileName);

@@ -10,7 +10,7 @@ public sealed class ListenerMatcherPolicy : MatcherPolicy, IEndpointSelectorPoli
 
     public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
     {
-        var kind = Listener.IsAdmin(httpContext) ? ListenerKind.Admin : ListenerKind.Public;
+        var kind = Listener.Kind(httpContext);
         for (var i = 0; i < candidates.Count; i++)
         {
             var listener = candidates[i].Endpoint.Metadata.GetMetadata<ListenerMetadata>();

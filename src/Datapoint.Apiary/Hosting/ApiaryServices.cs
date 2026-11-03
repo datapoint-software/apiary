@@ -7,6 +7,7 @@ using Datapoint.Apiary.Management;
 using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
+using Datapoint.Apiary.Replication;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
@@ -32,6 +33,7 @@ public static class ApiaryServices
         services.AddHostedService<StartupTasks>();
         services.AddApiaryManagement();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
+        services.AddScoped<ICommandForwarder, CommandForwarder>();
         services.AddHttpPrincipalAccessor();
         services.AddApiaryAuthentication();
         services.AddAuthorizationObserver<AuthorizationAuditor>();

@@ -14,23 +14,38 @@ public sealed class StateTransactionBehavior(
     StateTransaction transaction,
     IPrincipalAccessor principals,
     IRequestOrigin origin,
+    ICommandForwarder forwarder,
+    ForwardedRequest forwarded,
     TimeProvider time) : IBehavior
 {
     private static readonly ConcurrentDictionary<Type, string> s_actionNames = new();
 
     public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
     {
+        if (!cluster.IsLeader)
+        {
+            await forwarder.ForwardAsync(command, ct);
+            return;
+        }
+
+        using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         await next(ct);
-        await CommitAsync(command, ct);
+        await CommitAsync(command, null, ct);
     }
 
     public async ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command, Func<CancellationToken, ValueTask<TResult>> next, CancellationToken ct = default)
     {
+        if (!cluster.IsLeader)
+        {
+            return await forwarder.ForwardAsync(command, ct);
+        }
+
+        using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         var result = await next(ct);
-        await CommitAsync(command, ct);
+        await CommitAsync(command, forwarded.RequestId is null ? null : forwarder.Serialize(result), ct);
         return result;
     }
 
@@ -47,7 +62,7 @@ public sealed class StateTransactionBehavior(
         throw new ActionFailedException(ErrorCodes.NoQuorum, FailureKind.Unavailable);
     }
 
-    private async ValueTask CommitAsync(object command, CancellationToken ct)
+    private async ValueTask CommitAsync(object command, string? result, CancellationToken ct)
     {
         if (transaction.Changes.Count == 0)
         {
@@ -65,7 +80,7 @@ public sealed class StateTransactionBehavior(
             transaction.Affected,
             transaction.ProjectId,
             AuditOutcome.Succeeded));
-        var entry = new StateEntry(Guid.CreateVersion7(now), now, [.. transaction.Changes, audit]);
+        var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, audit], result);
         await cluster.AppendAsync(entry, ct);
     }
 }

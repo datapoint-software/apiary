@@ -2,5 +2,6 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Datapoint.Apiary.Security\Datapoint.Apiary.Security.csproj" />
+    <PackageReference Include="DotNext.Net.Cluster" />
   </ItemGroup>
 </Project>

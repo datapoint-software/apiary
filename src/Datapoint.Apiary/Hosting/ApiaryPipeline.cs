@@ -2,6 +2,7 @@ using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
+using Datapoint.Apiary.Replication;
 
 namespace Datapoint.Apiary.Hosting;
 
@@ -12,9 +13,10 @@ public static class ApiaryPipeline
         app.UseExceptionHandler(handler => handler.Run(context =>
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
         app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
-        app.UseWhen(context => !Listener.IsAdmin(context), proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>());
+        app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>());
         app.UseRouting();
         MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
+        app.MapGroup("/cluster").WithMetadata(ListenerMetadata.Cluster).MapApiaryCluster();
         app.MapReverseProxy().WithMetadata(ListenerMetadata.Public);
         app.MapFallback(PublicPages.NotFound).WithMetadata(ListenerMetadata.Public);
         return app;

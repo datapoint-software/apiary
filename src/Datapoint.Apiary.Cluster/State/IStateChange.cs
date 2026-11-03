@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.Users;
@@ -27,6 +28,9 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(LockTaken), "lock.taken")]
 [JsonDerivedType(typeof(LockReleased), "lock.released")]
 [JsonDerivedType(typeof(AuditRecorded), "audit.recorded")]
+[JsonDerivedType(typeof(ClusterCreated), "cluster.created")]
+[JsonDerivedType(typeof(ReplicaSaved), "replica.saved")]
+[JsonDerivedType(typeof(ReplicaRemoved), "replica.removed")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

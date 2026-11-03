@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Management.Accounts;
+using Datapoint.Apiary.Replication;
 
 namespace Datapoint.Apiary.Auth;
 
@@ -13,6 +14,12 @@ public sealed class SessionCookie(IHttpContextAccessor accessor) : ISessionCooki
             return;
         }
 
+        if (context.Features.Get<CookieRecorder>() is { } recorder)
+        {
+            recorder.Cookie = new ForwardedCookie(token);
+            return;
+        }
+
         context.Response.Cookies.Append(Name, token, Options(context));
     }
 
@@ -20,6 +27,12 @@ public sealed class SessionCookie(IHttpContextAccessor accessor) : ISessionCooki
     {
         if (accessor.HttpContext is not { } context)
         {
+            return;
+        }
+
+        if (context.Features.Get<CookieRecorder>() is { } recorder)
+        {
+            recorder.Cookie = new ForwardedCookie(null);
             return;
         }
 

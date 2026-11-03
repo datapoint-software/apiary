@@ -7,21 +7,58 @@ namespace Datapoint.Apiary.Cluster.State;
 public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
 {
     private const int KeyRingVersion = 1;
+    private const string FileName = "keys.json";
     private const char Separator = '.';
     private readonly SealedTokens _wrapping = new(new SealingKey(rootKey.Derive(KeyPurposes.StateAtRest)));
-    private Dictionary<string, SealedTokens> _dataKeys = new(StringComparer.Ordinal);
+    private Dictionary<string, (DateTimeOffset CreatedAt, byte[] Key, SealedTokens Tokens)> _dataKeys = new(StringComparer.Ordinal);
     private string _current = "";
 
-    public async Task LoadAsync(string directory, CancellationToken cancellationToken)
+    public bool IsLoaded => _current.Length > 0;
+
+    public async Task<bool> LoadAsync(string directory, CancellationToken cancellationToken)
     {
-        var path = Path.Combine(directory, "keys.json");
-        var ring = File.Exists(path) ? await ReadAsync(path, cancellationToken) : await CreateAsync(path, cancellationToken);
-        _dataKeys = ring.Keys.ToDictionary(k => k.Id, Unwrap, StringComparer.Ordinal);
+        var path = Path.Combine(directory, FileName);
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        await using var stream = File.OpenRead(path);
+        var ring = await JsonSerializer.DeserializeAsync(stream, ClusterJsonContext.Default.StateKeyRing, cancellationToken)
+            ?? throw new InvalidDataException($"An empty key ring in {path}.");
+        _dataKeys = ring.Keys.ToDictionary(k => k.Id, k => Use(k.CreatedAt, Unwrap(k)), StringComparer.Ordinal);
         _current = ring.Current;
+        return true;
     }
 
+    public Task CreateAsync(string directory, CancellationToken cancellationToken)
+    {
+        var id = SecretTokens.New()[..8];
+        return ImportAsync(directory, new SharedKeyRing(id, [new SharedDataKey(id, time.GetUtcNow(), Base64Url.Encode(SealingKey.Generate().Value))]), cancellationToken);
+    }
+
+    public async Task ImportAsync(string directory, SharedKeyRing shared, CancellationToken cancellationToken)
+    {
+        var keys = shared.Keys.ToDictionary(k => k.Id, k => Use(k.CreatedAt, Base64Url.TryDecode(k.Key) ?? throw new InvalidDataException("A shared data key isn't base64url.")), StringComparer.Ordinal);
+        var ring = new StateKeyRing(KeyRingVersion, shared.Current, [.. keys.Select(k => new WrappedDataKey(k.Key, k.Value.CreatedAt, _wrapping.Seal(WrapPurpose(k.Key), k.Value.Key)))]);
+        var path = Path.Combine(directory, FileName);
+        var temporary = path + ".tmp";
+        await using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write))
+        {
+            await JsonSerializer.SerializeAsync(stream, ring, ClusterJsonContext.Default.StateKeyRing, cancellationToken);
+            stream.Flush(flushToDisk: true);
+        }
+
+        File.Move(temporary, path, overwrite: true);
+        _dataKeys = keys;
+        _current = shared.Current;
+    }
+
+    public SharedKeyRing Export() =>
+        new(_current, [.. _dataKeys.Select(k => new SharedDataKey(k.Key, k.Value.CreatedAt, Base64Url.Encode(k.Value.Key)))]);
+
     public string Seal(string purpose, ReadOnlySpan<byte> plaintext) =>
-        _current + Separator + _dataKeys[_current].Seal(purpose, plaintext);
+        _current + Separator + _dataKeys[_current].Tokens.Seal(purpose, plaintext);
 
     public byte[] Open(string purpose, string sealedText)
     {
@@ -31,36 +68,16 @@ public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
             throw new InvalidDataException("The state was encrypted with a data key that isn't in the key ring.");
         }
 
-        return key.Open(purpose, sealedText[(separator + 1)..])
+        return key.Tokens.Open(purpose, sealedText[(separator + 1)..])
             ?? throw new InvalidDataException("The state can't be decrypted: it was changed, or encrypted with another root key.");
     }
 
-    private static async Task<StateKeyRing> ReadAsync(string path, CancellationToken cancellationToken)
-    {
-        await using var stream = File.OpenRead(path);
-        return await JsonSerializer.DeserializeAsync(stream, ClusterJsonContext.Default.StateKeyRing, cancellationToken)
-            ?? throw new InvalidDataException($"An empty key ring in {path}.");
-    }
+    private static (DateTimeOffset CreatedAt, byte[] Key, SealedTokens Tokens) Use(DateTimeOffset createdAt, byte[] key) =>
+        (createdAt, key, new SealedTokens(new SealingKey(key)));
 
     private static string WrapPurpose(string id) => "apiary/state-data-key/" + id;
 
-    private async Task<StateKeyRing> CreateAsync(string path, CancellationToken cancellationToken)
-    {
-        var id = SecretTokens.New()[..8];
-        var key = SealingKey.Generate();
-        var ring = new StateKeyRing(KeyRingVersion, id, [new WrappedDataKey(id, time.GetUtcNow(), _wrapping.Seal(WrapPurpose(id), key.Value))]);
-        var temporary = path + ".tmp";
-        await using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write))
-        {
-            await JsonSerializer.SerializeAsync(stream, ring, ClusterJsonContext.Default.StateKeyRing, cancellationToken);
-            stream.Flush(flushToDisk: true);
-        }
-
-        File.Move(temporary, path, overwrite: false);
-        return ring;
-    }
-
-    private SealedTokens Unwrap(WrappedDataKey wrapped) =>
-        new(new SealingKey(_wrapping.Open(WrapPurpose(wrapped.Id), wrapped.Key)
-            ?? throw new InvalidDataException("The state's data keys can't be decrypted with this root key. Mount the root key this cluster was created with.")));
+    private byte[] Unwrap(WrappedDataKey wrapped) =>
+        _wrapping.Open(WrapPurpose(wrapped.Id), wrapped.Key)
+            ?? throw new InvalidDataException("The state's data keys can't be decrypted with this root key. Mount the root key this cluster was created with.");
 }

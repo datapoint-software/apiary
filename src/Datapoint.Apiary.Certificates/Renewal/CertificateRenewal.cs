@@ -43,7 +43,7 @@ public sealed partial class CertificateRenewal(
 
     private async Task RunOnceAsync(CancellationToken cancellationToken)
     {
-        if (!cluster.IsWritable)
+        if (!cluster.IsLeader || !cluster.IsWritable)
         {
             return;
         }

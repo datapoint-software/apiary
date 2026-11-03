@@ -1,3 +1,5 @@
+using Datapoint.Apiary.Cluster.Join;
+using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,9 +12,12 @@ public static class ClusterServiceCollectionExtensions
     {
         services.Configure<ClusterOptions>(configuration);
         services.AddSingleton<StateEncryption>();
-        services.AddSingleton<LocalClusterState>();
-        services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<LocalClusterState>());
-        services.AddHostedService<ClusterStateLoader>();
+        services.AddSingleton<JoinProtocol>();
+        services.AddSingleton<ClusterClient>();
+        services.AddSingleton<PeerDiscovery>();
+        services.AddSingleton<RaftClusterState>();
+        services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<RaftClusterState>());
+        services.AddHostedService(provider => provider.GetRequiredService<RaftClusterState>());
         return services;
     }
 }

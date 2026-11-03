@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Replication;
 using FluentValidation;
 
 namespace Datapoint.Apiary.Api;
@@ -10,6 +12,8 @@ public static class ApiErrors
     {
         ValidationException validation => ValidationProblems.From(validation).ToResult(),
         ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code, Params: failed.Params).ToResult(),
+        ForwardedProblemException forwarded => forwarded.ToResult(),
+        ClusterUnavailableException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.NoQuorum).ToResult(),
         _ => null,
     };
 

@@ -8,7 +8,11 @@ public interface IClusterState
 
     bool IsWritable { get; }
 
+    bool IsLeader { get; }
+
     IChangeToken GetChangeToken();
+
+    ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken);
 
     ValueTask AppendAsync(StateEntry entry, CancellationToken cancellationToken);
 }

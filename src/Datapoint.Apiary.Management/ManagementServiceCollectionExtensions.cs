@@ -17,6 +17,7 @@ public static class ManagementServiceCollectionExtensions
     public static IServiceCollection AddApiaryManagement(this IServiceCollection services)
     {
         services.AddScoped<StateTransaction>();
+        services.AddScoped<ForwardedRequest>();
         services.AddScoped<CurrentUser>();
         services.AddScoped<Sessions>();
         services.AddScoped<Invitations>();

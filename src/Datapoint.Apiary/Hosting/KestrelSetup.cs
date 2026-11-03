@@ -1,4 +1,8 @@
+using System.Net;
 using Datapoint.Apiary.Certificates.Selection;
+using Datapoint.Apiary.Cluster.Raft;
+using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Replication;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Options;
@@ -28,7 +32,25 @@ public static class KestrelSetup
                 });
             });
             kestrel.ListenAnyIP(options.AdminPort, listen => listen.Use(allowlist.Guard));
+            ListenForReplicas(kestrel, options);
         });
         return builder;
+    }
+
+    private static void ListenForReplicas(KestrelServerOptions kestrel, ApiaryOptions options)
+    {
+        var cluster = kestrel.ApplicationServices.GetRequiredService<RaftClusterState>();
+        var mode = kestrel.ApplicationServices.GetRequiredService<IOptions<ClusterOptions>>().Value.Mode;
+        var starting = TemporaryCertificate.Create(kestrel.ApplicationServices.GetRequiredService<TimeProvider>());
+        kestrel.Listen(mode is ClusterMode.Swarm ? IPAddress.Any : IPAddress.Loopback, options.ClusterPort, listen =>
+        {
+            listen.Protocols = HttpProtocols.Http1AndHttp2;
+            listen.UseHttps(https =>
+            {
+                https.ServerCertificateSelector = (_, _) => cluster.Credentials?.Certificate ?? starting;
+                https.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
+                https.AllowAnyClientCertificate();
+            });
+        });
     }
 }
