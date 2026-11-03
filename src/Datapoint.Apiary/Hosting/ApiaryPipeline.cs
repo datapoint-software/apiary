@@ -52,7 +52,7 @@ public static class ApiaryPipeline
         admin.MapApiaryOAuth();
         admin.MapApiarySso();
         admin.MapApiaryMcp();
-        admin.MapActions("/api", o =>
+        admin.MapMediatorActions("/api", o =>
         {
             o.SerializerOptions = ApiJson.Options;
             o.MapException = ApiErrors.Map;
