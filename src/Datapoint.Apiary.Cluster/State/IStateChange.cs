@@ -15,6 +15,7 @@ namespace Datapoint.Apiary.Cluster.State;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$change")]
 [JsonDerivedType(typeof(ProjectSaved), "project.saved")]
+[JsonDerivedType(typeof(ProjectDeleted), "project.deleted")]
 [JsonDerivedType(typeof(RouteSaved), "route.saved")]
 [JsonDerivedType(typeof(RouteDeleted), "route.deleted")]
 [JsonDerivedType(typeof(RedirectSaved), "redirect.saved")]

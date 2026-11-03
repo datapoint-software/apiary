@@ -8,10 +8,11 @@ public sealed class ListProjectsHandler(IClusterState cluster) : IQueryHandler<L
     public ValueTask<IReadOnlyList<ProjectView>> HandleAsync(ListProjects query, CancellationToken ct = default)
     {
         var state = cluster.Current;
-        var counts = state.Routes.Values.CountBy(r => r.ProjectId).ToDictionary();
+        var routes = state.Routes.Values.CountBy(r => r.ProjectId).ToDictionary();
+        var redirects = state.Redirects.Values.CountBy(r => r.ProjectId).ToDictionary();
         IReadOnlyList<ProjectView> projects = [.. state.Projects.Values
             .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(p => new ProjectView(p.Id, p.Name, p.Description, p.Icon, counts.GetValueOrDefault(p.Id)))];
+            .Select(p => new ProjectView(p.Id, p.Name, p.Description, p.Icon, routes.GetValueOrDefault(p.Id), redirects.GetValueOrDefault(p.Id)))];
         return new(projects);
     }
 }

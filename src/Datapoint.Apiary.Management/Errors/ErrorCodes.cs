@@ -35,6 +35,11 @@ public static class ErrorCodes
     public const string IpRangeTooMany = "ipRange.tooMany";
 
     public const string ProjectNotFound = "project.notFound";
+    public const string ProjectNameTaken = "project.nameTaken";
+    public const string ProjectIconUnknown = "project.iconUnknown";
+    public const string ProjectNotEmpty = "project.notEmpty";
+    public const string ProjectLast = "project.last";
+    public const string ProjectMoveToSelf = "project.moveToSelf";
     public const string RouteNotFound = "route.notFound";
     public const string RouteDuplicate = "route.duplicate";
     public const string RouteTargetsRequired = "route.targetsRequired";
@@ -99,7 +104,7 @@ public static class ErrorCodes
         HostnameRequired, HostnameInvalid, HostnameTooLong, HostnameConsecutiveDots, HostnameLabel, HostnameScheme, HostnamePath,
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
-        ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
+        ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
         MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
