@@ -2,11 +2,12 @@ using System.Diagnostics;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Proxy.Telemetry;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Yarp.ReverseProxy.Model;
 
 namespace Datapoint.Apiary.Proxy.AccessLogs;
 
-public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter writer, ProxyMetrics metrics, TimeProvider time)
+public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter writer, ProxyMetrics metrics, IOptions<AccessLogOptions> options, TimeProvider time)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -33,7 +34,7 @@ public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter wr
         var request = context.Request;
         return new AccessLogEntry(
             time.GetUtcNow(),
-            context.Connection.RemoteIpAddress?.ToString(),
+            ClientAddress.Format(context.Connection.RemoteIpAddress, options.Value.ShortenAddresses),
             request.Method,
             request.Host.Host,
             request.Path.Value ?? "/",

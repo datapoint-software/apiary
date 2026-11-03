@@ -47,7 +47,7 @@ public static class ApiaryServices
             .AddBehavior<StateTransactionBehavior>());
 
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
-        services.AddApiaryProxy(options.OwnPorts);
+        services.AddApiaryProxy(options.OwnPorts, section.GetSection("AccessLogs"));
         return services;
     }
 
