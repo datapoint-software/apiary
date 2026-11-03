@@ -72,6 +72,13 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
 - First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects, plus raw TCP and UDP (see [TCP and UDP](#tcp-and-udp)).
 
+### Projects
+
+- Every route, stream route, redirect and uploaded certificate belongs to exactly one project. A new cluster starts with one project, "Default".
+- Projects organise and filter: per-project overviews, route lists grouped by project, and counts and status per project. They are **not an access boundary**: roles still apply to the whole cluster.
+- A project has a name, a one-line description and an icon. A project can only be deleted once it's empty: its routes are moved to another project or deleted first.
+- Management actions that list or create these objects take a project, and audit entries record the project of the object they affect.
+
 ### Weighted and canary routing
 
 By default a route has a single target group, and none of the following applies. Each feature is opt-in and configured per route, independently of the others:
@@ -102,7 +109,7 @@ By default a route has a single target group, and none of the following applies.
 - **Replacing voters.** When a voter leaves (it was stopped, or it has been missing longer than a configurable timeout), a follower is promoted in its place if there is one. A voter that is briefly unreachable, e.g. during a network blip, isn't replaced, so membership doesn't churn. A missing member is removed straight away, without waiting for the timeout, when a new member starts on the same node: Swarm runs at most one replica per node, so the old one can't still be running there.
 - **Membership is configurable.** In *automatic* mode, replicas that appear in Swarm DNS join, and ones that leave or stay missing past the timeout are removed, so the cluster scales with the edge nodes. In *manual* mode, new replicas wait until an admin approves them (UI or MCP), and admins remove dead ones. In both modes a replica must prove it's genuine (see [Cluster trust](#cluster-trust)) before it can join.
 - **Writes go to the leader.** A command that changes state and reaches another replica is forwarded to the Raft leader, which returns the result. Callers never need to know which replica leads (see [Writes](#writes)).
-- The state holds routes, admin users and their roles, OAuth clients and tokens, the audit log, automatic and uploaded certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
+- The state holds projects, routes, admin users and their roles, OAuth clients and tokens, the audit log, automatic and uploaded certificates and their private keys, the ACME account key, pending challenge tokens, and locks.
 - **Replicas leave cleanly.** When Swarm stops a replica (scale-down, rolling update or node drain), it hands off leadership if it leads, and a voter steps down so a follower can be promoted, within `stop_grace_period`. Apiary refuses to step down a voter if that would leave fewer voters than a majority needs.
 - **Healthy means caught up, once.** A replica's health check passes only once it has joined the cluster and received the state, so Swarm waits for it before stopping the next replica in a rolling update. After that it stays healthy as long as the process responds, even if it falls behind for a while (see [Observability](#observability)).
 - Every replica keeps proxying with its last known routes and certificates even without a majority. Only writes stop, such as route and user changes and certificate renewals.
