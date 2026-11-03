@@ -4,6 +4,10 @@ How Apiary's code is organized and written. The conventions follow each platform
 
 Researched against the official documentation on 2026-11-03, for .NET 10 with C# 14 and Angular 22.2. Check this file again before each major upgrade.
 
+## Language
+
+British English everywhere we choose the words: our own names in code, documentation, commit messages, and the interface's text (`Authorisation`, `Behaviour`, `Colour`, `licence` for the noun). Names that come from frameworks and libraries stay as they are, since we can't rename them: `Color`, `AuthorizeAttribute`, CSS `color`, `Datapoint.Mediator.Authorization`. So do proper names, such as the GNU Affero General Public License.
+
 ## Repository layout
 
 ```
@@ -91,9 +95,30 @@ Analyzers check what they can:
 - Nesting that can be reduced: Roslynator RCS1208.
 - `using` blocks that can be declarations: IDE0063.
 - Braces: IDE0011.
-- Method length: Meziantou MA0051, which also catches most deep nesting.
+- Complexity: CA1502, with a cyclomatic complexity limit of 10 per method set in `CodeMetricsConfig.txt`. It also catches most deep nesting.
 
 The three-level limit and nested conditional operators are checked in review: no open-source analyzer measures nesting depth, and SonarAnalyzer, which does, isn't open source.
+
+Readability:
+
+- **Names say what things are, in the domain's own words** (`Route`, `LeaderLease`, `RenewalWindow`), as full words. Only the well-known abbreviations, such as `Http`, `Id` and `Tls`, are allowed.
+- **Methods are short,** but length isn't a hard limit. Split a method when the new one has a name that stands for real work, not to meet a line count. Two methods that can only be understood together are worse than one.
+- **No comments in code.** If code needs a comment to be understood, rename or restructure it until it doesn't. No commented-out code either. This covers XML documentation too: we don't publish libraries for developers outside Datapoint. If we ever do, that package gets XML documentation on its public API.
+  - Descriptions that agents and the API document need are data, not comments: `[Action(Description = …)]` for commands and queries, and `[Description]` on their properties.
+- **No side effects inside expressions:** no assignments, `++` or calls that change state in a condition or an argument. Use parentheses whenever `&&` and `||` are mixed.
+- **Interfaces only at real boundaries:** where there are two implementations, or a seam such as the cluster, the clock (`TimeProvider`), the ACME client or the network. Not one interface per class, and no layers that only pass calls through.
+- **No mocking library.** Tests use real objects, and small hand-written fakes at those boundaries.
+- **Immutable by default:** records for data, `readonly` fields, `init` properties, and `IReadOnlyList<T>` and the like in signatures.
+- **LINQ for short transformations without side effects.** Use a loop when the code changes something, exits early, or runs on the proxy's request path, where LINQ's allocations matter.
+- **Booleans for states that are and will always be binary;** an enum when there could be a third state, or when several Boolean arguments would make a call unreadable. Literal arguments are named at the call site: `Load(path, validate: true)`.
+- **The null-forgiving operator `!`** only where the compiler can't see that a value is set. Prefer restructuring so it isn't needed.
+- **Async all the way down,** following [David Fowler's guidance](https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md):
+  - No `async void`, `.Result` or `.Wait()`.
+  - `await` rather than `ContinueWith`.
+  - A `CancellationToken` passed through every call that takes one.
+  - Async factory methods instead of async work in constructors.
+  - Checked by CA2016, CA2012, and VSTHRD100 and VSTHRD002 from [Microsoft.VisualStudio.Threading.Analyzers](https://github.com/microsoft/vs-threading) (MIT).
+- **Exceptions for bugs and infrastructure faults only.** Expected failures are error codes (see [Errors are codes, not messages](#errors-are-codes-not-messages)). `catch (Exception)` only at boundaries: the host, background services and the Mediator pipeline. Checked by CA1031.
 
 [Primary constructors](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/instance-constructors#primary-constructors):
 
@@ -107,7 +132,7 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
 
 ### Enforcement
 
-- `.editorconfig` starts from [the dotnet/docs repository's](https://github.com/dotnet/docs/blob/main/.editorconfig). Our changes to it are marked with a comment that says why.
+- `.editorconfig` starts from [the dotnet/docs repository's](https://github.com/dotnet/docs/blob/main/.editorconfig). Our changes to it are marked with a comment that says why: configuration files aren't code, and the reason isn't visible anywhere else.
 - `Directory.Build.props`:
   - `Nullable` and `TreatWarningsAsErrors` are on.
   - `AnalysisLevel` is pinned to `10.0-recommended`, so an SDK update can't change the rules silently.
@@ -197,6 +222,7 @@ FluentValidation's exceptions go through `MapException`, so Apiary maps those to
 - `WebApplicationFactory` for the admin API and MCP.
 - Raft runs as several in-process replicas, so failures, elections and recovery are tested without Docker.
 - Test method names are sentences with underscores (`Rejects_a_loopback_target`). CA1707 is turned off for test projects only.
+- **Tests read as specifications:** one behaviour per test, laid out as arrange, act, assert, with no `if` or loops. Data comes from small named builders (`ARoute().WithTarget("127.0.0.1")`), not unexplained literals. Checked in part by xUnit's analyzers.
 
 ## Angular
 
@@ -224,18 +250,17 @@ The same rules as in .NET. In TypeScript, ESLint enforces most of them.
 |---|---|
 | At most three levels of nesting | `max-depth: 3` |
 | A complexity limit per function | `complexity: 10` |
-| Functions of about 40 lines at most | `max-lines-per-function: 40` |
 | No `else` after `return` | `no-else-return` |
 | No nested conditional operators | `no-nested-ternary` |
 | Braces always | `curly` |
 | Strict equality | `eqeqeq` |
 | One class per file, named after it | `max-classes-per-file: 1` |
 | No `any`: use `unknown` and narrow it | `@typescript-eslint/no-explicit-any` |
-| No non-null assertion `!`; the rare justified one gets a comment and a suppression | `@typescript-eslint/no-non-null-assertion` |
+| No non-null assertion `!` where restructuring removes the need; the rare remaining one is suppressed on its line | `@typescript-eslint/no-non-null-assertion` |
 | `readonly` wherever a value doesn't change | `@typescript-eslint/prefer-readonly` |
 | Angular's naming: camelCase members, PascalCase types | `@typescript-eslint/naming-convention` |
 
-Guard clauses, `continue` in loops and names for complex conditions apply as in .NET, and are checked in review.
+Short functions, full-word names, no comments, no side effects inside expressions, guard clauses, `continue` in loops and names for complex conditions apply as in .NET, and are checked in review. Like methods, functions have no hard length limit.
 
 **Templates only display:**
 
