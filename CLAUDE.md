@@ -6,7 +6,7 @@ Before writing or reviewing code, read [docs/engineering.md](docs/engineering.md
 
 ## Branches, commits and merge requests
 
-Sections that follow a specification summarize it, so there is no need to fetch it. Some rules deliberately narrow a specification, e.g. which branch types we use; follow them. Otherwise, where a summary and its specification disagree, the specification wins.
+Sections that follow a specification summarise it, so there is no need to fetch it. Some rules deliberately narrow a specification, e.g. which branch types we use; follow them. Otherwise, where a summary and its specification disagree, the specification wins.
 
 ### Branch names
 
@@ -53,7 +53,7 @@ Commit often, one commit per self-contained change: each commit does one thing, 
 
 ### Merge requests
 
-- Title: formatted like a commit's first line (see above), summarizing the whole merge request.
+- Title: formatted like a commit's first line (see above), summarising the whole merge request.
 - Description: use these headings, in this order:
 
   ```markdown

@@ -120,7 +120,7 @@ By default a route has a single target group, and none of the following applies.
 Every change is a Datapoint.Mediator command, applied through a transaction behaviour in Apiary that implements the library's `ITransactionContext`. The library needs no changes: its abstractions don't depend on EF Core.
 
 - **Commands are forwarded, not HTTP requests.** On a follower, the behaviour sends the action name, its JSON arguments, the signed-in user and their IP address to the leader over the replicas' mutual TLS. Forwarding the HTTP request instead would hide the admin's IP address from the allowlist and audit log, and break MCP sessions on every leadership change.
-- **The leader decides.** It runs authorization, validation and the handler against the latest state, so a user who was just demoted is refused.
+- **The leader decides.** It runs authorisation, validation and the handler against the latest state, so a user who was just demoted is refused.
 - **One entry per command.** The command's changes and its audit entry are appended as a single Raft entry, so a change is never saved without its audit record. The caller gets its result once the entry is saved by a majority.
 - **Queries run locally**, on whichever replica receives them.
 - **Safe retries.** Each forwarded command carries a unique request ID. The leader remembers recently applied IDs and their results. When a leader fails before replying, the follower retries with the same ID against the new leader, which returns the stored result if the command was already applied, instead of applying it twice. Callers see "unknown" only if no leader returns before a timeout.
@@ -187,8 +187,8 @@ During the rolling update, each restarted replica rejoins with the certificate i
 
 Administrators manage and query Apiary in two ways: through the Angular UI, or through their AI agents over the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP).
 
-- Every management operation (e.g. create a route, list certificates) is a Datapoint.Mediator command or query, named with `[Action]`. The same action is mapped as an HTTP endpoint for the UI (`Datapoint.Mediator.AspNetCore`) and as an MCP tool for agents (`Datapoint.Mediator.ModelContextProtocol`), so both get the same validation and authorization.
-- Authorization is denied by default: every action needs an authorizer.
+- Every management operation (e.g. create a route, list certificates) is a Datapoint.Mediator command or query, named with `[Action]`. The same action is mapped as an HTTP endpoint for the UI (`Datapoint.Mediator.AspNetCore`) and as an MCP tool for agents (`Datapoint.Mediator.ModelContextProtocol`), so both get the same validation and authorisation.
+- Authorisation is denied by default: every action needs an authoriser.
 - **Agents have the same permissions as the user who connected them.** Datapoint.Mediator marks queries as read-only and commands as possibly destructive (MCP's `readOnlyHint` and `destructiveHint`), so MCP clients that honour these hints ask the user before running a command. Whether they do is up to the client and its settings; Apiary can't enforce or verify it (see [risks.md](risks.md)). The UI lists each user's connected agents, and any of them can be disconnected, revoking its tokens.
 - The UI, its HTTP API and the MCP endpoint are all served on the admin port, which must **never be reachable from the internet**. Every replica serves it, so admins can use any edge node. It's protected by three independent layers (defence in depth), so it stays safe if one fails:
   1. **A network firewall outside the hosts** (e.g. a cloud security group or the network's firewall) allows the admin port only from the VPN or internal address ranges. This is the main layer: Docker's iptables rules can't bypass it. Rules in Docker's [`DOCKER-USER` chain](https://docs.docker.com/engine/network/packet-filtering-firewalls/) on each node can add to it, but aren't relied on.
@@ -199,7 +199,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Sign-in.** Admins sign in either with a local account, stored in the replicated state, or through single sign-on with an OpenID Connect (OIDC) identity provider such as Entra ID or Keycloak.
   - Roles can be mapped from the identity provider's groups, so access is managed there and removed when people leave.
   - Local accounts stay available as a break-glass way in, for when the identity provider is down. That matters because the identity provider may itself be routed through Apiary.
-  - For MCP, Apiary stays the OAuth authorization server, and sends users to the identity provider to sign in.
+  - For MCP, Apiary stays the OAuth authorisation server, and sends users to the identity provider to sign in.
 - **Local accounts** guard the most powerful access, since they are also the break-glass way in. Following [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) and [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html):
   - **Password hashing:** PBKDF2-HMAC-SHA512, built into .NET, with OWASP's recommended iteration count (about 210,000). Each hash stores its algorithm and settings, so a stronger algorithm (e.g. Argon2id) can be adopted later by re-hashing each password at its user's next sign-in.
   - **Throttling:** each failed sign-in for the same account and IP address adds a growing delay. There is no hard lockout, which would let an attacker lock out the break-glass account on purpose. Delays are kept in memory on each replica, not in the replicated state, so sign-in doesn't depend on a majority. Repeated failures are audited and shown in the UI.
@@ -212,7 +212,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
   4. On start, Apiary logs where and until when setup is open (e.g. "Waiting for setup at https://edge-1:9443 until 14:35").
 
   If every Administrator is locked out, `docker exec <container> apiary users create-admin --name <name>` prints a one-time link, valid for about 15 minutes, where the new Administrator sets their password in the browser. Running `docker exec` already requires control of the host, and the action is audited.
-- **Roles.** Every user has one role, and every authorizer checks it:
+- **Roles.** Every user has one role, and every authoriser checks it:
 
   | Role | Can |
   | --- | --- |
@@ -223,7 +223,7 @@ Administrators manage and query Apiary in two ways: through the Angular UI, or t
 - **Uploading private keys is UI only.** The certificate upload action isn't offered as an MCP tool, so private keys never pass through an AI agent or its model provider.
 - **Audit log.** Every action that changes state, and every denied action, is recorded from the start, whether it came from the UI or MCP: when, who (user, and the agent's OAuth client when there is one), from which IP address, the action name, the IDs it affected, and whether it succeeded. Arguments are not recorded, since they can contain secrets such as private keys or passwords. Read-only actions aren't recorded by default, to keep the log small.
 - The audit log is part of the replicated state, so it's consistent across replicas and included in backups. A change whose audit entry can't be written fails, so nothing changes unrecorded. Entries are kept for a configurable period, 1 year by default, and can also be sent to the logs.
-- **Agents authenticate with OAuth**, as the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorization server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
+- **Agents authenticate with OAuth**, as the [MCP authorisation specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) describes. Apiary is the authorisation server: the user signs in through a browser (with a local account or single sign-on) and the agent receives short-lived tokens. We implement only the parts of OAuth the specification needs, without an OAuth server library.
 
 ## Observability
 

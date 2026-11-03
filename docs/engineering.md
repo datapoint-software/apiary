@@ -1,6 +1,6 @@
 # Engineering
 
-How Apiary's code is organized and written. The conventions follow each platform's own guidance; where we add or change a rule, it says so and why. The architecture these rules serve is in [architecture.md](architecture.md).
+How Apiary's code is organised and written. The conventions follow each platform's own guidance; where we add or change a rule, it says so and why. The architecture these rules serve is in [architecture.md](architecture.md).
 
 Researched against the official documentation on 2026-11-03, for .NET 10 with C# 14 and Angular 22.2. Check this file again before each major upgrade.
 
@@ -14,7 +14,7 @@ British English everywhere we choose the words: our own names in code, documenta
 src/
   Datapoint.Apiary/                The executable: hosting, Kestrel and YARP, the admin API, MCP, CLI commands; serves the UI
   Datapoint.Apiary.Cluster/        Raft, the replicated state, snapshots, leader forwarding, the transaction context
-  Datapoint.Apiary.Management/     Datapoint.Mediator commands and queries: validation, authorization, audit
+  Datapoint.Apiary.Management/     Datapoint.Mediator commands and queries: validation, authorisation, audit
   Datapoint.Apiary.Proxy/          Route configuration from the state, stream routes, health checks
   Datapoint.Apiary.Certificates/   ACME, renewal, certificate selection
   Datapoint.Apiary.Security/       Root key, encryption at rest, password hashing, OAuth tokens
@@ -40,7 +40,7 @@ Datapoint.Apiary.slnx  Directory.Build.props  Directory.Packages.props  global.j
 - `Cluster` depends on `Security`, to encrypt the state at rest.
 - `Proxy` reads the state through `Cluster`'s interfaces. It never depends on `Management`: every request passes through the proxy, and management code must not be able to slow it down or break it.
 - `Certificates` depends on `Cluster` and `Security`.
-- `Management` depends on `Cluster`, `Certificates` and `Security`. Business rules, validation and authorization live only here.
+- `Management` depends on `Cluster`, `Certificates` and `Security`. Business rules, validation and authorisation live only here.
 - `Datapoint.Apiary` (the host) references everything and is referenced by nothing but tests.
 
 `Datapoint.Apiary.Architecture.Tests` fails the build when a project reference breaks these rules.
@@ -126,7 +126,7 @@ Readability:
 - **Classes:** a primary constructor for injected services. Use its parameters directly, rather than copying them into `_fields`.
 - **Never assign to a primary constructor parameter.** Unlike a `readonly` field, nothing stops it from changing, so a reassigned dependency would be a silent bug.
 - **A normal constructor** when it validates arguments or does more than receive them.
-- IDE0290 (use a primary constructor) is a warning, so the style stays consistent. A parameter captured twice, in a field initializer and in a member, triggers CS9124, which fails the build.
+- IDE0290 (use a primary constructor) is a warning, so the style stays consistent. A parameter captured twice, in a field initialiser and in a member, triggers CS9124, which fails the build.
 
 C# 14 features we use: `field`-backed properties, null-conditional assignment (`a?.B = x`), extension members, and `nameof` with unbound generic types. See [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14).
 
@@ -192,9 +192,9 @@ No text written in .NET reaches a client: not validation messages, and not excep
 
 Where the words come from:
 
-- **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalog is ready for Angular's internationalization when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
-- **MCP** agents have no UI, so the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters. It's never an exception message, and it can later share the UI's translations.
-- **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalog.
+- **The UI** has a message catalogue that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalogue is ready for Angular's internationalisation when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
+- **MCP** agents have no UI, so the MCP adapter adds an English description of each code from its own catalogue, next to the code and parameters. It's never an exception message, and it can later share the UI's translations.
+- **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalogue.
 
 **Gap in Datapoint.Mediator 4.0.0-beta.3:** its adapters still produce English text in three places:
 
@@ -273,13 +273,13 @@ Short functions, full-word names, no comments, no side effects inside expression
 
 ### Forms
 
-- **One vocabulary of errors.** Client-side validators produce the same codes as the server's validators (`hostname.consecutiveDots`, `target.loopback`, `range`), so the UI's message catalog words both alike, and there's one list to translate.
+- **One vocabulary of errors.** Client-side validators produce the same codes as the server's validators (`hostname.consecutiveDots`, `target.loopback`, `range`), so the UI's message catalogue words both alike, and there's one list to translate.
 - **Shared rules live in `@datapoint/apiary-ui`** as Signal Forms rule functions (`hostname()`, `port()`, `target()`, `ipRange()`), mirroring the server's FluentValidation extensions. A test compares the codes on both sides.
 - **Each form's rules are in their own file,** apart from the component: `route-editor.ts` and `route-rules.ts`. The rules are tested without rendering anything.
 - **The library decides when errors show.** `<ap-field>` shows a field's error when you leave it, then as you type. `<ap-error-summary>` lists them on submit and moves focus. A form never decides that on its own.
 - **Fields that don't apply don't validate.** A field that depends on another, like the maintenance window's dates, is marked hidden or disabled in the schema, not only wrapped in `@if`, so it can never block a save.
 - **Checks that need the server are async validators,** with debounce and a pending state, shown as "Checking…".
-- **Server errors land on fields.** The submit handler maps the ProblemDetails `errors` onto fields by name; errors without a field go to the summary. Server text is never shown, only codes through the catalog.
+- **Server errors land on fields.** The submit handler maps the ProblemDetails `errors` onto fields by name; errors without a field go to the summary. Server text is never shown, only codes through the catalogue.
 - **Library controls plug straight in.** Inputs, selects, switches and the date picker implement Signal Forms' custom-control interfaces, so forms bind to them like native inputs.
 - **Forms hold no business rules.** They check shape and give quick feedback. Anything that depends on the cluster's state is decided by the server.
 - **HTTP:** a client generated from the admin API's OpenAPI document, so the UI and the API can't drift apart. Uploads with progress use `withXhr()`; fetch is the default.
@@ -288,7 +288,7 @@ Short functions, full-word names, no comments, no side effects inside expression
 
 - `@datapoint/apiary-ui` is built with ng-packagr, and its selectors use the `ap` prefix: `<ap-button>`, `<ap-date-picker>`.
 - It has one component for each design system card. Apiary-specific pieces (ProjectCard, ClusterMap, Split) stay in the app.
-- It holds the shared behavior too: validation and the error summary, toasts, confirmations, menus, and focus handling.
+- It holds the shared behaviour too: validation and the error summary, toasts, confirmations, menus, and focus handling.
 - **Accessibility primitives:**
   - [Angular Aria](https://angular.dev/guide/aria/overview), stable since v22, for menus, tabs, select and listbox.
   - The CDK for dialogs, overlays, focus traps and announcements. Aria has no dialog.
