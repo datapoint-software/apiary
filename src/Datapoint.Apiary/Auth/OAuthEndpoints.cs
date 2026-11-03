@@ -5,6 +5,7 @@ using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Mediator;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 
 namespace Datapoint.Apiary.Auth;
 
@@ -26,7 +27,7 @@ public static class OAuthEndpoints
         endpoints.MapGet(ResourceMetadataPath, ResourceMetadata);
         endpoints.MapGet(ResourceMetadataPath + McpPath, ResourceMetadata);
         endpoints.MapGet(ServerMetadataPath, ServerMetadata);
-        endpoints.MapGet("/oauth/authorize", (HttpRequest request) => Results.Redirect("/connect" + request.QueryString));
+        endpoints.MapGet("/oauth/authorize", Authorize);
         endpoints.MapPost("/oauth/register", Register).WithMetadata(new RequestSizeLimitAttribute(MaxRequestSize));
         endpoints.MapPost("/oauth/token", TokenAsync).WithMetadata(new RequestSizeLimitAttribute(MaxRequestSize)).DisableAntiforgery();
         endpoints.MapPost("/oauth/revoke", RevokeAsync).WithMetadata(new RequestSizeLimitAttribute(MaxRequestSize)).DisableAntiforgery();
@@ -57,6 +58,20 @@ public static class OAuthEndpoints
             s_none));
     }
 
+    private static IResult Authorize(HttpRequest request)
+    {
+        var error = request.Query["response_type"].ToString() != "code" ? ErrorCodes.AgentResponseTypeInvalid
+            : IsOtherResource(request, request.Query["resource"]) ? ErrorCodes.AgentResourceInvalid
+            : null;
+        return Results.Redirect("/connect" + (error is null ? request.QueryString : QueryString.Create("error", error)));
+    }
+
+    private static bool IsOtherResource(HttpRequest request, StringValues resources)
+    {
+        var own = Base(request);
+        return resources.Any(r => r?.TrimEnd('/') is not { } resource || (resource != own && resource != own + McpPath));
+    }
+
     private static IResult Register(RegistrationRequest request, AgentClients clients, IClusterState cluster, TimeProvider time)
     {
         try
@@ -84,6 +99,11 @@ public static class OAuthEndpoints
         }
 
         var form = await context.Request.ReadFormAsync(context.RequestAborted);
+        if (IsOtherResource(context.Request, form["resource"]))
+        {
+            return Error("invalid_target", StatusCodes.Status400BadRequest);
+        }
+
         var command = new IssueAgentToken(
             form["grant_type"].ToString(),
             Value(form, "client_id"),

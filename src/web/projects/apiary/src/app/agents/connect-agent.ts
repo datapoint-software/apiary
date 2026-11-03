@@ -28,6 +28,7 @@ export class ConnectAgent {
     codeChallengeMethod: this.query.get('code_challenge_method') ?? '',
     state: this.query.get('state'),
   };
+  private readonly refused = this.query.get('error');
   private readonly api = inject(Api);
   private readonly messages = inject(ErrorMessages);
   protected readonly auth = inject(Auth);
@@ -35,6 +36,10 @@ export class ConnectAgent {
     this.api.query('agents.client', { clientId: this.request.clientId, redirectUri: this.request.redirectUri }),
   );
   protected readonly loadError = computed(() => {
+    if (this.refused) {
+      return this.messages.describe(this.refused);
+    }
+
     const error = this.client.error() as { error?: ApiProblem } | undefined;
     return error ? this.messages.describe(error.error?.code ?? 'agent.clientUnknown') : '';
   });

@@ -109,6 +109,8 @@ public static class ErrorCodes
     public const string AgentRedirectUnknown = "agent.redirectUnknown";
     public const string AgentRedirectInvalid = "agent.redirectInvalid";
     public const string AgentChallengeInvalid = "agent.challengeInvalid";
+    public const string AgentResponseTypeInvalid = "agent.responseTypeInvalid";
+    public const string AgentResourceInvalid = "agent.resourceInvalid";
     public const string AgentTooMany = "agent.tooMany";
     public const string AgentOriginInvalid = "agent.originInvalid";
     public const string AgentOriginsTooMany = "agent.originsTooMany";
@@ -145,7 +147,7 @@ public static class ErrorCodes
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
         ReplicaNotFound, ReplicaNotPending, ReplicaReachable,
-        AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany, AgentOriginInvalid, AgentOriginsTooMany,
+        AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentResponseTypeInvalid, AgentResourceInvalid, AgentTooMany, AgentOriginInvalid, AgentOriginsTooMany,
         SsoIssuerInvalid, SsoGroupsRequired, SsoGroupsTooMany, SsoOff, SsoFailed, SsoNoRole, SsoNoEmail, SsoEmailTaken, SsoDisabled,
         UserManagedBySso,
         StreamNotFound, StreamPortReserved, StreamPortTaken, StreamServerNamesUdp, StreamServerNamesTooMany,

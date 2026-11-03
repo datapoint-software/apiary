@@ -117,6 +117,8 @@ public static partial class McpErrorDescriptions
         ["agent.redirectUnknown"] = "The redirect URI wasn't registered by this client.",
         ["agent.redirectInvalid"] = "A redirect URI must point at the user's own computer (localhost or a loopback address), or at an HTTPS origin an Administrator trusts in agents.update-policy.",
         ["agent.challengeInvalid"] = "The request needs PKCE with S256.",
+        ["agent.responseTypeInvalid"] = "The request needs response_type=code.",
+        ["agent.resourceInvalid"] = "The request names a resource other than this Apiary.",
         ["agent.tooMany"] = "The user has 20 agents connected, the most Apiary allows.",
         ["agent.originInvalid"] = "A trusted origin must be an HTTPS URL without a path, query or fragment, such as https://agents.example.com.",
         ["agent.originsTooMany"] = "At most 20 trusted origins are allowed.",

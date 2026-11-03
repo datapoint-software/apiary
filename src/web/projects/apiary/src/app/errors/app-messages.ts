@@ -88,6 +88,8 @@ export const appMessages: MessageCatalog = {
   'agent.redirectUnknown': () => 'The agent asked to return somewhere it didn’t register. Start connecting it again from the agent.',
   'agent.redirectInvalid': () => 'This agent runs on a site Apiary doesn’t trust. An Administrator can add the site on the Connected agents page.',
   'agent.challengeInvalid': () => 'The agent’s request is missing its security check (PKCE with S256). Update the agent, or use another one.',
+  'agent.responseTypeInvalid': () => 'The agent asks for a kind of access Apiary doesn’t give (only response_type=code). Update the agent, or use another one.',
+  'agent.resourceInvalid': () => 'The agent asks for access to a server other than this Apiary. Start connecting it again from the agent, with this Apiary’s address.',
   'agent.tooMany': () => 'You have 20 agents connected, the most Apiary allows. Disconnect one you no longer use first.',
   'agent.originInvalid': () => 'Enter HTTPS addresses without a path, one per line, such as https://agents.example.com.',
   'agent.originsTooMany': () => 'List 20 sites at most.',
