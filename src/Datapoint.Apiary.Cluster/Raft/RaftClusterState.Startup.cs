@@ -46,16 +46,39 @@ public sealed partial class RaftClusterState
         try
         {
             Address = await discovery.OwnEndPointAsync(cancellationToken);
-            var bootstrap = await ObtainCredentialsAsync(cancellationToken);
+            var recovering = IsRecovering;
+            if (recovering)
+            {
+                PrepareRecovery();
+            }
+            else if (await ObtainCredentialsAsync(cancellationToken) is not { } bootstrapping)
+            {
+                ArchiveSupersededState();
+                return;
+            }
+            else
+            {
+                _bootstrapping = bootstrapping;
+            }
+
             if (_log is null)
             {
                 await OpenLogAsync(cancellationToken);
             }
 
-            RewriteAddresses();
-            await StartRaftAsync(bootstrap, cancellationToken);
+            if (!recovering)
+            {
+                RewriteAddresses();
+            }
+
+            await StartRaftAsync(_bootstrapping, recovering, cancellationToken);
             var monitoring = MonitorAsync(cancellationToken);
-            await BecomeReadyAsync(bootstrap, cancellationToken);
+            if (recovering)
+            {
+                await FinishRecoveryAsync(cancellationToken);
+            }
+
+            await BecomeReadyAsync(_bootstrapping, cancellationToken);
             await monitoring;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -93,15 +116,22 @@ public sealed partial class RaftClusterState
         NotifyChanged();
     }
 
-    private async Task<bool> ObtainCredentialsAsync(CancellationToken cancellationToken)
+    private bool _bootstrapping;
+
+    private async Task<bool?> ObtainCredentialsAsync(CancellationToken cancellationToken)
     {
         using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var started = time.GetUtcNow();
         while (true)
         {
             var peers = await discovery.PeersAsync(Address!.Address, cancellationToken);
-            var answers = await Task.WhenAll(peers.Select(peer => AskToJoinAsync(peer, key, cancellationToken)));
+            var answers = WithoutSuperseded(await Task.WhenAll(peers.Select(peer => AskToJoinAsync(peer, key, cancellationToken))));
             var settled = answers.All(a => a is not null) || time.GetUtcNow() - started > s_peerWait;
+            if (answers.Any(a => a?.Status is JoinStatus.Superseded))
+            {
+                return null;
+            }
+
             if (answers.Any(a => a?.Status is JoinStatus.WrongCluster))
             {
                 throw new InvalidOperationException("Another Apiary cluster answers on this network with the same root key. This replica's state belongs to a different cluster; remove its volume to join the running one.");
@@ -116,13 +146,19 @@ public sealed partial class RaftClusterState
         }
     }
 
+    private JoinResponse?[] WithoutSuperseded(JoinResponse?[] answers)
+    {
+        var superseded = answers.SelectMany(a => a?.Supersedes ?? []).Concat(Current.PreviousClusterIds).ToHashSet();
+        return answers.Where(a => a?.ClusterId is not { } id || !superseded.Contains(id)).ToArray();
+    }
+
     private async Task<bool> TryUseAsync(JoinResponse?[] answers, ECDsa key, CancellationToken cancellationToken)
     {
         if (answers.FirstOrDefault(a => a?.Status is JoinStatus.Joined) is { } joined)
         {
             if (!encryption.IsLoaded)
             {
-                await encryption.ImportAsync(StateDirectory, _joinKeys!, cancellationToken);
+                await encryption.ImportAsync(StateDirectory, _joinKeys[joined.ClusterId!.Value], cancellationToken);
             }
 
             UseCredentials(new ReplicaCredentials(key, joined.CertificatePem!, joined.AuthorityPem!));
@@ -149,7 +185,7 @@ public sealed partial class RaftClusterState
         return true;
     }
 
-    private SharedKeyRing? _joinKeys;
+    private readonly Dictionary<Guid, SharedKeyRing> _joinKeys = [];
 
     private async Task<JoinResponse?> AskToJoinAsync(IPAddress peer, ECDsa key, CancellationToken cancellationToken)
     {
@@ -170,9 +206,12 @@ public sealed partial class RaftClusterState
             }
         }
 
-        if (response is { Status: JoinStatus.Joined, Keys: { } keys })
+        if (response is { Status: JoinStatus.Joined, Keys: { } keys, ClusterId: { } clusterId } && protocol.OpenKeys(keys, request.Nonce) is { } ring)
         {
-            _joinKeys ??= protocol.OpenKeys(keys, request.Nonce);
+            lock (_joinKeys)
+            {
+                _joinKeys[clusterId] = ring;
+            }
         }
 
         return response;
@@ -208,14 +247,14 @@ public sealed partial class RaftClusterState
         LogAddressesRewritten(moved.Count);
     }
 
-    private async Task StartRaftAsync(bool bootstrap, CancellationToken cancellationToken)
+    private async Task StartRaftAsync(bool bootstrap, bool recovering, CancellationToken cancellationToken)
     {
         var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(discovery.IsSwarm ? IPAddress.Any : IPAddress.Loopback, options.Value.RaftPort))
         {
             PublicEndPoint = Address!,
             ConfigurationStorage = new MemberAddressBook(MembersFile),
             ColdStart = bootstrap,
-            Announcer = discovery.IsSwarm ? AnnounceAsync : null,
+            Announcer = discovery.IsSwarm && !recovering ? AnnounceAsync : null,
             LoggerFactory = loggers,
             SslOptions = new SslOptions
             {

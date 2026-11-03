@@ -29,20 +29,25 @@ public sealed partial class RaftClusterState
         var state = Current;
         var self = Identity?.Id ?? Guid.Empty;
         var address = Address?.ToString() ?? "";
-        if (state.ClusterCa is not { } ca)
+        if (Refusal(state, request) is { } refusal)
         {
-            return protocol.Sign(new JoinResponse(JoinStatus.NoCluster, self, address, null, null, null, null), request.Nonce);
+            return protocol.Sign(new JoinResponse(refusal, self, address, state.ClusterId, null, null, null, state.PreviousClusterIds), request.Nonce);
         }
 
-        if (request.ClusterId is { } clusterId && clusterId != state.ClusterId)
-        {
-            return protocol.Sign(new JoinResponse(JoinStatus.WrongCluster, self, address, state.ClusterId, null, null, null), request.Nonce);
-        }
+        var ca = state.ClusterCa!;
 
         var certificate = ClusterAuthority.Issue(ca, publicKey, request.ReplicaId, now);
         var keys = protocol.SealKeys(encryption.Export(), request.Nonce);
-        return protocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, ca.CertificatePem, certificate, keys), request.Nonce);
+        return protocol.Sign(new JoinResponse(JoinStatus.Joined, self, address, state.ClusterId, ca.CertificatePem, certificate, keys, state.PreviousClusterIds), request.Nonce);
     }
+
+    private static JoinStatus? Refusal(ApiaryState state, JoinRequest request) => (state.ClusterCa, request.ClusterId) switch
+    {
+        (null, _) => JoinStatus.NoCluster,
+        (_, { } id) when state.PreviousClusterIds.Contains(id) => JoinStatus.Superseded,
+        (_, { } id) when id != state.ClusterId => JoinStatus.WrongCluster,
+        _ => null,
+    };
 
     private bool IsGenuine(JoinRequest request, IPAddress? remote, DateTimeOffset now) =>
         protocol.Verify(request, now)
@@ -213,6 +218,12 @@ public sealed partial class RaftClusterState
             await Task.Delay(s_monitorInterval, time, cancellationToken);
             try
             {
+                if (await IsSupersededAsync(outsidersOnly: true, cancellationToken))
+                {
+                    ArchiveSupersededState();
+                    return;
+                }
+
                 await RemoveMissingAsync(cancellationToken);
                 await CheckMovedPeersAsync(cancellationToken);
             }
@@ -261,6 +272,12 @@ public sealed partial class RaftClusterState
         _leaderlessSince ??= now;
         if (now - _leaderlessSince < s_leaderlessTimeout)
         {
+            return;
+        }
+
+        if (await IsSupersededAsync(outsidersOnly: false, cancellationToken))
+        {
+            ArchiveSupersededState();
             return;
         }
 

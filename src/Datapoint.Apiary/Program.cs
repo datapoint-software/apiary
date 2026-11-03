@@ -17,6 +17,11 @@ if (args is ["users", "create-admin", .. var options])
     return await CreateAdminCommand.RunAsync(options);
 }
 
+if (args is ["recover", .. var recoverOptions])
+{
+    return await RecoverCommand.RunAsync(recoverOptions);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 builder.AddApiaryListeners();
 builder.Services.AddApiary(builder.Configuration);

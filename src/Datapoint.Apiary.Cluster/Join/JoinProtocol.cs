@@ -41,6 +41,7 @@ public sealed class JoinProtocol(RootKey rootKey)
     [
         nonce, r.Status.ToString(), r.ReplicaId.ToString("N"), r.Address, r.ClusterId?.ToString("N") ?? "",
         r.AuthorityPem ?? "", r.CertificatePem ?? "", r.Keys ?? "",
+        string.Join(',', (r.Supersedes ?? []).Select(id => id.ToString("N"))),
     ];
 
     private string Mac(string kind, string[] fields)

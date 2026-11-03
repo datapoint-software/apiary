@@ -2,6 +2,7 @@ using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
+using Datapoint.Apiary.Recovery;
 using Datapoint.Apiary.Replication;
 
 namespace Datapoint.Apiary.Hosting;
@@ -25,6 +26,7 @@ public static class ApiaryPipeline
     private static void MapAdmin(RouteGroupBuilder admin)
     {
         admin.MapApiaryHealth();
+        admin.MapGroup("/operator").MapApiaryOperator();
         admin.MapOpenApi();
         admin.MapActions("/api", o =>
         {

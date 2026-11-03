@@ -12,4 +12,5 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonSerializable(typeof(Raft.ReplicaIdentity))]
 [JsonSerializable(typeof(Raft.AddressHistory))]
 [JsonSerializable(typeof(Backups.BackupContent))]
+[JsonSerializable(typeof(Recovery.RecoveryRequest))]
 public sealed partial class ClusterJsonContext : JsonSerializerContext;

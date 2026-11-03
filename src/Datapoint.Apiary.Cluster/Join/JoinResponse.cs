@@ -8,4 +8,5 @@ public sealed record JoinResponse(
     string? AuthorityPem,
     string? CertificatePem,
     string? Keys,
+    IReadOnlyList<Guid>? Supersedes,
     string Mac = "");

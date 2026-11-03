@@ -14,6 +14,8 @@ namespace Datapoint.Apiary.Cluster.State;
 
 public sealed record ApiaryState
 {
+    private readonly ImmutableList<Guid>? _previousClusterIds;
+
     public static ApiaryState Empty { get; } = new();
 
     public long Index { get; init; }
@@ -37,6 +39,12 @@ public sealed record ApiaryState
     public Guid? ClusterId { get; init; }
 
     public ClusterCa? ClusterCa { get; init; }
+
+    public ImmutableList<Guid> PreviousClusterIds
+    {
+        get => _previousClusterIds ?? [];
+        init => _previousClusterIds = value;
+    }
 
     public ImmutableDictionary<Guid, Replica> Replicas { get; init; } = ImmutableDictionary<Guid, Replica>.Empty;
 
