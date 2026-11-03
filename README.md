@@ -14,7 +14,7 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 
 ## Try it
 
-Apiary is in development, and the admin port is plain HTTP until certificates are added, so run it on your own machine only. With Docker:
+Apiary is in development, and its admin port is plain HTTP, so run it on your own machine only. With Docker:
 
 ```bash
 docker compose -f deploy/compose.yaml up --build
@@ -23,6 +23,22 @@ docker compose -f deploy/compose.yaml up --build
 - `http://localhost:9443` is the admin UI, bound to your machine only. The first visit creates the first administrator, with an authenticator app.
 - Add a route from `whoami.localhost` to `whoami`, port 80, then open `http://whoami.localhost`.
 - `docker compose -f deploy/compose.yaml logs -f apiary` shows the access log.
+- Apiary generates a root key into the `keys` volume on first start, and warns about it. Without that key the `data` volume can't be read, so keep both, or mount your own key made with `docker run --rm apiary:dev secrets init` as a Compose secret at `/run/secrets/apiary_root_key`.
+
+To try automatic certificates without a public address, add [Pebble](https://github.com/letsencrypt/pebble), Let's Encrypt's test server:
+
+```bash
+docker compose -f deploy/compose.yaml -f deploy/pebble/compose.yaml up --build
+```
+
+Add a route from `shop.apiary.test` to `whoami`, port 80. Pebble reaches Apiary through Docker's network, so it issues a certificate within seconds; see it under Certificates. Then check HTTPS with Pebble's root:
+
+```bash
+curl -sk https://localhost:15000/roots/0 > pebble-root.pem
+curl --cacert pebble-root.pem --resolve shop.apiary.test:443:127.0.0.1 https://shop.apiary.test/
+```
+
+Without Pebble, Apiary asks Let's Encrypt's staging environment (`Apiary__Acme__DirectoryUrl`), which needs a public hostname pointing at your machine.
 
 For development without Docker, run `dotnet run --project src/Datapoint.Apiary` and, in `src/web`, `npm start`, which serves the UI on `http://localhost:4200`.
 
