@@ -104,7 +104,7 @@ Readability:
 - **Names say what things are, in the domain's own words** (`Route`, `LeaderLease`, `RenewalWindow`), as full words. Only the well-known abbreviations, such as `Http`, `Id` and `Tls`, are allowed.
 - **Methods are short,** but length isn't a hard limit. Split a method when the new one has a name that stands for real work, not to meet a line count. Two methods that can only be understood together are worse than one.
 - **No comments in code.** If code needs a comment to be understood, rename or restructure it until it doesn't. No commented-out code either. This covers XML documentation too: we don't publish libraries for developers outside Datapoint. If we ever do, that package gets XML documentation on its public API.
-  - Descriptions that agents and the API document need are data, not comments: `[Action(Description = …)]` for commands and queries, and `[Description]` on their properties.
+  - Descriptions that agents and the API document need are data, not comments: `[Action(name, description)]` for commands and queries, and `[Description]` on their properties.
 - **No side effects inside expressions:** no assignments, `++` or calls that change state in a condition or an argument. Use parentheses whenever `&&` and `||` are mixed.
 - **Interfaces only at real boundaries:** where there are two implementations, or a seam such as the cluster, the clock (`TimeProvider`), the ACME client or the network. Not one interface per class, and no layers that only pass calls through.
 - **No mocking library.** Tests use real objects, and small hand-written fakes at those boundaries.
