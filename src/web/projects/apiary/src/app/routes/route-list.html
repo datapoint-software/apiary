@@ -53,53 +53,10 @@
         <button emptyActions apButton type="button" (click)="clearFilters()">Clear filters</button>
       </ap-empty-state>
     } @else {
-      <div class="ap-table-wrap">
-        <table class="ap-table">
-          <caption class="ap-sr">Routes, grouped by project</caption>
-          <thead>
-            <tr>
-              <th scope="col">Hostname</th>
-              <th scope="col">Target</th>
-              <th scope="col">Status</th>
-              <th scope="col">Certificate</th>
-              <th scope="col" class="ap-num">Timeout</th>
-              <th scope="col">Changed</th>
-              <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
-            </tr>
-          </thead>
-          @for (group of groups(); track group.project.id) {
-            <tbody>
-              <tr class="ap-group">
-                <td colspan="7">
-                  <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }}</span></span>
-                </td>
-              </tr>
-              @for (route of group.routes; track route.id) {
-                <tr>
-                  <td>
-                    <div class="ap-cell-main">
-                      <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}</a>
-                      <span class="ap-caption ap-data">{{ route.path }}</span>
-                    </div>
-                  </td>
-                  <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
-                  <td>
-                    <ap-route-status [route]="route" />
-                  </td>
-                  <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
-                  <td class="ap-num">{{ route.timeoutSeconds }} s</td>
-                  <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
-                  <td class="ap-col-actions">
-                    @if (auth.canOperate()) {
-                      <ap-route-row-actions [route]="route" />
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          }
-        </table>
-      </div>
+      @if (selectedRoutes().length > 0) {
+        <ap-route-selection-bar [routes]="selectedRoutes()" (cleared)="clearSelection()" />
+      }
+      <ap-route-table [groups]="groups()" [(selected)]="selected" />
     }
     <div class="ap-panel-foot"><div class="ap-pager"><span aria-live="polite">{{ shown().length }} of {{ total() }} {{ total() === 1 ? 'route' : 'routes' }}</span></div></div>
   </section>

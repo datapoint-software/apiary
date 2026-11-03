@@ -1,0 +1,71 @@
+<div class="ap-table-wrap">
+  <table class="ap-table">
+    <caption class="ap-sr">{{ grouped() ? 'Routes, grouped by project' : 'Routes' }}</caption>
+    <thead>
+      <tr>
+        @if (auth.canOperate()) {
+          <th class="ap-col-check" scope="col">
+            <input
+              class="ap-check"
+              type="checkbox"
+              aria-label="Select all routes shown"
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              (change)="toggleAll($any($event.target).checked)"
+            />
+          </th>
+        }
+        <th scope="col">Hostname</th>
+        <th scope="col">Target</th>
+        <th scope="col">Status</th>
+        <th scope="col">Certificate</th>
+        <th scope="col" class="ap-num">Timeout</th>
+        <th scope="col">Changed</th>
+        <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+      </tr>
+    </thead>
+    @for (group of groups(); track group.project.id) {
+      <tbody>
+        @if (grouped()) {
+          <tr class="ap-group">
+            <td [attr.colspan]="columns()">
+              <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }}</span></span>
+            </td>
+          </tr>
+        }
+        @for (route of group.routes; track route.id) {
+          @let isSelected = selected().has(route.id);
+          <tr [attr.aria-selected]="auth.canOperate() ? isSelected : null">
+            @if (auth.canOperate()) {
+              <td class="ap-col-check">
+                <input
+                  class="ap-check"
+                  type="checkbox"
+                  [attr.aria-label]="'Select ' + routeLabel(route)"
+                  [checked]="isSelected"
+                  (change)="toggle(route, $any($event.target).checked)"
+                />
+              </td>
+            }
+            <td>
+              <div class="ap-cell-main">
+                <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}</a>
+                <span class="ap-caption ap-data">{{ route.path }}</span>
+              </div>
+            </td>
+            <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
+            <td><ap-route-status [route]="route" /></td>
+            <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
+            <td class="ap-num">{{ route.timeoutSeconds }} s</td>
+            <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
+            <td class="ap-col-actions">
+              @if (auth.canOperate()) {
+                <ap-route-row-actions [route]="route" />
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    }
+  </table>
+</div>

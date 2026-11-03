@@ -42,6 +42,28 @@ export class RouteActions {
     return deleted;
   }
 
+  async deleteMany(routes: readonly RouteView[]): Promise<boolean> {
+    if (routes.length === 1) {
+      return this.delete(routes[0]);
+    }
+    const deleted = await this.confirmer.confirm({
+      heading: `Delete ${routes.length} routes?`,
+      text: `Requests to these hostnames get a 404 on every replica as soon as you confirm: ${routes.map(routeLabel).join(', ')}.`,
+      confirm: `Delete ${routes.length} routes`,
+      busy: 'Deleting…',
+      typeToConfirm: `delete ${routes.length} routes`,
+      action: async () => {
+        for (const route of routes) {
+          await this.api.send('routes.delete', { id: route.id });
+        }
+      },
+    });
+    if (deleted) {
+      this.toaster.show(`${routes.length} routes deleted.`);
+    }
+    return deleted;
+  }
+
   async enable(route: RouteView): Promise<boolean> {
     const label = routeLabel(route);
     try {

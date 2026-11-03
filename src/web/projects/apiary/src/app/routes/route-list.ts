@@ -1,21 +1,19 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
 import { Plus, Search } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView, RouteView } from '../api/models';
-import { timeAgo } from '../api/time-ago';
 import { RouteGroup } from './route-group';
-import { routeLabel, targetLabel } from './route-label';
-import { RouteStatusLabel } from './route-status-label';
-import { RouteRowActions } from './route-row-actions';
+import { RouteSelectionBar } from './route-selection-bar';
+import { RouteTable } from './route-table';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-route-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteStatusLabel, RouteRowActions, RouterLink],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteTable, RouteSelectionBar, RouterLink],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -26,9 +24,6 @@ export class RouteList {
   private readonly router = inject(Router);
   protected readonly icons = { plus: Plus, search: Search };
   protected readonly statuses = [['all', 'All'], ['disabled', 'Disabled']] as const;
-  protected readonly routeLabel = routeLabel;
-  protected readonly targetLabel = targetLabel;
-  protected readonly timeAgo = timeAgo;
   protected readonly filter = linkedSignal(() => '');
   protected readonly projectFilter = linkedSignal(() => this.project());
   protected readonly statusFilter = linkedSignal<string>(() => 'all');
@@ -49,6 +44,9 @@ export class RouteList {
     });
   });
 
+  protected readonly selected = signal<ReadonlySet<string>>(new Set());
+  protected readonly selectedRoutes = computed(() => this.shown().filter((r) => this.selected().has(r.id)));
+
   protected readonly groups = computed<readonly RouteGroup[]>(() =>
     this.projects
       .value()
@@ -59,6 +57,10 @@ export class RouteList {
   protected chooseProject(id: string): void {
     this.projectFilter.set(id);
     void this.router.navigate([], { queryParams: { project: id || null }, replaceUrl: true });
+  }
+
+  protected clearSelection(): void {
+    this.selected.set(new Set());
   }
 
   protected clearFilters(): void {
