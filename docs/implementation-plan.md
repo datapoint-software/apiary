@@ -158,7 +158,7 @@ What the review after milestone 12 found missing, agreed on 2026-11-03.
 
 ## 15. Tests
 
-- The architecture tests, the error catalog and shared rule tests, and unit and integration tests for the backend and the frontend.
+- The architecture tests, the error catalog and shared rule tests, a check that the UI never reads an error's `title` or `detail`, and unit and integration tests for the backend and the frontend.
 
 ## 16. Release
 

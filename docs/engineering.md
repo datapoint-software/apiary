@@ -178,7 +178,7 @@ Commands and queries are validated with [FluentValidation](https://docs.fluentva
 
 ### Errors are codes, not messages
 
-No text written in .NET reaches a client: not validation messages, and not exception messages. The API returns error codes; the UI turns them into words, so it can be translated without changing the API.
+The API's contract for errors is codes: the UI turns them into words, so it can be translated without changing the API. Responses may also carry English text for developers and agents, such as a ProblemDetails `title`, but the UI never shows it or relies on it.
 
 - **Every failure has a code,** with parameters when the text needs them, such as `{ "field": "timeout", "code": "range", "params": { "min": 1, "max": 120 } }`.
   - Validators set codes with FluentValidation's `WithErrorCode`.
@@ -190,16 +190,16 @@ No text written in .NET reaches a client: not validation messages, and not excep
 - **Validation failures** are a 400 ProblemDetails with an `errors` list of `{ field, code, params }`. Field names match the form's, so `@datapoint/apiary-ui` attaches each error to its field and lists them in the error summary.
 - **Other failures** are a ProblemDetails with a `code` and the matching status: 404, 409, 403, or 503 while writes are paused.
 - **Unexpected exceptions** are a 500 with the code `internal` and the request's trace ID. The exception's message and stack trace go to the log only.
-- **No human text in ProblemDetails:** `title` and `detail` are left out.
+- **Text is optional and never sensitive.** `title` and `detail` are for whoever reads the raw response: someone using curl or the browser's developer tools, or an agent. Apiary's own errors can leave them out. Any text that reaches a client, whoever wrote it, must never contain what the caller sent, internal names (.NET types, namespaces, file paths, stack traces, hostnames, addresses, connection strings), or anything that tells the caller more than the code does, such as whether a user exists.
+- **The UI reads only codes.** It never shows or tests `title`, `detail` or an exception's message, so a translation never misses text from the server.
 - **Never echo the attempted value.** It's untrusted input: responses and logs carry the field and the code, never what was sent.
 
 Where the words come from:
 
 - **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalog is ready for Angular's internationalization when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
-- **MCP** agents have no UI, and English is what they need: the model reads it, explains the problem to its user in their language, and often corrects its own call. So the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters, and it can later share the UI's translations. English text that Datapoint.Mediator adds for agents is fine too, such as the JSON parser's message for arguments it can't read, which names the field at fault. Like every response, it must never include what the caller sent.
+- **MCP** agents have no UI, and English is what they need: the model reads it, explains the problem to its user in their language, and often corrects its own call. So the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters, and it can later share the UI's translations. For arguments it can't read, Datapoint.Mediator reports the field at fault, and Apiary turns it into a field error with the code `invalid`, like any other.
 - **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalog.
-
-**Known issue:** on the HTTP API, Datapoint.Mediator 4.0.0-beta.3 still sends English text for unreadable request bodies and for 401 and 403, where the UI expects only codes. FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. See [risks.md](risks.md).
+- **Another test** fails when the UI's code reads `title` or `detail` from an error response.
 
 ### Security APIs
 

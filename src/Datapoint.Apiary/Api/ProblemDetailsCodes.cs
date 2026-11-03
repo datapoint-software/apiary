@@ -8,9 +8,6 @@ public static class ProblemDetailsCodes
     {
         var problem = context.ProblemDetails;
         problem.Extensions["code"] = Code(problem.Status);
-        problem.Title = null;
-        problem.Detail = null;
-        problem.Type = null;
         problem.Extensions.Remove("errors");
     }
 
