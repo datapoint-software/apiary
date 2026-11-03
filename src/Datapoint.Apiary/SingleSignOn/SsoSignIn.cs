@@ -150,9 +150,11 @@ public sealed partial class SsoSignIn(
     private static string RedirectUri(HttpRequest request) => $"{request.Scheme}://{request.Host}{CallbackPath}";
 
     private static string SafeNext(string? next) =>
-        next is { Length: > 0 and <= 2000 } && next[0] == '/' && !next.StartsWith("//", StringComparison.Ordinal) && !next.Contains('\\', StringComparison.Ordinal)
+        next is { Length: > 0 and <= 2000 } && next[0] == '/' && !next.StartsWith("//", StringComparison.Ordinal) && next.All(IsSafeInPath)
             ? next
             : "/";
+
+    private static bool IsSafeInPath(char c) => c is > ' ' and < '\u007f' and not '\\';
 
     private static IResult Failed(string code) => Results.Redirect("/sign-in?error=" + Uri.EscapeDataString(code));
 
