@@ -45,6 +45,7 @@ public sealed partial class LocalClusterState(
         Current = state;
         _entriesSinceSnapshot = replayed;
         LogLoaded(state.Index, replayed);
+        NotifyChanged();
     }
 
     public async ValueTask AppendAsync(StateEntry entry, CancellationToken cancellationToken)
