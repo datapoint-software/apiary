@@ -77,6 +77,7 @@ public static class ErrorCodes
     public const string CertificateNoHostnames = "certificate.noHostnames";
     public const string CertificateTooLarge = "certificate.tooLarge";
     public const string CertificateRenewing = "certificate.renewing";
+    public const string CertificateRenewTooSoon = "certificate.renewTooSoon";
 
     public const string EmailInvalid = "email.invalid";
     public const string EmailTaken = "email.taken";
@@ -139,7 +140,7 @@ public static class ErrorCodes
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
-        CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing,
+        CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing, CertificateRenewTooSoon,
         EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordBreached, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,

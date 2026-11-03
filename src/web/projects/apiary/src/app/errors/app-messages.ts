@@ -51,6 +51,8 @@ export const appMessages: MessageCatalog = {
   'certificate.noHostnames': () => 'This certificate names no hostnames. Use one with a subject alternative name.',
   'certificate.tooLarge': () => 'That’s too long for a certificate or key. Check that you chose the right file.',
   'certificate.renewing': () => 'It’s being renewed already. Wait a minute, then reload.',
+  'certificate.renewTooSoon': () =>
+    'It was renewed in the last day, or the last attempt failed and Apiary retries later by itself. Renewing too often locks the hostname out of Let’s Encrypt for a week.',
   'certificate.chainRequired': () => 'Paste the certificate and its chain, or choose the file.',
   'certificate.keyRequired': () => 'Paste the private key, or choose the file.',
   'certificate.choose': () => 'Choose an uploaded certificate.',

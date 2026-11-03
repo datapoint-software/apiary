@@ -45,6 +45,12 @@ public sealed class StateTransactionBehavior(
             return await forwarder.ForwardAsync(command, ct);
         }
 
+        if (command is ISelfCommitting)
+        {
+            EnsureWritable();
+            return await next(ct);
+        }
+
         using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         var result = await next(ct);

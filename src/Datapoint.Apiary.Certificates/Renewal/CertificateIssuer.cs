@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Datapoint.Apiary.Certificates.Acme;
@@ -23,8 +24,26 @@ public sealed partial class CertificateIssuer(
     private static readonly TimeSpan s_lockLifetime = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan s_challengeLifetime = TimeSpan.FromHours(1);
     private readonly string _holder = $"{Environment.MachineName}/{Guid.NewGuid():N}";
+    private readonly ConcurrentDictionary<string, bool> _issuing = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<IssueResult?> IssueAsync(string host, string? user, string action, CancellationToken cancellationToken)
+    {
+        if (!_issuing.TryAdd(host, true))
+        {
+            return null;
+        }
+
+        try
+        {
+            return await IssueAloneAsync(host, user, action, cancellationToken);
+        }
+        finally
+        {
+            _issuing.TryRemove(host, out _);
+        }
+    }
+
+    private async Task<IssueResult?> IssueAloneAsync(string host, string? user, string action, CancellationToken cancellationToken)
     {
         var lockName = "certificate:" + host;
         var now = time.GetUtcNow();
@@ -61,10 +80,11 @@ public sealed partial class CertificateIssuer(
 
             return await SucceededAsync(certificate, bundle.Material, user, action, lockName, tokens, cancellationToken);
         }
-        catch (AcmeException exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            LogFailed(host, exception.Code, exception.Detail);
-            return await FailedAsync(certificate, exception, user, action, lockName, tokens, cancellationToken);
+            var failure = exception as AcmeException ?? new AcmeException(AcmeErrors.Rejected, exception.Message);
+            LogFailed(host, failure.Code, failure.Detail);
+            return await FailedAsync(certificate, failure, user, action, lockName, tokens, cancellationToken);
         }
     }
 
