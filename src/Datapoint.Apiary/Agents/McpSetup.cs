@@ -17,6 +17,8 @@ public static class McpSetup
     private static readonly HashSet<string> s_withheld = new(StringComparer.Ordinal)
     {
         "certificates.upload",
+        "certificates.check",
+        "backups.export",
         "backups.restore",
         "agents.connect",
         "agents.client",
