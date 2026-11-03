@@ -131,9 +131,14 @@ public static class OAuthEndpoints
         }
 
         var form = await context.Request.ReadFormAsync(context.RequestAborted);
+        if (Value(form, "client_id") is not { } clientId)
+        {
+            return Error(AgentTokenResult.InvalidRequest, StatusCodes.Status400BadRequest);
+        }
+
         if (Value(form, "token") is { } token)
         {
-            await mediator.SendAsync(new RevokeAgentToken(token), context.RequestAborted);
+            await mediator.SendAsync(new RevokeAgentToken(token, clientId), context.RequestAborted);
         }
 
         return Results.Ok();

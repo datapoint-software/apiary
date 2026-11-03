@@ -11,7 +11,8 @@ public sealed class RevokeAgentTokenHandler(StateTransaction transaction) : ICom
     {
         var hash = SecretTokens.Hash(command.Token);
         var state = transaction.State;
-        if (state.Agents.Values.FirstOrDefault(a => a.Tokens is { } t && (t.AccessHash == hash || t.RefreshHash == hash)) is not { } agent)
+        if (state.Agents.Values.FirstOrDefault(a => a.Tokens is { } t && (t.AccessHash == hash || t.RefreshHash == hash)) is not { } agent
+            || agent.ClientId != command.ClientId)
         {
             return ValueTask.CompletedTask;
         }
