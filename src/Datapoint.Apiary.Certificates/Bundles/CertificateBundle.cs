@@ -1,3 +1,4 @@
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -61,6 +62,31 @@ public sealed record CertificateBundle(CertificateMaterial? Material, Certificat
         finally
         {
             Dispose(chain);
+        }
+    }
+
+    public static SslStreamCertificateContext? Context(CertificateMaterial material)
+    {
+        var chain = ReadChain(material.ChainPem);
+        if (chain.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var withKey = WithKey(chain[0], material.KeyPem);
+            if (withKey is null)
+            {
+                return null;
+            }
+
+            var leaf = X509CertificateLoader.LoadPkcs12(withKey.Export(X509ContentType.Pkcs12), password: null);
+            return SslStreamCertificateContext.Create(leaf, [.. chain.Skip(1)], offline: true);
+        }
+        finally
+        {
+            chain[0].Dispose();
         }
     }
 

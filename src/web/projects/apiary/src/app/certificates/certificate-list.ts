@@ -10,11 +10,12 @@ import { Auth } from '../auth/auth';
 import { openDialog } from '../shell/open-dialog';
 import { daysLeft, needsAttention, sourceName, statusText, statusTone } from './certificate-status';
 import { UploadDialog } from './upload-dialog';
+import { AdminCertificatePanel } from './admin-certificate-panel';
 import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-certificate-list',
-  imports: [WriteLock, PageHead, Button, Icon, Banner, Status, EmptyState, RouterLink],
+  imports: [WriteLock, AdminCertificatePanel, PageHead, Button, Icon, Banner, Status, EmptyState, RouterLink],
   templateUrl: './certificate-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

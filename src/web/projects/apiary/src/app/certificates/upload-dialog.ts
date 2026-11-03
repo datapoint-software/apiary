@@ -14,10 +14,11 @@ interface UploadModel {
   keyPem: string;
 }
 
-export interface Replacing {
-  readonly id: string;
+export interface UploadTarget {
+  readonly id?: string;
   readonly name: string;
   readonly projectId?: string;
+  readonly admin?: boolean;
 }
 
 const maximumFileSize = 65_536;
@@ -29,7 +30,7 @@ const maximumFileSize = 65_536;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UploadDialog {
-  protected readonly replacing = inject<Replacing | null>(DIALOG_DATA);
+  protected readonly replacing = inject<UploadTarget | null>(DIALOG_DATA);
   protected readonly dialog = inject<DialogRef<string>>(DialogRef);
   private readonly api = inject(Api);
   private readonly toaster = inject(Toaster);
@@ -37,7 +38,7 @@ export class UploadDialog {
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   private readonly model = signal<UploadModel>({ projectId: this.replacing?.projectId ?? '', chainPem: '', keyPem: '' });
   protected readonly upload = form(this.model, (p) => {
-    required(p.projectId, { error: { kind: 'project.notFound' } });
+    required(p.projectId, { error: { kind: 'project.notFound' }, when: () => !this.replacing?.admin });
     required(p.chainPem, { error: { kind: 'certificate.chainRequired' } });
     required(p.keyPem, { error: { kind: 'certificate.keyRequired' } });
     validate(p.chainPem, ({ value }) => (!value() || value().includes('-----BEGIN CERTIFICATE-----') ? undefined : { kind: 'certificate.pemInvalid' }));
@@ -61,7 +62,7 @@ export class UploadDialog {
   constructor() {
     effect(() => {
       const projects = this.projects.value();
-      if (!this.model().projectId && projects.length > 0) {
+      if (!this.replacing?.admin && !this.model().projectId && projects.length > 0) {
         this.model.update((m) => ({ ...m, projectId: projects[0].id }));
       }
     });
@@ -83,7 +84,10 @@ export class UploadDialog {
     this.adding.set(true);
     this.failure.set('');
     try {
-      const id = await this.api.send<string>('certificates.upload', { ...this.model(), replacingId: this.replacing?.id });
+      const { chainPem, keyPem } = this.model();
+      const id = this.replacing?.admin
+        ? (await this.api.send('admin-certificate.upload', { chainPem, keyPem }), 'admin')
+        : await this.api.send<string>('certificates.upload', { ...this.model(), replacingId: this.replacing?.id });
       const preview = this.preview();
       this.toaster.show(`It covers ${preview?.hosts.join(', ')} until ${preview?.notAfter.slice(0, 10)}.`, {
         heading: this.replacing ? 'Certificate replaced' : 'Certificate added',

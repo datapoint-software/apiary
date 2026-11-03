@@ -23,7 +23,7 @@ public static class CreateAdminCommand
             return 1;
         }
 
-        var url = (OperatorClient.Option(args, "--url") ?? $"http://localhost:{OperatorClient.AdminPort()}").TrimEnd('/');
+        var url = (OperatorClient.Option(args, "--url") ?? $"https://localhost:{OperatorClient.AdminPort()}").TrimEnd('/');
         Console.WriteLine($"Open this link within 15 minutes to set the password and two-step sign-in for {email}:");
         Console.WriteLine($"{url}/invite/{body.GetProperty("token").GetString()}");
         return 0;

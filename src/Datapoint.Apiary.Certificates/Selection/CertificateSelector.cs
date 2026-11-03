@@ -1,7 +1,6 @@
 using System.Collections.Frozen;
 using System.Net.Security;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using Datapoint.Apiary.Certificates.Bundles;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.State;
@@ -112,26 +111,14 @@ public sealed partial class CertificateSelector : IDisposable
 
     private SslStreamCertificateContext? Load(string name, CertificateMaterial material)
     {
-        var chain = CertificateBundle.ReadChain(material.ChainPem);
         try
         {
-            using var withKey = CertificateBundle.WithKey(chain[0], material.KeyPem);
-            if (withKey is null)
-            {
-                return null;
-            }
-
-            var leaf = X509CertificateLoader.LoadPkcs12(withKey.Export(X509ContentType.Pkcs12), password: null);
-            return SslStreamCertificateContext.Create(leaf, [.. chain.Skip(1)], offline: true);
+            return CertificateBundle.Context(material);
         }
         catch (System.Security.Cryptography.CryptographicException exception)
         {
             LogLoadFailed(exception, name);
             return null;
-        }
-        finally
-        {
-            chain[0].Dispose();
         }
     }
 

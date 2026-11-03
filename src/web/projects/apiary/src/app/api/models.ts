@@ -228,6 +228,17 @@ export interface CertificateDetails {
   readonly addedBy?: string;
 }
 
+export interface AdminCertificateView {
+  readonly selfSigned: boolean;
+  readonly hosts: readonly string[];
+  readonly issuer: string;
+  readonly notBefore: string;
+  readonly notAfter: string;
+  readonly fingerprint: string;
+  readonly changedAt: string;
+  readonly changedBy: string | null;
+}
+
 export interface CertificatePreview {
   readonly hosts: readonly string[];
   readonly issuer: string;

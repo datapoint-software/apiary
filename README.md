@@ -14,13 +14,13 @@ Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engin
 
 ## Try it
 
-Apiary is in development, and its admin port is plain HTTP, so run it on your own machine only. With Docker:
+Apiary is in development, so run it on your own machine only. With Docker:
 
 ```bash
 docker compose -f deploy/compose.yaml up --build
 ```
 
-- `http://localhost:9443` is the admin UI, bound to your machine only. The first visit creates the first administrator, with an authenticator app.
+- `https://localhost:9443` is the admin UI, bound to your machine only. Its certificate is self-signed, so your browser warns about it: check that the SHA-256 fingerprint matches the one Apiary logs at start (`docker compose -f deploy/compose.yaml logs apiary`), then accept it. The first visit creates the first administrator, with an authenticator app. Administrators can upload a certificate your browsers trust on the Certificates page.
 - Add a route from `whoami.localhost` to `whoami`, port 80, then open `http://whoami.localhost`.
 - `docker compose -f deploy/compose.yaml logs -f apiary` shows the access log.
 - Apiary generates a root key into the `keys` volume on first start, and warns about it. Without that key the `data` volume can't be read, so keep both, or mount your own key made with `docker run --rm apiary:dev secrets init` as a Compose secret at `/run/secrets/apiary_root_key`.

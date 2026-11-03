@@ -31,7 +31,13 @@ public static class KestrelSetup
                     OnConnection = connection => ValueTask.FromResult(certificates.OptionsFor(connection.ClientHelloInfo.ServerName)),
                 });
             });
-            kestrel.ListenAnyIP(options.AdminPort, listen => listen.Use(allowlist.Guard));
+            var admin = kestrel.ApplicationServices.GetRequiredService<AdminCertificates>();
+            kestrel.ListenAnyIP(options.AdminPort, listen =>
+            {
+                listen.Protocols = HttpProtocols.Http1AndHttp2;
+                listen.Use(allowlist.Guard);
+                listen.UseHttps(new TlsHandshakeCallbackOptions { OnConnection = _ => ValueTask.FromResult(admin.Options()) });
+            });
             ListenForReplicas(kestrel, options);
         });
         return builder;

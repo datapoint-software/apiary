@@ -18,6 +18,7 @@ public static class McpSetup
     {
         "certificates.upload",
         "certificates.check",
+        "admin-certificate.upload",
         "backups.export",
         "backups.restore",
         "agents.connect",

@@ -11,7 +11,7 @@ public static class OperatorClient
         var configuration = Configuration();
         var cluster = configuration.Get<ClusterOptions>() ?? new ClusterOptions();
         var token = await File.ReadAllTextAsync(LocalOperatorToken.PathIn(cluster.DataDirectory));
-        var client = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{AdminPort()}/") };
+        var client = LoopbackHttp.Create(AdminPort(), TimeSpan.FromSeconds(100));
         client.DefaultRequestHeaders.Authorization = new("Local", token.Trim());
         return client;
     }

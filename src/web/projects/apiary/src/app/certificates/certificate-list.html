@@ -63,3 +63,7 @@
     </div>
   }
 </section>
+
+@if (auth.canAdminister()) {
+  <ap-admin-certificate-panel style="display: block; margin-top: var(--space-5)" />
+}

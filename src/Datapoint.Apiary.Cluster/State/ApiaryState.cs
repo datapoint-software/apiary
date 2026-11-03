@@ -101,5 +101,7 @@ public sealed record ApiaryState
 
     public SingleSignOn.SsoSettings? SingleSignOn { get; init; }
 
+    public AdminCertificate? AdminCertificate { get; init; }
+
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

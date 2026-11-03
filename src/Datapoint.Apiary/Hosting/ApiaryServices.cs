@@ -38,6 +38,8 @@ public static class ApiaryServices
         services.AddApiaryCluster(section);
         services.AddApiaryCertificates(section.GetSection("Acme"));
         services.AddHostedService<StartupTasks>();
+        services.AddSingleton<AdminCertificates>();
+        services.AddHostedService<AdminCertificateKeeper>();
         services.AddSingleton<IRouteTelemetry, ClusterRouteTelemetry>();
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddSingleton(new SsoIssuerPolicy(options.AllowHttpSsoIssuer));

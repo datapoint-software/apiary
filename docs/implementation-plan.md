@@ -21,7 +21,7 @@ Every layer in place, each doing the minimum.
 - The error contract: ProblemDetails with codes, the UI's message catalog, and the test that checks both catalogs.
 - The container image, built locally on Ubuntu, and a `docker compose` file with a sample target service (e.g. `traefik/whoami`).
 
-**Try it:** `docker compose up`, open `http://localhost:9443` for the admin shell, and `curl http://localhost` for the 404.
+**Try it:** `docker compose up`, open `https://localhost:9443` for the admin shell, and `curl http://localhost` for the 404.
 
 **Not yet:** routes, sign-in. The admin port has no authentication, so this runs on your machine only.
 
