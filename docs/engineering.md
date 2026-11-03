@@ -283,8 +283,8 @@ Short functions, full-word names, no comments, no side effects inside expression
 
 ### The component library
 
-- `@datapoint/apiary-ui` is built with ng-packagr, and its selectors use the `ap` prefix: `<ap-button>`, `<ap-date-picker>`.
-- It has one component for each design system card. Apiary-specific pieces (ProjectCard, ClusterMap, Split) stay in the app.
+- `@datapoint/apiary-ui` is built with ng-packagr, and its selectors use the `ap` prefix: `[apButton]`, `<ap-calendar-button>`, `<ap-field>`.
+- It has a component where a card has behavior: buttons, fields and the error summary, banners, status, toasts, confirmations, the calendar button, the empty state, the page head and the password checks. Cards that are only styles (panels, tables, tabs, tags) are used as `ap-*` classes from the shared CSS. Apiary-specific pieces (ProjectCard, ClusterMap) stay in the app.
 - It holds the shared behavior too: validation and the error summary, toasts, confirmations, menus, and focus handling.
 - **Accessibility primitives:**
   - [Angular Aria](https://angular.dev/guide/aria/overview), stable since v22, for menus, tabs, select and listbox.
