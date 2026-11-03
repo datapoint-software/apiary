@@ -17,6 +17,6 @@ public sealed class ListAgentsHandler(IClusterState cluster, CurrentUser current
             .Where(a => AgentState.IsConnected(a, now) && (a.UserId == user.Id || user.Role is Role.Administrator))
             .OrderByDescending(a => a.UserId == user.Id)
             .ThenByDescending(a => a.LastUsedAt)
-            .Select(a => new AgentView(a.Id, a.Name, state.Users.GetValueOrDefault(a.UserId)?.Email, a.ConnectedAt, a.LastUsedAt, a.UserId == user.Id))]);
+            .Select(a => new AgentView(a.Id, a.Name, state.Users.GetValueOrDefault(a.UserId)?.Email, a.ConnectedAt, a.LastUsedAt, a.ConnectedAt + AgentLifetimes.Connection, a.UserId == user.Id))]);
     }
 }

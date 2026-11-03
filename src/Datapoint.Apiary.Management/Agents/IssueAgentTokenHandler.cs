@@ -75,10 +75,14 @@ public sealed class IssueAgentTokenHandler(StateTransaction transaction, TimePro
     {
         var access = SecretTokens.New();
         var refresh = SecretTokens.New();
-        var tokens = new AgentTokens(SecretTokens.Hash(access), now + AgentLifetimes.Access, SecretTokens.Hash(refresh), now + AgentLifetimes.Refresh, previousRefreshHash);
+        var ends = agent.ConnectedAt + AgentLifetimes.Connection;
+        var accessExpiresAt = Earliest(now + AgentLifetimes.Access, ends);
+        var tokens = new AgentTokens(SecretTokens.Hash(access), accessExpiresAt, SecretTokens.Hash(refresh), Earliest(now + AgentLifetimes.Refresh, ends), previousRefreshHash);
         transaction.Record(new AgentSaved(agent with { Code = null, Tokens = tokens, LastUsedAt = now }));
-        return new AgentTokenResult(access, refresh, (int)AgentLifetimes.Access.TotalSeconds, Error: null);
+        return new AgentTokenResult(access, refresh, (int)(accessExpiresAt - now).TotalSeconds, Error: null);
     }
+
+    private static DateTimeOffset Earliest(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
 
     private bool IsActive(Agent agent) =>
         transaction.State.Users.TryGetValue(agent.UserId, out var user) && user.Status is UserStatus.Active;

@@ -21,6 +21,7 @@
             <th scope="col">On behalf of</th>
             <th scope="col">Connected</th>
             <th scope="col">Last active</th>
+            <th scope="col">Connected until</th>
             <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
           </tr>
         </thead>
@@ -31,6 +32,7 @@
               <td class="ap-muted">{{ agent.mine ? 'You' : agent.user }}</td>
               <td class="ap-data">{{ utcDateTime(agent.connectedAt) }} UTC</td>
               <td class="ap-muted">{{ timeAgo(agent.lastUsedAt) }}</td>
+              <td class="ap-data">{{ utcDateTime(agent.endsAt) }} UTC</td>
               <td class="ap-col-actions">
                 <button apWrite apButton size="small" type="button" (click)="disconnect(agent)">Disconnect…</button>
               </td>
@@ -61,7 +63,7 @@
         <span class="ap-muted">Other agents need the address: <span class="ap-data">{{ endpoint }}</span></span>
       </li>
       <li>Your agent opens Apiary in your browser. Sign in as yourself, and approve the connection.</li>
-      <li>It appears here, and acts with your role: {{ role() }}.</li>
+      <li>It appears here, and acts with your role: {{ role() }}. After 90 days, connect it again.</li>
     </ol>
   </div>
 </section>

@@ -164,6 +164,7 @@ export interface AgentView {
   readonly user?: string;
   readonly connectedAt: string;
   readonly lastUsedAt: string;
+  readonly endsAt: string;
   readonly mine: boolean;
 }
 
