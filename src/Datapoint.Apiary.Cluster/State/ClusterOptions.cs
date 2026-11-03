@@ -19,4 +19,6 @@ public sealed class ClusterOptions
     public int ClusterPort { get; set; } = 9445;
 
     public TimeSpan MissingTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+    public TimeSpan DataKeyLifetime { get; set; } = TimeSpan.FromDays(90);
 }

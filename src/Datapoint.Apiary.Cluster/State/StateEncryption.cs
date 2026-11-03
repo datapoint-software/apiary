@@ -12,8 +12,13 @@ public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
     private readonly SealedTokens _wrapping = new(new SealingKey(rootKey.Derive(KeyPurposes.StateAtRest)));
     private Dictionary<string, (DateTimeOffset CreatedAt, byte[] Key, SealedTokens Tokens)> _dataKeys = new(StringComparer.Ordinal);
     private string _current = "";
+    private string? _directory;
 
     public bool IsLoaded => _current.Length > 0;
+
+    public DateTimeOffset? CurrentCreatedAt => IsLoaded ? _dataKeys[_current].CreatedAt : null;
+
+    public static SharedDataKey NewDataKey(DateTimeOffset now) => new(SecretTokens.New()[..8], now, Base64Url.Encode(SealingKey.Generate().Value));
 
     public async Task<bool> LoadAsync(string directory, CancellationToken cancellationToken)
     {
@@ -28,13 +33,14 @@ public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
             ?? throw new InvalidDataException($"An empty key ring in {path}.");
         _dataKeys = ring.Keys.ToDictionary(k => k.Id, k => Use(k.CreatedAt, Unwrap(k)), StringComparer.Ordinal);
         _current = ring.Current;
+        _directory = directory;
         return true;
     }
 
     public Task CreateAsync(string directory, CancellationToken cancellationToken)
     {
-        var id = SecretTokens.New()[..8];
-        return ImportAsync(directory, new SharedKeyRing(id, [new SharedDataKey(id, time.GetUtcNow(), Base64Url.Encode(SealingKey.Generate().Value))]), cancellationToken);
+        var key = NewDataKey(time.GetUtcNow());
+        return ImportAsync(directory, new SharedKeyRing(key.Id, [key]), cancellationToken);
     }
 
     public async Task ImportAsync(string directory, SharedKeyRing shared, CancellationToken cancellationToken)
@@ -52,6 +58,16 @@ public sealed class StateEncryption(RootKey rootKey, TimeProvider time)
         File.Move(temporary, path, overwrite: true);
         _dataKeys = keys;
         _current = shared.Current;
+        _directory = directory;
+    }
+
+    public Task AddAsync(SharedDataKey key, CancellationToken cancellationToken)
+    {
+        var ring = Export();
+        return ImportAsync(
+            _directory ?? throw new InvalidOperationException("The key ring isn't loaded."),
+            new SharedKeyRing(key.Id, [.. ring.Keys.Where(k => k.Id != key.Id), key]),
+            cancellationToken);
     }
 
     public SharedKeyRing Export() =>

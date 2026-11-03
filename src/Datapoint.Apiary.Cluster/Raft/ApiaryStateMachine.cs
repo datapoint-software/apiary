@@ -39,6 +39,11 @@ public sealed class ApiaryStateMachine(DirectoryInfo location, StateEncryption e
         var json = encryption.Open(EntryPurpose, Encoding.UTF8.GetString(payload));
         var stateEntry = JsonSerializer.Deserialize(json, ClusterJsonContext.Default.StateEntry)
             ?? throw new InvalidDataException($"An empty state entry at index {entry.Index}.");
+        foreach (var added in stateEntry.Changes.OfType<Keys.DataKeyAdded>())
+        {
+            await encryption.AddAsync(added.Key, token);
+        }
+
         Current = stateEntry.ApplyTo(Current, entry.Index);
         Applied?.Invoke(stateEntry);
         return SnapshotDue(stateEntry);
@@ -61,7 +66,7 @@ public sealed class ApiaryStateMachine(DirectoryInfo location, StateEncryption e
 
     private bool SnapshotDue(StateEntry entry)
     {
-        if (++_sinceSnapshot < snapshotEvery && !entry.Changes.Any(c => c is ClusterCreated or ClusterRecovered or ReplicaSaved or ReplicaRemoved or Backups.StateRestored))
+        if (++_sinceSnapshot < snapshotEvery && !entry.Changes.Any(c => c is ClusterCreated or ClusterRecovered or ReplicaSaved or ReplicaRemoved or Backups.StateRestored or Keys.DataKeyAdded))
         {
             return false;
         }

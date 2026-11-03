@@ -36,6 +36,7 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(MembershipChanged), "membership.changed")]
 [JsonDerivedType(typeof(ReplicaApproved), "replica.approved")]
 [JsonDerivedType(typeof(ReplicaLeft), "replica.left")]
+[JsonDerivedType(typeof(Keys.DataKeyAdded), "data-key.added")]
 [JsonDerivedType(typeof(BackupExported), "backup.exported")]
 [JsonDerivedType(typeof(StateRestored), "state.restored")]
 public interface IStateChange
