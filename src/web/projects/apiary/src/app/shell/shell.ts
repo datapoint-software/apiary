@@ -13,6 +13,7 @@ import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
 import {
   Archive,
   Bot,
+  Cable,
   CornerUpRight,
   DoorOpen,
   FolderOpen,
@@ -126,6 +127,7 @@ export class Shell {
         title: 'Traffic',
         items: [
           { icon: Route, label: 'All routes', link: '/routes', count: routes || undefined },
+          { icon: Cable, label: 'Stream routes', link: '/streams' },
           {
             icon: ShieldCheck,
             label: 'Certificates',

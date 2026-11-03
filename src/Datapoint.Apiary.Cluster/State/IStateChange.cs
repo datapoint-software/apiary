@@ -52,6 +52,8 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(BackupExported), "backup.exported")]
 [JsonDerivedType(typeof(StateRestored), "state.restored")]
 [JsonDerivedType(typeof(SingleSignOn.SsoSettingsSaved), "sso.saved")]
+[JsonDerivedType(typeof(Streams.StreamRouteSaved), "stream.saved")]
+[JsonDerivedType(typeof(Streams.StreamRouteDeleted), "stream.deleted")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

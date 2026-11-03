@@ -1,11 +1,12 @@
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Proxy.Routing;
+using Datapoint.Apiary.Proxy.Streams;
 using Yarp.ReverseProxy;
 using Yarp.ReverseProxy.Model;
 
 namespace Datapoint.Apiary.Proxy.Telemetry;
 
-public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLookup proxy, ProxyMetrics metrics)
+public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLookup proxy, ProxyMetrics metrics, StreamConnections streams)
 {
     public IReadOnlyList<RouteSnapshot> Snapshot()
     {
@@ -19,6 +20,7 @@ public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLooku
             snapshots.Add(new RouteSnapshot(route.Id, metrics.PerMinute(id), Targets(ProxyConfigBuilder.ClusterId(route))));
         }
 
+        snapshots.AddRange(cluster.Current.StreamRoutes.Keys.Select(id => new RouteSnapshot(id, 0, []) { Connections = streams.Count(id) }));
         metrics.Forget(keep);
         return snapshots;
     }

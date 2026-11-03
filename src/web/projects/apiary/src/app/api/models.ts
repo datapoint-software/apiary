@@ -52,6 +52,23 @@ export interface RedirectView {
   readonly changedBy?: string;
 }
 
+export type StreamProtocol = 'tcp' | 'udp';
+
+export interface StreamRouteView {
+  readonly id: string;
+  readonly projectId: string;
+  readonly name: string;
+  readonly protocol: StreamProtocol;
+  readonly listenPort: number;
+  readonly targetHost: string;
+  readonly targetPort: number;
+  readonly serverNames: readonly string[];
+  readonly idleTimeoutSeconds: number;
+  readonly connections: number;
+  readonly changedAt: string;
+  readonly changedBy?: string;
+}
+
 export interface ProjectView {
   readonly id: string;
   readonly name: string;
@@ -59,6 +76,7 @@ export interface ProjectView {
   readonly icon: string;
   readonly routeCount: number;
   readonly redirectCount: number;
+  readonly streamCount: number;
   readonly certificateCount: number;
   readonly requestsPerMinute: number;
   readonly routesDown: number;

@@ -22,6 +22,7 @@ export class DeleteProjectDialog {
     const parts = [
       [this.project.routeCount, 'route', 'routes'],
       [this.project.redirectCount, 'redirect', 'redirects'],
+      [this.project.streamCount, 'stream route', 'stream routes'],
       [this.project.certificateCount, 'uploaded certificate', 'uploaded certificates'],
     ] as const;
     return parts

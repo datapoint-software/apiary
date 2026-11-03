@@ -5,6 +5,7 @@ using Datapoint.Apiary.Management.Backups;
 using Datapoint.Apiary.Management.Authorization;
 using Datapoint.Apiary.Management.Setup;
 using Datapoint.Apiary.Management.SingleSignOn;
+using Datapoint.Apiary.Management.Streams;
 using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Management.Users;
@@ -33,6 +34,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddSingleton<AgentClients>();
         services.AddSingleton<SsoAssertions>();
         services.TryAddSingleton(new SsoIssuerPolicy(AllowHttp: false));
+        services.TryAddSingleton(new StreamPortPolicy(new HashSet<int>()));
         services.AddSingleton<SignInThrottle>();
         services.AddSingleton<SetupWindow>();
         services.AddSingleton(provider => new SealingKey(provider.GetRequiredService<RootKey>().Derive(KeyPurposes.Challenges)));

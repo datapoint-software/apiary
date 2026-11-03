@@ -20,7 +20,10 @@ public static class RouteTelemetryMerger
             .ToList();
         var down = targets.Count(h => h == TargetHealth.Unhealthy);
         var up = targets.Count(h => h == TargetHealth.Healthy);
-        return new RouteTelemetry(reports.Sum(r => r.RequestsPerMinute), Health(up, down), down);
+        return new RouteTelemetry(reports.Sum(r => r.RequestsPerMinute), Health(up, down), down)
+        {
+            Connections = reports.Sum(r => r.Connections),
+        };
     }
 
     private static TargetHealth Judge(IReadOnlyList<TargetHealth> views)

@@ -10,6 +10,7 @@ using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
 using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.SingleSignOn;
+using Datapoint.Apiary.Management.Streams;
 using Datapoint.Apiary.Replication;
 using Datapoint.Apiary.SingleSignOn;
 using Datapoint.Apiary.Telemetry;
@@ -39,6 +40,7 @@ public static class ApiaryServices
         services.AddSingleton<IRouteTelemetry, ClusterRouteTelemetry>();
         var options = section.Get<ApiaryOptions>() ?? new ApiaryOptions();
         services.AddSingleton(new SsoIssuerPolicy(options.AllowHttpSsoIssuer));
+        services.AddSingleton(new StreamPortPolicy(options.OwnPorts));
         services.AddApiaryManagement();
         services.AddApiarySso();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();

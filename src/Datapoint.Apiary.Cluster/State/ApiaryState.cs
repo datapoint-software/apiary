@@ -21,6 +21,7 @@ public sealed record ApiaryState
     private readonly ImmutableDictionary<Guid, Redirect>? _redirects;
     private readonly ImmutableList<Keys.RegisteredRootKey>? _rootKeys;
     private readonly ImmutableDictionary<Guid, Agent>? _agents;
+    private readonly ImmutableDictionary<Guid, Streams.StreamRoute>? _streamRoutes;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -34,6 +35,12 @@ public sealed record ApiaryState
     {
         get => _redirects ?? ImmutableDictionary<Guid, Redirect>.Empty;
         init => _redirects = value;
+    }
+
+    public ImmutableDictionary<Guid, Streams.StreamRoute> StreamRoutes
+    {
+        get => _streamRoutes ?? ImmutableDictionary<Guid, Streams.StreamRoute>.Empty;
+        init => _streamRoutes = value;
     }
 
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;

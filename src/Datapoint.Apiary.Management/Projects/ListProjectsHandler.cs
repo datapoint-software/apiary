@@ -15,9 +15,13 @@ public sealed class ListProjectsHandler(IClusterState cluster, IRouteTelemetry t
         var routes = state.Routes.Values.ToLookup(r => r.ProjectId);
         var redirects = state.Redirects.Values.CountBy(r => r.ProjectId).ToDictionary();
         var certificates = state.Certificates.Values.Where(c => c.ProjectId is not null).CountBy(c => c.ProjectId!.Value).ToDictionary();
+        var streams = state.StreamRoutes.Values.CountBy(s => s.ProjectId).ToDictionary();
         return [.. state.Projects.Values
             .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(p => View(p, [.. routes[p.Id]], redirects.GetValueOrDefault(p.Id), certificates.GetValueOrDefault(p.Id), measured))];
+            .Select(p => View(p, [.. routes[p.Id]], redirects.GetValueOrDefault(p.Id), certificates.GetValueOrDefault(p.Id), measured) with
+            {
+                StreamCount = streams.GetValueOrDefault(p.Id),
+            })];
     }
 
     private static ProjectView View(Project project, IReadOnlyList<Route> routes, int redirects, int certificates, IReadOnlyDictionary<Guid, RouteTelemetry> measured)

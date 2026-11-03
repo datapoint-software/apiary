@@ -50,6 +50,11 @@ export const routes: Routes = [
         loadComponent: () => import('./certificates/certificate-list').then((m) => m.CertificateList),
       },
       {
+        path: 'streams',
+        title: 'Stream routes · Apiary',
+        loadComponent: () => import('./streams/stream-list').then((m) => m.StreamList),
+      },
+      {
         path: 'redirects',
         title: 'Redirects · Apiary',
         loadComponent: () => import('./redirects/redirect-list').then((m) => m.RedirectList),

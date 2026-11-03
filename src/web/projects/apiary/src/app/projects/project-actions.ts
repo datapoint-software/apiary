@@ -32,7 +32,7 @@ export class ProjectActions {
   }
 
   async delete(project: ProjectView): Promise<void> {
-    if (project.routeCount + project.redirectCount + project.certificateCount > 0) {
+    if (project.routeCount + project.redirectCount + project.certificateCount + project.streamCount > 0) {
       const movedTo = await openDialog<ProjectView, ProjectView>(this.dialog, DeleteProjectDialog, project);
       if (movedTo) {
         this.toaster.show(`${project.name} deleted. What it held moved to ${movedTo.name}.`);

@@ -10,11 +10,9 @@ public sealed partial class TargetConnector(OwnEndpoints own, ILogger<TargetConn
     public async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
     {
         var endpoint = context.DnsEndPoint;
-        var addresses = await ResolveAsync(endpoint.Host, cancellationToken);
-        var allowed = addresses.Where(a => IsAllowed(a, endpoint.Port)).ToArray();
+        var allowed = await ResolveAllowedAsync(endpoint.Host, endpoint.Port, cancellationToken);
         if (allowed.Length == 0)
         {
-            LogRefused(endpoint.Host, endpoint.Port);
             throw new HttpRequestException(HttpRequestError.ConnectionError, "The target resolves only to refused addresses.");
         }
 
@@ -29,6 +27,18 @@ public sealed partial class TargetConnector(OwnEndpoints own, ILogger<TargetConn
             socket.Dispose();
             throw;
         }
+    }
+
+    public async Task<IPAddress[]> ResolveAllowedAsync(string host, int port, CancellationToken cancellationToken)
+    {
+        var addresses = await ResolveAsync(host, cancellationToken);
+        var allowed = addresses.Where(a => IsAllowed(a, port)).ToArray();
+        if (allowed.Length == 0)
+        {
+            LogRefused(host, port);
+        }
+
+        return allowed;
     }
 
     private static async Task<IPAddress[]> ResolveAsync(string host, CancellationToken cancellationToken) =>

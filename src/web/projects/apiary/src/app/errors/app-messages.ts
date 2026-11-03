@@ -89,5 +89,10 @@ export const appMessages: MessageCatalog = {
   'sso.emailTaken': () => 'An Apiary account with a password already uses your email. Sign in with your password, or ask an Administrator to delete that account first.',
   'sso.disabled': () => 'Your account is disabled. Ask an Administrator to enable it.',
   'user.managedBySso': () => 'Your identity provider manages this. Change it there; Apiary updates it the next time they sign in.',
+  'stream.notFound': () => 'This stream route was deleted. The list now shows the current ones.',
+  'stream.portReserved': () => 'Apiary uses this port itself. Choose another.',
+  'stream.portTaken': () => 'Another stream route already uses this port and protocol. Choose another port, or give both TCP routes different TLS server names.',
+  'stream.serverNamesUdp': () => 'Only TCP routes can choose by TLS server name.',
+  'stream.serverNamesTooMany': () => 'A stream route takes up to 20 server names.',
   'backup.unreadable': () => 'This file isn’t a backup this cluster can open. Choose a file Apiary exported, from a cluster with the same root key.',
 };

@@ -10,4 +10,7 @@ public sealed record ProjectView(
     int CertificateCount,
     long RequestsPerMinute,
     int RoutesDown,
-    int RoutesDegraded);
+    int RoutesDegraded)
+{
+    public int StreamCount { get; init; }
+}

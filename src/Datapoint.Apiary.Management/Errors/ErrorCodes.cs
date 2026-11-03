@@ -115,6 +115,11 @@ public static class ErrorCodes
     public const string SsoEmailTaken = "sso.emailTaken";
     public const string SsoDisabled = "sso.disabled";
     public const string UserManagedBySso = "user.managedBySso";
+    public const string StreamNotFound = "stream.notFound";
+    public const string StreamPortReserved = "stream.portReserved";
+    public const string StreamPortTaken = "stream.portTaken";
+    public const string StreamServerNamesUdp = "stream.serverNamesUdp";
+    public const string StreamServerNamesTooMany = "stream.serverNamesTooMany";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -136,5 +141,6 @@ public static class ErrorCodes
         AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany,
         SsoIssuerInvalid, SsoGroupsRequired, SsoGroupsTooMany, SsoOff, SsoFailed, SsoNoRole, SsoNoEmail, SsoEmailTaken, SsoDisabled,
         UserManagedBySso,
+        StreamNotFound, StreamPortReserved, StreamPortTaken, StreamServerNamesUdp, StreamServerNamesTooMany,
     ];
 }

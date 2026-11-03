@@ -4,6 +4,7 @@ using Datapoint.Apiary.Proxy.Caching;
 using Datapoint.Apiary.Proxy.Health;
 using Datapoint.Apiary.Proxy.Network;
 using Datapoint.Apiary.Proxy.Routing;
+using Datapoint.Apiary.Proxy.Streams;
 using Datapoint.Apiary.Proxy.Telemetry;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OutputCaching;
@@ -37,6 +38,8 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<ILoadBalancingPolicy, WeightedPolicy>();
         services.AddHostedService(provider => provider.GetRequiredService<AccessLogWriter>());
         services.AddHostedService<RouteCacheEvictor>();
+        services.AddSingleton<StreamConnections>();
+        services.AddHostedService<StreamListeners>();
         services.AddSingleton<HttpCachePolicy>();
         services.AddOutputCache(o =>
         {

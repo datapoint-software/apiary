@@ -1,0 +1,69 @@
+<ap-page-head heading="Stream routes">
+  <span pageSub>TCP and UDP traffic, such as MQTT or databases, forwarded as it is. Apiary doesn’t read or change it.</span>
+  @if (auth.canOperate() && streams.value().length > 0) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />Add stream route</button>
+  }
+</ap-page-head>
+
+<ap-banner tone="info" heading="Each stream route needs its port published">
+  Swarm only sends traffic to ports your stack file publishes. After adding a stream route, add its port to the Apiary service and deploy the stack again.
+</ap-banner>
+
+<section class="ap-panel">
+  @if (isLoading()) {
+    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  } @else if (streams.value().length === 0) {
+    <ap-empty-state heading="No stream routes">
+      Forward TCP or UDP traffic, such as MQTT on port 1883, to a service on the shared network.
+      @if (auth.canOperate()) {
+        <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />Add stream route</button>
+      }
+    </ap-empty-state>
+  } @else {
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">Stream routes</caption>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Listens on</th>
+            <th scope="col">Target</th>
+            <th scope="col">Project</th>
+            <th scope="col" class="ap-num">Connections</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (stream of streams.value(); track stream.id) {
+            <tr>
+              <td>
+                <div class="ap-cell-main">
+                  <strong style="font-weight: 500">{{ stream.name }}</strong>
+                  @if (stream.serverNames.length) {
+                    <span class="ap-caption ap-data">{{ stream.serverNames.join(', ') }}</span>
+                  }
+                </div>
+              </td>
+              <td><span class="ap-data">{{ stream.listenPort }}</span> <span class="ap-tag">{{ stream.protocol.toUpperCase() }}</span></td>
+              <td class="ap-data ap-muted">{{ stream.targetHost }}:{{ stream.targetPort }}</td>
+              <td class="ap-muted">{{ projectNames().get(stream.projectId) }}</td>
+              <td class="ap-num">{{ stream.connections }}</td>
+              <td class="ap-col-actions">
+                @if (auth.canOperate()) {
+                  <div class="ap-row" style="gap: 4px; justify-content: flex-end">
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit ' + stream.name" (click)="edit(stream)">
+                      <ap-icon [icon]="icons.edit" />
+                    </button>
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + stream.name" (click)="delete(stream)">
+                      <ap-icon [icon]="icons.delete" />
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
