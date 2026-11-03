@@ -1,8 +1,13 @@
+using System.Collections.Frozen;
+using System.IO.Compression;
+
 namespace Datapoint.Apiary.Security.Passwords;
 
 public static class CommonPasswords
 {
     private const int MaximumRepeatedUnit = 4;
+
+    private static readonly Lazy<FrozenSet<string>> s_list = new(ReadList);
 
     private static readonly string[] s_sequences =
     [
@@ -33,7 +38,7 @@ public static class CommonPasswords
     public static bool IsCommon(string password)
     {
         var lower = password.ToLowerInvariant();
-        return s_known.Contains(lower) || IsRepeatedUnit(lower) || IsSequence(lower) || IsFewDigits(lower);
+        return s_known.Contains(lower) || s_list.Value.Contains(lower) || IsRepeatedUnit(lower) || IsSequence(lower) || IsFewDigits(lower);
     }
 
     private static bool IsRepeatedUnit(string password)
@@ -71,4 +76,18 @@ public static class CommonPasswords
     private static string Reverse(string value) => string.Concat(value.Reverse());
 
     private static bool IsFewDigits(string password) => password.All(char.IsAsciiDigit) && password.Distinct().Count() <= 3;
+
+    private static FrozenSet<string> ReadList()
+    {
+        using var resource = typeof(CommonPasswords).Assembly.GetManifestResourceStream("common-passwords.txt.gz")
+            ?? throw new InvalidOperationException("common-passwords.txt.gz isn't embedded in the assembly.");
+        using var reader = new StreamReader(new GZipStream(resource, CompressionMode.Decompress));
+        var passwords = new HashSet<string>(StringComparer.Ordinal);
+        while (reader.ReadLine() is { } line)
+        {
+            passwords.Add(line.ToLowerInvariant());
+        }
+
+        return passwords.ToFrozenSet(StringComparer.Ordinal);
+    }
 }

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <EmbeddedResource Include="Passwords\common-passwords.txt.gz" LogicalName="common-passwords.txt.gz" />
   </ItemGroup>
 </Project>
