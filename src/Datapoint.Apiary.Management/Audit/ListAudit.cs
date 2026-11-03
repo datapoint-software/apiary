@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Audit;
 
-[Action("audit.list", Description = "Lists audit log entries, newest first: who changed what, from which IP address, and whether it succeeded. At most 500 entries.")]
+[Action("audit.list", "Lists audit log entries, newest first: who changed what, from which IP address, and whether it succeeded. At most 500 entries.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Viewer)]
 public sealed record ListAudit(
     [property: Description("The earliest time to include, in UTC.")] DateTimeOffset? From = null,

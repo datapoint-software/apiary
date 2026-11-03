@@ -5,6 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Certificates;
 
-[Action("certificates.delete", Description = "Deletes a certificate and its private key from every replica. Refused while a route uses it.")]
+[Action("certificates.delete", "Deletes a certificate and its private key from every replica. Refused while a route uses it.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record DeleteCertificate([property: Description("The certificate's id.")] Guid Id) : ICommand;

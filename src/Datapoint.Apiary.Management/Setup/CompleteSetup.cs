@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Setup;
 
-[Action("setup.complete", Description = "Creates the first administrator, signs them in and returns their recovery codes. Works only while setup is open.")]
+[Action("setup.complete", "Creates the first administrator, signs them in and returns their recovery codes. Works only while setup is open.")]
+[Api]
 [AllowAnonymousAccess]
 public sealed record CompleteSetup(
     [property: Description("The administrator's name.")] string Name,

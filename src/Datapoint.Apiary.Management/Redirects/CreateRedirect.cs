@@ -5,7 +5,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Redirects;
 
-[Action("redirects.create", Description = "Redirects every request for a hostname to another address, such as www.example.com to https://example.com, and returns the new redirect's id. The hostname gets an automatic certificate, so HTTPS visitors are redirected too.")]
+[Action("redirects.create", "Redirects every request for a hostname to another address, such as www.example.com to https://example.com, and returns the new redirect's id. The hostname gets an automatic certificate, so HTTPS visitors are redirected too.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record CreateRedirect(
     [property: Description("The id of the project the redirect belongs to.")] Guid ProjectId,

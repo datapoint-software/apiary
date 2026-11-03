@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Account;
 
-[Action("account.confirm-two-step", Description = "Finishes setting up two-step sign-in again with a code from the new authenticator app entry and your password. Recovery codes stay the same.")]
+[Action("account.confirm-two-step", "Finishes setting up two-step sign-in again with a code from the new authenticator app entry and your password. Recovery codes stay the same.")]
+[Api]
 [RequiresRole(Role.Viewer)]
 public sealed record ConfirmTwoStep(
     [property: Description("The challenge account.beginTwoStep returned.")] string Challenge,

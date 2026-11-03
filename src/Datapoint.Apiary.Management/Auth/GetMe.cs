@@ -4,6 +4,7 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Auth;
 
-[Action("auth.me", Description = "Returns the signed-in user: name, email, role and two-step sign-in status.")]
+[Action("auth.me", "Returns the signed-in user: name, email, role and two-step sign-in status.")]
+[Api]
 [RequiresRole(Role.Viewer)]
 public sealed record GetMe : IQuery<SignedInUser>;

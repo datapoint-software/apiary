@@ -5,6 +5,7 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Account;
 
-[Action("account.begin-two-step", Description = "Starts setting up two-step sign-in again, with a new authenticator app entry. The current setup keeps working until it's confirmed.")]
+[Action("account.begin-two-step", "Starts setting up two-step sign-in again, with a new authenticator app entry. The current setup keeps working until it's confirmed.")]
+[Api]
 [RequiresRole(Role.Viewer)]
 public sealed record BeginTwoStep : IQuery<TwoStepEnrollment>;

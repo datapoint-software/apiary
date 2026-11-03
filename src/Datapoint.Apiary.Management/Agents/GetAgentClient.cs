@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-[Action("agents.client", Description = "Describes an MCP client that asks to connect, before you approve it.")]
+[Action("agents.client", "Describes an MCP client that asks to connect, before you approve it.")]
+[Api]
 [RequiresRole(Role.Viewer)]
 public sealed record GetAgentClient(
     [property: Description("The client's id, from its registration.")] string ClientId,

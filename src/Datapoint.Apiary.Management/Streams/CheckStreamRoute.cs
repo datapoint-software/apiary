@@ -7,7 +7,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Streams;
 
-[Action("streams.check", Description = "Checks whether a port is free for a stream route, for forms to warn as people type. Saving still checks everything.")]
+[Action("streams.check", "Checks whether a port is free for a stream route, for forms to warn as people type. Saving still checks everything.")]
+[Api]
 [RequiresRole(Role.Operator)]
 public sealed record CheckStreamRoute(
     [property: Description("Tcp or Udp.")] StreamProtocol Protocol,

@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Streams;
 
-[Action("streams.create", Description = "Forwards raw TCP or UDP from a port on every replica to a target, and returns the new stream route's id. The port must also be published in the stack file to receive traffic.")]
+[Action("streams.create", "Forwards raw TCP or UDP from a port on every replica to a target, and returns the new stream route's id. The port must also be published in the stack file to receive traffic.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record CreateStreamRoute(
     [property: Description("The id of the project the stream route belongs to.")] Guid ProjectId,

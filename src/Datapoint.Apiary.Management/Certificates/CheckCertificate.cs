@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Certificates;
 
-[Action("certificates.check", Description = "Checks a PEM certificate chain and private key without saving them, and returns what the certificate covers. For the admin UI only.")]
+[Action("certificates.check", "Checks a PEM certificate chain and private key without saving them, and returns what the certificate covers. For the admin UI only.")]
+[Api]
 [RequiresRole(Role.Operator)]
 public sealed record CheckCertificate(
     [property: Description("The certificate and its chain, PEM, leaf first.")] string ChainPem,

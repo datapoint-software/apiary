@@ -5,7 +5,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
 
-[Action("users.change-role", Description = "Changes someone's role. It applies at their next request.")]
+[Action("users.change-role", "Changes someone's role. It applies at their next request.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Administrator)]
 public sealed record ChangeRole(
     [property: Description("The user's id.")] Guid Id,

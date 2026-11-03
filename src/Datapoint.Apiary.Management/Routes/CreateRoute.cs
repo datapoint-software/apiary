@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Routes;
 
-[Action("routes.create", Description = "Creates an HTTP route that forwards requests for a hostname and path to a target, and returns the new route's id. The route applies on every replica as soon as it's saved.")]
+[Action("routes.create", "Creates an HTTP route that forwards requests for a hostname and path to a target, and returns the new route's id. The route applies on every replica as soon as it's saved.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record CreateRoute(
     [property: Description("The id of the project the route belongs to.")] Guid ProjectId,

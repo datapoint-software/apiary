@@ -5,6 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
 
-[Action("users.reset-two-step", Description = "Turns off someone's two-step sign-in, for when they lost their phone, signs them out everywhere and disconnects their agents. They set it up again at their next sign-in.")]
+[Action("users.reset-two-step", "Turns off someone's two-step sign-in, for when they lost their phone, signs them out everywhere and disconnects their agents. They set it up again at their next sign-in.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Administrator)]
 public sealed record ResetTwoStep([property: Description("The user's id.")] Guid Id) : ICommand;

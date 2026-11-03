@@ -4,6 +4,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
 
-[Action("users.session-policy", Description = "Gets how many minutes without activity sign people out of the admin interface. Agents aren't affected.")]
+[Action("users.session-policy", "Gets how many minutes without activity sign people out of the admin interface. Agents aren't affected.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Administrator)]
 public sealed record GetSessionPolicy : IQuery<SessionPolicyView>;

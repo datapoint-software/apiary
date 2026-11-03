@@ -4,6 +4,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-[Action("agents.list", Description = "Lists the AI agents connected through MCP: yours, or everyone's for Administrators. A connection ends 90 days after it was approved.")]
+[Action("agents.list", "Lists the AI agents connected through MCP: yours, or everyone's for Administrators. A connection ends 90 days after it was approved.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Viewer)]
 public sealed record ListAgents : IQuery<IReadOnlyList<AgentView>>;

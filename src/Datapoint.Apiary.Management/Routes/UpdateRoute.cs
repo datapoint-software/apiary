@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Routes;
 
-[Action("routes.update", Description = "Replaces all of an HTTP route's settings, so send the ones to keep as well. The change applies on every replica as soon as it's saved.")]
+[Action("routes.update", "Replaces all of an HTTP route's settings, so send the ones to keep as well. The change applies on every replica as soon as it's saved.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record UpdateRoute(
     [property: Description("The route's id.")] Guid Id,

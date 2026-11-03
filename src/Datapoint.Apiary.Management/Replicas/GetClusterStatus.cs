@@ -5,6 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Replicas;
 
-[Action("cluster.status", Description = "Shows the replicas in the cluster as the replica answering sees them: which one leads, which are reachable, and whether changes can be saved.")]
+[Action("cluster.status", "Shows the replicas in the cluster as the replica answering sees them: which one leads, which are reachable, and whether changes can be saved.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Viewer)]
 public sealed record GetClusterStatus : IQuery<ClusterView>;

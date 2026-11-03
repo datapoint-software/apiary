@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Invites;
 
-[Action("invites.accept", Description = "Creates the account an invite link is for: sets its password and two-step sign-in, signs in and returns recovery codes.")]
+[Action("invites.accept", "Creates the account an invite link is for: sets its password and two-step sign-in, signs in and returns recovery codes.")]
+[Api]
 [AllowAnonymousAccess]
 public sealed record AcceptInvite(
     [property: Description("The token from the invite link.")] string Token,

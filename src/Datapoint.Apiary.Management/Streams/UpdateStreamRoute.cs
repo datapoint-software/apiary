@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Streams;
 
-[Action("streams.update", Description = "Replaces all of a stream route's settings. Open connections are closed if the port, protocol or target changes.")]
+[Action("streams.update", "Replaces all of a stream route's settings. Open connections are closed if the port, protocol or target changes.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record UpdateStreamRoute(
     [property: Description("The stream route's id.")] Guid Id,

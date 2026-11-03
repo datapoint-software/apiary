@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Account;
 
-[Action("account.change-password", Description = "Changes your password, signs out your other sessions and disconnects your agents. Returns how many of each.")]
+[Action("account.change-password", "Changes your password, signs out your other sessions and disconnects your agents. Returns how many of each.")]
+[Api]
 [RequiresRole(Role.Viewer)]
 public sealed record ChangePassword(
     [property: Description("Your current password.")] string Current,

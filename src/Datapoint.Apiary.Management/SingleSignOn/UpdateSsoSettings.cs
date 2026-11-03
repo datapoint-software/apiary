@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.SingleSignOn;
 
-[Action("sso.update", Description = "Changes how people sign in through your identity provider, using OpenID Connect.")]
+[Action("sso.update", "Changes how people sign in through your identity provider, using OpenID Connect.")]
+[Api]
 [RequiresRole(Role.Administrator)]
 public sealed record UpdateSsoSettings(
     [property: Description("Whether the sign-in page offers single sign-on.")] bool Enabled,

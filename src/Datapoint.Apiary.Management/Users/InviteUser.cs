@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
 
-[Action("users.invite", Description = "Invites someone: creates their account and returns a one-time link, valid for 72 hours, where they set their password and two-step sign-in.")]
+[Action("users.invite", "Invites someone: creates their account and returns a one-time link, valid for 72 hours, where they set their password and two-step sign-in.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Administrator)]
 public sealed record InviteUser(
     [property: Description("Their name.")] string Name,

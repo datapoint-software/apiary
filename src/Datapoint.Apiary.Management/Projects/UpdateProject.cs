@@ -5,7 +5,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Projects;
 
-[Action("projects.update", Description = "Changes a project's name, description and icon.")]
+[Action("projects.update", "Changes a project's name, description and icon.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record UpdateProject(
     [property: Description("The project's id.")] Guid Id,

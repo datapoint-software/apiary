@@ -4,7 +4,8 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Apiary.Management.Agents;
 
-[Action("oauth.token", Description = "The OAuth token endpoint for MCP clients: exchanges an authorization code or a refresh token for new tokens.")]
+[Action("oauth.token", "The OAuth token endpoint for MCP clients: exchanges an authorization code or a refresh token for new tokens.")]
+[Api]
 [AllowAnonymousAccess]
 public sealed record IssueAgentToken(
     string GrantType,

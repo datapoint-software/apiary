@@ -6,7 +6,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
 
-[Action("users.create-admin", Description = "Creates an administrator and returns a one-time link, valid for 15 minutes. Only from the command line inside the container, for when every administrator is locked out.")]
+[Action("users.create-admin", "Creates an administrator and returns a one-time link, valid for 15 minutes. Only from the command line inside the container, for when every administrator is locked out.")]
+[Api]
 [RequiresRole(Role.Administrator)]
 public sealed record CreateAdministrator(
     [property: Description("Their name.")] string Name,

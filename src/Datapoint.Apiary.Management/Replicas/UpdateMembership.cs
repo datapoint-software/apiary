@@ -6,7 +6,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Replicas;
 
-[Action("cluster.update-membership", Description = "Sets how replicas join and leave. Automatic: new replicas join on their own, and missing ones are removed after the timeout. Manual: new replicas wait for an administrator's approval, and missing ones stay until removed.")]
+[Action("cluster.update-membership", "Sets how replicas join and leave. Automatic: new replicas join on their own, and missing ones are removed after the timeout. Manual: new replicas wait for an administrator's approval, and missing ones stay until removed.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Administrator)]
 public sealed record UpdateMembership(
     [property: Description("Automatic or Manual.")] MembershipMode Mode,

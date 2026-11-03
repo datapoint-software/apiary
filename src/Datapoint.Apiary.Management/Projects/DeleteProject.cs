@@ -5,7 +5,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Projects;
 
-[Action("projects.delete", Description = "Deletes a project. A project that still has routes, redirects or uploaded certificates is only deleted when moveTo names another project: they move there first, in the same change, and keep working. The last project can't be deleted.")]
+[Action("projects.delete", "Deletes a project. A project that still has routes, redirects or uploaded certificates is only deleted when moveTo names another project: they move there first, in the same change, and keep working. The last project can't be deleted.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record DeleteProject(
     [property: Description("The project's id.")] Guid Id,

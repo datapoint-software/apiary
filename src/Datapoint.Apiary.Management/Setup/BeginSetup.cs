@@ -5,7 +5,8 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Apiary.Management.Setup;
 
-[Action("setup.begin", Description = "Checks the first administrator's details and starts setting up their two-step sign-in.")]
+[Action("setup.begin", "Checks the first administrator's details and starts setting up their two-step sign-in.")]
+[Api]
 [AllowAnonymousAccess]
 public sealed record BeginSetup(
     [property: Description("The administrator's name.")] string Name,

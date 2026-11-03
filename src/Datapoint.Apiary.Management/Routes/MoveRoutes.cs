@@ -5,7 +5,9 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Routes;
 
-[Action("routes.move", Description = "Moves HTTP routes to another project. Only where they're listed changes: traffic isn't affected.")]
+[Action("routes.move", "Moves HTTP routes to another project. Only where they're listed changes: traffic isn't affected.")]
+[Api]
+[ModelContextProtocol]
 [RequiresRole(Role.Operator)]
 public sealed record MoveRoutes(
     [property: Description("The ids of the routes to move, at most 500.")] IReadOnlyList<Guid> Ids,

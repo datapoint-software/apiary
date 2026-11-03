@@ -13,24 +13,6 @@ public static class McpSetup
 {
     public const string Policy = "agents";
 
-    private static readonly string[] s_withheldPrefixes = ["auth.", "account.", "setup.", "invites.", "oauth.", "sso."];
-    private static readonly HashSet<string> s_withheld = new(StringComparer.Ordinal)
-    {
-        "certificates.upload",
-        "certificates.check",
-        "admin-certificate.upload",
-        "backups.export",
-        "backups.restore",
-        "agents.connect",
-        "agents.update-policy",
-        "agents.client",
-        "routes.check",
-        "redirects.check",
-        "projects.check",
-        "streams.check",
-        "users.check-email",
-    };
-
     public static IServiceCollection AddApiaryMcp(this IServiceCollection services)
     {
         services.AddAuthorizationBuilder().AddPolicy(Policy, policy => policy
@@ -40,7 +22,6 @@ public static class McpSetup
             .WithHttpTransport(o => o.Stateless = true)
             .WithMediatorActions(o =>
             {
-                o.Filter = action => IsOffered(action.Name);
                 o.SerializerOptions = ApiJson.Options;
                 o.ErrorMessage = Describe;
             });
@@ -49,9 +30,6 @@ public static class McpSetup
 
     public static void MapApiaryMcp(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapMcp(OAuthEndpoints.McpPath).RequireAuthorization(Policy);
-
-    public static bool IsOffered(string action) =>
-        !s_withheld.Contains(action) && !s_withheldPrefixes.Any(prefix => action.StartsWith(prefix, StringComparison.Ordinal));
 
     private const string Instructions =
         "Apiary is the reverse proxy in front of this Docker Swarm. You act for the user who connected you, with their role. "

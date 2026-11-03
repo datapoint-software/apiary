@@ -5,7 +5,8 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Certificates;
 
-[Action("certificates.upload", Description = "Adds an uploaded certificate with its private key, or replaces one. For the admin UI only, so private keys never pass through an agent.")]
+[Action("certificates.upload", "Adds an uploaded certificate with its private key, or replaces one. For the admin UI only, so private keys never pass through an agent.")]
+[Api]
 [RequiresRole(Role.Operator)]
 public sealed record UploadCertificate(
     [property: Description("The id of the project the certificate belongs to.")] Guid ProjectId,
