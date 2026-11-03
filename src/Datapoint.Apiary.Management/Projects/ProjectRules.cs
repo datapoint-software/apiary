@@ -22,7 +22,7 @@ public static class ProjectRules
             .Must(ProjectIcons.All.Contains).WithErrorCode(ErrorCodes.ProjectIconUnknown);
     }
 
-    private static bool IsTaken(ApiaryState state, string name, Guid? id)
+    public static bool IsTaken(ApiaryState state, string name, Guid? id)
     {
         var trimmed = name.Trim();
         return state.Projects.Values.Any(p => p.Id != id && string.Equals(p.Name, trimmed, StringComparison.OrdinalIgnoreCase));

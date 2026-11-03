@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { FormField, applyWhen, form, hidden, required, validate } from '@angular/forms/signals';
 import { ApiProblem, Button, ErrorSummary, Field, Form, ipRanges, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
+import { serverCheck } from '../api/server-check';
 import { ProjectView, StreamProtocol, StreamRouteView } from '../api/models';
 import { CopyText } from '../auth/copy-text';
 
@@ -77,6 +78,12 @@ export class StreamDialog {
     required(s.name);
     validate(s.name, ({ value }) => (value().trim().length > 40 ? { kind: 'tooLong', params: { max: 40 } } : undefined));
     port(s.listenPort);
+    serverCheck(s.listenPort, 'streams.check', ['listenPort'], ({ value, valueOf }) => ({
+      protocol: valueOf(s.protocol),
+      listenPort: value(),
+      serverNames: valueOf(s.protocol) === 'tcp' ? lines(valueOf(s.serverNames)) : [],
+      id: this.existing?.id ?? null,
+    }));
     target(s.targetHost);
     port(s.targetPort);
     hidden(s.serverNames, ({ valueOf }) => valueOf(s.protocol) !== 'tcp');

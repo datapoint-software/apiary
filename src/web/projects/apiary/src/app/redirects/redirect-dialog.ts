@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { ApiProblem, Button, ErrorSummary, Field, Form, hostname, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
+import { serverCheck } from '../api/server-check';
 import { ProjectView } from '../api/models';
 
 export interface AddedRedirect {
@@ -46,6 +47,7 @@ export class RedirectDialog {
   protected readonly redirect = form(this.model, (r) => {
     required(r.projectId, { error: { kind: 'project.notFound' } });
     hostname(r.from);
+    serverCheck(r.from, 'redirects.check', ['from'], ({ value }) => ({ from: value() }));
     required(r.to, { error: { kind: 'redirect.targetInvalid' } });
     validate(r.to, ({ value, valueOf }) => {
       const kind = value().trim() ? checkTarget(value(), valueOf(r.from)) : undefined;

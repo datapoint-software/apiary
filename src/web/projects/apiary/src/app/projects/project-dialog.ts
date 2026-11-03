@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { ApiProblem, Button, ErrorSummary, Field, Form, Icon, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
+import { serverCheck } from '../api/server-check';
 import { ProjectView } from '../api/models';
 import { projectIcons } from '../shell/project-icons';
 
@@ -40,6 +41,7 @@ export class ProjectDialog {
   protected readonly project = form(this.model, (p) => {
     required(p.name);
     validate(p.name, ({ value }) => tooLong(value(), 40));
+    serverCheck(p.name, 'projects.check', ['name'], ({ value }) => ({ name: value(), id: this.existing?.id ?? null }));
     validate(p.description, ({ value }) => tooLong(value(), 120));
   });
 

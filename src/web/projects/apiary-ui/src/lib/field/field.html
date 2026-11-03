@@ -8,6 +8,7 @@
 @if (help()) {
   <span class="ap-help" [id]="id + '-help'">{{ help() }}</span>
 }
+<span class="ap-help" aria-live="polite">{{ checking() ? 'Checking…' : '' }}</span>
 <span class="ap-error" [id]="id + '-error'" [hidden]="!error()">
   <ap-icon [icon]="alertIcon" />{{ error() }}
 </span>

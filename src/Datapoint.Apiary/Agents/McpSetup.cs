@@ -22,6 +22,11 @@ public static class McpSetup
         "backups.restore",
         "agents.connect",
         "agents.client",
+        "routes.check",
+        "redirects.check",
+        "projects.check",
+        "streams.check",
+        "users.check-email",
     };
 
     public static IServiceCollection AddApiaryMcp(this IServiceCollection services)

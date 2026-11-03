@@ -63,7 +63,7 @@ export class RouteEditor implements HasUnsavedChanges {
   });
 
   protected readonly model = signal<RouteModel>(emptyRoute(''));
-  protected readonly route = form(this.model, routeRules);
+  protected readonly route = form(this.model, routeRules(() => this.id()));
   protected readonly loadError = computed(() => {
     const error = this.existing.error();
     return error ? this.messages.describe('route.notFound') : '';

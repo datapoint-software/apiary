@@ -1,10 +1,13 @@
 import { applyEach, applyWhen, hidden, required, schema, validate } from '@angular/forms/signals';
 import { dayMs, hostname, ipRanges, parseUtc, port, target, utcDateTime, wholeNumber } from '@datapoint/apiary-ui';
+import { serverCheck } from '../api/server-check';
 import { RouteModel } from './route-model';
 
-export const routeRules = schema<RouteModel>((route) => {
+export const routeRules = (id: () => string | undefined) => schema<RouteModel>((route) => {
   required(route.projectId, { error: { kind: 'project.notFound' } });
   hostname(route.host);
+  serverCheck(route.host, 'routes.check', ['host', 'path'], ({ value, valueOf }) => ({ host: value(), path: valueOf(route.path), id: id() || null }));
+  serverCheck(route.path, 'routes.check', ['path'], ({ value, valueOf }) => ({ host: valueOf(route.host), path: value(), id: id() || null }));
   validate(route.path, ({ value }) => {
     const path = value().trim();
     if (!path) {

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormField, form, required } from '@angular/forms/signals';
 import { ApiProblem, Button, ErrorSummary, Field, Form, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
+import { serverCheck } from '../api/server-check';
 import { InviteLink, Role } from '../api/models';
 import { RoleChoices } from './role-choices';
 
@@ -39,6 +40,7 @@ export class InviteDialog {
   protected readonly invite = form(this.model, (p) => {
     required(p.name);
     required(p.email);
+    serverCheck(p.email, 'users.check-email', ['email'], ({ value }) => ({ email: value() }));
   });
 
   protected async create(apForm: Form): Promise<void> {

@@ -65,7 +65,7 @@ public static class RouteRules
             .OverridePropertyName(nameof(IRouteFields.CertificateId))
             .When(r => r.CertificateId is { } id && cluster.Current.Certificates.TryGetValue(id, out var c) && c.Source == CertificateSource.Uploaded);
         validator.RuleFor(r => r)
-            .Must(r => !IsDuplicate(cluster.Current, r, existingId(r)))
+            .Must(r => !IsDuplicate(cluster.Current, r.Host, r.Path, existingId(r)))
             .WithErrorCode(ErrorCodes.RouteDuplicate)
             .OverridePropertyName(nameof(IRouteFields.Path));
     }
@@ -76,10 +76,10 @@ public static class RouteRules
     private static bool Covers(ApiaryState state, IRouteFields fields) =>
         state.Certificates[fields.CertificateId!.Value].Material?.Covers(RouteNormalization.Host(fields.Host)) == true;
 
-    private static bool IsDuplicate(ApiaryState state, IRouteFields fields, Guid? existingId)
+    public static bool IsDuplicate(ApiaryState state, string host, string path, Guid? existingId)
     {
-        var host = RouteNormalization.Host(fields.Host);
-        var path = RouteNormalization.Path(fields.Path);
+        host = RouteNormalization.Host(host);
+        path = RouteNormalization.Path(path);
         return state.Routes.Values.Any(r => r.Id != existingId && r.Host == host && string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase));
     }
 }

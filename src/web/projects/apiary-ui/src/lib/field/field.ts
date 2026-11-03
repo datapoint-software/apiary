@@ -25,6 +25,11 @@ export class Field {
   private readonly form = inject(Form, { optional: true });
   private readonly control = contentChild(FormField, { read: ElementRef });
 
+  protected readonly checking = computed(() => {
+    const state = this.field()();
+    return state.pending() && (state.dirty() || state.touched());
+  });
+
   protected readonly error = computed(() => {
     const state = this.field()();
     const isShown = state.touched() || (this.form?.attempted() ?? false);
