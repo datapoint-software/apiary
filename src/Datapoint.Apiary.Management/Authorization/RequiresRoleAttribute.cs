@@ -1,3 +1,5 @@
+using Datapoint.Apiary.Cluster.Users;
+
 namespace Datapoint.Apiary.Management.Authorization;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]

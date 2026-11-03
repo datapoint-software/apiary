@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Claims;
+using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Apiary.Management.Authorization;

@@ -1,4 +1,4 @@
-namespace Datapoint.Apiary.Management.Authorization;
+namespace Datapoint.Apiary.Cluster.Users;
 
 public enum Role
 {

@@ -36,6 +36,27 @@ public static class ErrorCodes
     public const string RouteDuplicate = "route.duplicate";
     public const string RouteTargetsRequired = "route.targetsRequired";
 
+    public const string EmailInvalid = "email.invalid";
+    public const string EmailTaken = "email.taken";
+    public const string PasswordTooShort = "password.tooShort";
+    public const string PasswordTooLong = "password.tooLong";
+    public const string PasswordCommon = "password.common";
+    public const string PasswordContainsEmail = "password.containsEmail";
+    public const string PasswordIncorrect = "password.incorrect";
+    public const string PasswordUnchanged = "password.unchanged";
+    public const string CodeInvalid = "code.invalid";
+    public const string SignInFailed = "auth.signInFailed";
+    public const string SignInThrottled = "auth.throttled";
+    public const string ChallengeExpired = "auth.challengeExpired";
+    public const string SetupClosed = "setup.closed";
+    public const string InviteInvalid = "invite.invalid";
+    public const string UserNotFound = "user.notFound";
+    public const string UserLastAdministrator = "user.lastAdministrator";
+    public const string UserSelf = "user.self";
+    public const string UserSameRole = "user.sameRole";
+    public const string UserNotInvited = "user.notInvited";
+    public const string SessionNotFound = "session.notFound";
+
     public static IReadOnlyList<string> All { get; } =
     [
         Internal, InvalidRequest, AuthenticationRequired, Forbidden, NoQuorum,
@@ -44,5 +65,8 @@ public static class ErrorCodes
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
+        EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
+        PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
+        UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound,
     ];
 }

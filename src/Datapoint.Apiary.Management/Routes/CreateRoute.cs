@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Datapoint.Apiary.Cluster.Routes;
+using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Authorization;
 using Datapoint.Mediator;
 

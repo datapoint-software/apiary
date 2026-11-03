@@ -9,7 +9,7 @@ public static class ApiErrors
     public static IResult? Map(Exception exception) => exception switch
     {
         ValidationException validation => ValidationProblems.From(validation).ToResult(),
-        ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code).ToResult(),
+        ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code, Params: failed.Params).ToResult(),
         _ => null,
     };
 
@@ -21,6 +21,8 @@ public static class ApiErrors
         FailureKind.NotFound => StatusCodes.Status404NotFound,
         FailureKind.Forbidden => StatusCodes.Status403Forbidden,
         FailureKind.Unavailable => StatusCodes.Status503ServiceUnavailable,
+        FailureKind.Throttled => StatusCodes.Status429TooManyRequests,
+        FailureKind.Invalid => StatusCodes.Status400BadRequest,
         _ => StatusCodes.Status409Conflict,
     };
 }

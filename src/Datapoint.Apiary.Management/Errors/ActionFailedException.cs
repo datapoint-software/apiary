@@ -29,7 +29,13 @@ public sealed class ActionFailedException : Exception
 
     public FailureKind Kind { get; }
 
+    public IReadOnlyDictionary<string, object?>? Params { get; init; }
+
     public static ActionFailedException NotFound(string code) => new(code, FailureKind.NotFound);
 
     public static ActionFailedException Conflict(string code) => new(code, FailureKind.Conflict);
+
+    public static ActionFailedException Forbidden(string code) => new(code, FailureKind.Forbidden);
+
+    public static ActionFailedException Invalid(string code) => new(code, FailureKind.Invalid);
 }

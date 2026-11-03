@@ -37,7 +37,7 @@ public static class ValidationProblems
         var parameters = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var (key, value) in values)
         {
-            if (!s_parameterNames.TryGetValue(key, out var name))
+            if (!s_parameterNames.TryGetValue(key, out var name) || value is -1)
             {
                 continue;
             }

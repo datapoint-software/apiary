@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Api;
+using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
 
@@ -10,7 +11,7 @@ public static class ApiaryPipeline
     {
         app.UseExceptionHandler(handler => handler.Run(context =>
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
-        app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UsePreviewPrincipal());
+        app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
         app.UseWhen(context => !Listener.IsAdmin(context), proxy => proxy.UseMiddleware<AccessLogMiddleware>());
         app.UseRouting();
         MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));

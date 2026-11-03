@@ -1,6 +1,8 @@
 using Datapoint.Apiary.Api;
+using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster;
 using Datapoint.Apiary.Management;
+using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,6 +28,8 @@ public static class ApiaryServices
         services.AddApiaryManagement();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
         services.AddHttpPrincipalAccessor();
+        services.AddApiaryAuthentication();
+        services.AddAuthorizationObserver<AuthorizationAuditor>();
         services.AddMediator(o => o
             .AddHandlersFromAssemblyContaining<StateTransaction>()
             .AddAuthorizationBehavior()

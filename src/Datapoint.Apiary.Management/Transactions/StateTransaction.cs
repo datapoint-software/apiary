@@ -16,6 +16,8 @@ public sealed class StateTransaction(IClusterState cluster)
 
     public Guid? ProjectId { get; private set; }
 
+    public string? ActingAs { get; set; }
+
     public void Record(IStateChange change)
     {
         _changes.Add(change);

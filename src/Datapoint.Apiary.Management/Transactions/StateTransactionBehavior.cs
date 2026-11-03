@@ -34,7 +34,7 @@ public sealed class StateTransactionBehavior(
         return result;
     }
 
-    private static string ActionName(Type type) =>
+    public static string ActionName(Type type) =>
         s_actionNames.GetOrAdd(type, t => t.GetCustomAttribute<ActionAttribute>()?.Name ?? t.Name);
 
     private void EnsureWritable()
@@ -49,11 +49,16 @@ public sealed class StateTransactionBehavior(
 
     private async ValueTask CommitAsync(object command, CancellationToken ct)
     {
+        if (transaction.Changes.Count == 0)
+        {
+            return;
+        }
+
         var now = time.GetUtcNow();
         var audit = new AuditRecorded(new AuditEntry(
             Guid.CreateVersion7(now),
             now,
-            principals.Principal?.FindFirstValue(ClaimTypes.Name),
+            transaction.ActingAs ?? principals.Principal?.FindFirstValue(ClaimTypes.Name),
             origin.Client,
             origin.Address,
             ActionName(command.GetType()),

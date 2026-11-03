@@ -6,4 +6,6 @@ public enum FailureKind
     Conflict,
     Unavailable,
     Forbidden,
+    Throttled,
+    Invalid,
 }

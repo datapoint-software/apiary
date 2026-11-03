@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Management.Transactions;
 
 namespace Datapoint.Apiary.Api;
@@ -14,4 +15,6 @@ public sealed class HttpRequestOrigin(IHttpContextAccessor accessor) : IRequestO
     }
 
     public string? Client => null;
+
+    public string? Device => DeviceNames.From(accessor.HttpContext?.Request.Headers.UserAgent.ToString());
 }

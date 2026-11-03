@@ -5,4 +5,6 @@ public interface IRequestOrigin
     string? Address { get; }
 
     string? Client { get; }
+
+    string? Device { get; }
 }
