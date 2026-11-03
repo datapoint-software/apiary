@@ -582,7 +582,7 @@ A split bar shows how a route's traffic is divided between target groups by weig
 C["CopyField"] = ("Apiary", 140, f"""
 <div class="ap-field">
   <span class="ap-label">Create the root key on a manager node</span>
-  <div class="ap-copy"><code>docker run --rm datapoint/apiary:0.4.0 secrets init | docker secret create apiary_root_key_2 -</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}Copy</button></div>
+  <div class="ap-copy"><code>docker run --rm hub.datapoint.software/datapoint/apiary:0.4.0 secrets init | docker secret create apiary_root_key_2 -</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}Copy</button></div>
   <span class="ap-help">The key goes straight into Swarm's encrypted store and never touches disk.</span>
 </div>
 """, """# CopyField

@@ -53,7 +53,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - Apiary uses host publishing mode, not host network mode (`network_mode: host`): the containers stay on the overlay network, so Apiary can still reach services by name. Host network mode isn't supported in any mode (see [Routing](#routing)).
 - The Raft port is never published. Replicas reach each other over the overlay network.
 - Each replica stores its copy of the state on a local volume on its node.
-- One image contains the proxy, the admin API and the built Angular UI.
+- One image contains the proxy, the admin API and the built Angular UI. It's published as `hub.datapoint.software/datapoint/apiary`, tagged with the bare version (`0.4.0`).
 - The root key (see [Cluster trust](#cluster-trust)) is provided as a [Swarm secret](https://docs.docker.com/engine/swarm/secrets/).
 
 ## Routing
@@ -146,7 +146,7 @@ Security steps that admins have to remember get skipped, so Apiary rotates every
 - Operators create one Swarm secret, once, before the first deploy: the **root key**, a random value that Apiary generates:
 
   ```bash
-  docker run --rm datapoint/apiary:<version> secrets init | docker secret create apiary_root_key_1 -
+  docker run --rm hub.datapoint.software/datapoint/apiary:<version> secrets init | docker secret create apiary_root_key_1 -
   ```
 
   The key goes straight from the command into Swarm's encrypted store and never touches disk. The compose file references it with `external: true`.

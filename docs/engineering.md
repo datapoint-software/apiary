@@ -148,6 +148,8 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
 - `global.json` pins the SDK and selects Microsoft.Testing.Platform as the test runner.
 - Central package management in `Directory.Packages.props`, with lock files, restore in locked mode in CI, and NuGet audit of transitive packages. See [central package management](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management).
 - **No Native AOT or trimming.** YARP supports Native AOT, but DotNext's cluster and Datapoint.Mediator haven't been verified with it, and trimming turns HTTP/3 off. Trimming analyzers stay on as warnings, so we know the cost if we revisit this.
+- **The image is published as `hub.datapoint.software/datapoint/apiary`,** tagged with the bare version.
+- **CI comes last:** the pipeline is added once all features are complete. Until then, builds and tests run locally.
 - **The container image is our own,** based on Microsoft's Ubuntu runtime image, because HTTP/3 needs `libmsquic`, which the chiseled images don't reliably include. Kestrel falls back to HTTP/2 silently without it, so a test checks that HTTP/3 is actually served. The image runs as a non-root user.
 
 ### ASP.NET Core
@@ -196,13 +198,7 @@ Where the words come from:
 - **MCP** agents have no UI, so the MCP adapter adds an English description of each code from its own catalogue, next to the code and parameters. It's never an exception message, and it can later share the UI's translations.
 - **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalogue.
 
-**Gap in Datapoint.Mediator 4.0.0-beta.3:** its adapters still produce English text in three places:
-
-- An argument that fails to bind (malformed JSON, a wrong type) returns a 400 with the exception's message.
-- 401 and 403 have English titles.
-- The MCP adapter passes the same message to agents.
-
-FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. For the rest, Datapoint.Mediator needs a change: codes and field paths for argument errors, and a way to shape its 400, 401 and 403 responses. We make that change in the Mediator repository, not here.
+**Known issue:** Datapoint.Mediator 4.0.0-beta.3 still sends English text for unreadable request bodies and for 401 and 403, on HTTP and MCP. FluentValidation's exceptions go through `MapException`, so Apiary maps those to codes itself. See [risks.md](risks.md).
 
 ### Security APIs
 
