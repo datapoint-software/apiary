@@ -2,7 +2,7 @@ using System.Net.Sockets;
 
 namespace Datapoint.Apiary.Proxy.Streams;
 
-public sealed class TcpStreamConnection(NetworkStream client, NetworkStream target, CancellationToken stopping) : IDisposable
+public sealed class TcpStreamConnection(NetworkStream client, NetworkStream target, int bufferSize, CancellationToken stopping) : IDisposable
 {
     private readonly CancellationTokenSource _closing = CancellationTokenSource.CreateLinkedTokenSource(stopping);
 
@@ -65,7 +65,7 @@ public sealed class TcpStreamConnection(NetworkStream client, NetworkStream targ
     {
         try
         {
-            await from.CopyToAsync(to, _closing.Token);
+            await from.CopyToAsync(to, bufferSize, _closing.Token);
         }
         catch (Exception exception) when (exception is OperationCanceledException or IOException or ObjectDisposedException)
         {

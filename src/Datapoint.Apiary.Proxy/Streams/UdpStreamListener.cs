@@ -10,7 +10,8 @@ namespace Datapoint.Apiary.Proxy.Streams;
 
 public sealed partial class UdpStreamListener : IStreamListener
 {
-    public const int MaximumSessions = 10_000;
+    public const int MaximumSessions = 1_000;
+    public const int MaximumSessionsPerAddress = 64;
     private const int MaximumDatagram = 65_527;
     private static readonly TimeSpan s_sweepEvery = TimeSpan.FromSeconds(1);
 
@@ -22,6 +23,7 @@ public sealed partial class UdpStreamListener : IStreamListener
     private readonly ILogger _logger;
     private readonly CancellationTokenSource _stopping = new();
     private readonly ConcurrentDictionary<EndPoint, UdpStreamSession> _sessions = new();
+    private readonly AddressCounts _perAddress = new(MaximumSessionsPerAddress);
     private readonly Task _receiving;
     private readonly Task _sweeping;
     private StreamRoute? _route;
@@ -119,7 +121,7 @@ public sealed partial class UdpStreamListener : IStreamListener
 
     private async Task<UdpStreamSession?> OpenAsync(EndPoint client)
     {
-        if (_route is not { } route || _sessions.Count >= MaximumSessions || !Allows(route, client))
+        if (_route is not { } route || _sessions.Count >= MaximumSessions || !Allows(route, client) || !_perAddress.TryAdd(AddressOf(client)))
         {
             return null;
         }
@@ -127,6 +129,7 @@ public sealed partial class UdpStreamListener : IStreamListener
         var addresses = await _connector.ResolveAllowedAsync(route.TargetHost, route.TargetPort, _stopping.Token);
         if (addresses.Length == 0)
         {
+            _perAddress.Remove(AddressOf(client));
             return null;
         }
 
@@ -139,6 +142,7 @@ public sealed partial class UdpStreamListener : IStreamListener
         {
             LogConnectFailed(_logger, route.Name, route.TargetHost, route.TargetPort, exception.Message);
             target.Dispose();
+            _perAddress.Remove(AddressOf(client));
             return null;
         }
 
@@ -150,6 +154,10 @@ public sealed partial class UdpStreamListener : IStreamListener
     }
 
     private bool Allows(StreamRoute route, EndPoint client) => _allowlists.Allows(route.AllowedAddresses, (client as IPEndPoint)?.Address);
+
+    private static IPAddress? AddressOf(EndPoint client) => client is IPEndPoint { Address: var address } ? Unmapped(address) : null;
+
+    private static IPAddress Unmapped(IPAddress address) => address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
 
     private async Task ReplyAsync(UdpStreamSession session)
     {
@@ -198,6 +206,7 @@ public sealed partial class UdpStreamListener : IStreamListener
         }
 
         _connections.Closed(session.Route.Id);
+        _perAddress.Remove(AddressOf(session.Client));
         session.Dispose();
     }
 

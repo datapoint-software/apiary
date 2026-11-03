@@ -11,6 +11,8 @@ namespace Datapoint.Apiary.Proxy.Streams;
 public sealed partial class TcpStreamListener : IStreamListener
 {
     public const int MaximumConnections = 10_000;
+    public const int MaximumConnectionsPerAddress = 256;
+    private const int BufferSize = 16 * 1024;
     private static readonly TimeSpan s_helloTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan s_connectTimeout = TimeSpan.FromSeconds(10);
 
@@ -21,8 +23,10 @@ public sealed partial class TcpStreamListener : IStreamListener
     private readonly ILogger _logger;
     private readonly CancellationTokenSource _stopping = new();
     private readonly ConcurrentDictionary<TcpStreamConnection, (StreamRoute Route, IPAddress? Client)> _open = new();
+    private readonly AddressCounts _perAddress = new(MaximumConnectionsPerAddress);
     private readonly Task _accepting;
     private IReadOnlyList<StreamRoute> _routes;
+    private int _active;
 
     public TcpStreamListener(int port, IReadOnlyList<StreamRoute> routes, TargetConnector connector, AddressAllowlists allowlists, StreamConnections connections, ILogger logger)
     {
@@ -87,21 +91,37 @@ public sealed partial class TcpStreamListener : IStreamListener
                 return;
             }
 
-            if (_open.Count >= MaximumConnections)
+            var address = Unmapped((client.RemoteEndPoint as IPEndPoint)?.Address);
+            if (Interlocked.Increment(ref _active) > MaximumConnections || !_perAddress.TryAdd(address))
             {
+                Interlocked.Decrement(ref _active);
                 client.Dispose();
                 continue;
             }
 
-            _ = HandleAsync(client);
+            _ = HandleCountedAsync(client, address);
         }
     }
 
-    private async Task HandleAsync(Socket client)
+    private static IPAddress? Unmapped(IPAddress? address) => address is { IsIPv4MappedToIPv6: true } ? address.MapToIPv4() : address;
+
+    private async Task HandleCountedAsync(Socket client, IPAddress? address)
+    {
+        try
+        {
+            await HandleAsync(client, address);
+        }
+        finally
+        {
+            _perAddress.Remove(address);
+            Interlocked.Decrement(ref _active);
+        }
+    }
+
+    private async Task HandleAsync(Socket client, IPAddress? address)
     {
         client.NoDelay = true;
         using var stream = new NetworkStream(client, ownsSocket: true);
-        var address = (client.RemoteEndPoint as IPEndPoint)?.Address;
         var (route, prefix) = await ChooseAsync(stream);
         if (route is null || !_allowlists.Allows(route.AllowedAddresses, address))
         {
@@ -114,7 +134,7 @@ public sealed partial class TcpStreamListener : IStreamListener
             return;
         }
 
-        using var connection = new TcpStreamConnection(stream, new NetworkStream(target, ownsSocket: true), _stopping.Token);
+        using var connection = new TcpStreamConnection(stream, new NetworkStream(target, ownsSocket: true), BufferSize, _stopping.Token);
         _open[connection] = (route, address);
         _connections.Opened(route.Id);
         try
