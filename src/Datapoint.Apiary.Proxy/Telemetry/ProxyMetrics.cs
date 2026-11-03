@@ -32,7 +32,7 @@ public sealed class ProxyMetrics
         var now = _time.GetUtcNow().ToUnixTimeSeconds();
         _rates.GetOrAdd(route, static _ => new RateWindow()).Add(now);
         Activity.Add(now, status, elapsed);
-        var tags = new TagList { { "apiary.route.id", route }, { "server.address", host } };
+        var tags = new TagList { { "apiary.route.id", route }, { "server.address", host.ToLowerInvariant() } };
         _duration.Record(elapsed.TotalSeconds, tags);
         tags.Add("http.response.status_code", status);
         _requests.Add(1, tags);
