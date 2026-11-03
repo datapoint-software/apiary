@@ -105,6 +105,15 @@ export interface UserView {
   readonly inviteExpiresAt?: string;
 }
 
+export interface AgentView {
+  readonly id: string;
+  readonly name: string;
+  readonly user?: string;
+  readonly connectedAt: string;
+  readonly lastUsedAt: string;
+  readonly mine: boolean;
+}
+
 export interface AgentClientView {
   readonly name: string;
   readonly redirectUri: string;

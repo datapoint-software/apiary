@@ -44,6 +44,7 @@ const labels: Record<string, string> = {
   'account.end-session': 'signed out one of their sessions',
   'account.end-other-sessions': 'signed out their other sessions',
   'agents.connect': 'connected an agent',
+  'agents.disconnect': 'disconnected an agent',
   'oauth.revoke': 'disconnected an agent from the agent itself',
 };
 

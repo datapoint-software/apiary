@@ -82,6 +82,11 @@ export const routes: Routes = [
         title: 'Replicas · Apiary',
         loadComponent: () => import('./cluster/replica-list').then((m) => m.ReplicaList),
       },
+      {
+        path: 'agents',
+        title: 'Connected agents · Apiary',
+        loadComponent: () => import('./agents/agent-list').then((m) => m.AgentList),
+      },
       { path: 'audit', title: 'Audit log · Apiary', loadComponent: () => import('./audit/audit-log').then((m) => m.AuditLog) },
       { path: 'account', title: 'Your account · Apiary', loadComponent: () => import('./account/profile').then((m) => m.Profile) },
       { path: 'account/security', title: 'Security · Apiary', loadComponent: () => import('./account/security').then((m) => m.Security) },

@@ -12,6 +12,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
 import {
   Archive,
+  Bot,
   CornerUpRight,
   FolderOpen,
   Hexagon,
@@ -137,6 +138,7 @@ export class Shell {
         title: 'Access',
         items: [
           ...(this.auth.canAdminister() ? [{ icon: Users, label: 'Users', link: '/users' }] : []),
+          { icon: Bot, label: 'Connected agents', link: '/agents' },
           { icon: ScrollText, label: 'Audit log', link: '/audit' },
         ],
       },
