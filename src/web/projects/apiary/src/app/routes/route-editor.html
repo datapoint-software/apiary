@@ -4,7 +4,7 @@
       Send requests for a hostname to services on the shared network.
     } @else {
       @if (status(); as status) {
-        <ap-status [tone]="status[0]">{{ status[1] }}</ap-status> &nbsp;·&nbsp;
+        <ap-status [tone]="status[0]">{{ status[1] }}</ap-status> &nbsp;·&nbsp; {{ requests() }} req/min &nbsp;·&nbsp;
       }
       {{ changed() }}
     }

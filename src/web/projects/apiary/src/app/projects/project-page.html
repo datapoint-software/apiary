@@ -12,11 +12,16 @@
     }
   </ap-page-head>
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+    @let health = projectHealth(project);
+    <div class="ap-panel ap-stat"><span class="ap-overline">Health</span><span style="margin-top: 10px"><ap-status [tone]="health[0]">{{ health[1] }}</ap-status></span></div>
     <div class="ap-panel ap-stat">
       <span class="ap-overline">Routes</span><span class="ap-stat-value">{{ project.routeCount }}</span>
       @if (disabledCount()) {
         <span class="ap-stat-delta">{{ disabledCount() }} disabled</span>
       }
+    </div>
+    <div class="ap-panel ap-stat">
+      <span class="ap-overline">Requests</span><span class="ap-stat-value">{{ perMinute(project.requestsPerMinute) }}<span class="ap-stat-unit">/min</span></span>
     </div>
     <div class="ap-panel ap-stat"><span class="ap-overline">Redirects</span><span class="ap-stat-value">{{ project.redirectCount }}</span></div>
     <div class="ap-panel ap-stat"><span class="ap-overline">Certificates</span><span class="ap-stat-value">{{ certificateCount() }}</span></div>

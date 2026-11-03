@@ -9,6 +9,12 @@
     <a bannerActions routerLink="/replicas">See the replicas</a>
   </ap-banner>
 }
+@for (route of down(); track route.id) {
+  <ap-banner tone="critical" [heading]="route.host + ' is down'">
+    None of its targets answer health checks, so visitors get an error. Check that {{ route.targets[0].host }} is running and on a network Apiary can reach.
+    <a bannerActions [routerLink]="['/routes', route.id]">Open the route</a>
+  </ap-banner>
+}
 @for (certificate of failing(); track certificate.id) {
   <ap-banner tone="warn" [heading]="'The certificate for ' + certificate.name + ' needs attention'">
     {{ certificate.notAfter ? 'It expires in ' + daysLeft(certificate) + ' days.' : 'It hasn’t been issued yet.' }}

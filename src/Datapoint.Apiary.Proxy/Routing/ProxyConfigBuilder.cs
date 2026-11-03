@@ -1,6 +1,7 @@
 using System.Globalization;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Proxy.Health;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
 
@@ -9,6 +10,8 @@ namespace Datapoint.Apiary.Proxy.Routing;
 public static class ProxyConfigBuilder
 {
     public const string RouteIdMetadata = "apiary.route";
+    private static readonly TimeSpan s_probeInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan s_probeTimeout = TimeSpan.FromSeconds(5);
 
     public static IReadOnlyList<RouteConfig> BuildRoutes(ApiaryState state)
     {
@@ -49,13 +52,25 @@ public static class ProxyConfigBuilder
     {
         ClusterId = ClusterId(route),
         LoadBalancingPolicy = "PowerOfTwoChoices",
+        HealthCheck = new HealthCheckConfig
+        {
+            AvailableDestinationsPolicy = "HealthyOrPanic",
+            Active = new ActiveHealthCheckConfig
+            {
+                Enabled = true,
+                Interval = s_probeInterval,
+                Timeout = s_probeTimeout,
+                Policy = ReachablePolicy.PolicyName,
+                Path = "/",
+            },
+        },
         HttpRequest = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(route.TimeoutSeconds) },
         Destinations = route.Targets
             .Select((target, index) => (Key: index.ToString(CultureInfo.InvariantCulture), Target: target))
             .ToDictionary(d => d.Key, d => new DestinationConfig { Address = Address(d.Target) }, StringComparer.Ordinal),
     };
 
-    private static string ClusterId(Route route) => route.Id.ToString("N");
+    public static string ClusterId(Route route) => route.Id.ToString("N");
 
     private static string Address(RouteTarget target)
     {

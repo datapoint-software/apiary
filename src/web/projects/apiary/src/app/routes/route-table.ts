@@ -6,6 +6,7 @@ import { Auth } from '../auth/auth';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
 import { RouteRowActions } from './route-row-actions';
+import { perMinute } from './route-status';
 import { RouteStatusLabel } from './route-status-label';
 
 @Component({
@@ -22,6 +23,7 @@ export class RouteTable {
   protected readonly routeLabel = routeLabel;
   protected readonly targetLabel = targetLabel;
   protected readonly timeAgo = timeAgo;
+  protected readonly perMinute = perMinute;
   private readonly routes = computed(() => this.groups().flatMap((g) => g.routes));
   protected readonly allSelected = computed(() => this.routes().length > 0 && this.routes().every((r) => this.selected().has(r.id)));
   protected readonly someSelected = computed(() => !this.allSelected() && this.routes().some((r) => this.selected().has(r.id)));
@@ -35,6 +37,10 @@ export class RouteTable {
       next.delete(route.id);
     }
     this.selected.set(next);
+  }
+
+  protected requests(group: RouteGroup): number {
+    return group.routes.reduce((sum, r) => sum + (r.disabled ? 0 : r.requestsPerMinute), 0);
   }
 
   protected toggleAll(on: boolean): void {

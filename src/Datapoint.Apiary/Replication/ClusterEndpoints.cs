@@ -7,6 +7,8 @@ using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Transactions;
+using Datapoint.Apiary.Proxy.Telemetry;
+using Datapoint.Apiary.Telemetry;
 using Datapoint.Mediator;
 using DotNext.Net.Cluster.Consensus.Raft;
 
@@ -27,6 +29,7 @@ public static class ClusterEndpoints
         replicas.MapGet("/keys", (HttpContext http, RaftClusterState cluster) =>
             cluster.KeysFor(http.Connection.ClientCertificate) is { } ring ? Results.Json(ring, ClusterWireJsonContext.Default.SharedKeyRing) : Results.StatusCode(StatusCodes.Status403Forbidden));
         replicas.MapGet("/view", (RaftClusterState cluster) => Results.Json(cluster.Describe(), ClusterWireJsonContext.Default.ClusterView));
+        replicas.MapGet("/" + ClusterRouteTelemetry.Path, (RouteTelemetrySource source) => Results.Json(source.Snapshot(), ApiJson.Options));
         replicas.MapGet("/challenges/{token}", (string token, RaftClusterState cluster) =>
             cluster.Current.AcmeChallenges.TryGetValue(token, out var challenge) ? Results.Json(challenge, ClusterWireJsonContext.Default.AcmeChallenge) : Results.NotFound());
         return group;

@@ -1,11 +1,12 @@
 using System.Diagnostics;
 using Datapoint.Apiary.Proxy.Routing;
+using Datapoint.Apiary.Proxy.Telemetry;
 using Microsoft.AspNetCore.Http;
 using Yarp.ReverseProxy.Model;
 
 namespace Datapoint.Apiary.Proxy.AccessLogs;
 
-public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter writer, TimeProvider time)
+public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter writer, ProxyMetrics metrics, TimeProvider time)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -16,13 +17,19 @@ public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter wr
         }
         finally
         {
-            writer.Write(Describe(context, Stopwatch.GetElapsedTime(started)));
+            var elapsed = Stopwatch.GetElapsedTime(started);
+            var route = context.Features.Get<IReverseProxyFeature>()?.Route.Config.Metadata?.GetValueOrDefault(ProxyConfigBuilder.RouteIdMetadata);
+            if (route is not null)
+            {
+                metrics.Record(route, context.Request.Host.Host, context.Response.StatusCode, elapsed);
+            }
+
+            writer.Write(Describe(context, route, elapsed));
         }
     }
 
-    private AccessLogEntry Describe(HttpContext context, TimeSpan elapsed)
+    private AccessLogEntry Describe(HttpContext context, string? route, TimeSpan elapsed)
     {
-        var proxy = context.Features.Get<IReverseProxyFeature>();
         var request = context.Request;
         return new AccessLogEntry(
             time.GetUtcNow(),
@@ -33,8 +40,8 @@ public sealed class AccessLogMiddleware(RequestDelegate next, AccessLogWriter wr
             context.Response.StatusCode,
             context.Response.ContentLength,
             Math.Round(elapsed.TotalMilliseconds, 2),
-            proxy?.Route.Config.Metadata?.GetValueOrDefault(ProxyConfigBuilder.RouteIdMetadata),
-            proxy?.ProxiedDestination?.Model.Config.Address,
+            route,
+            context.Features.Get<IReverseProxyFeature>()?.ProxiedDestination?.Model.Config.Address,
             request.Headers.UserAgent.ToString() is { Length: > 0 } agent ? agent : null);
     }
 }

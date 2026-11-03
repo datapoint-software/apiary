@@ -27,6 +27,7 @@ import {
   Users,
 } from 'lucide';
 import { needsAttention } from '../certificates/certificate-status';
+import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView } from '../api/models';
 import { Auth } from '../auth/auth';
@@ -95,6 +96,7 @@ export class Shell {
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), {
     defaultValue: [],
   });
+  private readonly projectsRefresh = reloadEvery(this.projects);
   private readonly certificates = httpResource<CertificateSummary[]>(
     () => this.api.query('certificates.list'),
     { defaultValue: [] },
@@ -113,6 +115,7 @@ export class Shell {
             label: p.name,
             link: `/projects/${p.id}`,
             count: p.routeCount || undefined,
+            warn: p.routesDown + p.routesDegraded > 0,
           })),
           { icon: FolderOpen, label: 'All projects', link: '/projects' },
         ],

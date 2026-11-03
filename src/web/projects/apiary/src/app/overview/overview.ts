@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { Banner, Button, Icon, PageHead } from '@datapoint/apiary-ui';
 import { Plus } from 'lucide';
+import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView } from '../api/models';
+import { CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { daysLeft, needsAttention } from '../certificates/certificate-status';
 import { ClusterStatus } from '../cluster/cluster-status';
@@ -33,9 +34,13 @@ export class Overview {
   protected readonly cluster = inject(ClusterStatus);
   protected readonly plus = Plus;
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
+  private readonly projectsRefresh = reloadEvery(this.projects);
   private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {
     defaultValue: [],
   });
+  private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
+  private readonly routesRefresh = reloadEvery(this.routes);
+  protected readonly down = computed(() => this.routes.value().filter((r) => !r.disabled && r.health === 'down').slice(0, 2));
   protected readonly heading = computed(() => {
     const first = this.auth.user()?.name.split(/\s+/)[0];
     const hello = greeting(new Date().getHours());

@@ -14,9 +14,12 @@ public sealed record RouteView(
     string? ChangedBy,
     bool Disabled,
     IReadOnlyList<string> AllowedAddresses,
-    MaintenanceWindow? Maintenance)
+    MaintenanceWindow? Maintenance,
+    long RequestsPerMinute,
+    RouteHealth Health,
+    int TargetsDown)
 {
-    public static RouteView From(Route route) =>
+    public static RouteView From(Route route, RouteTelemetry telemetry) =>
         new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy,
-            route.Disabled, route.AllowedAddresses ?? [], route.Maintenance);
+            route.Disabled, route.AllowedAddresses ?? [], route.Maintenance, telemetry.RequestsPerMinute, telemetry.Health, telemetry.TargetsDown);
 }

@@ -17,7 +17,12 @@ export interface RouteView {
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
   readonly maintenance?: MaintenanceWindow;
+  readonly requestsPerMinute: number;
+  readonly health: RouteHealth;
+  readonly targetsDown: number;
 }
+
+export type RouteHealth = 'unknown' | 'healthy' | 'degraded' | 'down';
 
 export interface MaintenanceWindow {
   readonly start: string;
@@ -44,6 +49,9 @@ export interface ProjectView {
   readonly routeCount: number;
   readonly redirectCount: number;
   readonly certificateCount: number;
+  readonly requestsPerMinute: number;
+  readonly routesDown: number;
+  readonly routesDegraded: number;
 }
 
 export type Role = 'viewer' | 'operator' | 'administrator';

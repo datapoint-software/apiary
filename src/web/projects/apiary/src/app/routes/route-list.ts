@@ -3,13 +3,26 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router, RouterLink } from '@angular/router';
 import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
 import { Plus, Search } from 'lucide';
+import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
 import { ProjectView, RouteView } from '../api/models';
 import { RouteGroup } from './route-group';
+import { needsAttention } from './route-status';
 import { RouteSelectionBar } from './route-selection-bar';
 import { RouteTable } from './route-table';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
+
+function matchesText(route: RouteView, text: string): boolean {
+  return !text || `${route.host}${route.path} ${route.targets.map((t) => t.host).join(' ')}`.includes(text);
+}
+
+function matchesStatus(route: RouteView, status: string): boolean {
+  if (status === 'disabled') {
+    return route.disabled;
+  }
+  return status !== 'attention' || needsAttention(route);
+}
 
 @Component({
   selector: 'ap-route-list',
@@ -23,12 +36,13 @@ export class RouteList {
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   protected readonly icons = { plus: Plus, search: Search };
-  protected readonly statuses = [['all', 'All'], ['disabled', 'Disabled']] as const;
+  protected readonly statuses = [['all', 'All'], ['attention', 'Needs attention'], ['disabled', 'Disabled']] as const;
   protected readonly filter = linkedSignal(() => '');
   protected readonly projectFilter = linkedSignal(() => this.project());
   protected readonly statusFilter = linkedSignal<string>(() => 'all');
 
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
+  private readonly routesRefresh = reloadEvery(this.routes);
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   protected readonly isLoading = computed(() => this.routes.isLoading() && this.routes.value().length === 0);
   protected readonly projectOptions = computed(() => this.projects.value());
@@ -37,11 +51,10 @@ export class RouteList {
   protected readonly shown = computed(() => {
     const text = this.filter().trim().toLowerCase();
     const project = this.projectFilter();
-    const disabledOnly = this.statusFilter() === 'disabled';
-    return this.routes.value().filter((r) => {
-      const matchesText = !text || `${r.host}${r.path} ${r.targets.map((t) => t.host).join(' ')}`.includes(text);
-      return matchesText && (!project || r.projectId === project) && (!disabledOnly || r.disabled);
-    });
+    const status = this.statusFilter();
+    return this.routes.value().filter(
+      (r) => (!project || r.projectId === project) && matchesText(r, text) && matchesStatus(r, status),
+    );
   });
 
   protected readonly selected = signal<ReadonlySet<string>>(new Set());

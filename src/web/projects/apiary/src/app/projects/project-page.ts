@@ -1,8 +1,9 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
+import { Button, EmptyState, Icon, PageHead, Status } from '@datapoint/apiary-ui';
 import { Pencil, Plus, Trash2 } from 'lucide';
+import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { Auth } from '../auth/auth';
@@ -10,11 +11,13 @@ import { WriteLock } from '../cluster/write-lock';
 import { RouteSelectionBar } from '../routes/route-selection-bar';
 import { RouteTable } from '../routes/route-table';
 import { NotFound } from '../shell/not-found';
+import { perMinute } from '../routes/route-status';
 import { ProjectActions } from './project-actions';
+import { projectHealth } from './project-health';
 
 @Component({
   selector: 'ap-project-page',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouterLink, RouteTable, RouteSelectionBar, NotFound],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, Status, RouterLink, RouteTable, RouteSelectionBar, NotFound],
   templateUrl: './project-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,9 +27,13 @@ export class ProjectPage {
   protected readonly auth = inject(Auth);
   protected readonly actions = inject(ProjectActions);
   protected readonly icons = { add: Plus, edit: Pencil, delete: Trash2 };
+  protected readonly projectHealth = projectHealth;
+  protected readonly perMinute = perMinute;
   protected readonly crumbs = [{ label: 'Projects', link: '/projects' }];
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'));
+  private readonly projectsRefresh = reloadEvery(this.projects);
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
+  private readonly routesRefresh = reloadEvery(this.routes);
   private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {
     defaultValue: [],
   });

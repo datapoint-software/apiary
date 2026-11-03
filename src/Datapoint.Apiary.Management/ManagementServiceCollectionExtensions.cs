@@ -3,6 +3,7 @@ using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Backups;
 using Datapoint.Apiary.Management.Authorization;
 using Datapoint.Apiary.Management.Setup;
+using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Management.Users;
 using Datapoint.Apiary.Security.Keys;
@@ -10,6 +11,7 @@ using Datapoint.Apiary.Security.Tokens;
 using Datapoint.Mediator.Authorization;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Datapoint.Apiary.Management;
 
@@ -17,6 +19,7 @@ public static class ManagementServiceCollectionExtensions
 {
     public static IServiceCollection AddApiaryManagement(this IServiceCollection services)
     {
+        services.TryAddSingleton<IRouteTelemetry, NoRouteTelemetry>();
         services.AddScoped<StateTransaction>();
         services.AddScoped<ForwardedRequest>();
         services.AddScoped<CurrentUser>();

@@ -7,7 +7,9 @@ using Datapoint.Apiary.Management;
 using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Proxy;
+using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Replication;
+using Datapoint.Apiary.Telemetry;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
@@ -31,6 +33,7 @@ public static class ApiaryServices
         services.AddApiaryCluster(section);
         services.AddApiaryCertificates(section.GetSection("Acme"));
         services.AddHostedService<StartupTasks>();
+        services.AddSingleton<IRouteTelemetry, ClusterRouteTelemetry>();
         services.AddApiaryManagement();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
         services.AddScoped<ICommandForwarder, CommandForwarder>();

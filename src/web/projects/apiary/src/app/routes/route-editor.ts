@@ -23,7 +23,7 @@ import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
 import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
-import { routeStatus } from './route-status';
+import { perMinute, routeStatus } from './route-status';
 import { MaintenanceSection } from './maintenance-section';
 import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
@@ -55,6 +55,7 @@ export class RouteEditor implements HasUnsavedChanges {
     const id = this.id();
     return id ? this.api.query('routes.get', { id }) : undefined;
   });
+  protected readonly requests = computed(() => perMinute(this.existing.value()?.requestsPerMinute ?? 0));
   protected readonly status = computed(() => {
     const route = this.existing.value();
     return route ? routeStatus(route) : undefined;

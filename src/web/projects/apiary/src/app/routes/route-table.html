@@ -19,7 +19,7 @@
         <th scope="col">Target</th>
         <th scope="col">Status</th>
         <th scope="col">Certificate</th>
-        <th scope="col" class="ap-num">Timeout</th>
+        <th scope="col" class="ap-num">Req/min</th>
         <th scope="col">Changed</th>
         <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
       </tr>
@@ -29,7 +29,7 @@
         @if (grouped()) {
           <tr class="ap-group">
             <td [attr.colspan]="columns()">
-              <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }}</span></span>
+              <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }} · {{ perMinute(requests(group)) }} req/min</span></span>
             </td>
           </tr>
         }
@@ -56,7 +56,7 @@
             <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
             <td><ap-route-status [route]="route" /></td>
             <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
-            <td class="ap-num">{{ route.timeoutSeconds }} s</td>
+            <td class="ap-num">{{ route.disabled ? '–' : perMinute(route.requestsPerMinute) }}</td>
             <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
             <td class="ap-col-actions">
               @if (auth.canOperate()) {
