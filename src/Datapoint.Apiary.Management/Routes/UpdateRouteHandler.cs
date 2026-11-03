@@ -23,6 +23,7 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             Path = RouteNormalization.Path(command.Path),
             Targets = [.. command.Targets.Select(t => t with { Host = t.Host.Trim().ToLowerInvariant() })],
             TimeoutSeconds = command.TimeoutSeconds,
+            CertificateId = command.CertificateId,
             ChangedAt = time.GetUtcNow(),
             ChangedBy = principals.Principal?.Identity?.Name,
         };

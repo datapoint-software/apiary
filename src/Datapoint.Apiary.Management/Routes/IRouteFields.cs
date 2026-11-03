@@ -13,4 +13,6 @@ public interface IRouteFields
     IReadOnlyList<RouteTarget> Targets { get; }
 
     int TimeoutSeconds { get; }
+
+    Guid? CertificateId { get; }
 }

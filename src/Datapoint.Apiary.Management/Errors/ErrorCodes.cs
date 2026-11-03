@@ -36,6 +36,22 @@ public static class ErrorCodes
     public const string RouteDuplicate = "route.duplicate";
     public const string RouteTargetsRequired = "route.targetsRequired";
 
+    public const string CertificateNotFound = "certificate.notFound";
+    public const string CertificateNotUploaded = "certificate.notUploaded";
+    public const string CertificateNotAutomatic = "certificate.notAutomatic";
+    public const string CertificateDoesNotCover = "certificate.doesNotCover";
+    public const string CertificateRoutesNotCovered = "certificate.routesNotCovered";
+    public const string CertificateInUse = "certificate.inUse";
+    public const string CertificatePemInvalid = "certificate.pemInvalid";
+    public const string CertificateKeyInvalid = "certificate.keyInvalid";
+    public const string CertificateKeyEncrypted = "certificate.keyEncrypted";
+    public const string CertificateKeyMismatch = "certificate.keyMismatch";
+    public const string CertificateChainIncomplete = "certificate.chainIncomplete";
+    public const string CertificateExpired = "certificate.expired";
+    public const string CertificateNotYetValid = "certificate.notYetValid";
+    public const string CertificateNoHostnames = "certificate.noHostnames";
+    public const string CertificateTooLarge = "certificate.tooLarge";
+
     public const string EmailInvalid = "email.invalid";
     public const string EmailTaken = "email.taken";
     public const string PasswordTooShort = "password.tooShort";
@@ -65,6 +81,9 @@ public static class ErrorCodes
         HostnameAddress, HostnameNotFull, TargetPort, PathInvalid,
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid,
         ProjectNotFound, RouteNotFound, RouteDuplicate, RouteTargetsRequired,
+        CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
+        CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
+        CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge,
         EmailInvalid, EmailTaken, PasswordTooShort, PasswordTooLong, PasswordCommon, PasswordContainsEmail, PasswordIncorrect,
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound,

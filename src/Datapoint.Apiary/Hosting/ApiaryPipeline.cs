@@ -12,7 +12,7 @@ public static class ApiaryPipeline
         app.UseExceptionHandler(handler => handler.Run(context =>
             ApiErrors.Internal(context).ToResult().ExecuteAsync(context)));
         app.UseWhen(Listener.IsAdmin, admin => admin.UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication());
-        app.UseWhen(context => !Listener.IsAdmin(context), proxy => proxy.UseMiddleware<AccessLogMiddleware>());
+        app.UseWhen(context => !Listener.IsAdmin(context), proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>());
         app.UseRouting();
         MapAdmin(app.MapGroup("").WithMetadata(ListenerMetadata.Admin));
         app.MapReverseProxy().WithMetadata(ListenerMetadata.Public);

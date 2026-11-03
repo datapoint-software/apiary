@@ -1,5 +1,8 @@
 using System.Text.Json.Serialization;
+using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Audit;
+using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
@@ -16,6 +19,13 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(SetupCompleted), "setup.completed")]
 [JsonDerivedType(typeof(SessionStarted), "session.started")]
 [JsonDerivedType(typeof(SessionsEnded), "sessions.ended")]
+[JsonDerivedType(typeof(CertificateSaved), "certificate.saved")]
+[JsonDerivedType(typeof(CertificateDeleted), "certificate.deleted")]
+[JsonDerivedType(typeof(AcmeAccountSaved), "acme.account.saved")]
+[JsonDerivedType(typeof(AcmeChallengesAdded), "acme.challenges.added")]
+[JsonDerivedType(typeof(AcmeChallengesRemoved), "acme.challenges.removed")]
+[JsonDerivedType(typeof(LockTaken), "lock.taken")]
+[JsonDerivedType(typeof(LockReleased), "lock.released")]
 [JsonDerivedType(typeof(AuditRecorded), "audit.recorded")]
 public interface IStateChange
 {

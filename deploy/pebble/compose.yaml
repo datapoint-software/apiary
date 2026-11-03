@@ -1,0 +1,30 @@
+services:
+  apiary:
+    environment:
+      Apiary__Acme__DirectoryUrl: https://pebble:14000/dir
+      SSL_CERT_FILE: /pebble/pebble.minica.pem
+    volumes:
+      - pebble-certs:/pebble:ro
+    networks:
+      apiary:
+        aliases:
+          - shop.apiary.test
+          - blog.apiary.test
+    depends_on:
+      - pebble
+
+  pebble:
+    image: ghcr.io/letsencrypt/pebble:2.9.0
+    command: ["-config", "/config/pebble-config.json"]
+    environment:
+      PEBBLE_VA_NOSLEEP: "1"
+    volumes:
+      - ./pebble/pebble-config.json:/config/pebble-config.json:ro
+      - pebble-certs:/test/certs
+    ports:
+      - "127.0.0.1:15000:15000"
+    networks:
+      - apiary
+
+volumes:
+  pebble-certs:

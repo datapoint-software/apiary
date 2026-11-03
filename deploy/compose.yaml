@@ -7,6 +7,8 @@ services:
       context: ..
     ports:
       - "80:8080"
+      - "443:8443/tcp"
+      - "443:8443/udp"
       - "127.0.0.1:9443:9443"
     volumes:
       - data:/data

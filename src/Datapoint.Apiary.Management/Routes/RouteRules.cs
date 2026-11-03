@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Management.Validation;
@@ -23,11 +24,23 @@ public static class RouteRules
             target.RuleFor(t => t.Host).Target();
             target.RuleFor(t => t.Port).Port();
         });
+        validator.RuleFor(r => r.CertificateId).Cascade(CascadeMode.Stop)
+            .Must(id => cluster.Current.Certificates.ContainsKey(id!.Value)).WithErrorCode(ErrorCodes.CertificateNotFound)
+            .Must(id => cluster.Current.Certificates[id!.Value].Source == CertificateSource.Uploaded).WithErrorCode(ErrorCodes.CertificateNotUploaded)
+            .When(r => r.CertificateId is not null);
+        validator.RuleFor(r => r)
+            .Must(r => Covers(cluster.Current, r))
+            .WithErrorCode(ErrorCodes.CertificateDoesNotCover)
+            .OverridePropertyName(nameof(IRouteFields.CertificateId))
+            .When(r => r.CertificateId is { } id && cluster.Current.Certificates.TryGetValue(id, out var c) && c.Source == CertificateSource.Uploaded);
         validator.RuleFor(r => r)
             .Must(r => !IsDuplicate(cluster.Current, r, existingId(r)))
             .WithErrorCode(ErrorCodes.RouteDuplicate)
             .OverridePropertyName(nameof(IRouteFields.Path));
     }
+
+    private static bool Covers(ApiaryState state, IRouteFields fields) =>
+        state.Certificates[fields.CertificateId!.Value].Material?.Covers(RouteNormalization.Host(fields.Host)) == true;
 
     private static bool IsDuplicate(ApiaryState state, IRouteFields fields, Guid? existingId)
     {

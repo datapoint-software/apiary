@@ -1,5 +1,6 @@
 using Datapoint.Apiary.Api;
 using Datapoint.Apiary.Auth;
+using Datapoint.Apiary.Certificates;
 using Datapoint.Apiary.Cluster;
 using Datapoint.Apiary.Keys;
 using Datapoint.Apiary.Management;
@@ -27,6 +28,7 @@ public static class ApiaryServices
         services.AddSingleton<RootKeyLoader>();
         services.AddSingleton(provider => provider.GetRequiredService<RootKeyLoader>().Load());
         services.AddApiaryCluster(section);
+        services.AddApiaryCertificates(section.GetSection("Acme"));
         services.AddHostedService<StartupTasks>();
         services.AddApiaryManagement();
         services.AddScoped<IRequestOrigin, HttpRequestOrigin>();

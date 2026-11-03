@@ -7,5 +7,6 @@ public sealed record Route(
     string Path,
     IReadOnlyList<RouteTarget> Targets,
     int TimeoutSeconds,
+    Guid? CertificateId,
     DateTimeOffset ChangedAt,
     string? ChangedBy);

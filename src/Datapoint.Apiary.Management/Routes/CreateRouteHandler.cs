@@ -18,6 +18,7 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             RouteNormalization.Path(command.Path),
             [.. command.Targets.Select(t => t with { Host = t.Host.Trim().ToLowerInvariant() })],
             command.TimeoutSeconds,
+            command.CertificateId,
             now,
             principals.Principal?.Identity?.Name);
         transaction.Record(new RouteSaved(route));

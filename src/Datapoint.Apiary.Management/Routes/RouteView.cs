@@ -9,9 +9,10 @@ public sealed record RouteView(
     string Path,
     IReadOnlyList<RouteTarget> Targets,
     int TimeoutSeconds,
+    Guid? CertificateId,
     DateTimeOffset ChangedAt,
     string? ChangedBy)
 {
     public static RouteView From(Route route) =>
-        new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.ChangedAt, route.ChangedBy);
+        new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy);
 }

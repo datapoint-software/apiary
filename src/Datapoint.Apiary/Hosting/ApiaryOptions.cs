@@ -6,6 +6,8 @@ public sealed class ApiaryOptions
 
     public int HttpsPort { get; set; } = 8443;
 
+    public int PublicHttpsPort { get; set; } = 443;
+
     public int AdminPort { get; set; } = 9443;
 
     public int RaftPort { get; set; } = 9444;
