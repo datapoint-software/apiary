@@ -12,6 +12,7 @@ import { ClusterStatus } from '../cluster/cluster-status';
 import { WriteLock } from '../cluster/write-lock';
 import { ProjectCards } from '../projects/project-cards';
 import { CertificateMeters } from './certificate-meters';
+import { GetStarted } from './get-started';
 import { RecentActivity } from './recent-activity';
 import { ReplicaPanel } from './replica-panel';
 
@@ -24,7 +25,7 @@ function greeting(hour: number): string {
 
 @Component({
   selector: 'ap-overview',
-  imports: [WriteLock, PageHead, RouterLink, Icon, Button, Banner, ProjectCards, ReplicaPanel, CertificateMeters, RecentActivity],
+  imports: [WriteLock, PageHead, RouterLink, Icon, Button, Banner, ProjectCards, GetStarted, ReplicaPanel, CertificateMeters, RecentActivity],
   templateUrl: './overview.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,6 +41,9 @@ export class Overview {
   });
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
   private readonly routesRefresh = reloadEvery(this.routes);
+  protected readonly firstRun = computed(
+    () => this.auth.canAdminister() && !['idle', 'loading', 'error'].includes(this.routes.status()) && this.routes.value().length === 0,
+  );
   protected readonly down = computed(() => this.routes.value().filter((r) => !r.disabled && r.health === 'down').slice(0, 2));
   protected readonly heading = computed(() => {
     const first = this.auth.user()?.name.split(/\s+/)[0];

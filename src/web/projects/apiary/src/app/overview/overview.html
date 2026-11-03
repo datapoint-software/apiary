@@ -22,6 +22,9 @@
     <a bannerActions [routerLink]="['/certificates', certificate.id]">See the renewal log</a>
   </ap-banner>
 }
+@if (firstRun()) {
+  <ap-get-started [projectCount]="projects.value().length" />
+}
 <section class="ap-section" aria-labelledby="projects-title">
   <div class="ap-section-head">
     <h2 class="ap-h ap-h-2" id="projects-title">Projects</h2>
