@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatapointLogo } from '../shell/datapoint-logo';
+import { sourceUrl, version } from '../version';
 
 @Component({
   selector: 'ap-auth-page',
@@ -21,6 +22,7 @@ import { DatapointLogo } from '../shell/datapoint-logo';
       <div class="ap-attribution">
         <span style="color: var(--ink-2)"><ap-datapoint-logo /></span>
         <span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
+        <span>Version {{ version }} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> · <a [href]="sourceUrl">Source</a></span>
       </div>
     </main>
   `,
@@ -30,4 +32,6 @@ export class AuthPage {
   readonly heading = input.required<string>();
   readonly sub = input('');
   readonly wide = input(false);
+  protected readonly version = version;
+  protected readonly sourceUrl = sourceUrl;
 }

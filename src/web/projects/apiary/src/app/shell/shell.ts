@@ -43,7 +43,7 @@ import { SearchBox } from './search-box';
 import { NavGroup } from './nav-item';
 import { projectIcon } from './project-icons';
 import { readCollapsed, saveCollapsed } from './sidebar-preference';
-import { version } from '../version';
+import { sourceUrl, version } from '../version';
 
 @Component({
   selector: 'ap-shell',
@@ -87,6 +87,7 @@ export class Shell {
     signOut: LogOut,
   };
   protected readonly version = version;
+  protected readonly sourceUrl = sourceUrl;
   protected readonly collapsed = signal(readCollapsed());
   protected readonly drawerOpen = signal(false);
   private readonly phone = matchMedia('(max-width: 639px)');
