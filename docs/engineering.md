@@ -103,6 +103,22 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
 - `BackgroundService.ExecuteAsync` [runs entirely in the background](https://learn.microsoft.com/en-us/dotnet/core/compatibility/extensions/10.0/backgroundservice-executeasync-task) in .NET 10: startup that must finish first goes in `StartAsync`.
 - Forwarded headers use `KnownIPNetworks`. `KnownNetworks` is obsolete in .NET 10.
 
+### Validation
+
+Commands and queries are validated with [FluentValidation](https://docs.fluentvalidation.net/) (Apache-2.0), through [Datapoint.Mediator.FluentValidation](https://github.com/datapoint-software/mediator/blob/main/docs/validation.md). It runs before every handler, so the admin UI, MCP agents and CLI commands all get the same checks. ASP.NET Core's `AddValidation()` would cover HTTP endpoints only, so we don't use it.
+
+- **One validator per command or query,** in the same feature folder: `CreateRouteValidator` next to `CreateRoute`.
+- **Rules shared by several commands are extension methods,** written and tested once:
+  - `.Hostname()`.
+  - `.Port()`.
+  - `.Target()`, which refuses loopback and link-local addresses.
+  - `.IpRange()`.
+- **Rules that need the current state run on the leader,** such as "this hostname and path are already a route". The leader validates against the latest state, as [architecture.md](architecture.md#writes) describes.
+- **Messages say what to do, with an example,** in the prototype's words: "Enter a hostname, such as shop.example.com", not "Invalid hostname". Agents and the UI receive the same text.
+- **Errors are a 400 ProblemDetails, keyed by field.** The field names match the form's, so `@datapoint/apiary-ui` can attach each error to its field and list them in the error summary.
+- **Never echo the attempted value.** It's untrusted input: responses and logs carry only the field name and the message.
+- **The server decides.** Forms repeat the simple checks for instant feedback, but every rule is enforced by its validator.
+
 ### Security APIs
 
 - Certificates load through `X509CertificateLoader`. The `X509Certificate2` constructors that take bytes or paths are obsolete ([SYSLIB0057](https://learn.microsoft.com/en-us/dotnet/fundamentals/syslib-diagnostics/syslib0057)).
