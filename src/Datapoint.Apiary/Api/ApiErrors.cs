@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Replication;
+using Datapoint.Mediator.Authorization;
 using FluentValidation;
 
 namespace Datapoint.Apiary.Api;
@@ -14,6 +15,8 @@ public static class ApiErrors
         ActionFailedException failed => new ApiProblem(Status(failed.Kind), failed.Code, Params: failed.Params).ToResult(),
         ForwardedProblemException forwarded => forwarded.ToResult(),
         ClusterUnavailableException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.NoQuorum).ToResult(),
+        AuthenticationRequiredException => new ApiProblem(StatusCodes.Status401Unauthorized, ErrorCodes.AuthenticationRequired).ToResult(),
+        AccessDeniedException => new ApiProblem(StatusCodes.Status403Forbidden, ErrorCodes.Forbidden).ToResult(),
         ClusterUpgradingException => new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.Upgrading).ToResult(),
         _ => null,
     };
