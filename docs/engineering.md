@@ -65,6 +65,13 @@ We follow Microsoft's conventions:
   - No `this.`.
   - Classes `sealed`, or `static`, unless something derives from them.
 
+Files:
+
+- **One top-level type per file,** named after the type: `RouteValidator.cs` holds `RouteValidator`. Nested types stay in their parent's file.
+- **A generic type's file** is named without its type parameters: `Result.cs` for `Result<T>`.
+- **A partial type split across files** uses `Type.Purpose.cs`, such as `RouteHandler.Logging.cs` for its `[LoggerMessage]` methods.
+- Enforced by [Meziantou.Analyzer](https://github.com/meziantou/Meziantou.Analyzer) (MIT) rule MA0048, which reports every top-level type whose name doesn't match its file.
+
 [Primary constructors](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/instance-constructors#primary-constructors):
 
 - **Records:** positional records for commands, queries and results.
@@ -82,6 +89,7 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
   - `Nullable` and `TreatWarningsAsErrors` are on.
   - `AnalysisLevel` is pinned to `10.0-recommended`, so an SDK update can't change the rules silently.
   - `EnforceCodeStyleInBuild` is on.
+- Meziantou.Analyzer runs in every project, with its rules at warning severity for those we adopt, starting with MA0048.
 - `dotnet format --verify-no-changes` runs in CI. See [code analysis](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview).
 - `BannedSymbols.txt` fails the build on APIs we don't use (see below).
 
