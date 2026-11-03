@@ -72,6 +72,29 @@ Files:
 - **A partial type split across files** uses `Type.Purpose.cs`, such as `RouteHandler.Logging.cs` for its `[LoggerMessage]` methods.
 - Enforced by [Meziantou.Analyzer](https://github.com/meziantou/Meziantou.Analyzer) (MIT) rule MA0048, which reports every top-level type whose name doesn't match its file.
 
+Nesting and control flow (each level of nesting is one more condition the reader has to hold in mind):
+
+- **At most three levels of nesting inside a method.** Every `if`, loop, `switch`, `try` and lambda body counts as a level.
+- **Guard clauses first.** Handle invalid or uninteresting cases at the top and leave, so the rest of the method is the normal case.
+- **No `else` after `return`, `throw`, `continue` or `break`.**
+- **In loops, skip early with `continue`** instead of wrapping the body in an `if`. A body that still needs real logic becomes a well-named method.
+- **`using` declarations** (`using var stream = …;`) instead of `using` blocks.
+- **Pattern matching to merge checks,** such as `if (request is not { Host: { Length: > 0 } host }) return …;`, instead of nested ifs.
+- **Switch expressions to map one value to another,** instead of `if`/`else if` chains. They're never nested inside each other.
+- **No nested conditional operators.** `a ? b : c ? d : e` is easily misread.
+- **Name complex conditions** (`var isExpired = …;`) rather than nesting or negating a compound one.
+- **Braces always,** even around a single statement.
+
+Analyzers check what they can:
+
+- `else` after a jump: Roslynator RCS1211.
+- Nesting that can be reduced: Roslynator RCS1208.
+- `using` blocks that can be declarations: IDE0063.
+- Braces: IDE0011.
+- Method length: Meziantou MA0051, which also catches most deep nesting.
+
+The three-level limit and nested conditional operators are checked in review: no open-source analyzer measures nesting depth, and SonarAnalyzer, which does, isn't open source.
+
 [Primary constructors](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/instance-constructors#primary-constructors):
 
 - **Records:** positional records for commands, queries and results.
@@ -89,7 +112,8 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
   - `Nullable` and `TreatWarningsAsErrors` are on.
   - `AnalysisLevel` is pinned to `10.0-recommended`, so an SDK update can't change the rules silently.
   - `EnforceCodeStyleInBuild` is on.
-- Meziantou.Analyzer runs in every project, with its rules at warning severity for those we adopt, starting with MA0048.
+- [Meziantou.Analyzer](https://github.com/meziantou/Meziantou.Analyzer) (MIT) and [Roslynator](https://github.com/dotnet/roslynator) (Apache-2.0) run in every project, with the rules we adopt at warning severity.
+- **No SonarAnalyzer.** Version 10 is under the SONAR Source-Available License, which isn't open source.
 - `dotnet format --verify-no-changes` runs in CI. See [code analysis](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview).
 - `BannedSymbols.txt` fails the build on APIs we don't use (see below).
 
