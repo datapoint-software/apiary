@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Authorization;
+using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
@@ -10,4 +11,4 @@ namespace Datapoint.Apiary.Management.Users;
 public sealed record InviteUser(
     [property: Description("Their name.")] string Name,
     [property: Description("Their email, used to sign in. Apiary doesn't send email.")] string Email,
-    [property: Description("Their role: Viewer, Operator or Administrator.")] Role Role) : ICommand<InviteLink>;
+    [property: Description("Their role: Viewer, Operator or Administrator.")] Role Role) : ICommand<InviteLink>, IConfidentialResult;

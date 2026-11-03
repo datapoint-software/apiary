@@ -1,6 +1,7 @@
 using System.ComponentModel;
-using Datapoint.Mediator;
+using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Mediator.Authorization;
+using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Setup;
 
@@ -12,4 +13,4 @@ public sealed record CompleteSetup(
     [property: Description("The administrator's password.")] string Password,
     [property: Description("The challenge setup.begin returned.")] string Challenge,
     [property: Description("The 6-digit code from the authenticator app.")] string Code)
-    : ICommand<IReadOnlyList<string>>, ISetupFields;
+    : ICommand<IReadOnlyList<string>>, ISetupFields, IConfidentialResult;

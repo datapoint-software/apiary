@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Authorization;
+using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Users;
@@ -9,4 +10,4 @@ namespace Datapoint.Apiary.Management.Users;
 [RequiresRole(Role.Administrator)]
 public sealed record CreateAdministrator(
     [property: Description("Their name.")] string Name,
-    [property: Description("Their email, used to sign in.")] string Email) : ICommand<InviteLink>;
+    [property: Description("Their email, used to sign in.")] string Email) : ICommand<InviteLink>, IConfidentialResult;
