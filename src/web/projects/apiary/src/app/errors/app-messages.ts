@@ -69,5 +69,11 @@ export const appMessages: MessageCatalog = {
   'replica.notFound': () => 'This replica was already removed. The list now shows the current replicas.',
   'replica.notPending': () => 'This replica stopped asking to join, or was already approved. The list now shows the current replicas.',
   'replica.reachable': () => 'This replica can be reached again, so it stays. Only unreachable replicas can be removed.',
+  'agent.notFound': () => 'This agent was already disconnected.',
+  'agent.clientUnknown': () => 'Apiary doesn’t recognize this agent. Start connecting it again from the agent.',
+  'agent.redirectUnknown': () => 'The agent asked to return somewhere it didn’t register. Start connecting it again from the agent.',
+  'agent.redirectInvalid': () => 'An agent can only return to an HTTPS address or to this computer.',
+  'agent.challengeInvalid': () => 'The agent’s request is missing its security check (PKCE with S256). Update the agent, or use another one.',
+  'agent.tooMany': () => 'You have 20 agents connected, the most Apiary allows. Disconnect one you no longer use first.',
   'backup.unreadable': () => 'This file isn’t a backup this cluster can open. Choose a file Apiary exported, from a cluster with the same root key.',
 };

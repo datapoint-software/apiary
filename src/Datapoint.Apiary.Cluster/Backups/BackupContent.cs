@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Datapoint.Apiary.Cluster.Acme;
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Sessions;
@@ -15,6 +16,7 @@ public sealed record BackupContent(int Version, DateTimeOffset TakenAt, Guid? Cl
         new(CurrentVersion, now, state.ClusterId, state.Index, state with
         {
             Sessions = ImmutableDictionary<Guid, Session>.Empty,
+            Agents = ImmutableDictionary<Guid, Agent>.Empty,
             AppliedRequests = ImmutableDictionary<Guid, AppliedRequest>.Empty,
             Locks = ImmutableDictionary<string, StateLock>.Empty,
             AcmeChallenges = ImmutableDictionary<string, AcmeChallenge>.Empty,

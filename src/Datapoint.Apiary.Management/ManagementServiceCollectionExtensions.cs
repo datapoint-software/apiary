@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Management.Accounts;
+using Datapoint.Apiary.Management.Agents;
 using Datapoint.Apiary.Management.Audit;
 using Datapoint.Apiary.Management.Backups;
 using Datapoint.Apiary.Management.Authorization;
@@ -28,6 +29,7 @@ public static class ManagementServiceCollectionExtensions
         services.AddScoped<AuditLog>();
         services.AddScoped<BackupRestorer>();
         services.AddSingleton<Challenges>();
+        services.AddSingleton<AgentClients>();
         services.AddSingleton<SignInThrottle>();
         services.AddSingleton<SetupWindow>();
         services.AddSingleton(provider => new SealingKey(provider.GetRequiredService<RootKey>().Derive(KeyPurposes.Challenges)));

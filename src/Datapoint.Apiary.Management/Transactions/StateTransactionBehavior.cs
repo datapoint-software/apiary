@@ -48,7 +48,7 @@ public sealed class StateTransactionBehavior(
         using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         var result = await next(ct);
-        await CommitAsync(command, forwarded.RequestId is null ? null : Remembered(forwarder.Serialize(result)), ct);
+        await CommitAsync(command, forwarded.RequestId is null || command is IConfidentialResult ? null : Remembered(forwarder.Serialize(result)), ct);
         return result;
     }
 
@@ -76,17 +76,7 @@ public sealed class StateTransactionBehavior(
         }
 
         var now = time.GetUtcNow();
-        var audit = new AuditRecorded(new AuditEntry(
-            Guid.CreateVersion7(now),
-            now,
-            transaction.ActingAs ?? principals.Principal?.FindFirstValue(ClaimTypes.Name),
-            origin.Client,
-            origin.Address,
-            ActionName(command.GetType()),
-            transaction.Affected,
-            transaction.ProjectId,
-            AuditOutcome.Succeeded));
-        var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, audit], result);
+        var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, .. Audit(command, now)], result);
         try
         {
             await cluster.AppendAsync(entry, ct);
@@ -96,5 +86,24 @@ public sealed class StateTransactionBehavior(
             metrics.WriteFailed(exception.GetType().Name);
             throw;
         }
+    }
+
+    private IEnumerable<IStateChange> Audit(object command, DateTimeOffset now)
+    {
+        if (transaction.Unaudited)
+        {
+            yield break;
+        }
+
+        yield return new AuditRecorded(new AuditEntry(
+            Guid.CreateVersion7(now),
+            now,
+            transaction.ActingAs ?? principals.Principal?.FindFirstValue(ClaimTypes.Name),
+            origin.Client,
+            origin.Address,
+            ActionName(command.GetType()),
+            transaction.Affected,
+            transaction.ProjectId,
+            AuditOutcome.Succeeded));
     }
 }

@@ -96,6 +96,12 @@ public static class ErrorCodes
     public const string ReplicaNotFound = "replica.notFound";
     public const string ReplicaNotPending = "replica.notPending";
     public const string ReplicaReachable = "replica.reachable";
+    public const string AgentNotFound = "agent.notFound";
+    public const string AgentClientUnknown = "agent.clientUnknown";
+    public const string AgentRedirectUnknown = "agent.redirectUnknown";
+    public const string AgentRedirectInvalid = "agent.redirectInvalid";
+    public const string AgentChallengeInvalid = "agent.challengeInvalid";
+    public const string AgentTooMany = "agent.tooMany";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -114,5 +120,6 @@ public static class ErrorCodes
         PasswordUnchanged, CodeInvalid, SignInFailed, SignInThrottled, ChallengeExpired, SetupClosed, InviteInvalid,
         UserNotFound, UserLastAdministrator, UserSelf, UserSameRole, UserNotInvited, SessionNotFound, BackupUnreadable,
         ReplicaNotFound, ReplicaNotPending, ReplicaReachable,
+        AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentTooMany,
     ];
 }

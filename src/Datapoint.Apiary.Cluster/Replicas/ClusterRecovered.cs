@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Datapoint.Apiary.Cluster.Acme;
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.State;
@@ -18,6 +19,7 @@ public sealed record ClusterRecovered(Guid ClusterId, ClusterCa Ca, Replica Surv
         ClusterCaChangedAt = null,
         Replicas = ImmutableDictionary<Guid, Replica>.Empty.Add(Survivor.Id, Survivor),
         Sessions = ImmutableDictionary<Guid, Session>.Empty,
+        Agents = ImmutableDictionary<Guid, Agent>.Empty,
         Locks = ImmutableDictionary<string, StateLock>.Empty,
         AcmeChallenges = ImmutableDictionary<string, AcmeChallenge>.Empty,
         AppliedRequests = ImmutableDictionary<Guid, AppliedRequest>.Empty,

@@ -18,6 +18,8 @@ public sealed class StateTransaction(IClusterState cluster)
 
     public string? ActingAs { get; set; }
 
+    public bool Unaudited { get; set; }
+
     public void Record(IStateChange change)
     {
         _changes.Add(change);

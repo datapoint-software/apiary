@@ -9,6 +9,12 @@ export const routes: Routes = [
   { path: 'setup', title: 'Welcome · Apiary', loadComponent: () => import('./auth/setup').then((m) => m.Setup) },
   { path: 'invite/:token', title: 'Join Apiary', loadComponent: () => import('./auth/accept-invite').then((m) => m.AcceptInvite) },
   {
+    path: 'connect',
+    title: 'Connect an agent · Apiary',
+    canActivate: [signedIn],
+    loadComponent: () => import('./agents/connect-agent').then((m) => m.ConnectAgent),
+  },
+  {
     path: '',
     component: Shell,
     canActivate: [signedIn],

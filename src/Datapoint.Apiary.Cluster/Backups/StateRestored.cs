@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Datapoint.Apiary.Cluster.Acme;
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.State;
@@ -18,6 +19,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
         SetupCompleted = Restored.SetupCompleted,
         Audit = Restored.Audit,
         Sessions = ImmutableDictionary<Guid, Session>.Empty,
+        Agents = ImmutableDictionary<Guid, Agent>.Empty,
         Locks = ImmutableDictionary<string, StateLock>.Empty,
         AcmeChallenges = ImmutableDictionary<string, AcmeChallenge>.Empty,
     };

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Datapoint.Apiary.Cluster.Acme;
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
@@ -25,6 +26,8 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(SetupCompleted), "setup.completed")]
 [JsonDerivedType(typeof(SessionStarted), "session.started")]
 [JsonDerivedType(typeof(SessionsEnded), "sessions.ended")]
+[JsonDerivedType(typeof(AgentSaved), "agent.saved")]
+[JsonDerivedType(typeof(AgentsRemoved), "agents.removed")]
 [JsonDerivedType(typeof(CertificateSaved), "certificate.saved")]
 [JsonDerivedType(typeof(CertificateDeleted), "certificate.deleted")]
 [JsonDerivedType(typeof(AcmeAccountSaved), "acme.account.saved")]

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Datapoint.Apiary.Cluster.Acme;
+using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
@@ -19,6 +20,7 @@ public sealed record ApiaryState
     private readonly ImmutableHashSet<Guid>? _approvedReplicas;
     private readonly ImmutableDictionary<Guid, Redirect>? _redirects;
     private readonly ImmutableList<Keys.RegisteredRootKey>? _rootKeys;
+    private readonly ImmutableDictionary<Guid, Agent>? _agents;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -37,6 +39,12 @@ public sealed record ApiaryState
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;
 
     public ImmutableDictionary<Guid, Session> Sessions { get; init; } = ImmutableDictionary<Guid, Session>.Empty;
+
+    public ImmutableDictionary<Guid, Agent> Agents
+    {
+        get => _agents ?? ImmutableDictionary<Guid, Agent>.Empty;
+        init => _agents = value;
+    }
 
     public ImmutableDictionary<Guid, Certificate> Certificates { get; init; } = ImmutableDictionary<Guid, Certificate>.Empty;
 

@@ -43,6 +43,7 @@ public static class ApiaryPipeline
         admin.MapApiaryHealth();
         admin.MapGroup("/operator").MapApiaryOperator();
         admin.MapOpenApi();
+        admin.MapApiaryOAuth();
         admin.MapActions("/api", o =>
         {
             o.SerializerOptions = ApiJson.Options;

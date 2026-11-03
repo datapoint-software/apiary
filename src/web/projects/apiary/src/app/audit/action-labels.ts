@@ -43,6 +43,8 @@ const labels: Record<string, string> = {
   'account.new-recovery-codes': 'made new recovery codes',
   'account.end-session': 'signed out one of their sessions',
   'account.end-other-sessions': 'signed out their other sessions',
+  'agents.connect': 'connected an agent',
+  'oauth.revoke': 'disconnected an agent from the agent itself',
 };
 
 export function actionLabel(action: string): string {
