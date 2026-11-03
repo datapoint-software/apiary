@@ -4,7 +4,7 @@ using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Replication;
-using Datapoint.Mediator.Authorization;
+using Datapoint.Mediator;
 using FluentValidation;
 
 namespace Datapoint.Apiary.Agents;
@@ -57,13 +57,14 @@ public static class McpSetup
         "Apiary is the reverse proxy in front of this Docker Swarm. You act for the user who connected you, with their role. "
         + "Before calling a tool that changes or deletes anything, show the user what you'll change and wait for their approval. "
         + "Errors come back as JSON with a code, such as route.notFound, its parameters and an English description, "
-        + "and for invalid arguments the fields that failed with their own codes and descriptions. The codes are stable; the descriptions may change.";
+        + "and for invalid arguments the fields that failed with their own codes and descriptions. The codes are stable; the descriptions may change. "
+        + "When your user isn't allowed to call a tool, or the arguments can't be read at all, the error is a short English sentence instead.";
 
     private static string? Describe(Exception exception) => exception switch
     {
         ValidationException validation => Json(ValidationProblems.From(validation)),
+        InvalidActionArgumentsException { Field: { } field } => Json(ValidationProblems.InvalidArgument(field)),
         ActionFailedException failed => Json(new ApiProblem(0, failed.Code, Params: failed.Params)),
-        AccessDeniedException => Json(new ApiProblem(0, ErrorCodes.Forbidden)),
         ForwardedProblemException forwarded => Json(Forwarded(forwarded.Body)),
         ClusterUnavailableException => Json(new ApiProblem(0, ErrorCodes.NoQuorum)),
         ClusterUpgradingException => Json(new ApiProblem(0, ErrorCodes.Upgrading)),

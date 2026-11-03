@@ -22,6 +22,9 @@ public static class ValidationProblems
     public static ApiProblem From(ValidationException exception) =>
         new(StatusCodes.Status400BadRequest, ValidationFailed, [.. exception.Errors.Select(ToFieldError)]);
 
+    public static ApiProblem InvalidArgument(string field) =>
+        new(StatusCodes.Status400BadRequest, ValidationFailed, [new FieldError(field, ErrorCodes.Invalid, null)]);
+
     private static FieldError ToFieldError(ValidationFailure failure) =>
         new(FieldName(failure.PropertyName), Code(failure.ErrorCode), Parameters(failure));
 
