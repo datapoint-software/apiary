@@ -19,12 +19,10 @@ public static class SsoIdTokens
 
     private static readonly JsonWebTokenHandler s_handler = new() { MapInboundClaims = false };
 
-    public static async Task<SsoClaims?> ValidateAsync(string idToken, OpenIdConnectConfiguration configuration, SsoSettings settings, SsoFlow flow)
-    {
-        var result = await s_handler.ValidateTokenAsync(idToken, new TokenValidationParameters
+    public static Task<TokenValidationResult> ValidateAsync(string idToken, OpenIdConnectConfiguration configuration, SsoSettings settings) =>
+        s_handler.ValidateTokenAsync(idToken, new TokenValidationParameters
         {
-            ValidIssuer = settings.Issuer,
-            ValidIssuers = [settings.Issuer, settings.Issuer + "/"],
+            ValidIssuer = configuration.Issuer,
             ValidAudience = settings.ClientId,
             IssuerSigningKeys = configuration.SigningKeys,
             ValidAlgorithms = s_algorithms,
@@ -33,18 +31,16 @@ public static class SsoIdTokens
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(2),
         });
-        if (!result.IsValid || result.SecurityToken is not JsonWebToken token || !Matches(token, "nonce", flow.Nonce))
-        {
-            return null;
-        }
 
-        return Read(token, settings.GroupsClaim);
-    }
+    public static bool IsKeyUnknown(TokenValidationResult result) => result.Exception is SecurityTokenSignatureKeyNotFoundException;
 
-    private static SsoClaims? Read(JsonWebToken token, string groupsClaim)
+    public static bool IsFor(JsonWebToken token, SsoSettings settings, SsoFlow flow) =>
+        !string.IsNullOrEmpty(token.Subject) && Matches(token, "nonce", flow.Nonce) && IsAuthorizedParty(token, settings.ClientId);
+
+    public static SsoClaims? Read(JsonWebToken token, string groupsClaim)
     {
         var email = Text(token, "email");
-        if (string.IsNullOrEmpty(token.Subject) || email is null || IsUnverified(token))
+        if (email is null || IsUnverified(token))
         {
             return null;
         }
@@ -53,12 +49,16 @@ public static class SsoIdTokens
         return new SsoClaims(token.Subject, email, name, Groups(token, groupsClaim));
     }
 
+    private static bool IsAuthorizedParty(JsonWebToken token, string clientId) =>
+        Text(token, "azp") is { } party ? party == clientId : token.Audiences.Count() == 1;
+
     private static bool Matches(JsonWebToken token, string claim, string expected) =>
         Text(token, claim) is { } actual
         && CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(actual), Encoding.UTF8.GetBytes(expected));
 
     private static bool IsUnverified(JsonWebToken token) =>
-        token.TryGetPayloadValue<bool>("email_verified", out var verified) && !verified;
+        (token.TryGetPayloadValue<bool>("email_verified", out var verified) && !verified)
+        || string.Equals(Text(token, "email_verified"), "false", StringComparison.OrdinalIgnoreCase);
 
     private static string? Text(JsonWebToken token, string claim) =>
         token.TryGetPayloadValue<string>(claim, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;

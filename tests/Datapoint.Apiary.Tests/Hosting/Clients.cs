@@ -6,10 +6,11 @@ namespace Datapoint.Apiary.Tests.Hosting;
 internal static class Clients
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5359", Justification = "Tests talk to an in-process Apiary on 127.0.0.1 with its self-signed certificates.")]
-    public static HttpClient Admin(ApiaryApp app, bool useCookies = true) =>
+    public static HttpClient Admin(ApiaryApp app, bool useCookies = true, bool allowRedirects = true) =>
         new(new SocketsHttpHandler
         {
             UseCookies = useCookies,
+            AllowAutoRedirect = allowRedirects,
             SslOptions = { RemoteCertificateValidationCallback = (_, _, _, _) => true },
         })
         {
