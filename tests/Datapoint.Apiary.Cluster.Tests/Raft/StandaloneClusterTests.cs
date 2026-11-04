@@ -46,6 +46,17 @@ public sealed class StandaloneClusterTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Disposing_without_stopping_doesn_t_notify_subscribers_that_are_already_gone()
+    {
+        var replica = await StartAsync();
+        using var subscription = Microsoft.Extensions.Primitives.ChangeToken.OnChange(replica.Cluster.GetChangeToken, () => throw new ObjectDisposedException("subscriber"));
+
+        await replica.Cluster.DisposeAsync();
+
+        Assert.False(replica.Cluster.IsWritable);
+    }
+
+    [Fact]
     public async Task A_new_cluster_has_an_id_and_a_ca()
     {
         var state = (await StartAsync()).Cluster.Current;

@@ -221,6 +221,7 @@ public sealed partial class RaftClusterState(
             return;
         }
 
+        await StopAsync(CancellationToken.None);
         if (_raft is not null)
         {
             await _raft.DisposeAsync();
@@ -244,6 +245,11 @@ public sealed partial class RaftClusterState(
 
     private void NotifyChanged()
     {
+        if (Volatile.Read(ref _disposed) == 1)
+        {
+            return;
+        }
+
         var previous = Interlocked.Exchange(ref _changed, new CancellationTokenSource());
         previous.Cancel();
         previous.Dispose();
