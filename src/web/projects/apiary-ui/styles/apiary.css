@@ -736,7 +736,7 @@
 .ap-dialog-backdrop { background: var(--scrim); animation: ap-fade 200ms ease; }
 .ap-dialog-pane { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .ap-dialog-pane > * { display: contents; }
-.ap-dialog-pane .ap-dialog { width: 100%; max-height: inherit; overflow: auto; }
+.ap-dialog-pane .ap-dialog { width: 100%; max-height: calc(100vh - 32px); overflow: auto; }
 .ap-dialog-pane:has(.ap-dialog-xl) { width: min(760px, calc(100vw - 32px)); }
 
 /* Links styled as buttons keep the button's colors, not the link color. */
