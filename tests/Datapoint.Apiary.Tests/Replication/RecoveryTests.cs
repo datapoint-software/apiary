@@ -37,7 +37,7 @@ public sealed class RecoveryTests : IAsyncLifetime
     [Fact]
     public async Task A_cluster_with_a_majority_refuses_to_recover()
     {
-        using var response = await RecoverAsync(await AdminSession.NextCodeAsync());
+        using var response = await RecoverAsync(await AdminSession.WaitForNextCodeAsync());
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("cluster.recoveryNotNeeded", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
@@ -70,7 +70,7 @@ public sealed class RecoveryTests : IAsyncLifetime
         var before = _swarm[_survivor].State.ClusterId;
         await LoseMajorityAsync();
 
-        using var response = await RecoverAsync(await AdminSession.NextCodeAsync());
+        using var response = await RecoverAsync(await AdminSession.WaitForNextCodeAsync());
         var recovered = await RestartSurvivorAsync();
 
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -84,7 +84,7 @@ public sealed class RecoveryTests : IAsyncLifetime
     public async Task A_replica_of_the_old_cluster_sets_its_state_aside_when_it_returns()
     {
         await LoseMajorityAsync();
-        using var response = await RecoverAsync(await AdminSession.NextCodeAsync());
+        using var response = await RecoverAsync(await AdminSession.WaitForNextCodeAsync());
         await RestartSurvivorAsync();
         var lost = LostSlots()[0];
 

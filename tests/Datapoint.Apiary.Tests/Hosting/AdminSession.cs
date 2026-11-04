@@ -23,24 +23,28 @@ internal static class AdminSession
         return user;
     }
 
-    public static async Task<HttpClient> SignedInAsync(ApiaryApp app, Role role = Role.Administrator, string email = "ana@example.com")
+    public static async Task<HttpClient> SignedInAsync(ApiaryApp app, Role role = Role.Administrator, string email = "ana@example.com", string? code = null)
     {
         await UserAsync(app, role, email);
         var client = Clients.Admin(app);
         var step = await PostAsync(client, "auth/sign-in", new JsonObject { ["email"] = email, ["password"] = Password });
-        await PostAsync(client, "auth/verify", new JsonObject { ["challenge"] = step["challenge"]!.GetValue<string>(), ["code"] = CurrentCode() });
+        await PostAsync(client, "auth/verify", new JsonObject { ["challenge"] = step["challenge"]!.GetValue<string>(), ["code"] = code ?? CurrentCode() });
         return client;
     }
 
     public static string CurrentCode() => Totp.Compute(Base32.Decode(Secret), Totp.Step(DateTimeOffset.UtcNow));
 
-    public static async Task<string> NextCodeAsync()
+    public static async Task<string> WaitForNextCodeAsync()
     {
         var now = DateTimeOffset.UtcNow;
         var next = Totp.Step(now) + 1;
         await Task.Delay(DateTimeOffset.FromUnixTimeSeconds(next * 30) - now, TestContext.Current.CancellationToken);
         return Totp.Compute(Base32.Decode(Secret), next);
     }
+
+    public static string PreviousCode() => Totp.Compute(Base32.Decode(Secret), Totp.Step(DateTimeOffset.UtcNow) - 1);
+
+    public static string NextCode() => Totp.Compute(Base32.Decode(Secret), Totp.Step(DateTimeOffset.UtcNow) + 1);
 
     public static async Task<JsonNode> PostAsync(HttpClient client, string action, JsonObject? body = null)
     {
