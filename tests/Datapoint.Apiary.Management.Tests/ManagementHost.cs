@@ -6,6 +6,7 @@ using Datapoint.Apiary.Cluster.Telemetry;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.Streams;
 using Datapoint.Apiary.Management.Tests.Fakes;
 using Datapoint.Apiary.Management.Transactions;
@@ -38,6 +39,7 @@ public sealed class ManagementHost : IDisposable
         services.AddSingleton<ISessionCookie>(Cookie);
         services.AddSingleton<IBreachedPasswords>(Breached);
         services.AddSingleton<ICommandForwarder>(Forwarder);
+        services.AddSingleton<IRouteTelemetry>(Telemetry);
         services.AddSingleton<IRequestOrigin, TestOrigin>();
         services.AddLogging();
         services.AddMetrics();
@@ -65,6 +67,8 @@ public sealed class ManagementHost : IDisposable
     public FakeBreachedPasswords Breached { get; } = new();
 
     public NoForwarding Forwarder { get; } = new();
+
+    public FakeRouteTelemetry Telemetry { get; } = new();
 
     public ApiaryState State => Cluster.Current;
 
