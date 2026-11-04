@@ -227,6 +227,8 @@ dotnet_naming_style.underscore_camel_case.required_prefix = _
 [tests/**.cs]
 # Apiary: test names are sentences with underscores.
 dotnet_diagnostic.CA1707.severity = none
+# Apiary: xUnit's string assertions already compare ordinally.
+dotnet_diagnostic.MA0002.severity = none
 
 [*.{json,ts,html,scss,css,yml,yaml}]
 indent_size = 2

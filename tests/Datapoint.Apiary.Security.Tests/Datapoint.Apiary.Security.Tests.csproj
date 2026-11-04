@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Datapoint.Apiary.Security\Datapoint.Apiary.Security.csproj" />
+  </ItemGroup>
+</Project>
