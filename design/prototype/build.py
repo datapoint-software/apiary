@@ -7,6 +7,10 @@ It's written to design/project/components/Prototype/preview.html, which opens on
 
 Usage: python3 design/prototype/build.py [preview.html]
 The optional argument also writes a copy wrapped in <!doctype html>, for opening locally.
+
+Usage: python3 design/prototype/build.py --idea <slug>
+Builds an idea being tried instead: the prototype with design/ideas/<slug>/*.css and *.js on top, written to
+design/ideas/<slug>/preview.html and nowhere else. See .claude/skills/prototype/SKILL.md.
 """
 import json
 import os
@@ -17,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DESIGN = os.path.dirname(HERE)
 REPO = os.path.dirname(DESIGN)
 PROJECT = os.path.join(DESIGN, "project")
+IDEAS = os.path.join(DESIGN, "ideas")
 STYLES = os.path.join(REPO, "src", "web", "projects", "apiary-ui", "styles")
 LUCIDE = "https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"
 SCRIPTS = ["data.js", "ui.js", "shell.js", "pages-projects.js", "pages-routes.js", "pages-traffic.js", "pages-cluster.js", "pages-access.js", "pages-visitors.js", "i18n-pt.js"]
@@ -62,11 +67,21 @@ def logo():
     return re.sub(r' width="628" height="156"', "", svg)
 
 
-def build():
+def build(idea=None):
     css = read(STYLES, "apiary.css") + "\n" + read(HERE, "prototype.css")
     shell = read(HERE, "shell.html").replace("{{LOGO}}", logo())
-    js = "\n".join(read(HERE, name) for name in SCRIPTS) + "\nrender(currentPath(), false);\n"
-    return f"""<title>Apiary Prototype</title>
+    js = "\n".join(read(HERE, name) for name in SCRIPTS)
+    title = "Apiary Prototype"
+    if idea:
+        # Each idea script runs in its own scope after the prototype, so it can replace the prototype's functions
+        # by assigning to them, but can't clash with its names.
+        folder = os.path.join(IDEAS, idea)
+        files = sorted(os.listdir(folder))
+        css += "".join("\n" + read(folder, f) for f in files if f.endswith(".css"))
+        js += "".join(f"\n</script>\n<script>\n(() => {{\n'use strict';\n{read(folder, f)}\n}})();" for f in files if f.endswith(".js"))
+        title = f"Apiary Idea {idea}"
+    js += "\nrender(currentPath(), false);\n"
+    return f"""<title>{title}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Built by design/prototype/build.py from design/project and design/prototype. Every screen and its data are invented. */
@@ -90,7 +105,18 @@ body::before {{ content: ""; position: fixed; inset: 0 0 auto; height: env(safe-
 """
 
 
-if __name__ == "__main__":
+def wrap(page):
+    return '<!doctype html>\n<html lang="en">\n<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>\n<body>\n' + page + "</body>\n</html>\n"
+
+
+if __name__ == "__main__" and sys.argv[1:2] == ["--idea"]:
+    if len(sys.argv) != 3 or not os.path.isdir(os.path.join(IDEAS, sys.argv[2])):
+        sys.exit("usage: build.py --idea <slug>, where design/ideas/<slug>/ exists")
+    out = os.path.join(IDEAS, sys.argv[2], "preview.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(wrap(build(sys.argv[2])))
+    print("wrote", os.path.relpath(out, REPO))
+elif __name__ == "__main__":
     page = build()
     card = os.path.join(PROJECT, "components", "Prototype")
     os.makedirs(card, exist_ok=True)

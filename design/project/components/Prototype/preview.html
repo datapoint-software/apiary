@@ -1719,15 +1719,17 @@ function skeleton() {
 }
 
 /* Sidebar, built from the data so counts and attention dots stay true */
-function renderNav(p) {
-  const voters = clusterVoters();
-  const groups = [
+function navGroups(voters) {
+  return [
     ['', [['layout-dashboard', 'Overview', '#/']]],
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
     ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
     ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
     ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
+}
+function renderNav(p) {
+  const groups = navGroups(clusterVoters());
   const all = groups.flatMap(g => g[1]);
   const best = all.filter(i => i[2] === '#' + p || (i[2] !== '#/' && ('#' + p).startsWith(i[2] + '/'))).sort((a, b) => b[2].length - a[2].length)[0];
   $('#side-nav').innerHTML = groups.map(([title, items]) => `<nav class="ap-nav" aria-label="${title || 'Main'}">${title ? `<span class="ap-overline" aria-hidden="true">${title}</span>` : ''}${items.map(([ic, label, href, count, warn]) => {
@@ -1903,6 +1905,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => { if (e.target.closest('[data-new-project]')) newProject(); });
 
 /* Prototype controls: scenarios to see how alerts, empty states, slow networks and failures look */
+let IDEA = null; // set by an idea's scripts (design/ideas/<slug>/): { title, variants: [[key, label], ...] }
+const ideaVariant = () => (IDEA && IDEA.variants.some(([v]) => v === Proto.state.variant) ? Proto.state.variant : IDEA && IDEA.variants[0][0]);
 const protoBtn = $('[data-proto]');
 const protoPanel = document.createElement('div');
 protoPanel.className = 'ap-popover pt-panel';
@@ -1911,8 +1915,9 @@ protoPanel.setAttribute('role', 'dialog');
 protoPanel.setAttribute('aria-labelledby', 'pt-t');
 document.body.querySelector('.ap').appendChild(protoPanel);
 function drawProto() {
-  const seg = (k, label, opts) => `<div class="ap-setting"><span class="ap-label" id="pt-${k}">${label}</span><div class="ap-seg" role="group" aria-labelledby="pt-${k}" data-pt="${k}">${opts.map(([v, t]) => `<button type="button" aria-pressed="${Proto.state[k] === v}" data-v="${v}">${t}</button>`).join('')}</div></div>`;
+  const seg = (k, label, opts, cur = Proto.state[k]) => `<div class="ap-setting"><span class="ap-label" id="pt-${k}">${label}</span><div class="ap-seg" role="group" aria-labelledby="pt-${k}" data-pt="${k}">${opts.map(([v, t]) => `<button type="button" aria-pressed="${cur === v}" data-v="${v}">${t}</button>`).join('')}</div></div>`;
   protoPanel.innerHTML = `<div><h2 class="ap-h ap-h-3" id="pt-t">Prototype controls</h2><p class="ap-caption" style="margin:2px 0 0">Not part of Apiary. Switch scenarios to see alerts, empty states and failures.</p></div>
+${IDEA && IDEA.variants.length > 1 ? seg('variant', esc(IDEA.title), IDEA.variants, ideaVariant()) : ''}
 ${seg('cluster', 'Cluster', [['healthy', 'Healthy'], ['degraded', '1 replica down'], ['quorum', 'No quorum']])}
 ${seg('network', 'Server', [['fast', 'Fast'], ['slow', 'Slow'], ['failing', 'Failing']])}
 ${seg('data', 'Data', [['sample', 'Sample'], ['empty', 'New install']])}
