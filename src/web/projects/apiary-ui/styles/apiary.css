@@ -171,6 +171,7 @@
 .ap-switch:checked::after { transform: translateX(16px); }
 .ap-choice-text { display: flex; flex-direction: column; }
 .ap-choice-text .ap-help { margin-top: 2px; }
+.ap-list-row.ap-choice-detail { margin: calc(-1 * var(--space-2)) 0 0 28px; padding: 0; border-top: 0; }
 
 /* Segmented control */
 .ap-seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--radius-2); background: var(--sunken); }

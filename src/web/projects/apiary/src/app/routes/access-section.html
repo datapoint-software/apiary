@@ -65,7 +65,7 @@
           </span>
         </label>
         @if (current()?.linkMadeAt && route().password.link().value()) {
-          <div class="ap-list-row" style="padding: 0 0 0 30px">
+          <div class="ap-list-row ap-choice-detail">
             @if (route().password.newLink().value()) {
               <div class="ap-list-text">
                 <strong>{{ 'A new link is made when you save' | t }}</strong>
