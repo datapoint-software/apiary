@@ -19,7 +19,7 @@ export function parseUtc(text: string, withTime = true): number | null {
 
 function isRealDate(year: number, month: number, day: number, hour: number, minute: number): boolean {
   const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day && hour < 24 && minute < 60;
+  return year >= 1970 && date.getUTCMonth() === month - 1 && date.getUTCDate() === day && hour < 24 && minute < 60;
 }
 
 export function formatUtc(ms: number, withTime = true): string {

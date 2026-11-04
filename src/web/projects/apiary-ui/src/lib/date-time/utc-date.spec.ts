@@ -9,6 +9,10 @@ describe('parseUtc', () => {
     expect(parseUtc('2026-11-03', false)).toBe(Date.UTC(2026, 10, 3));
   });
 
+  it.each(['0026-11-03 14:00', '1969-12-31 23:59'])('refuses %j, a year before 1970', (text) => {
+    expect(parseUtc(text)).toBeNull();
+  });
+
   it('ignores surrounding spaces', () => {
     expect(parseUtc('  2026-11-03 14:05  ')).toBe(Date.UTC(2026, 10, 3, 14, 5));
   });
