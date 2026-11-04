@@ -27,6 +27,9 @@ function seedData() {
       { id: 'r10', host: 'legacy.example.com', path: '/', project: 'legacy', targets: [{ host: 'legacy-shop', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'critical', statusText: 'Route down', cert: 'auto', rpm: 0, timeout: 30, allow: [] },
       { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
+      { id: 'r13', host: 'preview.example.com', path: '/', project: 'marketing', targets: [{ host: 'website-next', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 12, timeout: 30, allow: [], changed: [NOW - 2 * DAY, 'ana@example.com'],
+        /* The prototype keeps the password to check it on the visitor page; Apiary keeps only a hash. */
+        gate: { password: 'harbor-maple-lantern-58', set: NOW - 2 * DAY, by: 'ana@example.com', message: 'Preview of the new website for Example Lda.', days: 7, link: { key: 'q3Lx8VbN2pT7wRfK9mZs4A', made: NOW - 2 * DAY } } },
     ],
     streams: [
       { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412 },

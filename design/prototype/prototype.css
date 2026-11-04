@@ -9,3 +9,8 @@
 .ap .ap-lang-btn:hover, .ap .ap-lang-btn[aria-expanded="true"] { color: var(--ink); }
 .ap-menu-item .ap-menu-check { margin-left: auto; }
 .ap-menu-item[role="menuitemradio"] { min-width: 168px; }
+
+/* Idea being tried: routes that ask visitors for a password. Moves into apiary.css if it stays. */
+.ap .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
+.ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
+.ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }

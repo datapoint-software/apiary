@@ -29,7 +29,7 @@ function routeRow(r) {
   const actions = canOperate() ? (r.disabled ? act('play', 'Enable ' + label, 'enable') : act('pause', 'Disable ' + label, 'disable'))
     + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + act('trash-2', 'Delete ' + label, 'delete') : '';
   return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
-<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span></div></td>
+<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
 <td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
 <td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
 <td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
@@ -179,6 +179,8 @@ const RM = {
   required: 'Fill this in.',
   range: (min, max) => `Enter a number from ${min} to ${max}.`,
   tooLong: max => `Use at most ${max} characters.`,
+  'gate.passwordRequired': 'Enter a password, or generate one.',
+  'gate.passwordShort': 'Use at least 12 characters. A generated one is easier to share and harder to guess.',
   'hostname.required': 'Enter a hostname, such as shop.example.com.',
   'hostname.scheme': 'Enter the hostname only, without http:// or https://.',
   'hostname.path': 'Enter the hostname only. Add a path in the Path field.',
@@ -246,6 +248,30 @@ route('/routes/new', () => routeEditor(null));
 route('/routes/new/:project', p => routeEditor(null, p));
 route('/routes/:id', id => { const r = D.routes.find(x => x.id === id); return r ? routeEditor(r) : notFound(); });
 
+/* Four random words and a number: long enough not to be guessed, short enough to read out on a call. */
+const PASS_WORDS = ['amber', 'anchor', 'aspen', 'basil', 'birch', 'canyon', 'cedar', 'cobalt', 'coral', 'delta', 'ember', 'fern', 'flint', 'garnet', 'harbor', 'hazel', 'indigo', 'juniper', 'lantern', 'linden', 'maple', 'meadow', 'nectar', 'olive', 'orchard', 'pebble', 'quartz', 'raven', 'river', 'saffron', 'spruce', 'thistle', 'tundra', 'velvet', 'willow', 'zephyr'];
+function passphrase() {
+  const pool = [...PASS_WORDS], words = [], n = new Uint32Array(5);
+  crypto.getRandomValues(n);
+  for (let i = 0; i < 4; i++) words.push(pool.splice(n[i] % pool.length, 1)[0]);
+  return words.join('-') + '-' + (10 + n[4] % 90);
+}
+
+const linkKey = () => btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' })[c]);
+const gateLink = r => `https://${r.host}${r.path}?apiary-key=${r.gate.link.key}`;
+/* After saving, the new password and sign-in link are shown once, to copy. */
+function showGateAccess(r, { password, link }) {
+  const both = password && link;
+  dialog({
+    title: `${esc(routeLabel(r))} saved`, mark: ['ok', 'lock'], initial: '[data-copy]',
+    body: `<p style="margin:0">${both ? 'Visitors need the password now, or the sign-in link. Copy them: they’re shown only this once.' : link ? 'Here’s the new sign-in link. Copy it: it’s shown only this once, and the old one no longer works.' : 'Visitors need the password now. Copy it: it’s shown only this once.'}</p>
+${link ? `<div class="ap-field" data-gate-share><span class="ap-label">Sign-in link</span>${copyText(gateLink(r))}</div>` : ''}${password ? `<div class="ap-field"><span class="ap-label">Password</span>${copyText(password)}</div>` : ''}
+<p class="ap-caption" style="margin:0">Send ${both ? 'them' : 'it'} over a channel you trust. Anyone who has ${both ? 'either' : 'it'} gets in until you set a new password${r.gate.link ? ' or make a new link' : ''}.</p>
+<p class="ap-caption" style="margin:0">Prototype: see what a visitor sees with <a href="#/public/link" data-close>the link</a> or <a href="#/public/password" data-close>the password</a>.</p>`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>Done</button>',
+  });
+}
+
 function routeEditor(r, projectId) {
   const isNew = !r;
   const src = r || { host: '', path: '/', project: projectId || (D.projects.length === 1 ? D.projects[0].id : ''), targets: [{ host: '', port: 8080, weight: 100 }], cert: 'auto', timeout: 30, allow: [] };
@@ -299,6 +325,17 @@ ${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that
 ${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8" spellcheck="false"'), help: 'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' })}
 ${rtChoice('rateLimited', src.rateLimit != null, 'Limit requests per visitor', 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.')}
 <div style="max-width:280px;margin-left:40px" data-rate${src.rateLimit != null ? '' : ' hidden'}>${field({ name: 'rateLimit', label: 'Rate limit', type: 'number', value: src.rateLimit ?? 600, data: true, after: 'a&nbsp;minute', attrs: 'inputmode="numeric"', help: 'From 1 to 100,000.' })}</div>
+${rtChoice('gated', !!src.gate, 'Ask visitors for a password', 'For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.')}
+<div class="ap-stack" style="margin-left:40px" data-gate${src.gate ? '' : ' hidden'}>
+${src.gate ? `<div class="ap-list-row" data-gate-current style="padding:0"><div class="ap-list-text"><strong>Password set ${ago(src.gate.set)}</strong><span class="ap-muted">By ${esc(src.gate.by)}. Apiary keeps only a hash, so it can’t show it again.</span></div><button class="ap-btn" type="button" data-gate-new data-write${ops ? '' : ' disabled'}>Set a new password…</button></div>` : ''}
+<div class="ap-stack" data-gate-pw${src.gate ? ' hidden' : ''}>
+${field({ name: 'gatePassword', label: 'Password', value: src.gate ? '' : passphrase(), data: true, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', after: '<button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-gate-gen>Generate another</button>', help: '<span data-gate-help>Shown once more after you save, to copy. Then Apiary keeps only a hash.</span>' })}
+</div>
+${rtChoice('gateLink', src.gate ? !!src.gate.link : true, 'Also make a sign-in link', 'Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.', 'ap-check')}
+${src.gate && src.gate.link ? `<div class="ap-list-row" data-link-current style="padding:0 0 0 30px"><div class="ap-list-text"><strong>Sign-in link made ${ago(src.gate.link.made)}</strong><span class="ap-muted">Shown once, like the password.</span></div><button class="ap-btn" type="button" data-link-new data-write${ops ? '' : ' disabled'}>Make a new link</button></div>` : ''}
+${field({ name: 'gateMessage', label: 'Message on the password page', optional: true, value: src.gate ? src.gate.message : '', placeholder: 'Preview of the new website for Example Lda.', help: 'Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private.' })}
+<div style="max-width:280px">${field({ name: 'gateDays', label: 'Keep visitors signed in for', control: select('gateDays', [['1', '1 day'], ['7', '7 days'], ['30', '30 days']], String(src.gate ? src.gate.days : 7)), help: 'A new password signs everyone out at once.' })}</div>
+</div>
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s6"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s6">Maintenance window</h2><p class="ap-panel-desc">During the window, visitors get a 503 page with your message.</p></div></div><div class="ap-panel-body ap-stack">
@@ -373,8 +410,31 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       if (n === 'canarySource') drawCanary();
       if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
       if (n === 'rateLimited') $('[data-rate]', el).hidden = !e.target.checked;
+      if (n === 'gated') $('[data-gate]', el).hidden = !e.target.checked;
+      if (n === 'gateLink' && $('[data-link-current]', el)) $('[data-link-current]', el).hidden = !e.target.checked;
       if (n === 'maint') $('[data-maint]', el).hidden = !e.target.checked;
     });
+
+    let newPassword = !src.gate;
+    $('[data-gate-new]', el)?.addEventListener('click', () => {
+      newPassword = true;
+      $('[data-gate-current]', el).hidden = true;
+      $('[data-gate-pw]', el).hidden = false;
+      f.elements.gatePassword.value = passphrase();
+      $('[data-gate-help]', el).textContent = 'Shown once more after you save, to copy. Saving signs out everyone who used the old one.';
+      f.elements.gatePassword.focus();
+      dirtyCheck();
+    });
+    let newLink = false;
+    $('[data-link-new]', el)?.addEventListener('click', e => {
+      newLink = true;
+      const row = $('[data-link-current]', el);
+      $('strong', row).textContent = 'A new link is made when you save';
+      $('.ap-muted', row).textContent = 'The current one stops working then.';
+      e.currentTarget.disabled = true;
+      dirtyCheck();
+    });
+    $('[data-gate-gen]', el).addEventListener('click', () => { f.elements.gatePassword.value = passphrase(); v.check('gatePassword'); dirtyCheck(); });
 
     const v = form(f, () => {
       const rules = {
@@ -412,6 +472,12 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           return lines.some(l => !V.cidr(l)) ? RM['ipRange.invalid'] : null;
         },
         rateLimit: (val, all) => (all.rateLimited ? rtWhole(1, 100000)(val) : null),
+        gatePassword: (val, all) => {
+          if (!all.gated || !newPassword) return null;
+          const s = String(val);
+          return !s.trim() ? RM['gate.passwordRequired'] : s.length < 12 ? RM['gate.passwordShort'] : s.length > 128 ? RM.tooLong(128) : null;
+        },
+        gateMessage: (val, all) => (all.gated && String(val).length > 120 ? RM.tooLong(120) : null),
         mStart: (val, all) => (all.maint && parseDate(val) === null ? RM['dateTime.format'] : null),
         mEnd: (val, all) => {
           if (!all.maint) return null;
@@ -441,6 +507,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       submit: async val => {
         await api();
         syncTargets();
+        const oldLink = src.gate && src.gate.link;
         const next = {
           host: val.host.trim().toLowerCase(), path: val.path.trim(), project: val.project,
           targets: targets.map(t => ({ host: String(t.host).trim(), port: +t.port, weight: many() ? +t.weight : 100 })),
@@ -448,6 +515,11 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           sticky: many() && val.sticky, compression: val.compression, caching: val.caching, hsts: val.hsts, hstsSub: val.hsts && val.hstsSub,
           cert: val.cert, certId: val.cert === 'uploaded' ? val.certId : null, timeout: +val.timeout,
           allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean), rateLimit: val.rateLimited ? +val.rateLimit : null,
+          gate: !val.gated ? null : {
+            password: newPassword ? val.gatePassword : src.gate.password, set: newPassword ? NOW : src.gate.set, by: newPassword ? D.me.email : src.gate.by,
+            message: val.gateMessage.trim(), days: +val.gateDays,
+            link: !val.gateLink ? null : newLink || !(src.gate && src.gate.link) ? { key: linkKey(), made: NOW } : src.gate.link,
+          },
           maintenance: val.maint ? { start: parseDate(val.mStart), end: parseDate(val.mEnd), message: val.mMsg.trim() } : null,
           changed: [NOW, D.me.email],
         };
@@ -457,7 +529,9 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           if (next.cert === 'auto' && !D.certs.some(c => c.host === next.host)) D.certs.push({ host: next.host, source: 'auto', issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now' });
         } else Object.assign(r, next);
         go('/routes');
-        toast(`${routeLabel(next)} saved. It applies on every replica now.`);
+        const fresh = next.gate && { password: newPassword ? next.gate.password : null, link: next.gate.link && next.gate.link !== oldLink ? next.gate.link : null };
+        if (fresh && (fresh.password || fresh.link)) showGateAccess(next, fresh);
+        else toast(`${routeLabel(next)} saved. It applies on every replica now.`);
       },
     });
 

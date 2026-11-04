@@ -249,8 +249,78 @@ const PUBLIC_PAGES = [
   ['not-allowed', 403, 'Not allowed', "You can't open this site from here", 'It only accepts visitors from certain networks. If you need it, contact whoever runs it.'],
   ['too-many-requests', 429, 'Too many requests', 'Too many requests', 'This site got too many requests from your network. Wait a moment, then try again.'],
   ['maintenance', 503, 'Maintenance', 'Down for maintenance', null],
+  ['password', 401, 'Password', 'Restricted access', null],
+  ['link', 200, 'Sign-in link', null, null],
+  ['link-old', 401, 'Old sign-in link', null, null],
 ];
+/* Idea being tried: a route can ask visitors for a password, or a sign-in link with its own key. Plain pages with
+   forms that post to the same address, no scripts; the prototype checks them in place. After 5 wrong tries from an
+   address, Apiary answers 429 for 5 minutes. A link only signs in after Continue, so link previews and email
+   scanners don't; then Apiary sets the cookie and redirects to the address without the key. */
+let gateTries = 0;
+const PUB_H1 = 'font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)';
+const PUB_BTN = 'font:600 1rem/1.5 var(--font-text);margin-top:var(--space-2);padding:10px 16px;border:0;border-radius:var(--radius-2);background:var(--honey);color:var(--on-honey);cursor:pointer';
+const PUB_SMALL = 'margin:var(--space-5) 0 0;font-size:0.875rem;color:var(--ink-3)';
+const PUB_PROTO = 'margin:var(--space-6) 0 0;font-size:0.8125rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:var(--space-3)';
+function passwordPage(mode) {
+  const r = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set)[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
+  const g = r.gate;
+  const box = 'font:inherit;padding:10px 12px;border-radius:var(--radius-2);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box';
+  const stay = `You stay signed in on this browser for ${plural(g.days, 'day')}.`;
+  const signedIn = el => {
+    gateTries = 0;
+    $('[data-gate-page]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password">See the password page</a> · <a href="#/public/link">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
+  };
+  if (mode === 'link' && g.link) return {
+    title: r.host,
+    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
+<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
+<p style="margin:0;color:var(--ink-2)">${g.message ? esc(g.message) : 'Someone shared this site with you.'}</p>
+<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${PUB_BTN}">Continue</button></form>
+<p style="${PUB_SMALL}">${stay}</p>
+<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>
+</main></div>`,
+    mount(el) { document.title = r.host; $('form', el).addEventListener('submit', e => { e.preventDefault(); signedIn(el); }); },
+  };
+  const old = mode === 'link-old';
+  return {
+    title: 'Password',
+    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
+<h1 style="${PUB_H1}">Restricted access</h1>
+<p style="margin:0;color:var(--ink-2)">${old ? 'This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.' : g.message ? esc(g.message) : 'Enter the password you were given.'}</p>
+<form method="post" novalidate style="margin-top:var(--space-5);display:grid;gap:var(--space-2)">
+<label for="gate-pw" style="font-weight:600;font-size:0.875rem">Password</label>
+<input id="gate-pw" name="password" type="password" autocomplete="current-password" required aria-describedby="gate-err" style="${box}">
+<p id="gate-err" role="alert" style="margin:0;color:var(--critical);font-size:0.875rem" hidden></p>
+<button type="submit" style="${PUB_BTN}">Continue</button>
+</form>
+<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>
+<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>
+</main></div>`,
+    mount(el) {
+      document.title = 'Password';
+      const f = $('form', el), input = $('#gate-pw', el), err = $('#gate-err', el);
+      const say = text => { err.textContent = text; err.hidden = !text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };
+      f.addEventListener('submit', e => {
+        e.preventDefault();
+        if (gateTries >= 5) return;
+        if (!input.value) { say('Enter the password.'); input.focus(); return; }
+        if (input.value === g.password) { signedIn(el); return; }
+        gateTries++;
+        input.value = '';
+        input.focus();
+        if (gateTries >= 5) {
+          say('Too many tries from your network. Wait 5 minutes, then try again.');
+          input.disabled = true;
+          $('button', f).disabled = true;
+          $('button', f).style.opacity = '0.5';
+        } else say('That password isn’t right. Check it, or ask whoever sent you the link.');
+      });
+    },
+  };
+}
 route('/public/:page', key => {
+  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key);
   const page = PUBLIC_PAGES.find(x => x[0] === key);
   if (!page) return notFound();
   const [, , title, heading, fixed] = page;

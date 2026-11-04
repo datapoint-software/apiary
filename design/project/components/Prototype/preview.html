@@ -859,6 +859,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap-menu-item .ap-menu-check { margin-left: auto; }
 .ap-menu-item[role="menuitemradio"] { min-width: 168px; }
 
+/* Idea being tried: routes that ask visitors for a password. Moves into apiary.css if it stays. */
+.ap .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
+.ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
+.ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }
+
 </style>
 <div class="ap" lang="en" style="min-height:100%">
 <a class="ap-skip" href="#main" data-skip>Skip to content</a>
@@ -956,6 +961,9 @@ function seedData() {
       { id: 'r10', host: 'legacy.example.com', path: '/', project: 'legacy', targets: [{ host: 'legacy-shop', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'critical', statusText: 'Route down', cert: 'auto', rpm: 0, timeout: 30, allow: [] },
       { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
+      { id: 'r13', host: 'preview.example.com', path: '/', project: 'marketing', targets: [{ host: 'website-next', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 12, timeout: 30, allow: [], changed: [NOW - 2 * DAY, 'ana@example.com'],
+        /* The prototype keeps the password to check it on the visitor page; Apiary keeps only a hash. */
+        gate: { password: 'harbor-maple-lantern-58', set: NOW - 2 * DAY, by: 'ana@example.com', message: 'Preview of the new website for Example Lda.', days: 7, link: { key: 'q3Lx8VbN2pT7wRfK9mZs4A', made: NOW - 2 * DAY } } },
     ],
     streams: [
       { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412 },
@@ -2150,8 +2158,78 @@ const PUBLIC_PAGES = [
   ['not-allowed', 403, 'Not allowed', "You can't open this site from here", 'It only accepts visitors from certain networks. If you need it, contact whoever runs it.'],
   ['too-many-requests', 429, 'Too many requests', 'Too many requests', 'This site got too many requests from your network. Wait a moment, then try again.'],
   ['maintenance', 503, 'Maintenance', 'Down for maintenance', null],
+  ['password', 401, 'Password', 'Restricted access', null],
+  ['link', 200, 'Sign-in link', null, null],
+  ['link-old', 401, 'Old sign-in link', null, null],
 ];
+/* Idea being tried: a route can ask visitors for a password, or a sign-in link with its own key. Plain pages with
+   forms that post to the same address, no scripts; the prototype checks them in place. After 5 wrong tries from an
+   address, Apiary answers 429 for 5 minutes. A link only signs in after Continue, so link previews and email
+   scanners don't; then Apiary sets the cookie and redirects to the address without the key. */
+let gateTries = 0;
+const PUB_H1 = 'font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)';
+const PUB_BTN = 'font:600 1rem/1.5 var(--font-text);margin-top:var(--space-2);padding:10px 16px;border:0;border-radius:var(--radius-2);background:var(--honey);color:var(--on-honey);cursor:pointer';
+const PUB_SMALL = 'margin:var(--space-5) 0 0;font-size:0.875rem;color:var(--ink-3)';
+const PUB_PROTO = 'margin:var(--space-6) 0 0;font-size:0.8125rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:var(--space-3)';
+function passwordPage(mode) {
+  const r = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set)[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
+  const g = r.gate;
+  const box = 'font:inherit;padding:10px 12px;border-radius:var(--radius-2);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box';
+  const stay = `You stay signed in on this browser for ${plural(g.days, 'day')}.`;
+  const signedIn = el => {
+    gateTries = 0;
+    $('[data-gate-page]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password">See the password page</a> · <a href="#/public/link">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
+  };
+  if (mode === 'link' && g.link) return {
+    title: r.host,
+    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
+<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
+<p style="margin:0;color:var(--ink-2)">${g.message ? esc(g.message) : 'Someone shared this site with you.'}</p>
+<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${PUB_BTN}">Continue</button></form>
+<p style="${PUB_SMALL}">${stay}</p>
+<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>
+</main></div>`,
+    mount(el) { document.title = r.host; $('form', el).addEventListener('submit', e => { e.preventDefault(); signedIn(el); }); },
+  };
+  const old = mode === 'link-old';
+  return {
+    title: 'Password',
+    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
+<h1 style="${PUB_H1}">Restricted access</h1>
+<p style="margin:0;color:var(--ink-2)">${old ? 'This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.' : g.message ? esc(g.message) : 'Enter the password you were given.'}</p>
+<form method="post" novalidate style="margin-top:var(--space-5);display:grid;gap:var(--space-2)">
+<label for="gate-pw" style="font-weight:600;font-size:0.875rem">Password</label>
+<input id="gate-pw" name="password" type="password" autocomplete="current-password" required aria-describedby="gate-err" style="${box}">
+<p id="gate-err" role="alert" style="margin:0;color:var(--critical);font-size:0.875rem" hidden></p>
+<button type="submit" style="${PUB_BTN}">Continue</button>
+</form>
+<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>
+<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>
+</main></div>`,
+    mount(el) {
+      document.title = 'Password';
+      const f = $('form', el), input = $('#gate-pw', el), err = $('#gate-err', el);
+      const say = text => { err.textContent = text; err.hidden = !text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };
+      f.addEventListener('submit', e => {
+        e.preventDefault();
+        if (gateTries >= 5) return;
+        if (!input.value) { say('Enter the password.'); input.focus(); return; }
+        if (input.value === g.password) { signedIn(el); return; }
+        gateTries++;
+        input.value = '';
+        input.focus();
+        if (gateTries >= 5) {
+          say('Too many tries from your network. Wait 5 minutes, then try again.');
+          input.disabled = true;
+          $('button', f).disabled = true;
+          $('button', f).style.opacity = '0.5';
+        } else say('That password isn’t right. Check it, or ask whoever sent you the link.');
+      });
+    },
+  };
+}
 route('/public/:page', key => {
+  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key);
   const page = PUBLIC_PAGES.find(x => x[0] === key);
   if (!page) return notFound();
   const [, , title, heading, fixed] = page;
@@ -2195,7 +2273,7 @@ function routeRow(r) {
   const actions = canOperate() ? (r.disabled ? act('play', 'Enable ' + label, 'enable') : act('pause', 'Disable ' + label, 'disable'))
     + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + act('trash-2', 'Delete ' + label, 'delete') : '';
   return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
-<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span></div></td>
+<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
 <td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
 <td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
 <td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
@@ -2345,6 +2423,8 @@ const RM = {
   required: 'Fill this in.',
   range: (min, max) => `Enter a number from ${min} to ${max}.`,
   tooLong: max => `Use at most ${max} characters.`,
+  'gate.passwordRequired': 'Enter a password, or generate one.',
+  'gate.passwordShort': 'Use at least 12 characters. A generated one is easier to share and harder to guess.',
   'hostname.required': 'Enter a hostname, such as shop.example.com.',
   'hostname.scheme': 'Enter the hostname only, without http:// or https://.',
   'hostname.path': 'Enter the hostname only. Add a path in the Path field.',
@@ -2412,6 +2492,30 @@ route('/routes/new', () => routeEditor(null));
 route('/routes/new/:project', p => routeEditor(null, p));
 route('/routes/:id', id => { const r = D.routes.find(x => x.id === id); return r ? routeEditor(r) : notFound(); });
 
+/* Four random words and a number: long enough not to be guessed, short enough to read out on a call. */
+const PASS_WORDS = ['amber', 'anchor', 'aspen', 'basil', 'birch', 'canyon', 'cedar', 'cobalt', 'coral', 'delta', 'ember', 'fern', 'flint', 'garnet', 'harbor', 'hazel', 'indigo', 'juniper', 'lantern', 'linden', 'maple', 'meadow', 'nectar', 'olive', 'orchard', 'pebble', 'quartz', 'raven', 'river', 'saffron', 'spruce', 'thistle', 'tundra', 'velvet', 'willow', 'zephyr'];
+function passphrase() {
+  const pool = [...PASS_WORDS], words = [], n = new Uint32Array(5);
+  crypto.getRandomValues(n);
+  for (let i = 0; i < 4; i++) words.push(pool.splice(n[i] % pool.length, 1)[0]);
+  return words.join('-') + '-' + (10 + n[4] % 90);
+}
+
+const linkKey = () => btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' })[c]);
+const gateLink = r => `https://${r.host}${r.path}?apiary-key=${r.gate.link.key}`;
+/* After saving, the new password and sign-in link are shown once, to copy. */
+function showGateAccess(r, { password, link }) {
+  const both = password && link;
+  dialog({
+    title: `${esc(routeLabel(r))} saved`, mark: ['ok', 'lock'], initial: '[data-copy]',
+    body: `<p style="margin:0">${both ? 'Visitors need the password now, or the sign-in link. Copy them: they’re shown only this once.' : link ? 'Here’s the new sign-in link. Copy it: it’s shown only this once, and the old one no longer works.' : 'Visitors need the password now. Copy it: it’s shown only this once.'}</p>
+${link ? `<div class="ap-field" data-gate-share><span class="ap-label">Sign-in link</span>${copyText(gateLink(r))}</div>` : ''}${password ? `<div class="ap-field"><span class="ap-label">Password</span>${copyText(password)}</div>` : ''}
+<p class="ap-caption" style="margin:0">Send ${both ? 'them' : 'it'} over a channel you trust. Anyone who has ${both ? 'either' : 'it'} gets in until you set a new password${r.gate.link ? ' or make a new link' : ''}.</p>
+<p class="ap-caption" style="margin:0">Prototype: see what a visitor sees with <a href="#/public/link" data-close>the link</a> or <a href="#/public/password" data-close>the password</a>.</p>`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>Done</button>',
+  });
+}
+
 function routeEditor(r, projectId) {
   const isNew = !r;
   const src = r || { host: '', path: '/', project: projectId || (D.projects.length === 1 ? D.projects[0].id : ''), targets: [{ host: '', port: 8080, weight: 100 }], cert: 'auto', timeout: 30, allow: [] };
@@ -2465,6 +2569,17 @@ ${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that
 ${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8" spellcheck="false"'), help: 'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' })}
 ${rtChoice('rateLimited', src.rateLimit != null, 'Limit requests per visitor', 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.')}
 <div style="max-width:280px;margin-left:40px" data-rate${src.rateLimit != null ? '' : ' hidden'}>${field({ name: 'rateLimit', label: 'Rate limit', type: 'number', value: src.rateLimit ?? 600, data: true, after: 'a&nbsp;minute', attrs: 'inputmode="numeric"', help: 'From 1 to 100,000.' })}</div>
+${rtChoice('gated', !!src.gate, 'Ask visitors for a password', 'For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.')}
+<div class="ap-stack" style="margin-left:40px" data-gate${src.gate ? '' : ' hidden'}>
+${src.gate ? `<div class="ap-list-row" data-gate-current style="padding:0"><div class="ap-list-text"><strong>Password set ${ago(src.gate.set)}</strong><span class="ap-muted">By ${esc(src.gate.by)}. Apiary keeps only a hash, so it can’t show it again.</span></div><button class="ap-btn" type="button" data-gate-new data-write${ops ? '' : ' disabled'}>Set a new password…</button></div>` : ''}
+<div class="ap-stack" data-gate-pw${src.gate ? ' hidden' : ''}>
+${field({ name: 'gatePassword', label: 'Password', value: src.gate ? '' : passphrase(), data: true, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', after: '<button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-gate-gen>Generate another</button>', help: '<span data-gate-help>Shown once more after you save, to copy. Then Apiary keeps only a hash.</span>' })}
+</div>
+${rtChoice('gateLink', src.gate ? !!src.gate.link : true, 'Also make a sign-in link', 'Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.', 'ap-check')}
+${src.gate && src.gate.link ? `<div class="ap-list-row" data-link-current style="padding:0 0 0 30px"><div class="ap-list-text"><strong>Sign-in link made ${ago(src.gate.link.made)}</strong><span class="ap-muted">Shown once, like the password.</span></div><button class="ap-btn" type="button" data-link-new data-write${ops ? '' : ' disabled'}>Make a new link</button></div>` : ''}
+${field({ name: 'gateMessage', label: 'Message on the password page', optional: true, value: src.gate ? src.gate.message : '', placeholder: 'Preview of the new website for Example Lda.', help: 'Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private.' })}
+<div style="max-width:280px">${field({ name: 'gateDays', label: 'Keep visitors signed in for', control: select('gateDays', [['1', '1 day'], ['7', '7 days'], ['30', '30 days']], String(src.gate ? src.gate.days : 7)), help: 'A new password signs everyone out at once.' })}</div>
+</div>
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s6"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s6">Maintenance window</h2><p class="ap-panel-desc">During the window, visitors get a 503 page with your message.</p></div></div><div class="ap-panel-body ap-stack">
@@ -2539,8 +2654,31 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       if (n === 'canarySource') drawCanary();
       if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
       if (n === 'rateLimited') $('[data-rate]', el).hidden = !e.target.checked;
+      if (n === 'gated') $('[data-gate]', el).hidden = !e.target.checked;
+      if (n === 'gateLink' && $('[data-link-current]', el)) $('[data-link-current]', el).hidden = !e.target.checked;
       if (n === 'maint') $('[data-maint]', el).hidden = !e.target.checked;
     });
+
+    let newPassword = !src.gate;
+    $('[data-gate-new]', el)?.addEventListener('click', () => {
+      newPassword = true;
+      $('[data-gate-current]', el).hidden = true;
+      $('[data-gate-pw]', el).hidden = false;
+      f.elements.gatePassword.value = passphrase();
+      $('[data-gate-help]', el).textContent = 'Shown once more after you save, to copy. Saving signs out everyone who used the old one.';
+      f.elements.gatePassword.focus();
+      dirtyCheck();
+    });
+    let newLink = false;
+    $('[data-link-new]', el)?.addEventListener('click', e => {
+      newLink = true;
+      const row = $('[data-link-current]', el);
+      $('strong', row).textContent = 'A new link is made when you save';
+      $('.ap-muted', row).textContent = 'The current one stops working then.';
+      e.currentTarget.disabled = true;
+      dirtyCheck();
+    });
+    $('[data-gate-gen]', el).addEventListener('click', () => { f.elements.gatePassword.value = passphrase(); v.check('gatePassword'); dirtyCheck(); });
 
     const v = form(f, () => {
       const rules = {
@@ -2578,6 +2716,12 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           return lines.some(l => !V.cidr(l)) ? RM['ipRange.invalid'] : null;
         },
         rateLimit: (val, all) => (all.rateLimited ? rtWhole(1, 100000)(val) : null),
+        gatePassword: (val, all) => {
+          if (!all.gated || !newPassword) return null;
+          const s = String(val);
+          return !s.trim() ? RM['gate.passwordRequired'] : s.length < 12 ? RM['gate.passwordShort'] : s.length > 128 ? RM.tooLong(128) : null;
+        },
+        gateMessage: (val, all) => (all.gated && String(val).length > 120 ? RM.tooLong(120) : null),
         mStart: (val, all) => (all.maint && parseDate(val) === null ? RM['dateTime.format'] : null),
         mEnd: (val, all) => {
           if (!all.maint) return null;
@@ -2607,6 +2751,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       submit: async val => {
         await api();
         syncTargets();
+        const oldLink = src.gate && src.gate.link;
         const next = {
           host: val.host.trim().toLowerCase(), path: val.path.trim(), project: val.project,
           targets: targets.map(t => ({ host: String(t.host).trim(), port: +t.port, weight: many() ? +t.weight : 100 })),
@@ -2614,6 +2759,11 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           sticky: many() && val.sticky, compression: val.compression, caching: val.caching, hsts: val.hsts, hstsSub: val.hsts && val.hstsSub,
           cert: val.cert, certId: val.cert === 'uploaded' ? val.certId : null, timeout: +val.timeout,
           allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean), rateLimit: val.rateLimited ? +val.rateLimit : null,
+          gate: !val.gated ? null : {
+            password: newPassword ? val.gatePassword : src.gate.password, set: newPassword ? NOW : src.gate.set, by: newPassword ? D.me.email : src.gate.by,
+            message: val.gateMessage.trim(), days: +val.gateDays,
+            link: !val.gateLink ? null : newLink || !(src.gate && src.gate.link) ? { key: linkKey(), made: NOW } : src.gate.link,
+          },
           maintenance: val.maint ? { start: parseDate(val.mStart), end: parseDate(val.mEnd), message: val.mMsg.trim() } : null,
           changed: [NOW, D.me.email],
         };
@@ -2623,7 +2773,9 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           if (next.cert === 'auto' && !D.certs.some(c => c.host === next.host)) D.certs.push({ host: next.host, source: 'auto', issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now' });
         } else Object.assign(r, next);
         go('/routes');
-        toast(`${routeLabel(next)} saved. It applies on every replica now.`);
+        const fresh = next.gate && { password: newPassword ? next.gate.password : null, link: next.gate.link && next.gate.link !== oldLink ? next.gate.link : null };
+        if (fresh && (fresh.password || fresh.link)) showGateAccess(next, fresh);
+        else toast(`${routeLabel(next)} saved. It applies on every replica now.`);
       },
     });
 
@@ -4364,6 +4516,55 @@ const PT_TEXT = new Map(Object.entries({
   "PEM, not protected by a passphrase. It’s encrypted with the root key and never shown again.": "PEM, sem frase-passe. É cifrada com a chave raiz e nunca mais mostrada.",
   "Shown on the project card.": "Aparece no cartão do projeto.",
   "Try again in a minute.": "Tente novamente daqui a um minuto.",
+  // Idea being tried: routes that ask for a password
+  "a minute": "por minuto",
+  "Needs a password": "Pede palavra-passe",
+  "Ask visitors for a password": "Pedir uma palavra-passe aos visitantes",
+  "For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.": "Para demonstrações e pré-visualizações que ainda não podem ser públicas. Os visitantes introduzem-na uma vez, numa página mostrada pelo Apiary, e mantêm a sessão nesse navegador. Todos partilham a mesma palavra-passe, por isso não distingue as pessoas.",
+  "Set a new password…": "Definir uma nova palavra-passe…",
+  "Generate another": "Gerar outra",
+  "Copy it before you save: Apiary keeps only a hash, so it can’t show it again. Send it over a channel you trust, apart from the address.": "Copie-a antes de guardar: o Apiary guarda só um hash, por isso não a pode mostrar de novo. Envie-a por um canal de confiança, separada do endereço.",
+  "Copy it before you save. Saving signs out everyone who used the old one.": "Copie-a antes de guardar. Guardar termina a sessão de todos os que usaram a antiga.",
+  "Message on the password page": "Mensagem na página da palavra-passe",
+  "Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private.": "Até 120 caracteres. Quem abrir o endereço vê-a, por isso não refira nada que prefira manter privado.",
+  "Keep visitors signed in for": "Manter a sessão dos visitantes durante",
+  "1 day": "1 dia",
+  "A new password signs everyone out at once.": "Uma nova palavra-passe termina logo a sessão de todos.",
+  "Enter a password, or generate one.": "Introduza uma palavra-passe, ou gere uma.",
+  "Use at least 12 characters. A generated one is easier to share and harder to guess.": "Use pelo menos 12 caracteres. Uma gerada é mais fácil de partilhar e mais difícil de adivinhar.",
+  "Restricted access": "Acesso restrito",
+  "Enter the password you were given.": "Introduza a palavra-passe que lhe deram.",
+  "Enter the password.": "Introduza a palavra-passe.",
+  "Too many tries from your network. Wait 5 minutes, then try again.": "Demasiadas tentativas a partir da sua rede. Aguarde 5 minutos e tente novamente.",
+  "That password isn’t right. Check it, or ask whoever sent you the link.": "Essa palavra-passe não está correta. Verifique-a, ou peça-a a quem lhe enviou a ligação.",
+  "Prototype: this is": "Protótipo: este é o",
+  ", and its password is": ", e a palavra-passe é",
+  "Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for, now served by the site itself. The site never sees the password or the cookie.": "Protótipo: o Apiary define um cookie para este nome de anfitrião e devolve o visitante à página que pediu, agora servida pelo próprio site. O site nunca vê a palavra-passe nem o cookie.",
+  "See the password page again": "Ver novamente a página da palavra-passe",
+  "Back to Apiary": "Voltar ao Apiary",
+  "Also make a sign-in link": "Criar também uma ligação de acesso",
+  "Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.": "Abre o site sem escrever a palavra-passe. Os visitantes clicam ainda em Continuar, para que as pré-visualizações de ligações e os analisadores de email não entrem. Quem tiver a ligação entra, por isso partilhe-a como a palavra-passe.",
+  "Shown once, like the password.": "Mostrada uma vez, tal como a palavra-passe.",
+  "Make a new link": "Criar uma nova ligação",
+  "A new link is made when you save": "É criada uma nova ligação quando guardar",
+  "The current one stops working then.": "A atual deixa então de funcionar.",
+  "Shown once more after you save, to copy. Then Apiary keeps only a hash.": "Mostrada mais uma vez depois de guardar, para a copiar. Depois o Apiary guarda só um hash.",
+  "Shown once more after you save, to copy. Saving signs out everyone who used the old one.": "Mostrada mais uma vez depois de guardar, para a copiar. Guardar termina a sessão de todos os que usaram a antiga.",
+  "Visitors need the password now, or the sign-in link. Copy them: they’re shown only this once.": "Os visitantes precisam agora da palavra-passe, ou da ligação de acesso. Copie-as: só são mostradas desta vez.",
+  "Here’s the new sign-in link. Copy it: it’s shown only this once, and the old one no longer works.": "Aqui está a nova ligação de acesso. Copie-a: só é mostrada desta vez, e a antiga deixa de funcionar.",
+  "Visitors need the password now. Copy it: it’s shown only this once.": "Os visitantes precisam agora da palavra-passe. Copie-a: só é mostrada desta vez.",
+  "Sign-in link": "Ligação de acesso",
+  "Old sign-in link": "Ligação de acesso antiga",
+  "Prototype: see what a visitor sees with": "Protótipo: veja o que um visitante vê com",
+  "the link": "a ligação",
+  "or": "ou",
+  "the password": "a palavra-passe",
+  "Someone shared this site with you.": "Alguém partilhou este site consigo.",
+  "Prototype: you opened": "Protótipo: abriu",
+  ". A link preview or an email scanner that opens it gets only this page.": ". Uma pré-visualização de ligação ou um analisador de email que a abra recebe só esta página.",
+  "This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.": "Esta ligação de acesso já não funciona. Introduza a palavra-passe, ou peça uma nova ligação a quem a enviou.",
+  "See the password page": "Ver a página da palavra-passe",
+  "See the sign-in link page": "Ver a página da ligação de acesso",
   // Calendar
   'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril', 'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
   'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro', 'Monday': 'segunda-feira', 'Tuesday': 'terça-feira',
@@ -4531,6 +4732,15 @@ const PT_PATTERNS = [
   [/^(\d+) certificates?$/, (m, n) => `${n} ${n === '1' ? 'certificado' : 'certificados'}`],
   [/^(.+?) · (Fetching .+)$/, (m, a, b) => `${tr(a)} · ${b}`],
   [/^· (.+)$/, (m, a) => `· ${tr(a)}`],
+  [/^Password set (.+)$/, (m, a) => `Palavra-passe definida ${tr(a)}`],
+  [/^By (.+)\. Apiary keeps only a hash, so it can’t show it again\.$/, 'Por $1. O Apiary guarda só um hash, por isso não a pode mostrar de novo.'],
+  [/^(.+) saved\. Visitors now need the password\.$/, '$1 guardada. Os visitantes passam a precisar da palavra-passe.'],
+  [/^You stay signed in on this browser for (\d+) days?\. No password\? Ask whoever sent you the link\.$/, (m, n) => `Mantém a sessão neste navegador durante ${n} ${n === '1' ? 'dia' : 'dias'}. Não tem a palavra-passe? Peça-a a quem lhe enviou a ligação.`],
+  [/^Sign-in link made (.+)$/, (m, a) => `Ligação de acesso criada ${tr(a)}`],
+  [/^(\S+) saved$/, '$1 guardada'],
+  [/^Send (them|it) over a channel you trust\. Anyone who has (?:either|it) gets in until you set a new password( or make a new link)?\.$/, (m, w, l) => `${w === 'them' ? 'Envie-as por um canal de confiança. Quem tiver qualquer uma delas' : 'Envie-a por um canal de confiança. Quem a tiver'} entra até definir uma nova palavra-passe${l ? ' ou criar uma nova ligação' : ''}.`],
+  [/^You stay signed in on this browser for (\d+) days?\.( No password\? Ask whoever sent you the link\.)?$/, (m, n, x) => `Mantém a sessão neste navegador durante ${n} ${n === '1' ? 'dia' : 'dias'}.${x ? ' Não tem a palavra-passe? Peça-a a quem lhe enviou a ligação.' : ''}`],
+  [/^Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for(, without the key in the address)?, now served by the site itself\. The site never sees the password, the key or the cookie\.$/, (m, k) => `Protótipo: o Apiary define um cookie para este nome de anfitrião e devolve o visitante à página que pediu${k ? ', sem a chave no endereço' : ''}, agora servida pelo próprio site. O site nunca vê a palavra-passe, a chave nem o cookie.`],
   [/^([^:]{2,40}): (.+)$/, (m, l, msg) => { const a = tr(l), b = tr(msg); return a === l && b === msg ? m : `${a}: ${b}`; }],
 ];
 
