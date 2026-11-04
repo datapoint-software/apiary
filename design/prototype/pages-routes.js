@@ -100,7 +100,7 @@ function deleteRoutes(rs, after) {
 route('/routes', () => {
   const add = canOperate() ? `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>` : '';
   if (!D.routes.length) {
-    return { title: 'All routes', html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.', add)}</section>` };
+    return { title: 'All routes', html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.', add)}</section>${sizeDefaultPanel()}`, mount: mountSizeDefault };
   }
   return {
     title: 'All routes',
@@ -111,8 +111,10 @@ route('/routes', () => {
 <div class="ap-seg" role="group" aria-label="Status" data-f="status"><button type="button" aria-pressed="true" data-v="all">All</button><button type="button" aria-pressed="false" data-v="attention">Needs attention</button><button type="button" aria-pressed="false" data-v="disabled">Disabled</button></div>
 ${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.name])], '', 'aria-label="Project" data-f="project"')}</div>
 <div data-selbar></div><div data-table></div>
-<div class="ap-panel-foot"><div class="ap-pager"><span data-count aria-live="polite"></span></div></div></section>`,
+<div class="ap-panel-foot"><div class="ap-pager"><span data-count aria-live="polite"></span></div></div></section>
+${sizeDefaultPanel()}`,
     mount(el) {
+      mountSizeDefault(el);
       const f = { q: '', project: '', status: 'all' };
       let selected = [];
       const box = $('[data-table]', el);
@@ -209,6 +211,7 @@ const RM = {
   'route.canaryName': 'Use letters, digits and hyphens, such as X-Canary.',
   'certificate.choose': 'Choose an uploaded certificate.',
   'certificate.doesNotCover': 'This certificate doesn’t cover the hostname. Choose one that does, or use an automatic certificate.',
+  'route.bodySize': 'Enter a whole number from 1 MB to 100 GB.',
 };
 function checkHost(v) {
   const s = String(v || '').trim();
@@ -243,6 +246,70 @@ const certCovers = (c, h) => c === h || (c.startsWith('*.') && h.endsWith(c.slic
 const withLabel = (html, label) => html.replace('class="ap-field"', `class="ap-field" data-label="${label}"`);
 const rtChoice = (name, checked, title, help, cls = 'ap-switch', style = '') => `<label class="ap-choice"${style ? ` style="${style}"` : ''}><input class="${cls}" type="checkbox" name="${name}"${checked ? ' checked' : ''}><span class="ap-choice-text"><span>${title}</span><span class="ap-help">${help}</span></span></label>`;
 const MAX_TARGETS = 10;
+
+/* Request size limits, in decimal MB like Docker shows them. A route without `size` uses the cluster default. */
+const MAX_SIZE_MB = 100000;
+const fmtSize = mb => (mb === 'none' ? 'No limit' : mb >= 1000 && mb % 1000 === 0 ? `${num(mb / 1000)} GB` : `${num(mb)} MB`);
+const toMb = (value, unit) => +value * (unit === 'GB' ? 1000 : 1);
+const usesDefaultSize = r => r.size === undefined;
+const checkSize = (value, unit) => {
+  const s = String(value).trim();
+  return !/^\d+$/.test(s) || toMb(s, unit) < 1 || toMb(s, unit) > MAX_SIZE_MB ? RM['route.bodySize'] : null;
+};
+function sizeFields(prefix, mb, help) {
+  const [value, unit] = mb >= 1000 && mb % 1000 === 0 ? [mb / 1000, 'GB'] : [mb, 'MB'];
+  return `<div class="ap-row" style="gap:12px;align-items:flex-start;flex-wrap:wrap;max-width:420px">
+<div style="flex:2 1 160px">${field({ name: prefix + 'Value', label: 'Largest request', type: 'number', value, data: true, attrs: 'inputmode="numeric" min="1"', help })}</div>
+<div style="flex:1 1 90px">${field({ name: prefix + 'Unit', label: 'Unit', control: select(prefix + 'Unit', ['MB', 'GB'], unit) })}</div></div>`;
+}
+function sizeChoices(size) {
+  const mode = size === undefined ? 'default' : size === 'none' ? 'none' : 'custom';
+  const choice = (value, title, help) => `<label class="ap-choice"><input class="ap-radio" type="radio" name="sizeMode" value="${value}"${value === mode ? ' checked' : ''}><span class="ap-choice-text"><span>${title}</span><span class="ap-help">${help}</span></span></label>`;
+  return `<fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-label">Request size limit</legend><div class="ap-stack" style="gap:10px">
+${choice('default', `Cluster default, <span class="ap-data">${fmtSize(D.sizeDefault)}</span>`, 'Follows the default on the All routes page, so it changes when an Administrator changes the default.')}
+${choice('custom', 'Custom', 'For routes that take large uploads, such as a container registry, or should only take small ones.')}
+<div style="margin-left:30px" data-size-custom${mode === 'custom' ? '' : ' hidden'}>${sizeFields('size', typeof size === 'number' ? size : D.sizeDefault, 'From 1 MB to 100 GB. Larger requests get a 413 and never reach the target.')}</div>
+${choice('none', 'No limit', 'Anyone who can reach this route can send it uploads of any size. Use it only when the target checks who is uploading, as a container registry does, or with allowed addresses.')}
+</div></fieldset><div data-size-warn></div>`;
+}
+
+/* The default on All routes. Administrators change it; everyone sees which routes set their own limit. */
+function sizeDefaultPanel() {
+  const using = D.routes.filter(usesDefaultSize).length, own = D.routes.filter(r => !usesDefaultSize(r));
+  const used = using === D.routes.length ? 'Every route uses it' : `${using} of ${plural(D.routes.length, 'route')} use it`;
+  return `<form class="ap-panel" id="rd-form" novalidate aria-labelledby="rd-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="rd-t">Request size limit</h2><p class="ap-panel-desc">The largest request a route accepts, unless it sets its own. Larger requests get a 413 and never reach the target.</p></div></div>
+<div class="ap-panel-body ap-stack"><div data-summary></div>
+${isAdmin() ? sizeFields('default', D.sizeDefault, `From 1 MB to 100 GB. ${used}.`)
+    : `<dl class="ap-kv"><dt>Default</dt><dd><span class="ap-data">${fmtSize(D.sizeDefault)}</span>. ${used}. Only Administrators can change it.</dd></dl>`}
+${own.length ? `<div class="ap-stack" style="gap:4px"><span class="ap-label">Routes with their own limit</span><div class="ap-list">${own.map(r => `<div class="ap-list-row"><div class="ap-list-text"><a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a></div>${r.size !== 'none' ? `<span class="ap-data">${fmtSize(r.size)}</span>` : r.allow && r.allow.length ? '<span class="ap-tag">No limit</span>' : status('warn', 'No limit, open to everyone')}</div>`).join('')}</div></div>` : ''}
+</div>
+${isAdmin() ? '<div class="ap-panel-foot ap-row" style="justify-content:flex-end"><button class="ap-btn" type="submit" data-busy="Saving…" data-write>Save default</button></div>' : ''}</form>`;
+}
+function mountSizeDefault(el) {
+  if (!isAdmin()) return;
+  const using = D.routes.filter(usesDefaultSize).length;
+  form($('#rd-form', el), { defaultValue: (v, all) => checkSize(v, all.defaultUnit) }, {
+    verb: 'save it',
+    links: { defaultUnit: ['defaultValue'] },
+    submit: async v => {
+      const mb = toMb(v.defaultValue, v.defaultUnit), old = D.sizeDefault;
+      if (mb === old) { toast(`The default is already ${fmtSize(mb)}.`, { tone: 'info' }); return; }
+      const save = async () => {
+        await api();
+        D.sizeDefault = mb;
+        toast(`${using ? `${plural(using, 'route')} now accept` : 'New routes accept'} requests up to ${fmtSize(mb)}, on every replica.`, { title: 'Default saved' });
+        refresh();
+      };
+      if (!using) return save();
+      confirmDialog({
+        title: `Change the limit on ${plural(using, 'route')}?`,
+        text: `${using === 1 ? 'One route uses' : `${num(using)} routes use`} the cluster default. ${using === 1 ? 'It' : 'They'} will accept requests up to <span class="ap-data">${fmtSize(mb)}</span> instead of <span class="ap-data">${fmtSize(old)}</span>, on every replica as soon as you save.${mb < old ? ' Uploads larger than that start failing with a 413.' : ''} Routes with their own limit don’t change.`,
+        confirm: 'Change the default', busy: 'Saving…', tone: mb < old ? 'danger' : 'primary', mark: mb < old ? ['warn', 'triangle-alert'] : ['info', 'info'],
+        onConfirm: save,
+      });
+    },
+  });
+}
 
 route('/routes/new', () => routeEditor(null));
 route('/routes/new/:project', p => routeEditor(null, p));
@@ -314,7 +381,8 @@ ${rtChoice('sticky', src.sticky, 'Sticky sessions', 'Keeps each visitor on the t
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s4"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s4">Traffic rules</h2></div></div><div class="ap-panel-body ap-stack">
-<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', type: 'number', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 120.' })}</div>
+<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', type: 'number', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 3600. Counts only time without any data moving, so a long upload that keeps sending isn’t cut off.' })}</div>
+${sizeChoices(src.size)}
 ${rtChoice('compression', src.compression, 'Compression', 'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.')}
 ${rtChoice('caching', src.caching, 'Caching', 'Stores only what the target allows with Cache-Control, in memory on each replica.')}
 ${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.')}
@@ -404,9 +472,18 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
     rowsEl.addEventListener('input', e => { if (/^t-(weight|host)-/.test(e.target.name)) { drawSplit(); drawCanary(); } });
     const showUpl = () => { $('[data-upl]', el).hidden = f.elements.cert.value !== 'uploaded'; };
     showUpl();
+    const showSize = () => {
+      $('[data-size-custom]', el).hidden = f.elements.sizeMode.value !== 'custom';
+      const open = f.elements.sizeMode.value === 'none' && !f.elements.allow.value.trim();
+      $('[data-size-warn]', el).innerHTML = open ? banner('warn', 'Anyone can upload any amount to this route', 'The route allows every address and has no size limit. Make sure the target checks who is uploading, or add allowed addresses under Access.') : '';
+      paint();
+    };
+    showSize();
+    f.addEventListener('input', e => { if (e.target.name === 'allow') showSize(); });
     f.addEventListener('change', e => {
       const n = e.target.name;
       if (n === 'cert') showUpl();
+      if (n === 'sizeMode') showSize();
       if (n === 'canarySource') drawCanary();
       if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
       if (n === 'rateLimited') $('[data-rate]', el).hidden = !e.target.checked;
@@ -465,7 +542,8 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           const h = String(all.host).trim().toLowerCase();
           return h && !certCovers(val.toLowerCase(), h) ? RM['certificate.doesNotCover'] : null;
         },
-        timeout: rtWhole(1, 120),
+        timeout: rtWhole(1, 3600),
+        sizeValue: (val, all) => (all.sizeMode === 'custom' ? checkSize(val, all.sizeUnit) : null),
         allow: val => {
           const lines = String(val).split('\n').map(s => s.trim()).filter(Boolean);
           if (lines.length > 100) return RM['ipRange.tooMany'];
@@ -503,7 +581,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       return rules;
     }, {
       verb: 'save',
-      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : []),
+      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : n === 'sizeMode' || n === 'sizeUnit' ? ['sizeValue'] : []),
       submit: async val => {
         await api();
         syncTargets();
@@ -514,6 +592,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           canary: many() && val.canarySource !== 'none' ? { source: val.canarySource, name: val.canaryName.trim(), value: val.canaryValue.trim() } : null,
           sticky: many() && val.sticky, compression: val.compression, caching: val.caching, hsts: val.hsts, hstsSub: val.hsts && val.hstsSub,
           cert: val.cert, certId: val.cert === 'uploaded' ? val.certId : null, timeout: +val.timeout,
+          size: val.sizeMode === 'default' ? undefined : val.sizeMode === 'none' ? 'none' : toMb(val.sizeValue, val.sizeUnit),
           allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean), rateLimit: val.rateLimited ? +val.rateLimit : null,
           gate: !val.gated ? null : {
             password: newPassword ? val.gatePassword : src.gate.password, set: newPassword ? NOW : src.gate.set, by: newPassword ? D.me.email : src.gate.by,

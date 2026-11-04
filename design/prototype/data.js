@@ -11,6 +11,8 @@ function seedData() {
     /* Idea being tried: visitor pages carry the operator's brand; a project can have its own. */
     brand: { name: 'Example Cloud', logo: sampleLogo('EC', '#1D4ED8'), logoName: 'example-cloud.svg', accent: '#1D4ED8', contact: 'Questions? Write to help@example.com.', changed: [NOW - 9 * DAY, 'ana@example.com'] },
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
+    /* The largest request a route accepts unless it sets its own, in MB. A route's own `size` is MB or 'none'. */
+    sizeDefault: 30,
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
       { id: 'shop', name: 'Shop', icon: 'shopping-bag', desc: 'Storefront, checkout and their APIs.' },
@@ -28,7 +30,8 @@ function seedData() {
       { id: 'r6', host: 'webhooks.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-webhooks', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 390, timeout: 30, allow: [] },
       { id: 'r7', host: 'grafana.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'grafana', port: 3000, weight: 100 }], protocols: ['HTTP/2', 'WebSockets'], status: 'ok', cert: 'uploaded', rpm: 410, timeout: 120, allow: ['10.0.0.0/8', '192.168.10.0/24'] },
       { id: 'r8', host: 'mqtt-admin.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'mqtt-admin-1', port: 18083, weight: 50 }, { host: 'mqtt-admin-2', port: 18083, weight: 50 }], protocols: ['HTTP/2', 'WebSockets'], status: 'warn', statusText: '1 target down', cert: 'uploaded', rpm: 130, timeout: 60, allow: ['10.0.0.0/8'] },
-      { id: 'r9', host: 'wiki.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'wiki', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', rpm: 100, timeout: 30, allow: ['10.0.0.0/8'] },
+      { id: 'r9', host: 'wiki.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'wiki', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', rpm: 100, timeout: 30, allow: ['10.0.0.0/8'], size: 100 },
+      { id: 'r14', host: 'registry.example.com', path: '/', project: 'internal', targets: [{ host: 'gitlab', port: 5005, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 60, timeout: 60, allow: [] },
       { id: 'r10', host: 'legacy.example.com', path: '/', project: 'legacy', targets: [{ host: 'legacy-shop', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'critical', statusText: 'Route down', cert: 'auto', rpm: 0, timeout: 30, allow: [] },
       { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
@@ -51,6 +54,7 @@ function seedData() {
       { host: '*.internal.example.com', source: 'uploaded', issuer: 'Example Internal CA', issued: at(164, '09:00'), expires: at(-201, '09:00'), status: 'ok', by: 'ana@example.com' },
       { host: 'legacy.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(81, '05:10'), expires: at(-9, '05:10'), status: 'warn', note: 'Renewal failed' },
       { host: 'www.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:31'), expires: at(-70, '06:31'), status: 'ok' },
+      { host: 'registry.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(35, '03:12'), expires: at(-55, '03:12'), status: 'ok' },
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
     ],
     redirects: [],

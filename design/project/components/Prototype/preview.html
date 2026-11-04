@@ -141,6 +141,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ap a { color: var(--honey-text); text-decoration: none; }
 .ap a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.ap p a:not(.ap-btn), .ap .ap-banner-body a:not(.ap-btn) { text-decoration: underline; text-underline-offset: 2px; }
 .ap-h { font-family: var(--font-display); margin: 0; text-wrap: balance; color: var(--ink); }
 .ap-h-1 { font-size: 2rem; line-height: 2.375rem; font-weight: 700; letter-spacing: -0.022em; }
 .ap-h-2 { font-size: 1.3125rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.015em; }
@@ -452,7 +453,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* Copy field */
 .ap-copy { display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding: 4px 4px 4px 12px; border-radius: var(--radius-2); background: var(--sunken); }
-.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-x: auto; white-space: nowrap; padding: 6px 0; }
+.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-wrap: anywhere; padding: 6px 0; }
 .ap-copy .ap-btn { background: var(--surface); }
 
 /* Cluster map: one hexagon per replica */
@@ -551,7 +552,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap .ap-crumbs a { color: var(--ink-2); }
 .ap-page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
 .ap-attribution { display: flex; flex-direction: column; gap: 6px; font-size: 0.6875rem; line-height: 0.9375rem; color: var(--ink-3); }
-.ap .ap-attribution a { color: var(--ink-2); }
+.ap .ap-attribution a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .ap-attribution svg { width: 92px; height: auto; color: var(--ink-2); }
 
 
@@ -860,7 +861,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap-dialog-backdrop { background: var(--scrim); animation: ap-fade 200ms ease; }
 .ap-dialog-pane { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .ap-dialog-pane > * { display: contents; }
-.ap-dialog-pane .ap-dialog { width: 100%; max-height: inherit; overflow: auto; }
+.ap-dialog-pane .ap-dialog { width: 100%; max-height: calc(100vh - 32px); overflow: auto; }
 .ap-dialog-pane:has(.ap-dialog-xl) { width: min(760px, calc(100vw - 32px)); }
 
 /* Links styled as buttons keep the button's colors, not the link color. */
@@ -971,6 +972,8 @@ function seedData() {
     /* Idea being tried: visitor pages carry the operator's brand; a project can have its own. */
     brand: { name: 'Example Cloud', logo: sampleLogo('EC', '#1D4ED8'), logoName: 'example-cloud.svg', accent: '#1D4ED8', contact: 'Questions? Write to help@example.com.', changed: [NOW - 9 * DAY, 'ana@example.com'] },
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
+    /* The largest request a route accepts unless it sets its own, in MB. A route's own `size` is MB or 'none'. */
+    sizeDefault: 30,
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
       { id: 'shop', name: 'Shop', icon: 'shopping-bag', desc: 'Storefront, checkout and their APIs.' },
@@ -988,7 +991,8 @@ function seedData() {
       { id: 'r6', host: 'webhooks.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-webhooks', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 390, timeout: 30, allow: [] },
       { id: 'r7', host: 'grafana.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'grafana', port: 3000, weight: 100 }], protocols: ['HTTP/2', 'WebSockets'], status: 'ok', cert: 'uploaded', rpm: 410, timeout: 120, allow: ['10.0.0.0/8', '192.168.10.0/24'] },
       { id: 'r8', host: 'mqtt-admin.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'mqtt-admin-1', port: 18083, weight: 50 }, { host: 'mqtt-admin-2', port: 18083, weight: 50 }], protocols: ['HTTP/2', 'WebSockets'], status: 'warn', statusText: '1 target down', cert: 'uploaded', rpm: 130, timeout: 60, allow: ['10.0.0.0/8'] },
-      { id: 'r9', host: 'wiki.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'wiki', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', rpm: 100, timeout: 30, allow: ['10.0.0.0/8'] },
+      { id: 'r9', host: 'wiki.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'wiki', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', rpm: 100, timeout: 30, allow: ['10.0.0.0/8'], size: 100 },
+      { id: 'r14', host: 'registry.example.com', path: '/', project: 'internal', targets: [{ host: 'gitlab', port: 5005, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 60, timeout: 60, allow: [] },
       { id: 'r10', host: 'legacy.example.com', path: '/', project: 'legacy', targets: [{ host: 'legacy-shop', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'critical', statusText: 'Route down', cert: 'auto', rpm: 0, timeout: 30, allow: [] },
       { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
@@ -1011,6 +1015,7 @@ function seedData() {
       { host: '*.internal.example.com', source: 'uploaded', issuer: 'Example Internal CA', issued: at(164, '09:00'), expires: at(-201, '09:00'), status: 'ok', by: 'ana@example.com' },
       { host: 'legacy.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(81, '05:10'), expires: at(-9, '05:10'), status: 'warn', note: 'Renewal failed' },
       { host: 'www.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:31'), expires: at(-70, '06:31'), status: 'ok' },
+      { host: 'registry.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(35, '03:12'), expires: at(-55, '03:12'), status: 'ok' },
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
     ],
     redirects: [],
@@ -2377,7 +2382,7 @@ function deleteRoutes(rs, after) {
 route('/routes', () => {
   const add = canOperate() ? `<a class="ap-btn ap-btn-primary" href="#/routes/new" data-write>${icon('plus')}Add route</a>` : '';
   if (!D.routes.length) {
-    return { title: 'All routes', html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.', add)}</section>` };
+    return { title: 'All routes', html: `${pageHead({ title: 'All routes', sub: 'Every HTTP route in the cluster, grouped by project.', actions: add })}<section class="ap-panel">${emptyState('No routes yet', 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.', add)}</section>${sizeDefaultPanel()}`, mount: mountSizeDefault };
   }
   return {
     title: 'All routes',
@@ -2388,8 +2393,10 @@ route('/routes', () => {
 <div class="ap-seg" role="group" aria-label="Status" data-f="status"><button type="button" aria-pressed="true" data-v="all">All</button><button type="button" aria-pressed="false" data-v="attention">Needs attention</button><button type="button" aria-pressed="false" data-v="disabled">Disabled</button></div>
 ${select('f-project', [['', 'All projects'], ...D.projects.map(p => [p.id, p.name])], '', 'aria-label="Project" data-f="project"')}</div>
 <div data-selbar></div><div data-table></div>
-<div class="ap-panel-foot"><div class="ap-pager"><span data-count aria-live="polite"></span></div></div></section>`,
+<div class="ap-panel-foot"><div class="ap-pager"><span data-count aria-live="polite"></span></div></div></section>
+${sizeDefaultPanel()}`,
     mount(el) {
+      mountSizeDefault(el);
       const f = { q: '', project: '', status: 'all' };
       let selected = [];
       const box = $('[data-table]', el);
@@ -2486,6 +2493,7 @@ const RM = {
   'route.canaryName': 'Use letters, digits and hyphens, such as X-Canary.',
   'certificate.choose': 'Choose an uploaded certificate.',
   'certificate.doesNotCover': 'This certificate doesn’t cover the hostname. Choose one that does, or use an automatic certificate.',
+  'route.bodySize': 'Enter a whole number from 1 MB to 100 GB.',
 };
 function checkHost(v) {
   const s = String(v || '').trim();
@@ -2520,6 +2528,70 @@ const certCovers = (c, h) => c === h || (c.startsWith('*.') && h.endsWith(c.slic
 const withLabel = (html, label) => html.replace('class="ap-field"', `class="ap-field" data-label="${label}"`);
 const rtChoice = (name, checked, title, help, cls = 'ap-switch', style = '') => `<label class="ap-choice"${style ? ` style="${style}"` : ''}><input class="${cls}" type="checkbox" name="${name}"${checked ? ' checked' : ''}><span class="ap-choice-text"><span>${title}</span><span class="ap-help">${help}</span></span></label>`;
 const MAX_TARGETS = 10;
+
+/* Request size limits, in decimal MB like Docker shows them. A route without `size` uses the cluster default. */
+const MAX_SIZE_MB = 100000;
+const fmtSize = mb => (mb === 'none' ? 'No limit' : mb >= 1000 && mb % 1000 === 0 ? `${num(mb / 1000)} GB` : `${num(mb)} MB`);
+const toMb = (value, unit) => +value * (unit === 'GB' ? 1000 : 1);
+const usesDefaultSize = r => r.size === undefined;
+const checkSize = (value, unit) => {
+  const s = String(value).trim();
+  return !/^\d+$/.test(s) || toMb(s, unit) < 1 || toMb(s, unit) > MAX_SIZE_MB ? RM['route.bodySize'] : null;
+};
+function sizeFields(prefix, mb, help) {
+  const [value, unit] = mb >= 1000 && mb % 1000 === 0 ? [mb / 1000, 'GB'] : [mb, 'MB'];
+  return `<div class="ap-row" style="gap:12px;align-items:flex-start;flex-wrap:wrap;max-width:420px">
+<div style="flex:2 1 160px">${field({ name: prefix + 'Value', label: 'Largest request', type: 'number', value, data: true, attrs: 'inputmode="numeric" min="1"', help })}</div>
+<div style="flex:1 1 90px">${field({ name: prefix + 'Unit', label: 'Unit', control: select(prefix + 'Unit', ['MB', 'GB'], unit) })}</div></div>`;
+}
+function sizeChoices(size) {
+  const mode = size === undefined ? 'default' : size === 'none' ? 'none' : 'custom';
+  const choice = (value, title, help) => `<label class="ap-choice"><input class="ap-radio" type="radio" name="sizeMode" value="${value}"${value === mode ? ' checked' : ''}><span class="ap-choice-text"><span>${title}</span><span class="ap-help">${help}</span></span></label>`;
+  return `<fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-label">Request size limit</legend><div class="ap-stack" style="gap:10px">
+${choice('default', `Cluster default, <span class="ap-data">${fmtSize(D.sizeDefault)}</span>`, 'Follows the default on the All routes page, so it changes when an Administrator changes the default.')}
+${choice('custom', 'Custom', 'For routes that take large uploads, such as a container registry, or should only take small ones.')}
+<div style="margin-left:30px" data-size-custom${mode === 'custom' ? '' : ' hidden'}>${sizeFields('size', typeof size === 'number' ? size : D.sizeDefault, 'From 1 MB to 100 GB. Larger requests get a 413 and never reach the target.')}</div>
+${choice('none', 'No limit', 'Anyone who can reach this route can send it uploads of any size. Use it only when the target checks who is uploading, as a container registry does, or with allowed addresses.')}
+</div></fieldset><div data-size-warn></div>`;
+}
+
+/* The default on All routes. Administrators change it; everyone sees which routes set their own limit. */
+function sizeDefaultPanel() {
+  const using = D.routes.filter(usesDefaultSize).length, own = D.routes.filter(r => !usesDefaultSize(r));
+  const used = using === D.routes.length ? 'Every route uses it' : `${using} of ${plural(D.routes.length, 'route')} use it`;
+  return `<form class="ap-panel" id="rd-form" novalidate aria-labelledby="rd-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="rd-t">Request size limit</h2><p class="ap-panel-desc">The largest request a route accepts, unless it sets its own. Larger requests get a 413 and never reach the target.</p></div></div>
+<div class="ap-panel-body ap-stack"><div data-summary></div>
+${isAdmin() ? sizeFields('default', D.sizeDefault, `From 1 MB to 100 GB. ${used}.`)
+    : `<dl class="ap-kv"><dt>Default</dt><dd><span class="ap-data">${fmtSize(D.sizeDefault)}</span>. ${used}. Only Administrators can change it.</dd></dl>`}
+${own.length ? `<div class="ap-stack" style="gap:4px"><span class="ap-label">Routes with their own limit</span><div class="ap-list">${own.map(r => `<div class="ap-list-row"><div class="ap-list-text"><a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a></div>${r.size !== 'none' ? `<span class="ap-data">${fmtSize(r.size)}</span>` : r.allow && r.allow.length ? '<span class="ap-tag">No limit</span>' : status('warn', 'No limit, open to everyone')}</div>`).join('')}</div></div>` : ''}
+</div>
+${isAdmin() ? '<div class="ap-panel-foot ap-row" style="justify-content:flex-end"><button class="ap-btn" type="submit" data-busy="Saving…" data-write>Save default</button></div>' : ''}</form>`;
+}
+function mountSizeDefault(el) {
+  if (!isAdmin()) return;
+  const using = D.routes.filter(usesDefaultSize).length;
+  form($('#rd-form', el), { defaultValue: (v, all) => checkSize(v, all.defaultUnit) }, {
+    verb: 'save it',
+    links: { defaultUnit: ['defaultValue'] },
+    submit: async v => {
+      const mb = toMb(v.defaultValue, v.defaultUnit), old = D.sizeDefault;
+      if (mb === old) { toast(`The default is already ${fmtSize(mb)}.`, { tone: 'info' }); return; }
+      const save = async () => {
+        await api();
+        D.sizeDefault = mb;
+        toast(`${using ? `${plural(using, 'route')} now accept` : 'New routes accept'} requests up to ${fmtSize(mb)}, on every replica.`, { title: 'Default saved' });
+        refresh();
+      };
+      if (!using) return save();
+      confirmDialog({
+        title: `Change the limit on ${plural(using, 'route')}?`,
+        text: `${using === 1 ? 'One route uses' : `${num(using)} routes use`} the cluster default. ${using === 1 ? 'It' : 'They'} will accept requests up to <span class="ap-data">${fmtSize(mb)}</span> instead of <span class="ap-data">${fmtSize(old)}</span>, on every replica as soon as you save.${mb < old ? ' Uploads larger than that start failing with a 413.' : ''} Routes with their own limit don’t change.`,
+        confirm: 'Change the default', busy: 'Saving…', tone: mb < old ? 'danger' : 'primary', mark: mb < old ? ['warn', 'triangle-alert'] : ['info', 'info'],
+        onConfirm: save,
+      });
+    },
+  });
+}
 
 route('/routes/new', () => routeEditor(null));
 route('/routes/new/:project', p => routeEditor(null, p));
@@ -2591,7 +2663,8 @@ ${rtChoice('sticky', src.sticky, 'Sticky sessions', 'Keeps each visitor on the t
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s4"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s4">Traffic rules</h2></div></div><div class="ap-panel-body ap-stack">
-<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', type: 'number', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 120.' })}</div>
+<div style="max-width:220px">${field({ name: 'timeout', label: 'Timeout', type: 'number', value: src.timeout, data: true, after: 'seconds', attrs: 'inputmode="numeric"', help: 'From 1 to 3600. Counts only time without any data moving, so a long upload that keeps sending isn’t cut off.' })}</div>
+${sizeChoices(src.size)}
 ${rtChoice('compression', src.compression, 'Compression', 'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.')}
 ${rtChoice('caching', src.caching, 'Caching', 'Stores only what the target allows with Cache-Control, in memory on each replica.')}
 ${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.')}
@@ -2681,9 +2754,18 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
     rowsEl.addEventListener('input', e => { if (/^t-(weight|host)-/.test(e.target.name)) { drawSplit(); drawCanary(); } });
     const showUpl = () => { $('[data-upl]', el).hidden = f.elements.cert.value !== 'uploaded'; };
     showUpl();
+    const showSize = () => {
+      $('[data-size-custom]', el).hidden = f.elements.sizeMode.value !== 'custom';
+      const open = f.elements.sizeMode.value === 'none' && !f.elements.allow.value.trim();
+      $('[data-size-warn]', el).innerHTML = open ? banner('warn', 'Anyone can upload any amount to this route', 'The route allows every address and has no size limit. Make sure the target checks who is uploading, or add allowed addresses under Access.') : '';
+      paint();
+    };
+    showSize();
+    f.addEventListener('input', e => { if (e.target.name === 'allow') showSize(); });
     f.addEventListener('change', e => {
       const n = e.target.name;
       if (n === 'cert') showUpl();
+      if (n === 'sizeMode') showSize();
       if (n === 'canarySource') drawCanary();
       if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
       if (n === 'rateLimited') $('[data-rate]', el).hidden = !e.target.checked;
@@ -2742,7 +2824,8 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           const h = String(all.host).trim().toLowerCase();
           return h && !certCovers(val.toLowerCase(), h) ? RM['certificate.doesNotCover'] : null;
         },
-        timeout: rtWhole(1, 120),
+        timeout: rtWhole(1, 3600),
+        sizeValue: (val, all) => (all.sizeMode === 'custom' ? checkSize(val, all.sizeUnit) : null),
         allow: val => {
           const lines = String(val).split('\n').map(s => s.trim()).filter(Boolean);
           if (lines.length > 100) return RM['ipRange.tooMany'];
@@ -2780,7 +2863,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       return rules;
     }, {
       verb: 'save',
-      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : []),
+      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : n === 'sizeMode' || n === 'sizeUnit' ? ['sizeValue'] : []),
       submit: async val => {
         await api();
         syncTargets();
@@ -2791,6 +2874,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           canary: many() && val.canarySource !== 'none' ? { source: val.canarySource, name: val.canaryName.trim(), value: val.canaryValue.trim() } : null,
           sticky: many() && val.sticky, compression: val.compression, caching: val.caching, hsts: val.hsts, hstsSub: val.hsts && val.hstsSub,
           cert: val.cert, certId: val.cert === 'uploaded' ? val.certId : null, timeout: +val.timeout,
+          size: val.sizeMode === 'default' ? undefined : val.sizeMode === 'none' ? 'none' : toMb(val.sizeValue, val.sizeUnit),
           allow: val.allow.split('\n').map(s => s.trim()).filter(Boolean), rateLimit: val.rateLimited ? +val.rateLimit : null,
           gate: !val.gated ? null : {
             password: newPassword ? val.gatePassword : src.gate.password, set: newPassword ? NOW : src.gate.set, by: newPassword ? D.me.email : src.gate.by,
@@ -4361,7 +4445,22 @@ const PT_TEXT = new Map(Object.entries({
   'Certificate source': 'Origem do certificado', 'From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.': 'Do Let’s Encrypt, renovado por si. O nome do anfitrião tem de chegar a este cluster na porta 80.',
   'Uploaded certificate': 'Certificado carregado', 'For wildcards and internal certificate authorities.': 'Para domínios com caráter universal e autoridades de certificação internas.',
   'Choose a certificate': 'Escolha um certificado', 'Upload a certificate on the Certificates page first if yours isn’t listed.': 'Se o seu não estiver na lista, carregue primeiro um certificado na página Certificados.',
-  'Traffic rules': 'Regras de tráfego', 'Timeout': 'Tempo limite', 'From 1 to 120.': 'De 1 a 120.', 'Compression': 'Compressão',
+  'Traffic rules': 'Regras de tráfego', 'Timeout': 'Tempo limite',
+  'From 1 to 3600. Counts only time without any data moving, so a long upload that keeps sending isn’t cut off.': 'De 1 a 3600. Conta só o tempo sem dados a passar, por isso um carregamento longo que continua a enviar não é interrompido.',
+  'Request size limit': 'Limite de tamanho dos pedidos', 'Cluster default,': 'Predefinição do cluster,', 'Custom': 'Personalizado', 'No limit': 'Sem limite',
+  'Follows the default on the All routes page, so it changes when an Administrator changes the default.': 'Segue a predefinição da página Todas as rotas, por isso muda quando um Administrador muda a predefinição.',
+  'For routes that take large uploads, such as a container registry, or should only take small ones.': 'Para rotas que recebem carregamentos grandes, como um registo de contentores, ou que só devem receber pequenos.',
+  'Largest request': 'Maior pedido', 'Unit': 'Unidade',
+  'From 1 MB to 100 GB. Larger requests get a 413 and never reach the target.': 'De 1 MB a 100 GB. Pedidos maiores recebem um 413 e nunca chegam ao destino.',
+  'Anyone who can reach this route can send it uploads of any size. Use it only when the target checks who is uploading, as a container registry does, or with allowed addresses.': 'Quem conseguir chegar a esta rota pode enviar-lhe carregamentos de qualquer tamanho. Use-o só quando o destino verifica quem está a carregar, como faz um registo de contentores, ou com endereços permitidos.',
+  'Anyone can upload any amount to this route': 'Qualquer pessoa pode carregar qualquer quantidade para esta rota',
+  'The route allows every address and has no size limit. Make sure the target checks who is uploading, or add allowed addresses under Access.': 'A rota permite todos os endereços e não tem limite de tamanho. Confirme que o destino verifica quem está a carregar, ou adicione endereços permitidos em Acesso.',
+  'Enter a whole number from 1 MB to 100 GB.': 'Introduza um número inteiro de 1 MB a 100 GB.',
+  'The largest request a route accepts, unless it sets its own. Larger requests get a 413 and never reach the target.': 'O maior pedido que uma rota aceita, a menos que defina o seu. Pedidos maiores recebem um 413 e nunca chegam ao destino.',
+  'From 1 MB to 100 GB. Every route uses it.': 'De 1 MB a 100 GB. Todas as rotas a usam.',
+  'Routes with their own limit': 'Rotas com limite próprio', 'No limit, open to everyone': 'Sem limite, aberta a todos',
+  'Save default': 'Guardar predefinição', 'Default saved': 'Predefinição guardada', 'Change the default': 'Mudar a predefinição',
+  'instead of': 'em vez de', 'Compression': 'Compressão',
   'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.': 'Desativada por omissão. Ative-a só para conteúdo público e estático: comprimir páginas que misturam segredos com texto que os visitantes podem alterar permite que atacantes adivinhem os segredos.',
   'Caching': 'Cache', 'Stores only what the target allows with Cache-Control, in memory on each replica.': 'Guarda só o que o destino permite com Cache-Control, em memória em cada réplica.',
   'HTTPS only (HSTS)': 'Só HTTPS (HSTS)',
@@ -4899,6 +4998,15 @@ const PT_PATTERNS = [
   [/^Move (\d+) routes?$/, (m, n) => `Mover ${n} ${n === '1' ? 'rota' : 'rotas'}`],
   [/^(.+) moved to (.+)\.$/, (m, a, b) => `${tr(a)} movida${/^\d+ routes$/.test(a) ? 's' : ''} para ${b}.`],
   [/^(.+) saved\. It applies on every replica now\.$/, '$1 guardada. Já se aplica em todas as réplicas.'],
+  [/^From 1 MB to 100 GB\. (\d+) of (\d+) routes use it\.$/, 'De 1 MB a 100 GB. $1 de $2 rotas usam-na.'],
+  [/^\. Every route uses it\. Only Administrators can change it\.$/, '. Todas as rotas a usam. Só os Administradores a podem mudar.'],
+  [/^\. (\d+) of (\d+) routes use it\. Only Administrators can change it\.$/, '. $1 de $2 rotas usam-na. Só os Administradores a podem mudar.'],
+  [/^The default is already (.+)\.$/, 'A predefinição já é $1.'],
+  [/^(\d+) routes? now accept requests up to (.+), on every replica\.$/, (m, n, a) => `${n === '1' ? 'A rota passa' : `As ${n} rotas passam`} a aceitar pedidos até ${a}, em todas as réplicas.`],
+  [/^New routes accept requests up to (.+), on every replica\.$/, 'As rotas novas aceitam pedidos até $1, em todas as réplicas.'],
+  [/^Change the limit on (\d+) routes?\?$/, (m, n) => `Mudar o limite ${n === '1' ? 'de 1 rota' : `de ${n} rotas`}?`],
+  [/^(One route uses|(\d+) routes use) the cluster default\. (It|They) will accept requests up to$/, (m, a, n) => `${n ? `${n} rotas usam` : 'Uma rota usa'} a predefinição do cluster. ${n ? 'Passam' : 'Passa'} a aceitar pedidos até`],
+  [/^, on every replica as soon as you save\.( Uploads larger than that start failing with a 413\.)? Routes with their own limit don’t change\.$/, (m, w) => `, em todas as réplicas, assim que guardar.${w ? ' Os carregamentos maiores começam a falhar com um 413.' : ''} As rotas com limite próprio não mudam.`],
   [/^(.+) enabled\. Traffic flows again\.$/, '$1 ativada. O tráfego volta a passar.'],
   [/^The weights add up to (\d+)%\. Make them add up to 100%\.$/, 'Os pesos somam $1%. Faça-os somar 100%.'],
   [/^"(.+)" isn't valid: use letters, digits and hyphens, not starting or ending with a hyphen\.$/, '"$1" não é válido: use letras, algarismos e hífenes, sem começar nem acabar com hífen.'],
