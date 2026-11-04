@@ -19,7 +19,7 @@ public static class PageLayout
         return new SecuredPage(Results.Content(
             $$$"""
             <!doctype html>
-            <html lang="{{{language.Code}}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+            <html lang="{{{language.Code}}}" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
             <title>{{{(name is null ? title : $"{title} · {name}")}}}</title>
             <style>{{{s_tokens.Value}}}
             body{font:16px/1.5 var(--font-text);margin:0;background:var(--ground);color:var(--ink)}

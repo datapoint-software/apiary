@@ -52,8 +52,8 @@ export const visitorPagesPortuguese: TextCatalog = {
   'Choose a file': 'Escolher um ficheiro',
   'or drop it here': 'ou largue-o aqui',
   'PNG, WebP or SVG, up to 100 KB': 'PNG, WebP ou SVG, até 100 KB',
-  'Shown 32 pixels high, on light and dark backgrounds, so choose one that works on both.':
-    'Mostrado com 32 píxeis de altura, em fundos claros e escuros, por isso escolha um que funcione em ambos.',
+  'Shown 32 pixels high, on a light background.':
+    'Mostrado com 32 píxeis de altura, num fundo claro.',
   'For buttons. Apiary picks white or black text, whichever reads better on it.':
     'Para os botões. O Apiary escolhe texto branco ou preto, o que se ler melhor sobre ela.',
   'Pick the accent color': 'Escolher a cor de destaque',

@@ -35,7 +35,7 @@
               <input type="file" accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml" aria-labelledby="logo-label" aria-describedby="logo-help logo-error" (change)="load($event)" />
             </label>
           }
-          <span class="ap-help" id="logo-help">{{ 'Shown 32 pixels high, on light and dark backgrounds, so choose one that works on both.' | t }}</span>
+          <span class="ap-help" id="logo-help">{{ 'Shown 32 pixels high, on a light background.' | t }}</span>
           <span class="ap-error" id="logo-error" [hidden]="!logoError()"><ap-icon [icon]="icons.alert" />{{ logoError() }}</span>
         </div>
         <ap-field [label]="'Accent color' | t" [field]="brand.accent" [help]="'For buttons. Apiary picks white or black text, whichever reads better on it.' | t">
