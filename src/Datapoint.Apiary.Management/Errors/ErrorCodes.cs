@@ -59,6 +59,7 @@ public static class ErrorCodes
     public const string BrandLogoType = "brand.logoType";
     public const string BrandLogoTooLarge = "brand.logoTooLarge";
     public const string BrandLogoInvalid = "brand.logoInvalid";
+    public const string LanguageUnsupported = "language.unsupported";
     public const string RedirectNotFound = "redirect.notFound";
     public const string RedirectDuplicate = "redirect.duplicate";
     public const string RedirectRouteExists = "redirect.routeExists";
@@ -149,7 +150,7 @@ public static class ErrorCodes
         ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired, RouteTargetsTooMany, RouteWeightsTotal, RouteCanaryName,
         MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
         RoutePasswordRequired, RoutePasswordShort, RouteLinkKeyRequired, RouteLinkKeyInvalid,
-        BrandAccentInvalid, BrandLogoType, BrandLogoTooLarge, BrandLogoInvalid,
+        BrandAccentInvalid, BrandLogoType, BrandLogoTooLarge, BrandLogoInvalid, LanguageUnsupported,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,

@@ -13,4 +13,6 @@ public sealed record User(
     DateTimeOffset? LastSignInAt)
 {
     public string? ExternalId { get; init; }
+
+    public string? Language { get; init; }
 }
