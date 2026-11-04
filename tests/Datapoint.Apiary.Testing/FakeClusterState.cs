@@ -17,7 +17,13 @@ public sealed class FakeClusterState : IClusterState, IDisposable
 
     public IReadOnlyList<StateEntry> Entries => _entries;
 
-    public IChangeToken GetChangeToken() => new CancellationChangeToken(_changed.Token);
+    public int ChangeTokenRequests { get; private set; }
+
+    public IChangeToken GetChangeToken()
+    {
+        ChangeTokenRequests++;
+        return new CancellationChangeToken(_changed.Token);
+    }
 
     public async ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken)
     {

@@ -21,10 +21,11 @@ public sealed partial class StreamListeners(
     private readonly Dictionary<(StreamProtocol Protocol, int Port), IStreamListener> _listeners = [];
     private readonly HashSet<(StreamProtocol Protocol, int Port)> _failed = [];
     private readonly SemaphoreSlim _changed = new(0);
+    private IDisposable? _subscription;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var subscription = ChangeToken.OnChange(cluster.GetChangeToken, () => _changed.Release());
+        _subscription = ChangeToken.OnChange(cluster.GetChangeToken, () => _changed.Release());
         try
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -49,6 +50,7 @@ public sealed partial class StreamListeners(
 
     public override void Dispose()
     {
+        _subscription?.Dispose();
         _changed.Dispose();
         base.Dispose();
     }
