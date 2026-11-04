@@ -8,6 +8,7 @@ import {
   ProjectView,
   RouteView,
   SignedInUser,
+  StreamRouteView,
   UserView,
 } from '../api/models';
 import { PasswordModel, RouteModel, emptyRoute } from '../routes/route-model';
@@ -31,6 +32,25 @@ export function aRoute(overrides: Partial<RouteView> = {}): RouteView {
     requestsPerMinute: 0,
     health: 'healthy',
     targetsDown: 0,
+    ...overrides,
+  };
+}
+
+export function aStreamRoute(overrides: Partial<StreamRouteView> = {}): StreamRouteView {
+  return {
+    id: 'stream-1',
+    projectId: 'project-1',
+    name: 'MQTT',
+    protocol: 'tcp',
+    listenPort: 1883,
+    targetHost: 'mqtt',
+    targetPort: 1883,
+    serverNames: [],
+    idleTimeoutSeconds: 60,
+    disabled: false,
+    allowedAddresses: [],
+    connections: 0,
+    changedAt: '2026-11-01T10:00:00Z',
     ...overrides,
   };
 }
