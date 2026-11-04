@@ -60,6 +60,10 @@ TRADEMARKS.md.
 Third-party material
 --------------------
 
+The packages Apiary's server uses, and their licenses and notices, are listed
+in THIRD-PARTY-NOTICES.txt; the admin interface's, in 3rdpartylicenses.txt
+next to its files.
+
 The list of common passwords in
 "src/Datapoint.Apiary.Security/Passwords/common-passwords.txt.gz" is taken
 from SecLists (https://github.com/danielmiessler/SecLists), under the

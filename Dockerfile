@@ -28,6 +28,7 @@ RUN apt-get update \
     && chown app:app /data /keys
 WORKDIR /app
 COPY --from=server /app/ ./
+COPY LICENSE NOTICE TRADEMARKS.md THIRD-PARTY-NOTICES.txt ./
 ENV PATH="/app:${PATH}" \
     ASPNETCORE_ENVIRONMENT=Production \
     Apiary__DataDirectory=/data \

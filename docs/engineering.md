@@ -26,6 +26,7 @@ tests/
   Datapoint.Apiary.Architecture.Tests/   Checks the dependency rules below
 deploy/                            Compose and stack files
 design/                            The published design system and the prototype (see design/prototype/README.md)
+tools/                             Repository scripts, such as the third-party notices generator
 docs/  branding/
 Datapoint.Apiary.slnx  Directory.Build.props  Directory.Packages.props  global.json  .editorconfig
 ```
@@ -147,6 +148,7 @@ C# 14 features we use: `field`-backed properties, null-conditional assignment (`
 - `.slnx` solution.
 - `global.json` pins the SDK and selects Microsoft.Testing.Platform as the test runner.
 - Central package management in `Directory.Packages.props`, with lock files, restore in locked mode in CI, and NuGet audit of transitive packages. See [central package management](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management).
+- **Third-party notices are generated.** After adding or upgrading a NuGet package, run `python3 tools/third-party-notices.py` and commit `THIRD-PARTY-NOTICES.txt` with the change; `--check` fails when the file is out of date, for CI. It accepts only the licenses in `tools/licenses/` (MIT and Apache-2.0): a package under another license fails it until someone has reviewed that license, including whether it still lets Datapoint offer Apiary under a commercial license as well as the AGPL, and added its text there. The image ships the file in `/app` with `LICENSE`, `NOTICE` and `TRADEMARKS.md`.
 - **No Native AOT or trimming.** YARP supports Native AOT, but DotNext's cluster and Datapoint.Mediator haven't been verified with it, and trimming turns HTTP/3 off. Trimming analyzers stay on as warnings, so we know the cost if we revisit this.
 - **The image is published as `hub.datapoint.software/datapoint/apiary`,** tagged with the bare version.
 - **CI comes last:** the pipeline is added once all features are complete. Until then, builds and tests run locally.
