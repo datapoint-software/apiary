@@ -74,6 +74,7 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
         builder.UseSetting("Apiary:DataDirectory", Path.Combine(_directory.Path, "data"));
         builder.UseSetting("Apiary:KeyDirectory", Path.Combine(_directory.Path, "keys"));
         builder.UseSetting("Apiary:RootKeyFile", Path.Combine(_directory.Path, "none"));
+        builder.UseSetting("Apiary:Acme:DirectoryUrl", "https://127.0.0.1:1/directory");
         foreach (var (key, value) in Settings)
         {
             builder.UseSetting(key, value);

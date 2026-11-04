@@ -22,6 +22,7 @@ const server = spawn('dotnet', ['run', '--project', project, '--no-launch-profil
         Apiary__DataDirectory: join(directory, 'data'),
         Apiary__KeyDirectory: join(directory, 'keys'),
         Apiary__RootKeyFile: join(directory, 'none'),
+    Apiary__Acme__DirectoryUrl: 'https://127.0.0.1:1/directory',
     },
 });
 
