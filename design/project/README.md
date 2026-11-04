@@ -104,7 +104,7 @@ Rules:
 
 Apiary has no logo yet. Until it does, write the name in the display face, bold, in `ink`, after a honey hexagon (Shell's `ap-brand`). Don't draw a bee.
 
-**Attribution is required.** Apiary's license (NOTICE, term 1) requires every version of the admin interface to show "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", linking to https://datapoint.software/, with the Datapoint logo next to it. Shell puts it in the sidebar footer. Use the logo from the Logos group; inline its SVG so it takes the text color (`ink-2`) in both themes. The logo's use is governed by TRADEMARKS.md.
+**Attribution is required.** Apiary's license (NOTICE, term 1) requires every version of the admin interface to show "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", linking to https://datapoint.software/, with the Datapoint logo next to it. Shell puts it in a footer centered under the content of every page (`ap-app-foot`), where a collapsed sidebar can't hide it; the sign-in and visitor pages end the same way. Use the logo from the Logos group; inline its SVG so it takes the text color (`ink-2`) in both themes. The logo's use is governed by TRADEMARKS.md.
 
 ## Accessibility
 
