@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <ProjectReference Include="..\Datapoint.Apiary.Testing\Datapoint.Apiary.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Datapoint.Apiary\Datapoint.Apiary.csproj" />
+  </ItemGroup>
+</Project>

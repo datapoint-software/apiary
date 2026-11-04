@@ -20,5 +20,6 @@
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <ProjectReference Include="..\Datapoint.Apiary.Management\Datapoint.Apiary.Management.csproj" />
     <ProjectReference Include="..\Datapoint.Apiary.Proxy\Datapoint.Apiary.Proxy.csproj" />
+    <InternalsVisibleTo Include="Datapoint.Apiary.Tests" />
   </ItemGroup>
 </Project>

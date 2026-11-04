@@ -14,5 +14,6 @@
     <Project Path="tests/Datapoint.Apiary.Management.Tests/Datapoint.Apiary.Management.Tests.csproj" />
     <Project Path="tests/Datapoint.Apiary.Security.Tests/Datapoint.Apiary.Security.Tests.csproj" />
     <Project Path="tests/Datapoint.Apiary.Testing/Datapoint.Apiary.Testing.csproj" />
+    <Project Path="tests/Datapoint.Apiary.Tests/Datapoint.Apiary.Tests.csproj" />
   </Folder>
 </Solution>
