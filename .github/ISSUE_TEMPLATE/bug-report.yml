@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in Apiary doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found a vulnerability? Don't report it here: use the private form in [SECURITY.md](https://github.com/datapoint-software/apiary/blob/main/SECURITY.md).
+        Remove credentials, root keys, domain names and IP addresses you don't want public from everything you paste.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add a route from `shop.example.test` to `whoami`, port 80.
+        2. Open `https://shop.example.test`.
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The image tag, such as `1.0.0-alpha.7`, or the commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Docker Swarm, several nodes
+        - Docker Swarm, one node
+        - Docker Compose
+        - dotnet run, for development
+    validations:
+      required: true
+  - type: input
+    id: replicas
+    attributes:
+      label: Replicas
+      description: How many Apiary replicas were running.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The relevant lines from `docker service logs` or `docker compose logs`.
+      render: text
