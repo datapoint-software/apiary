@@ -31,6 +31,6 @@ public sealed class RenewCertificateHandler(IClusterState cluster, CertificateIs
     }
 
     private static bool IsTooSoon(Certificate certificate, DateTimeOffset now) =>
-        certificate.NextAttemptAt > now
+        (certificate.NextAttemptAt > now && RenewalPlan.LastFailureReachedAcme(certificate))
         || certificate.History.Any(e => e.Kind is CertificateEventKind.Issued or CertificateEventKind.Renewed && now - e.At < s_minimumInterval);
 }

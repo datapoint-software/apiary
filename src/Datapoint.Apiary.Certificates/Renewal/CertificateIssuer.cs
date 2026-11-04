@@ -139,7 +139,7 @@ public sealed partial class CertificateIssuer(
         var saved = current.WithEvent(new CertificateEvent(now, CertificateEventKind.Failed, exception.Code, exception.Detail, user ?? SystemActor)) with
         {
             FailedAttempts = attempts,
-            NextAttemptAt = now + RenewalPlan.RetryAfter(attempts),
+            NextAttemptAt = now + RenewalPlan.RetryAfter(attempts, exception.Code),
         };
         await AppendAsync([new CertificateSaved(saved), new AcmeChallengesRemoved(tokens), new LockReleased(lockName, _holder), Audit(now, user, action, saved, AuditOutcome.Failed)], cancellationToken);
         return new IssueResult(saved, exception.Code, exception.Detail);

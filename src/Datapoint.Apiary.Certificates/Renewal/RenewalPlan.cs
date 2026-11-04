@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Certificates.Acme;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.State;
 
@@ -6,6 +7,7 @@ namespace Datapoint.Apiary.Certificates.Renewal;
 public static class RenewalPlan
 {
     public static readonly TimeSpan KeepUnused = TimeSpan.FromDays(30);
+    private static readonly TimeSpan s_unreachableRetry = TimeSpan.FromMinutes(5);
 
     public static IReadOnlySet<string> WantedHosts(ApiaryState state) =>
         state.Routes.Values.Where(r => r.CertificateId is null).Select(r => r.Host)
@@ -22,13 +24,16 @@ public static class RenewalPlan
     public static IReadOnlyList<string> Due(ApiaryState state, DateTimeOffset now) =>
         [.. WantedHosts(state).Where(host => IsDue(Automatic(state, host), now)).Order(StringComparer.Ordinal)];
 
-    public static TimeSpan RetryAfter(int failedAttempts) => failedAttempts switch
+    public static TimeSpan RetryAfter(int failedAttempts, string code) => code == AcmeErrors.Unreachable ? s_unreachableRetry : failedAttempts switch
     {
         <= 1 => TimeSpan.FromMinutes(5),
         2 => TimeSpan.FromMinutes(15),
         3 => TimeSpan.FromHours(1),
         _ => TimeSpan.FromHours(6),
     };
+
+    public static bool LastFailureReachedAcme(Certificate certificate) =>
+        certificate.History.FirstOrDefault(e => e.Kind == CertificateEventKind.Failed)?.Code is not AcmeErrors.Unreachable;
 
     private static bool IsLocal(string host) =>
         host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase);
