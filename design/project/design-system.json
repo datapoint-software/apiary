@@ -36,8 +36,8 @@
   },
   "lastChange": {
     "by": "João Lopes",
-    "at": "2026-11-03T10:00:00Z",
+    "at": "2026-11-04T00:03:43Z",
     "via": "Claude Code",
-    "note": "Approved version: solid surfaces, collapsible sidebar, accessibility settings, account menu, new DatePicker, Validation and FileDrop cards, and the clickable Prototype page in place of the single dashboard."
+    "note": "Synced with the app: new CodeInput, Loading, PageHead, Panel and SaveBar cards, and the other cards, the brand book, the stylesheet and the Prototype brought up to date."
   }
 }
