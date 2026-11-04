@@ -18,3 +18,17 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Keeps the workflows' actions current. They're pinned by commit SHA, so a
+  # moved tag can't change what runs; Dependabot updates the SHA and its
+  # version comment together, in one pull request that CI runs.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]

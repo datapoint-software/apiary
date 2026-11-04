@@ -11,7 +11,7 @@ How a version gets from `main` to Docker Hub, and how to try a pre-release on a 
 
 Only a tag publishes an image. To rehearse a release, run the Release workflow by hand from **Actions → Release → Run workflow**: it runs every step for both platforms, but doesn't sign in to Docker Hub or push, so it needs no secrets. A release tags the image with its version; a final release (no `-`) also moves `latest`, a pre-release never does. Each image carries a build provenance attestation and an SBOM, which `docker buildx imagetools inspect datapointsoftware/apiary:<version> --format '{{ json .SBOM }}'` shows.
 
-Actions are pinned by commit SHA, with the version in a comment, so a moved tag upstream can't change what runs. Update them on purpose, together with the comment.
+Actions are pinned by commit SHA, with the version in a comment, so a moved tag upstream can't change what runs. Every Monday, [Dependabot](../.github/dependabot.yml) opens one pull request that updates them, SHA and comment together, and CI runs it before it's merged.
 
 ## Set up publishing (once)
 
