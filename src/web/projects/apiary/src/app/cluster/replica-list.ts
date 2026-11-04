@@ -24,7 +24,7 @@ import {
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { MemberView, MembershipMode } from '../api/models';
-import { timeAgo } from '../api/time-ago';
+import { timeAgo, timeSince } from '../api/time-ago';
 import { Auth } from '../auth/auth';
 import { ClusterStatus } from './cluster-status';
 import { PendingReplicas } from './pending-replicas';
@@ -96,7 +96,7 @@ export class ReplicaList {
       return [
         'critical',
         member.missingSince
-          ? `Missing for ${timeAgo(member.missingSince).replace(/ ago$/, '')}`
+          ? `Missing for ${timeSince(member.missingSince)}`
           : 'Unreachable',
       ];
     }
@@ -136,7 +136,7 @@ export class ReplicaList {
     const node = member.node ?? member.address;
     const settings = this.cluster.view()?.membership;
     const missing = member.missingSince
-      ? `It has been missing for ${timeAgo(member.missingSince).replace(/ ago$/, '')}`
+      ? `It has been missing for ${timeSince(member.missingSince)}`
       : 'It can’t be reached';
     const later =
       settings?.mode === 'automatic'

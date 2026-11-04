@@ -39,6 +39,7 @@ import { Auth } from '../auth/auth';
 import { ClusterStatus } from '../cluster/cluster-status';
 import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
+import { LanguageMenu } from './language-menu';
 import { DisplayMenu } from './display-menu';
 import { SearchBox } from './search-box';
 import { NavGroup } from './nav-item';
@@ -58,6 +59,7 @@ import { sourceUrl, version } from '../version';
     Banner,
     Status,
     DatapointLogo,
+    LanguageMenu,
     CdkMenu,
     CdkMenuItem,
     CdkMenuTrigger,

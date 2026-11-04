@@ -108,6 +108,7 @@ export interface SignedInUser {
   readonly twoStepSetUpAt?: string;
   readonly recoveryCodesLeft: number;
   readonly singleSignOn: boolean;
+  readonly language?: string;
 }
 
 export interface SignInOptions {

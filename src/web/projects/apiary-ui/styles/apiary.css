@@ -636,6 +636,9 @@
 .ap a.ap-tab[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
 .ap-cell-main { display: flex; flex-direction: column; gap: 2px; }
 .ap .ap-cell-main a { color: var(--ink); font-weight: 500; }
+.ap .ap-lang-btn { gap: 6px; padding-inline: 10px; color: var(--ink-2); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; }
+.ap .ap-lang-btn:hover, .ap .ap-lang-btn[aria-expanded="true"] { color: var(--ink); }
+.ap-menu-item .ap-menu-check { margin-left: auto; }
 .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
 .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
 .ap-preview-logo { color: var(--ink-2); }
