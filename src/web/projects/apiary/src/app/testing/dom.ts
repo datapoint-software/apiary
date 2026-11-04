@@ -90,6 +90,7 @@ export function type(control: HTMLInputElement | HTMLTextAreaElement, value: str
 
 export function choose(control: HTMLSelectElement, value: string): void {
   control.value = value;
+  control.dispatchEvent(new Event('input'));
   control.dispatchEvent(new Event('change'));
 }
 
@@ -106,4 +107,10 @@ export function cellsOfRow(fixture: ComponentFixture<unknown>, containing: strin
   const rows = [...root(fixture).querySelectorAll('tbody tr')];
   const row = rows.find((r) => normalized(r.textContent).includes(containing));
   return row ? [...row.querySelectorAll('td')].map((cell) => normalized(cell.textContent)) : [];
+}
+
+export function definitionOf(fixture: ComponentFixture<unknown>, term: string): string {
+  const terms = [...root(fixture).querySelectorAll('dt')];
+  const found = terms.find((dt) => normalized(dt.textContent) === term);
+  return normalized(found?.nextElementSibling?.textContent ?? null);
 }
