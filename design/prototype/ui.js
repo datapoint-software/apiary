@@ -176,6 +176,8 @@ ${check ? `<label class="ap-choice"><input class="ap-check" type="checkbox" id="
 
 /* Menus, anchored to the button that opened them */
 let openMenuState = null;
+/* Called on a popup before it's measured and placed. The language layer translates it here, so the popup is sized for its final text. */
+let beforeMeasure = () => {};
 function menu(anchor, items, { label = 'Actions', head = '', align = 'end' } = {}) {
   const reopen = openMenuState && openMenuState.anchor === anchor;
   closeMenu(false);
@@ -186,9 +188,10 @@ function menu(anchor, items, { label = 'Actions', head = '', align = 'end' } = {
   m.setAttribute('aria-label', label);
   m.style.cssText = 'position:fixed;z-index:40;animation:ap-rise 160ms cubic-bezier(.2,.8,.2,1)';
   m.innerHTML = head + items.map((it, i) => (it === '-' ? '<div class="ap-menu-sep" role="separator"></div>'
-    : `<button class="ap-menu-item${it.danger ? ' ap-menu-danger' : ''}" role="menuitem" type="button" tabindex="-1" data-i="${i}"${it.disabled ? ' aria-disabled="true"' : ''}${it.write ? ' data-write' : ''}>${icon(it.icon)}${esc(it.label)}</button>`)).join('');
+    : `<button class="ap-menu-item${it.danger ? ' ap-menu-danger' : ''}" role="${it.checked === undefined ? 'menuitem' : `menuitemradio" aria-checked="${it.checked}`}" type="button" tabindex="-1" data-i="${i}"${it.lang ? ` lang="${it.lang}"` : ''}${it.disabled ? ' aria-disabled="true"' : ''}${it.write ? ' data-write' : ''}>${it.icon ? icon(it.icon) : ''}${esc(it.label)}${it.checked ? icon('check', 'ap-menu-check') : ''}</button>`)).join('');
   $('#overlays').appendChild(m);
   paint();
+  beforeMeasure(m);
   const r = anchor.getBoundingClientRect();
   let top = r.bottom + 6;
   if (top + m.offsetHeight > innerHeight - 8) top = Math.max(8, r.top - m.offsetHeight - 6);
@@ -523,6 +526,7 @@ ${withTime ? `<div class="ap-cal-time"><label class="ap-label" for="cal-h">Time<
   });
   draw(false);
   $('#overlays').appendChild(pop);
+  beforeMeasure(pop);
   const r = wrap.getBoundingClientRect();
   let top = r.bottom + 6;
   if (top + pop.offsetHeight > innerHeight - 8) top = Math.max(8, r.top - pop.offsetHeight - 6);

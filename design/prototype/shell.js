@@ -191,6 +191,29 @@ $('[data-account]').addEventListener('click', e => menu(e.currentTarget, [
   { icon: 'log-out', label: 'Sign out', run: () => go('/sign-in') },
 ], { label: 'Account', head: `<div class="ap-menu-head"><span class="ap-avatar ap-avatar-lg" aria-hidden="true">${initialsOf(D.me.name)}</span><span><strong>${esc(D.me.name)}</strong><span class="ap-secondary">${esc(D.me.email)}</span><span class="ap-secondary">${D.me.role}</span></span></div><div class="ap-menu-sep" role="separator"></div>` }));
 
+/* Language. Idea being tried: Português switches the prototype to European Portuguese, through i18n-pt.js. */
+const LANGUAGES = [{ code: 'en', short: 'EN', name: 'English' }, { code: 'pt', short: 'PT', name: 'Português' }];
+let language = store.get('language') || 'en';
+const langBtn = $('[data-language]');
+function applyLanguage() {
+  const current = LANGUAGES.find(l => l.code === language);
+  $('[data-language-code]').textContent = current.short;
+  langBtn.setAttribute('aria-label', 'Language: ' + current.name);
+}
+langBtn.addEventListener('click', e => menu(e.currentTarget, LANGUAGES.map(l => ({
+  label: l.name, lang: l.code, checked: l.code === language,
+  run: () => {
+    if (l.code === language) return;
+    language = l.code;
+    store.set('language', language);
+    if (language === 'en') { location.reload(); return; }
+    applyLanguage();
+    startTranslation();
+    toast(`Language set to ${l.name}.`, { tone: 'info' });
+  },
+})), { label: 'Language' }));
+applyLanguage();
+
 /* About, reachable from the sidebar in every state: the attribution must never be hidden */
 $('[data-about]').addEventListener('click', () => {
   const d = dialog({
