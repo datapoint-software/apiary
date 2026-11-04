@@ -281,7 +281,8 @@ public sealed partial class RaftClusterState
                 LogLeaving(response.IsSuccessStatusCode);
             }
         }
-        catch (Exception exception) when (exception is OperationCanceledException or HttpRequestException or ClusterUnavailableException)
+        catch (Exception exception) when (exception is OperationCanceledException or HttpRequestException or ClusterUnavailableException
+            or DotNext.Net.Cluster.MemberUnavailableException)
         {
             LogLeaveFailed(exception);
         }
