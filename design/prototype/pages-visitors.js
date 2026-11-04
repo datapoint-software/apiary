@@ -25,7 +25,7 @@ ${note}
 ${poweredBy()}</div>`;
 }
 /* The Datapoint logo, then the Apiary mark and "Powered by Apiary", inline so the page needs no stylesheet. */
-const datapointLogo = (w = 64) => $('.ap-side-foot .ap-attribution a').innerHTML.replace('<svg', `<svg style="width:${w}px;height:auto;display:block"`);
+const datapointLogo = (w = 64) => $('[data-dp-logo]').innerHTML.replace('<svg', `<svg style="width:${w}px;height:auto;display:block"`);
 const poweredBy = ({ small = false } = {}) => `<footer style="padding:${small ? '0' : 'var(--space-6) var(--space-4) var(--space-8)'};display:flex;justify-content:center;align-items:center;gap:${small ? '8px' : '14px'};font-size:${small ? '0.6875rem' : '0.8125rem'};color:var(--ink-3)${small ? ';margin-top:18px' : ''}">
 <a href="https://datapoint.software/"${small ? ' target="_blank" rel="noopener"' : ''} style="color:var(--ink-2)">${datapointLogo(small ? 52 : 88)}</a>
 <span aria-hidden="true" style="width:1px;height:${small ? 12 : 18}px;background:var(--line-strong)"></span>

@@ -17,3 +17,21 @@
 
 /* Idea being tried: the brand dialog has the form and a live preview side by side. */
 .ap-dialog-xl { width: min(760px, 100%); }
+
+/* Idea being tried: the attribution and license links at the bottom of every admin page, like the visitor and
+   sign-in pages, instead of the sidebar, where a collapsed sidebar hid them. */
+.ap-col { display: flex; flex-direction: column; min-height: 100vh; }
+.ap-col > .ap-content { flex: 1 0 auto; }
+.ap-app-foot { max-width: calc(var(--content-max) + 64px); width: 100%; box-sizing: border-box; padding: 0 var(--space-6) var(--space-7); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-3); }
+.ap .ap-app-foot a { color: var(--ink-2); }
+.ap-app-foot-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
+.ap-app-foot-logo svg { width: 80px; height: auto; display: block; }
+.ap-app-foot-sep { width: 1px; height: 16px; background: var(--line-strong); }
+.ap .ap-app-foot a.ap-app-foot-apiary { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); vertical-align: bottom; }
+.ap-app-foot-apiary .ap-brand-mark { width: 13px; height: 12px; }
+@media (max-width: 720px) {
+  .ap-app-foot { padding: 0 var(--space-4) var(--space-6); }
+  /* On a phone: the logo on top, then the version, license and source, then the credit. */
+  .ap-app-foot-row { flex-direction: column; gap: 8px; }
+  .ap-app-foot-sep { display: none; }
+}

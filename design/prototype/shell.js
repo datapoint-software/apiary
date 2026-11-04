@@ -218,7 +218,7 @@ applyLanguage();
 $('[data-about]').addEventListener('click', () => {
   const d = dialog({
     title: 'Apiary', initial: '[data-close]', size: 'about',
-    body: `<div class="ap-about-credits"><span class="ap-about-logo">${$('.ap-side-foot .ap-attribution a').innerHTML}</span><span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span><span>Free software under the <a href="#">GNU Affero General Public License, version 3</a>, with additional terms. This program comes with no warranty. <a href="#">Source code</a></span></div>`,
+    body: `<div class="ap-about-credits"><span class="ap-about-logo">${$('[data-dp-logo]').innerHTML}</span><span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span><span>Free software under the <a href="#">GNU Affero General Public License, version 3</a>, with additional terms. This program comes with no warranty. <a href="#">Source code</a></span></div>`,
     foot: '<button class="ap-btn" type="button" data-close>Close</button>',
   });
   const head = $('.ap-dialog-head', d.el);

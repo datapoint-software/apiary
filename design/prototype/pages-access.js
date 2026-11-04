@@ -477,7 +477,7 @@ ${D.sessions.map(s => `<div class="ap-list-row"><div style="display:flex;gap:12p
 });
 
 /* Sign-in, invites, agent approval and first run: outside the shell, with the attribution */
-const authFoot = () => `<div class="ap-attribution"><span style="color:var(--ink-2)">${$('.ap-side-foot .ap-attribution a').innerHTML}</span><span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span><span>Version ${D.cluster.version} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> · <a href="#">Source</a></span></div>`;
+const authFoot = () => `<div class="ap-attribution"><span style="color:var(--ink-2)">${$('[data-dp-logo]').innerHTML}</span><span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span><span>Version ${D.cluster.version} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> · <a href="#">Source</a></span></div>`;
 const authPage = (heading, body, { sub = '', wide = false } = {}) => `<main class="ap-auth" id="main-bare"><div class="ap-panel ap-auth-card"${wide ? ' style="width:min(460px,100%)"' : ''}><div class="ap-auth-brand"><span class="ap-brand-mark" aria-hidden="true"></span><div><h1 class="ap-h ap-h-2">${heading}</h1>${sub ? `<p class="ap-muted" style="margin:4px 0 0;font-size:0.875rem">${sub}</p>` : ''}</div></div>${body}</div>${authFoot()}</main>`;
 const authLink = (text, attr) => `<button class="ap-link ap-caption" type="button" ${attr} style="color:var(--honey-text)">${text}</button>`;
 function welcome(name, first) {
