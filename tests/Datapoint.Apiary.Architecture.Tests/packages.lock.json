@@ -14,6 +14,18 @@
         "resolved": "5.6.0",
         "contentHash": "Kcobt3pnOdO0A+6CKiMHZdTEluJpsfxiV20axtZdmfBQnDmiWTKPJADlgAfdTuKNAnVarrkJa0UEGwuOo91muw=="
       },
+      "Microsoft.Testing.Extensions.CodeCoverage": {
+        "type": "Direct",
+        "requested": "[18.12.0, )",
+        "resolved": "18.12.0",
+        "contentHash": "BST/sWYpKk9OXO7Yxktcg6FWORRsHU0EdCbMwZ7d3OqJsMKlrNHIZ30g0Ib4k5T5acJYXRBmg9mNrTU/N6cy1g==",
+        "dependencies": {
+          "Microsoft.DiaSymReader": "2.2.10",
+          "Microsoft.Extensions.DependencyModel": "10.0.10",
+          "Microsoft.Testing.Platform": "2.5.0",
+          "Mono.Cecil": "0.11.6"
+        }
+      },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",
         "requested": "[18.12.1, )",
@@ -90,6 +102,11 @@
         "resolved": "10.0.2",
         "contentHash": "LG9Yll3B5aNpxv0+D47g6LiOiKBIlodhcHdQwcYzo8VeexFLGqx5ymetmA2aBRyo9cCcWsQWrFsdbsr8LvmWDw=="
       },
+      "Microsoft.DiaSymReader": {
+        "type": "Transitive",
+        "resolved": "2.2.10",
+        "contentHash": "zmGsm6b2y3STDa/Of7rdkkfTDV8VuGB8aCqIkLoJIQh5tL78K3zJ8OUyFKnfsaORXmGr9iOKwDkZfUjeXi+CwA=="
+      },
       "Microsoft.Extensions.AI.Abstractions": {
         "type": "Transitive",
         "resolved": "10.11.0",
@@ -150,6 +167,11 @@
         "type": "Transitive",
         "resolved": "10.0.14",
         "contentHash": "QtpQzuSZVyTPCuHW058yCs9Nj0394uUkNyFHS813nOmK9UgUdBdaprJ5PPsBgsQIpxADTsTkbaMMonykem6qdw=="
+      },
+      "Microsoft.Extensions.DependencyModel": {
+        "type": "Transitive",
+        "resolved": "10.0.10",
+        "contentHash": "rfZA1RjR021RPqSmIPovfz2aOd79TGqJ9BengbjnzIISOVwjLmuSDnhCMmiY/1c6iYvGolQ1iNGzkav0u11XEA=="
       },
       "Microsoft.Extensions.Diagnostics.Abstractions": {
         "type": "Transitive",
@@ -342,6 +364,11 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.13"
         }
       },
+      "Mono.Cecil": {
+        "type": "Transitive",
+        "resolved": "0.11.6",
+        "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
+      },
       "OpenTelemetry": {
         "type": "Transitive",
         "resolved": "1.20.1",
@@ -457,8 +484,8 @@
       "apiary": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Management": "[0.1.0, )",
-          "Datapoint.Apiary.Proxy": "[0.1.0, )",
+          "Datapoint.Apiary.Management": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Proxy": "[1.0.0-alpha.6, )",
           "Datapoint.Mediator.AspNetCore": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization.AspNetCore": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization.DependencyInjection": "[4.0.0-beta.6, )",
@@ -477,23 +504,23 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
       "datapoint.apiary.management": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Certificates": "[0.1.0, )",
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Certificates": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )",
           "Datapoint.Mediator.Abstractions": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization": "[4.0.0-beta.6, )",
           "FluentValidation": "[12.2.0, )",
@@ -503,13 +530,20 @@
       "datapoint.apiary.proxy": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )",
           "Yarp.ReverseProxy": "[2.3.0, )"
         }
       },
       "datapoint.apiary.security": {
         "type": "Project"
+      },
+      "datapoint.apiary.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
+          "Microsoft.Extensions.TimeProvider.Testing": "[10.11.0, )"
+        }
       },
       "Datapoint.Mediator": {
         "type": "CentralTransitive",
@@ -640,6 +674,12 @@
         "dependencies": {
           "Microsoft.OpenApi": "[2.12.2, 3.0.0)"
         }
+      },
+      "Microsoft.Extensions.TimeProvider.Testing": {
+        "type": "CentralTransitive",
+        "requested": "[10.11.0, )",
+        "resolved": "10.11.0",
+        "contentHash": "DTivKZ2Du0dJideTTa6vPj/eXKNRu+RxtjBX7NOOUXHBtHx1ehbE+lM+j3/5M3wU6BqzcZqEEyR4+FnPKs2rTA=="
       },
       "Microsoft.IdentityModel.Protocols.OpenIdConnect": {
         "type": "CentralTransitive",

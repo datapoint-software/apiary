@@ -1,10 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="..\Datapoint.Apiary.Testing\Datapoint.Apiary.Testing.csproj" />
     <ProjectReference Include="..\..\src\Datapoint.Apiary\Datapoint.Apiary.csproj" />
   </ItemGroup>
 </Project>

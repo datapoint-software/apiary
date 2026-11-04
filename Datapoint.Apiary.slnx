@@ -9,5 +9,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Datapoint.Apiary.Architecture.Tests/Datapoint.Apiary.Architecture.Tests.csproj" />
+    <Project Path="tests/Datapoint.Apiary.Testing/Datapoint.Apiary.Testing.csproj" />
   </Folder>
 </Solution>
