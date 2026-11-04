@@ -180,6 +180,15 @@ public sealed class StandaloneClusterTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task A_standalone_replica_refuses_to_start_with_another_root_key()
+    {
+        var replica = await StartAsync();
+        await replica.StopAsync();
+
+        await Assert.ThrowsAsync<WrongRootKeyException>(() => StandaloneReplica.StartAsync(_directory.Path, RootKey.Generate(), _port));
+    }
+
+    [Fact]
     public async Task A_new_data_key_seals_the_state_from_then_on()
     {
         var replica = await StartAsync();

@@ -154,6 +154,7 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 - **A replica waiting for approval in manual mode reports healthy**, like any replica that's joining, so the rolling-update wait above (15 seconds) can't tell it from one that will be ready soon. Approve new replicas before an update.
 
 - **Commit `1068cf3` doesn't build on its own**: a staged file move (`PublicPages` into the proxy project) went into it by mistake, and the next commit completes it. It's pushed, so it wasn't rewritten; skip it when bisecting.
+- **Fixed: a standalone replica started with another root key waited forever** for other replicas to send it the keys, which never come outside Swarm. It now stops at once and says to mount the root key the cluster was created with. Found while writing the cluster tests.
 - **Fixed: Apiary couldn't start on macOS** after root key rotation added saved credentials, because macOS won't export a private key once it's attached to a certificate. Linux, where it runs in production, was unaffected.
 
 - **Mediator's known issue (English messages in error responses) is fixed for HTTP** by stripping title and detail in `ProblemDetailsCodes`, and for MCP by returning every error as structured content with its code (`McpSetup`), including authorization failures and arguments that can't be read, since Mediator 4.0.0-beta.6.

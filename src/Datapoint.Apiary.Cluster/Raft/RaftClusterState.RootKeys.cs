@@ -37,7 +37,7 @@ public sealed partial class RaftClusterState
         {
             return await encryption.LoadAsync(StateDirectory, cancellationToken);
         }
-        catch (WrongRootKeyException) when (File.Exists(CredentialsFile))
+        catch (WrongRootKeyException) when (discovery.IsSwarm && File.Exists(CredentialsFile))
         {
             _rekeying = true;
             return false;
