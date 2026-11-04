@@ -75,7 +75,9 @@ On macOS, use .NET runtime 10.0.14 or later (`dotnet --list-runtimes`). Even the
 
 ## Contributing
 
-See [CLAUDE.md](CLAUDE.md) for the conventions on branches, commits, merge requests and versions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to propose a change, set up, test and open a pull request. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md). Report vulnerabilities privately, as the [security policy](SECURITY.md) explains.
+
+[CLAUDE.md](CLAUDE.md) has the full conventions on branches, commits, merge requests and versions, and how AI agents work in this repository.
 
 ## License
 
