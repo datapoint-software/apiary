@@ -46,9 +46,9 @@ public static class KestrelSetup
     private static void ListenForReplicas(KestrelServerOptions kestrel, ApiaryOptions options)
     {
         var cluster = kestrel.ApplicationServices.GetRequiredService<RaftClusterState>();
-        var mode = kestrel.ApplicationServices.GetRequiredService<IOptions<ClusterOptions>>().Value.Mode;
+        var clusterOptions = kestrel.ApplicationServices.GetRequiredService<IOptions<ClusterOptions>>().Value;
         var starting = TemporaryCertificate.Create(kestrel.ApplicationServices.GetRequiredService<TimeProvider>());
-        kestrel.Listen(mode is ClusterMode.Swarm ? IPAddress.Any : IPAddress.Loopback, options.ClusterPort, listen =>
+        kestrel.Listen(clusterOptions.BindAddress ?? (clusterOptions.Mode is ClusterMode.Swarm ? IPAddress.Any : IPAddress.Loopback), options.ClusterPort, listen =>
         {
             listen.Protocols = HttpProtocols.Http1AndHttp2;
             listen.UseHttps(https =>

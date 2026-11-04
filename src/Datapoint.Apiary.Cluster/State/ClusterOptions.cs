@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace Datapoint.Apiary.Cluster.State;
 
 public sealed class ClusterOptions
@@ -17,6 +19,12 @@ public sealed class ClusterOptions
     public int RaftPort { get; set; } = 9444;
 
     public int ClusterPort { get; set; } = 9445;
+
+    public string? ClusterBindAddress { get; set; }
+
+    public IPAddress? BindAddress => ClusterBindAddress is { Length: > 0 } text
+        ? IPAddress.TryParse(text, out var address) ? address : throw new InvalidOperationException($"Apiary__ClusterBindAddress isn't an IP address: {text}")
+        : null;
 
     public TimeSpan MissingTimeout { get; set; } = TimeSpan.FromMinutes(2);
 

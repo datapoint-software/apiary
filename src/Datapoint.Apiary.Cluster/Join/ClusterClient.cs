@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Security;
+using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Trust;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,7 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
 {
     private static readonly TimeSpan s_timeout = TimeSpan.FromSeconds(15);
     [SuppressMessage("Security", "CA5359", Justification = "A joining replica can't know the cluster CA yet; JoinProtocol authenticates the response with an HMAC from the root key.")]
-    private readonly HttpClient _anonymous = Create(new SslClientAuthenticationOptions
+    private readonly HttpClient _anonymous = Create(options.Value.BindAddress, new SslClientAuthenticationOptions
     {
         TargetHost = "apiary",
         RemoteCertificateValidationCallback = (_, _, _, _) => true,
@@ -29,7 +30,7 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
             return;
         }
 
-        var trusted = Create(ReplicaCredentials.ClientOptions(() => _credentials));
+        var trusted = Create(options.Value.BindAddress, ReplicaCredentials.ClientOptions(() => _credentials));
         if (Interlocked.CompareExchange(ref _trusted, trusted, null) is null)
         {
             return;
@@ -87,11 +88,12 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
     private Uri Uri(IPAddress peer, string path) =>
         new(string.Create(CultureInfo.InvariantCulture, $"https://{new IPEndPoint(peer, options.Value.ClusterPort)}/cluster/{path}"));
 
-    private static HttpClient Create(SslClientAuthenticationOptions ssl)
+    private static HttpClient Create(IPAddress? local, SslClientAuthenticationOptions ssl)
     {
         var handler = new SocketsHttpHandler
         {
             SslOptions = ssl,
+            ConnectCallback = local is null ? null : (context, cancellationToken) => ConnectFromAsync(local, context.DnsEndPoint, cancellationToken),
             ConnectTimeout = TimeSpan.FromSeconds(3),
             PooledConnectionLifetime = TimeSpan.FromMinutes(5),
             KeepAlivePingDelay = TimeSpan.FromSeconds(2),
@@ -99,5 +101,21 @@ public sealed class ClusterClient(IOptions<ClusterOptions> options) : IDisposabl
             KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
         };
         return new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan, DefaultRequestVersion = HttpVersion.Version20, DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower };
+    }
+
+    private static async ValueTask<Stream> ConnectFromAsync(IPAddress local, DnsEndPoint remote, CancellationToken cancellationToken)
+    {
+        var socket = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+        try
+        {
+            socket.Bind(new IPEndPoint(local, 0));
+            await socket.ConnectAsync(remote, cancellationToken);
+            return new NetworkStream(socket, ownsSocket: true);
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
     }
 }

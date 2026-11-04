@@ -300,7 +300,7 @@ public sealed partial class RaftClusterState
 
     private async Task StartRaftAsync(bool bootstrap, bool recovering, CancellationToken cancellationToken)
     {
-        var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(discovery.IsSwarm ? IPAddress.Any : IPAddress.Loopback, options.Value.RaftPort))
+        var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(options.Value.BindAddress ?? (discovery.IsSwarm ? Address!.Address : IPAddress.Loopback), options.Value.RaftPort))
         {
             PublicEndPoint = Address!,
             ConfigurationStorage = new MemberAddressBook(MembersFile),
