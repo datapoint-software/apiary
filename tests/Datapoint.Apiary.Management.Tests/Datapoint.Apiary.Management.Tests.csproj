@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Datapoint.Mediator" />
+    <PackageReference Include="Datapoint.Mediator.DependencyInjection" />
+    <PackageReference Include="Datapoint.Mediator.Authorization.DependencyInjection" />
+    <PackageReference Include="Datapoint.Mediator.FluentValidation.DependencyInjection" />
+    <ProjectReference Include="..\Datapoint.Apiary.Testing\Datapoint.Apiary.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Datapoint.Apiary.Management\Datapoint.Apiary.Management.csproj" />
+  </ItemGroup>
+</Project>
