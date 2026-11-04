@@ -21,7 +21,7 @@ Actions are pinned by commit SHA, with the version in a comment, so a moved tag 
 
 ## Release a version
 
-1. Choose the version from the commits since the last release: a breaking change raises `MAJOR`, `feat` raises `MINOR`, `fix` raises `PATCH`. Before `1.0.0`, count pre-releases up: `1.0.0-alpha.1`, `1.0.0-alpha.2`, then `1.0.0-beta.1`, `1.0.0-rc.1`.
+1. Choose the version from the commits since the last release: a breaking change raises `MAJOR`, `feat` raises `MINOR`, `fix` raises `PATCH`. Before `1.0.0`, count pre-releases up: `1.0.0-alpha.1`, `1.0.0-alpha.2`, then `1.0.0-beta.1`, `1.0.0-rc.1`. A version that failed to release isn't reused: fix the problem and release the next one.
 2. Set it in both places, in one commit on `main` (`chore: raise the version to <version>`):
    - `<Version>` in [`Directory.Build.props`](../Directory.Build.props);
    - `version` in [`src/web/projects/apiary/src/app/version.ts`](../src/web/projects/apiary/src/app/version.ts).
@@ -35,7 +35,7 @@ Actions are pinned by commit SHA, with the version in a comment, so a moved tag 
 
 5. Follow the Release workflow under **Actions**. It fails without publishing anything if the tag doesn't match both versions.
 
-A published version is never changed. To fix one, release the next version. A tag that failed before publishing can be deleted and pushed again.
+A published version is never changed. To fix one, release the next version. Version tags can't be moved or deleted, not even by admins: a ruleset on GitHub protects them. So a tag whose release failed stays as it is: fix the problem and release the next version, such as `1.0.0-beta.2` after `1.0.0-beta.1`.
 
 ## Try a pre-release on a development Swarm
 
@@ -53,4 +53,4 @@ APIARY_VERSION=1.0.0-alpha.1 docker stack deploy -c deploy/stack.yaml apiary
 
 To upgrade, run the same command with the new version; Swarm replaces one replica at a time and rolls back if one fails to start. `docker service ps apiary_apiary` shows each replica's version and state.
 
-Pre-releases can change anything, including how state is stored. Treat a development cluster's data as disposable, and back it up before upgrading if you want to keep it.
+Alphas could change anything, including how state is stored. From `1.0.0-beta.1`, each version reads the state the one before it wrote, and replicas on both versions keep working while Swarm replaces them one at a time. Changes that only the new version can read wait, answered with `cluster.upgrading`, until every replica runs it (see [Replicated state](engineering.md#replicated-state)). Once they're made, the older version can't read the state, so going back means restoring the backup. Back up before upgrading anyway: a pre-release can still have bugs that a backup recovers from.

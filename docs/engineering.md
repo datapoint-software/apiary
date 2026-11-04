@@ -215,6 +215,14 @@ Where the words come from:
   - The obsolete certificate and key-derivation constructors.
 - Post-quantum algorithms are experimental in .NET 10 and need OpenSSL 3.5; we don't use them yet.
 
+### Replicated state
+
+From `1.0.0-beta.1`, every version reads the state the version before it wrote, and replicas on both versions run side by side during a rolling upgrade. Changes to `Datapoint.Apiary.Cluster`'s state keep that promise:
+
+- **A new version reads the old state.** Add properties, with defaults that keep today's behavior; never rename, remove or change the type of a serialized one.
+- **An older replica never gets a change it can't apply correctly.** A new `IStateChange` type raises `StateSchema.Current` and is marked `[StateSchema(n)]`, so the leader answers `cluster.upgrading` until every replica understands it. So does a change to an existing type that an older version would misread or ignore unsafely, such as a new property that restricts access.
+- **Going back a version isn't supported** once a newer schema's change is applied: restoring a backup is the way back, as [deploying.md](deploying.md) says.
+
 ### Tests
 
 - [xUnit v3](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform) on Microsoft.Testing.Platform, with xUnit's own assertions. No FluentAssertions, which is now commercial.

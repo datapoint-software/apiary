@@ -28,7 +28,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: The image tag, such as `1.0.0-alpha.7`, or the commit.
+      description: The image tag, such as `1.0.0-beta.1`, or the commit.
     validations:
       required: true
   - type: dropdown

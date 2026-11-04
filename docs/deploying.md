@@ -148,7 +148,7 @@ A backup can only be restored with the root key it was made with: keep each root
 
 ## Day to day
 
-- **Upgrade**: change `APIARY_VERSION` and run the same `docker stack deploy`. Swarm replaces one replica at a time and rolls back if one fails to start.
+- **Upgrade**: back up first, then change `APIARY_VERSION` and run the same `docker stack deploy`. Swarm replaces one replica at a time and rolls back if one fails to start. Each version reads the state of the one before it, but not always the other way round, so to go back a version after the upgrade finished, restore the backup.
 - **Add an edge node**: label it, raise `replicas:` and deploy. It joins by itself.
 - **Rotate the root key**: follow the steps on the Root key page in the admin UI, after a suspected leak or as your policy requires. Connected AI agents have to connect again afterwards.
 - **Visitor pages**: set the brand on Traffic › Visitor pages. To hide the Datapoint logo and "Powered by Apiary" at the bottom of every visitor page, set `Apiary__VisitorPages__ShowPoweredBy: "false"`.
