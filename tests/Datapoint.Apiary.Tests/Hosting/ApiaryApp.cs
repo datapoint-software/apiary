@@ -39,7 +39,7 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
     public static Task<ApiaryApp> StartAsync(IReadOnlyDictionary<string, string>? settings = null, int attempts = 3) =>
         StartAsync(() => new ApiaryApp { Settings = settings ?? new Dictionary<string, string>(StringComparer.Ordinal) }, attempts);
 
-    public static async Task<ApiaryApp> StartAsync(Func<ApiaryApp> create, int attempts = 3)
+    public static async Task<ApiaryApp> StartAsync(Func<ApiaryApp> create, int attempts = 3, TimeSpan? readyWithin = null)
     {
         var app = create();
         app.UseKestrel();
@@ -50,11 +50,11 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
         catch (IOException exception) when (exception.InnerException is AddressInUseException && attempts > 1)
         {
             await app.DisposeAsync();
-            return await StartAsync(create, attempts - 1);
+            return await StartAsync(create, attempts - 1, readyWithin);
         }
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(30));
+        timeout.CancelAfter(readyWithin ?? TimeSpan.FromSeconds(30));
         await app.Cluster.WaitUntilReadyAsync(timeout.Token);
         return app;
     }

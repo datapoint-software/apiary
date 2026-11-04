@@ -59,7 +59,7 @@ internal sealed class SwarmReplicas : IAsyncDisposable
         Dns.Add(LoopbackAliases.Address(replica));
         var key = rootKey ?? RootKey;
         await File.WriteAllTextAsync(RootKeyFile(key), key.Format(), TestContext.Current.CancellationToken);
-        var app = await ApiaryApp.StartAsync(() => Create(replica, key));
+        var app = await ApiaryApp.StartAsync(() => Create(replica, key), readyWithin: TimeSpan.FromSeconds(60));
         _running[replica] = app;
         return app;
     }
