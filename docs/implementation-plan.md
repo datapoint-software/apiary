@@ -8,7 +8,7 @@ The order in which Apiary is built. Each milestone ends in something you can run
 - **Single node first.** Milestones 1 to 3 run as one instance, with Docker Compose. Every write still goes through the same path the cluster will use (a Datapoint.Mediator command, applied by a transaction behavior to a state machine), so [milestone 4](#4-high-availability) adds replicas without rewriting features.
 - **Components as needed.** Each design system component is built in `@datapoint/apiary-ui` when the first page needs it, following its card in `design/project`, not all up front.
 - **Each milestone says how to try it**, and what it still lacks.
-- **CI comes last**, once features are complete, as [engineering.md](engineering.md#build-and-packages) says. Until then, builds and tests run locally.
+- **CI runs from the first alpha** (`1.0.0-alpha.1`), so pre-releases can be deployed to a development Swarm; see [releasing.md](releasing.md).
 
 ## 0. Walking skeleton
 
@@ -164,7 +164,6 @@ What the review after milestone 12 found missing, agreed on 2026-11-03.
 
 - `ng-package.json` listing the component library's styles as assets, so a published package includes them.
 - Tests of the failure modes in [failure-modes.md](failure-modes.md) on a real Swarm.
-- CI, publishing the image to `hub.datapoint.software/datapoint/apiary`.
 - `1.0.0`.
 
 ## What you'll need to try it

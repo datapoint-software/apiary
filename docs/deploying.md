@@ -41,7 +41,7 @@ Apiary runs only on labeled nodes, one replica per node.
 The root key protects everything Apiary stores, including certificates' private keys, and is the only key that can open its backups.
 
 ```bash
-(umask 077 && docker run --rm hub.datapoint.software/datapoint/apiary:<version> secrets init > apiary_root_key_1)
+(umask 077 && docker run --rm datapointsoftware/apiary:<version> secrets init > apiary_root_key_1)
 docker secret create apiary_root_key_1 apiary_root_key_1
 ```
 

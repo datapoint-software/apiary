@@ -21,7 +21,7 @@ export class RootKeyPage {
   protected readonly timeAgo = timeAgo;
   protected readonly utcDateTime = utcDateTime;
   protected readonly saveCommand = 'docker exec <apiary container> cat /run/secrets/apiary_root_key';
-  protected readonly createCommand = `(umask 077 && docker run --rm hub.datapoint.software/datapoint/apiary:${version} secrets init > apiary_root_key_2) && docker secret create apiary_root_key_2 apiary_root_key_2`;
+  protected readonly createCommand = `(umask 077 && docker run --rm datapointsoftware/apiary:${version} secrets init > apiary_root_key_2) && docker secret create apiary_root_key_2 apiary_root_key_2`;
   protected readonly onCurrent = computed(() => this.count(this.status.value()?.current));
   protected readonly onTarget = computed(() => this.count(this.status.value()?.target));
   protected readonly total = computed(() => this.status.value()?.replicas.length ?? 0);

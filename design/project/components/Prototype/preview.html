@@ -3407,7 +3407,7 @@ route('/root-key', () => {
   const count = id => D.replicas.filter(r => id && keyOf(r) === id).length;
   const behind = k.target ? D.replicas.filter(r => keyOf(r) !== k.target) : [];
   const stalled = k.target && NOW - k.targetSince > ROTATION_STALLED;
-  const create = `(umask 077 && docker run --rm hub.datapoint.software/datapoint/apiary:${D.cluster.version} secrets init > apiary_root_key_2) && docker secret create apiary_root_key_2 apiary_root_key_2`;
+  const create = `(umask 077 && docker run --rm datapointsoftware/apiary:${D.cluster.version} secrets init > apiary_root_key_2) && docker secret create apiary_root_key_2 apiary_root_key_2`;
   const copy = text => `<div class="ap-copy"><code>${esc(text)}</code><button class="ap-btn ap-btn-sm" type="button" data-copy>${icon('copy')}<span>Copy</span></button></div>`;
   return {
     title: 'Root key',

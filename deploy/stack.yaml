@@ -1,6 +1,6 @@
 services:
   apiary:
-    image: hub.datapoint.software/datapoint/apiary:${APIARY_VERSION:?Set APIARY_VERSION to the version to deploy}
+    image: datapointsoftware/apiary:${APIARY_VERSION:?Set APIARY_VERSION to the version to deploy}
     environment:
       Apiary__Mode: Swarm
       Apiary__ServiceName: "{{.Service.Name}}"

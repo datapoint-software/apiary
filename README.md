@@ -51,7 +51,7 @@ docker node update --label-add apiary.edge=true $(docker node ls -q)
 APIARY_VERSION=dev docker stack deploy -c deploy/stack.yaml apiary
 ```
 
-`deploy/stack.yaml` pulls `hub.datapoint.software/datapoint/apiary`, so for a local image change its `image:` to `apiary:dev`. It runs one replica per node, so on one node only one starts; to see three, run them with `docker service create` instead, with a volume per replica (`type=volume,source=apiary-data-{{.Task.Slot}},target=/data`), as stack files can't template volume names. Then:
+`deploy/stack.yaml` pulls `datapointsoftware/apiary`, so for a local image change its `image:` to `apiary:dev`. It runs one replica per node, so on one node only one starts; to see three, run them with `docker service create` instead, with a volume per replica (`type=volume,source=apiary-data-{{.Task.Slot}},target=/data`), as stack files can't template volume names. Then:
 
 - Open Replicas in the admin UI to see the leader and the other replicas.
 - Stop the leader's container (`docker kill`) and keep changing routes: one change waits 2 or 3 seconds for a new leader, and Swarm starts a new replica that joins by itself.
@@ -64,6 +64,7 @@ On macOS, use .NET runtime 10.0.14 or later (`dotnet --list-runtimes`). Even the
 ## Documentation
 
 - [Deploying](docs/deploying.md): step-by-step guide to set up Apiary on a production Swarm, for system administrators.
+- [Releasing](docs/releasing.md): what CI checks, how to publish a version to Docker Hub, and how to try a pre-release on a development Swarm.
 - [Architecture](docs/architecture.md): technology stack, deployment, routing, replicated state, certificates and management (admin UI and MCP).
 - [Engineering](docs/engineering.md): repository layout, dependency rules between projects, and the .NET and Angular conventions.
 - [Failure modes](docs/failure-modes.md): what happens when replicas, nodes or the network fail, and when the cluster is scaled.

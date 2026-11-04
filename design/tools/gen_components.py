@@ -630,7 +630,7 @@ A split bar shows how a route's traffic is divided between target groups by weig
 C["CopyField"] = ("Forms", 250, f"""
 <div class="ap-field">
   <span class="ap-label">Create the new key on a manager node</span>
-  <div class="ap-copy"><code>(umask 077 &amp;&amp; docker run --rm hub.datapoint.software/datapoint/apiary:0.1.0 secrets init &gt; apiary_root_key_2) &amp;&amp; docker secret create apiary_root_key_2 apiary_root_key_2</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}<span>Copy</span></button></div>
+  <div class="ap-copy"><code>(umask 077 &amp;&amp; docker run --rm datapointsoftware/apiary:0.1.0 secrets init &gt; apiary_root_key_2) &amp;&amp; docker secret create apiary_root_key_2 apiary_root_key_2</code><button class="ap-btn ap-btn-sm" type="button">{icon("copy")}<span>Copy</span></button></div>
   <span class="ap-help">Then copy the file's content into your secret store, and delete the file.</span>
 </div>
 <div class="ap-field">
