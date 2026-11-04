@@ -9,6 +9,8 @@ if (Proto.state.data === 'empty') D = emptyData();
 const shell = $('#app-shell'), side = $('#side'), main = $('#main');
 const projectOf = id => D.projects.find(p => p.id === id);
 const routesOf = id => D.routes.filter(r => r.project === id);
+const stackOf = name => D.stacks.find(s => s.name === name);
+const declaredIn = name => ({ routes: D.routes.filter(r => r.stack && r.stack.name === name), streams: D.streams.filter(x => x.stack && x.stack.name === name), redirects: D.redirects.filter(x => x.stack && x.stack.name === name) });
 const rpmOf = id => routesOf(id).filter(r => !r.disabled).reduce((a, r) => a + r.rpm, 0);
 function projectHealth(id) {
   const rs = routesOf(id), active = rs.filter(r => !r.disabled);
@@ -107,8 +109,8 @@ function navGroups(voters) {
   return [
     ['', [['layout-dashboard', 'Overview', '#/']]],
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
-    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
-    ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
+    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['layers', 'Stacks', '#/stacks', D.stacks.length || null, D.stacks.some(s => s.failed)], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
+    ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on'], ['key-round', 'Pipeline tokens', '#/pipeline-tokens', D.pipelineTokens.length || null]] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
     ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
 }

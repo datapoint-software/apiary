@@ -557,6 +557,68 @@ const PT_TEXT = new Map(Object.entries({
   "Brand saved": "Marca guardada",
   "Brand saved. Visitor pages use it now.": "Marca guardada. As páginas para visitantes já a usam.",
   "Powered by Apiary": "Com tecnologia Apiary",
+  // Stacks and pipeline tokens
+  'Kept': 'Mantido', 'Dropped': 'Descartado', 'Stacks': 'Stacks', 'Stack': 'Stack', 'Pipeline tokens': 'Tokens de pipeline', 'Pipelines': 'Pipelines', 'Tokens': 'Tokens', 'Token': 'Token',
+  'Swarm stacks whose routes come from labels in their stack file. Their pipeline applies the file after each deploy.': 'Stacks do Swarm cujas rotas vêm das etiquetas do ficheiro da stack. A pipeline de cada uma aplica o ficheiro depois de cada implementação.',
+  'Add stack': 'Adicionar stack', 'Add stack…': 'Adicionar stack…', 'Add a stack': 'Adicionar uma stack', 'No stacks yet': 'Ainda não há stacks',
+  'Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels.': 'Adicione as stacks que implementa a partir da CI. O Apiary dá a cada uma um token de pipeline, e a sua pipeline aplica as rotas das etiquetas do ficheiro da stack.',
+  'Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels. Only Administrators can add stacks.': 'Adicione as stacks que implementa a partir da CI. O Apiary dá a cada uma um token de pipeline, e a sua pipeline aplica as rotas das etiquetas do ficheiro da stack. Só os Administradores podem adicionar stacks.',
+  'Declares': 'Declara', 'Last applied': 'Última aplicação', 'Changes': 'Alterações', 'From labels': 'Das etiquetas', 'Nothing': 'Nada', 'No changes': 'Sem alterações',
+  'Last apply failed': 'A última aplicação falhou', 'Waiting for the first apply': 'À espera da primeira aplicação', 'commit': 'commit',
+  'Prototype: simulate an apply that': 'Protótipo: simular uma aplicação que', 'works': 'funciona', 'finds a hostname in use': 'encontra um nome de anfitrião em uso',
+  'can’t reach a quorum': 'não consegue quórum', 'removes everything': 'remove tudo',
+  'a hostname is already in use': 'um nome de anfitrião já está em uso', 'it would remove everything': 'removeria tudo',
+  'The stack file declares': 'O ficheiro da stack declara', ', which a route in Internal tools, not from a stack, already uses. Nothing changed.': ', que uma rota em Internal tools, que não vem de uma stack, já usa. Nada mudou.',
+  'Pipeline': 'Pipeline', ', error': ', erro', '. This clears when an apply succeeds.': '. Isto desaparece quando uma aplicação for bem-sucedida.',
+  'First apply': 'Primeira aplicação', 'Last apply': 'Última aplicação', 'What it declares': 'O que declara', 'Kind': 'Tipo', 'Service': 'Serviço',
+  'Fields the labels set are locked on their pages. Disabling and maintenance windows stay available.': 'Os campos definidos pelas etiquetas ficam bloqueados nas suas páginas. Desativar e as janelas de manutenção continuam disponíveis.',
+  'Added': 'Adicionado', 'Removed': 'Removido', 'Replaced a change': 'Substituiu uma alteração', 'Route': 'Rota', 'Redirect': 'Redirecionamento',
+  ': Rate limit': ': Limite de pedidos', ': Target': ': Destino', ': Timeout': ': Tempo limite',
+  'Nothing changed: the stack file matched what Apiary had.': 'Nada mudou: o ficheiro da stack correspondia ao que o Apiary tinha.',
+  'Create token': 'Criar token', 'No tokens': 'Sem tokens', 'Created': 'Criado', 'Last used': 'Última utilização', 'Revoke…': 'Revogar…', 'Revoke token': 'Revogar token',
+  'Apply from your pipeline': 'Aplicar a partir da pipeline',
+  'Apiary never connects to Docker. Your pipeline reads the labels from the stack file and sends them here, so routes change in the same commit as the services. It calls the admin port, so it must run inside your network, like the people who use this interface.': 'O Apiary nunca se liga ao Docker. A sua pipeline lê as etiquetas do ficheiro da stack e envia-as para aqui, para que as rotas mudem no mesmo commit que os serviços. Chama a porta de administração, por isso tem de correr dentro da sua rede, tal como as pessoas que usam esta interface.',
+  'Add': 'Adicione', 'labels under': 'etiquetas em', 'of each service:': 'de cada serviço:',
+  'Passwords, sign-in links, certificates and allowed addresses can’t be set by labels: anyone who can inspect the service could read them.': 'As palavras-passe, ligações de acesso, certificados e endereços permitidos não podem ser definidos por etiquetas: quem puder inspecionar o serviço poderia lê-los.',
+  'In merge requests, show what an apply would change, without changing it:': 'Nos merge requests, mostre o que uma aplicação mudaria, sem mudar nada:',
+  'Remove this stack': 'Remover esta stack', 'After': 'Depois de', 'Remove stack…': 'Remover stack…', 'Remove stack': 'Remover stack',
+  '. Deletes everything it declared and revokes its tokens.': '. Elimina tudo o que declarou e revoga os seus tokens.',
+  '. Deletes everything it declared and revokes its tokens. Needs the Administrator role.': '. Elimina tudo o que declarou e revoga os seus tokens. Precisa da função de Administrador.',
+  'Shown in the audit log for every apply, so name the pipeline that uses it.': 'Aparece no registo de auditoria em cada aplicação, por isso dê-lhe o nome da pipeline que o usa.',
+  'Expires after': 'Expira após', 'Token expires after': 'O token expira após', '90 days': '90 dias', 'Creating…': 'A criar…',
+  'Create a new one before it expires, and update the CI variable.': 'Crie um novo antes de expirar e atualize a variável da CI.',
+  'Another token has this name. Choose another.': 'Já há um token com este nome. Escolha outro.',
+  'Store it as a masked, protected CI variable named': 'Guarde-o como uma variável da CI mascarada e protegida chamada',
+  '. You won’t see it again: Apiary keeps only a hash.': '. Não o voltará a ver: o Apiary guarda só um hash.', 'I stored it': 'Já o guardei',
+  'Pipelines that use it can’t apply': 'As pipelines que o usam deixam de poder aplicar', 'anymore. The routes it applied stay as they are.': '. As rotas que aplicou ficam como estão.',
+  'Stack name': 'Nome da stack', 'The name your pipeline gives': 'O nome que a sua pipeline dá a', ', such as': ', como',
+  'Set by the apiary.project label': 'Definido pela etiqueta apiary.project', 'Where its routes go when their labels don’t name a project.': 'Onde ficam as rotas cujas etiquetas não indicam um projeto.',
+  'Token name': 'Nome do token', 'For the stack’s first pipeline token. It appears in the audit log for every apply, so name the pipeline that uses it.': 'Para o primeiro token de pipeline da stack. Aparece no registo de auditoria em cada aplicação, por isso dê-lhe o nome da pipeline que o usa.',
+  'Enter the stack name.': 'Introduza o nome da stack.', 'Enter a token name.': 'Introduza um nome para o token.', 'Enter a name.': 'Introduza um nome.',
+  'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores.': 'Use o nome tal como o Docker o escreve: letras minúsculas, algarismos, hífenes e sublinhados.',
+  'This stack is already here. Open it to create another token.': 'Esta stack já existe. Abra-a para criar outro token.',
+  'Do this after': 'Faça isto depois de', ': Apiary never touches Docker, so the services keep running until you run it. Routes not from this stack don’t change.': ': o Apiary nunca mexe no Docker, por isso os serviços continuam a correr até o executar. As rotas que não vêm desta stack não mudam.',
+  'Type the stack’s name to confirm.': 'Escreva o nome da stack para confirmar.', 'to confirm': 'para confirmar',
+  'The apply worked': 'A aplicação funcionou', 'The apply failed': 'A aplicação falhou', 'The apply was refused': 'A aplicação foi recusada', 'What the pipeline log shows:': 'O que o registo da pipeline mostra:',
+  'A dry run in the merge request prints the same plan, without applying it.': 'Uma simulação no merge request mostra o mesmo plano, sem o aplicar.',
+  'Try another outcome, or run it again after a failure to see it clear.': 'Experimente outro resultado, ou corra-a de novo depois de uma falha para a ver desaparecer.',
+  'Apiary doesn’t record refused tokens on the stack page: anyone could send one. They’re in the audit log as failed sign-ins.': 'O Apiary não regista tokens recusados na página da stack: qualquer pessoa poderia enviar um. Estão no registo de auditoria como inícios de sessão falhados.',
+  'Nothing appears on this page or in the audit log: without quorum, Apiary can’t save anything, its own records included. Only the pipeline log shows it, which is why the command exits with an error and fails the job.': 'Nada aparece nesta página nem no registo de auditoria: sem quórum, o Apiary não consegue guardar nada, incluindo os seus próprios registos. Só o registo da pipeline o mostra, e é por isso que o comando termina com um erro e faz falhar o job.',
+  'A CI pipeline uses a token to sign in to Apiary and apply a stack file, so the routes in its labels change in the same deploy as the services. You only need one if you deploy from CI.': 'Uma pipeline de CI usa um token para entrar no Apiary e aplicar um ficheiro de stack, para que as rotas das suas etiquetas mudem na mesma implementação que os serviços. Só precisa de um se implementar a partir da CI.',
+  'Each token can only change the stack it was created for: it can’t change other stacks, routes not from a stack, users or settings. To create one, open the stack on the': 'Cada token só pode mudar a stack para a qual foi criado: não pode mudar outras stacks, rotas que não vêm de uma stack, utilizadores nem definições. Para criar um, abra a stack na página',
+  'page. Revoking a token stops its pipeline at once, and the routes it applied stay as they are.': '. Revogar um token trava de imediato a sua pipeline, e as rotas que aplicou ficam como estão.',
+  'No pipeline tokens': 'Sem tokens de pipeline',
+  'Nothing can apply a stack file yet, so routes change only here, in the API and through agents. To let a pipeline apply one, open its stack on the': 'Ainda nada pode aplicar um ficheiro de stack, por isso as rotas só mudam aqui, na API e através de agentes. Para deixar uma pipeline aplicar um, abra a stack na página',
+  'page and create a token.': 'e crie um token.', '. Revoke tokens nobody uses.': '. Revogue os tokens que ninguém usa.',
+  'has never been used': 'nunca foi usado', 'Declared in stack': 'Vem da stack', 'Set in stack': 'Definido na stack',
+  'Fields with a': 'Os campos com um', 'come from the labels of': 'vêm das etiquetas de',
+  ': change them in the stack file, and the next apply updates this route.': ': mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota.',
+  ': change them in the stack file, and the next apply updates this route. You can still disable the route or schedule maintenance here.': ': mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota. Ainda pode desativar a rota ou agendar manutenção aqui.',
+  ': change them in the stack file. You can still disable it from the list.': ': mude-os no ficheiro da stack. Ainda a pode desativar a partir da lista.',
+  '. You can still disable the route or schedule maintenance here.': '. Ainda pode desativar a rota ou agendar manutenção aqui.',
+  'tried to apply stack': 'tentou aplicar a stack', 'applied stack': 'aplicou a stack', 'removed stack': 'removeu a stack', 'and pipeline token': 'e o token de pipeline',
+  'added stack': 'adicionou a stack', 'created pipeline token': 'criou o token de pipeline', 'for stack': 'para a stack', 'revoked pipeline token': 'revogou o token de pipeline',
+
   // Calendar
   'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril', 'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
   'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro', 'Monday': 'segunda-feira', 'Tuesday': 'terça-feira',
@@ -566,7 +628,46 @@ const PT_TEXT = new Map(Object.entries({
 }));
 
 const PT_MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December';
+const PT_COUNT = { route: ['rota', 'rotas'], 'stream route': ['rota TCP ou UDP', 'rotas TCP ou UDP'], redirect: ['redirecionamento', 'redirecionamentos'], change: ['alteração', 'alterações'], token: ['token', 'tokens'], item: ['item', 'itens'] };
+const ptCount = (n, w) => `${n} ${PT_COUNT[w.replace(/s$/, '')][n === '1' ? 0 : 1]}`;
+const ptCounts = t => t.replace(/(\d+) (stream routes?|routes?|redirects?|changes?|tokens?|items?)\b/g, (m, n, w) => ptCount(n, w)).replace(/, and |(?<=\S) and (?=\d)/g, ' e ');
 const PT_PATTERNS = [
+  // Stacks and pipeline tokens
+  [/^\d+ (?:stream routes?|routes?|redirects?|changes?)(?: · \d+ (?:stream routes?|routes?|redirects?))*$/, ptCounts],
+  [/^Last applied (.+) by pipeline$/, (m, a) => `Aplicada ${tr(a)} pela pipeline`],
+  [/^(.+ ago|just now) by$/, (m, a) => `${tr(a)} por`],
+  [/^Added (.+) by (\S+)$/, (m, a, b) => `Adicionada ${tr(a)} por ${b}`],
+  [/^The last apply failed (.+?): (.+)$/, (m, a, b) => `A última aplicação falhou ${tr(a)}: ${tr(b)}`],
+  [/^The stack file declares nothing, so the apply would delete all (\d+) items? of (\S+)\. That usually means the wrong file or labels that went missing\. Pipeline$/, (m, n, x) => `O ficheiro da stack não declara nada, por isso a aplicação eliminaria ${n === '1' ? 'o único item' : `os ${n} itens`} de ${x}. Normalmente, é o ficheiro errado ou etiquetas que desapareceram. Pipeline`],
+  [/^Nothing has applied (\S+) yet$/, 'A stack $1 ainda não foi aplicada'],
+  [/^Add the commands under Apply from your pipeline, below, to the pipeline that deploys (\S+), with its token as$/, 'Adicione os comandos de Aplicar a partir da pipeline, abaixo, à pipeline que implementa $1, com o seu token como'],
+  [/^\. After its first run, the routes in its labels appear here\.$/, '. Depois da primeira execução, as rotas das suas etiquetas aparecem aqui.'],
+  [/^(.+) UTC\. Every apply is in the audit log\.$/, '$1 UTC. Todas as aplicações estão no registo de auditoria.'],
+  [/^(.+) was set by (\S+), (.+)\. A label now sets it, so it’s locked\.$/, (m, a, b, c) => `${a.replace(/ a minute$/, ' por minuto').replace(/ seconds$/, ' segundos')} foi definido por ${b}, ${tr(c)}. Agora é uma etiqueta que o define, por isso está bloqueado.`],
+  [/^What (\S+) declares$/, 'O que $1 declara'],
+  [/^Stream route, (\w+) (\d+)$/, 'Rota TCP ou UDP, $1 $2'],
+  [/^A pipeline needs one to apply (\S+)\.( Only Administrators can create or revoke them\.)?$/, (m, x, o) => `Uma pipeline precisa de um para aplicar ${x}.${o ? ' Só os Administradores os podem criar ou revogar.' : ''}`],
+  [/^Nothing can apply (\S+) until an Administrator creates a token\.$/, 'Nada pode aplicar $1 até um Administrador criar um token.'],
+  [/^After the deploy, apply it\. Routes of (\S+) missing from the file are removed\.$/, 'Depois da implementação, aplique-o. As rotas de $1 que faltem no ficheiro são removidas.'],
+  [/^Create a pipeline token for (\S+)$/, 'Criar um token de pipeline para $1'],
+  [/^It can only apply (\S+): it can’t change other stacks, routes not from a stack, users or settings\.$/, 'Só pode aplicar $1: não pode mudar outras stacks, rotas que não vêm de uma stack, utilizadores nem definições.'],
+  [/^Anyone with it can change or remove the routes of (\S+)\. If it leaks, revoke it here\.$/, 'Quem o tiver pode mudar ou remover as rotas de $1. Se for divulgado, revogue-o aqui.'],
+  [/^Revoke (\S+)\?$/, 'Revogar $1?'], [/^(\S+) no longer works\.$/, '$1 deixou de funcionar.'],
+  [/^Remove stack (\S+)\?$/, 'Remover a stack $1?'],
+  [/^(?:Apiary deletes its (.+?) on every replica, and requests to them get a 404 at once\. )?(?:(Its pipeline token stops|Its (\d+) pipeline tokens stop) working\. )?Do this after$/, (m, l, t, n) => `${l ? `O Apiary elimina ${ptCounts(l).replace(/^1 /, 'a sua ').replace(/^(\d+) /, 'as suas $1 ')} em todas as réplicas, e os pedidos para elas recebem um 404 de imediato. ` : ''}${t ? (n ? `Os seus ${n} tokens de pipeline deixam de funcionar. ` : 'O seu token de pipeline deixa de funcionar. ') : ''}Faça isto depois de`],
+  [/^(\S+) is gone(?:, with its (.+))?\.$/, (m, x, l) => `${x} foi removida${l ? `, com ${ptCounts(l)}` : ''}.`],
+  [/^(\d+ tokens? needs?) a look$/, (m, a) => (a.startsWith('1 ') ? '1 token precisa de atenção' : `${parseInt(a)} tokens precisam de atenção`)],
+  [/^(?:hasn’t been used for|has never been used|expires in)\b.*$/, t => t.replace(/hasn’t been used for (\d+) (day|hour|minute)s?/g, (m, n, u) => `não é usado há ${tr(`${n} ${u}s ago`).replace(/^há /, '')}`)
+    .replace(/has never been used/g, 'nunca foi usado').replace(/ and expires in /g, ' e expira em ').replace(/(^|· )expires in /g, '$1expira em ')
+    .replace(/ (\d+) days?\b/g, (m, n) => ` ${n} ${n === '1' ? 'dia' : 'dias'}`).replace(/\. Revoke tokens nobody uses\.$/, '. Revogue os tokens que ninguém usa.')],
+  [/^Pipeline (\S+)$/, 'Pipeline $1'],
+  [/^(.+) is declared in a stack file\. Change it there, or select only routes not from a stack\.$/, '$1 está declarada num ficheiro de stack. Mude-a lá, ou selecione só rotas que não vêm de uma stack.'],
+  [/^(\d+) of them are declared in a stack file\. Change them there, or select only routes not from a stack\.$/, '$1 delas estão declaradas num ficheiro de stack. Mude-as lá, ou selecione só rotas que não vêm de uma stack.'],
+  [/^Remove it from the stack file instead\. The next apply of (\S+) deletes it\.$/, 'Em vez disso, remova-a do ficheiro da stack. A próxima aplicação de $1 elimina-a.'],
+  [/^: change them in the stack file, and the next apply updates this route\. Last applied (.+) by pipeline$/, (m, a) => `: mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota. Aplicada ${tr(a)} pela pipeline`],
+  [/^(\d+) added, (\d+) changed, (\d+) removed · commit (\w+) · from (.+)$/, (m, a, c, r, id, ip) => `${a} ${a === '1' ? 'adicionado' : 'adicionados'}, ${c} ${c === '1' ? 'alterado' : 'alterados'}, ${r} ${r === '1' ? 'removido' : 'removidos'} · commit ${id} · a partir de ${ip}`],
+  [/^(.+) · (\d+) tokens? revoked · from (.+)$/, (m, a, n, ip) => `${a === 'Nothing declared' ? 'Nada declarado' : ptCounts(a)} · ${ptCount(n, 'token')} ${n === '1' ? 'revogado' : 'revogados'} · a partir de ${ip}`],
+  [/^(route\.hostInUse|stack\.removesEverything) · from (.+)$/, '$1 · a partir de $2'],
   [/^Changed (.+) ago by (.+)$/, (m, a, b) => `Alterado ${tr(a + ' ago')} por ${b}`],
   [/^(Password|Not found|Starting|Unavailable|Not allowed|Too many requests|Maintenance) · (.+)$/, (m, a, b) => `${tr(a)} · ${b}`],
   [/^Remove the brand of (.+)\?$/, 'Remover a marca de $1?'], [/^Remove the brand of (.+)$/, 'Remover a marca de $1'],
@@ -754,6 +855,7 @@ const PT_PATTERNS = [
 const PT_VERBS = {
   save: 'guardar', 'save it': 'guardar', 'save them': 'guardar', 'save the membership': 'guardar a adesão', 'save single sign-on': 'guardar o início de sessão único',
   'save your profile': 'guardar o perfil', 'delete it': 'eliminar', 'add it': 'adicionar', 'check it': 'verificar', continue: 'continuar', recover: 'recuperar',
+  'create the token': 'criar o token', 'add the stack': 'adicionar a stack',
   'create the administrator': 'criar o administrador', 'create the invite': 'criar o convite', 'create your account': 'criar a conta',
   'change your password': 'alterar a palavra-passe', 'make new codes': 'criar novos códigos', 'move them': 'mover', 'sign in': 'iniciar sessão', 'turn it on': 'ativar',
 };
@@ -774,7 +876,8 @@ function translateNode(node) {
     // Between two dates, "to" reads "a"; elsewhere, such as in a redirect, "para".
     const prev = node.previousSibling;
     // As a label, "Preview" is the noun, "Pré-visualização"; on a button, the verb, "Pré-visualizar".
-    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : text === 'Preview' && el.classList.contains('ap-label') ? 'Pré-visualização' : tr(text);
+    // In "Type <name> to confirm", "Type" is the verb, "Escreva"; elsewhere, the noun, "Tipo".
+    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : text === 'Preview' && el.classList.contains('ap-label') ? 'Pré-visualização' : text === 'Type' && el.classList.contains('ap-label') ? 'Escreva' : tr(text);
     if (to !== text) node.nodeValue = raw.replace(raw.trim(), to);
     return;
   }

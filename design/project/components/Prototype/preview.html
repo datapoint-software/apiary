@@ -875,6 +875,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .pt-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 65; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border: 1.5px dashed var(--ink-3); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink-2); font: 600 0.75rem/1rem var(--font-text); cursor: pointer; box-shadow: var(--shadow-card); }
 .pt-fab:hover { color: var(--ink); border-color: var(--ink-2); }
 .pt-panel { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 66; width: min(340px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow-y: auto; border: 1.5px dashed var(--ink-3); }
+.pt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 800px; padding: 10px 14px; border: 1.5px dashed var(--ink-3); border-radius: var(--radius-2); }
 .ap-toasts { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
 
 /* Idea being tried: a language menu in the top bar. Moves into apiary.css if it stays. */
@@ -886,6 +887,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* Idea being tried: routes that ask visitors for a password. Moves into apiary.css if it stays. */
 .ap .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
 .ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
+.ap .ap-stack-tag { display: inline-flex; align-items: center; gap: 4px; }
+.ap .ap-stack-tag .ap-icon { width: 12px; height: 12px; }
 .ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }
 
 /* Idea being tried: the brand dialog has the form and a live preview side by side. */
@@ -983,9 +986,13 @@ function seedData() {
       { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.', brand: { name: 'Example Lda.', logo: sampleLogo('EL', '#0F766E'), logoName: 'example-lda.svg', accent: '#0F766E', contact: 'Questions about the website? Write to hello@example.pt.', changed: [NOW - 2 * DAY, 'ana@example.com'] } },
     ],
     routes: [
-      { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'] },
-      { id: 'r2', host: 'shop.example.com', path: '/api', project: 'shop', targets: [{ host: 'shop-api', port: 8080, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 4120, timeout: 30, allow: [] },
-      { id: 'r3', host: 'checkout.example.com', path: '/', project: 'shop', targets: [{ host: 'checkout', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 2210, timeout: 60, allow: [] },
+      { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'],
+        stack: { name: 'shop', service: 'shop_web', fields: ['host', 'path', 'targets', 'project', 'timeout'] } },
+      { id: 'r2', host: 'shop.example.com', path: '/api', project: 'shop', targets: [{ host: 'shop-api', port: 8080, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 4120, timeout: 30, rateLimit: 600, allow: [],
+        stack: { name: 'shop', service: 'shop_api', fields: ['host', 'path', 'targets', 'project', 'timeout', 'rateLimit'] } },
+      /* `hand` keeps who last set a field that no label sets yet, so an apply that starts setting it can say whose change it replaced. */
+      { id: 'r3', host: 'checkout.example.com', path: '/', project: 'shop', targets: [{ host: 'checkout', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 2210, timeout: 60, allow: [],
+        stack: { name: 'shop', service: 'shop_checkout', fields: ['host', 'path', 'targets', 'project'] }, hand: { timeout: ['marta@example.com', at(5, '16:40')] } },
       { id: 'r4', host: 'static.example.com', path: '/', project: 'shop', targets: [{ host: 'static', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 591, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r5', host: 'api.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-api', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 3020, timeout: 30, allow: [] },
       { id: 'r6', host: 'webhooks.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-webhooks', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 390, timeout: 30, allow: [] },
@@ -1001,8 +1008,8 @@ function seedData() {
         gate: { password: 'harbor-maple-lantern-58', set: NOW - 2 * DAY, by: 'ana@example.com', message: 'Preview of the new website for Example Lda.', days: 7, link: { key: 'q3Lx8VbN2pT7wRfK9mZs4A', made: NOW - 2 * DAY } } },
     ],
     streams: [
-      { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412 },
-      { id: 's2', name: 'MQTT over TLS', proto: 'TCP', listen: 8883, target: 'mqtt', port: 8883, project: 'internal', status: 'ok', conns: 95 },
+      { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412, stack: { name: 'mqtt', service: 'mqtt_broker', fields: ['listen', 'target', 'port', 'proto'] } },
+      { id: 's2', name: 'MQTT over TLS', proto: 'TCP', listen: 8883, target: 'mqtt', port: 8883, project: 'internal', status: 'ok', conns: 95, stack: { name: 'mqtt', service: 'mqtt_broker', fields: ['listen', 'target', 'port', 'proto'] } },
       { id: 's3', name: 'Postgres (read replica)', proto: 'TCP', listen: 5433, target: 'pg-replica', port: 5432, project: 'payments', status: 'ok', conns: 18 },
       { id: 's4', name: 'Syslog', proto: 'UDP', listen: 514, target: 'vector', port: 514, project: 'internal', status: 'warn', statusText: 'No traffic for 2 h', conns: 0 },
     ],
@@ -1018,7 +1025,21 @@ function seedData() {
       { host: 'registry.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(35, '03:12'), expires: at(-55, '03:12'), status: 'ok' },
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
     ],
-    redirects: [],
+    redirects: [
+      { from: 'www.shop.example.com', to: 'https://shop.example.com', code: 308, keepPath: true, project: 'shop', stack: { name: 'shop', service: 'shop_web', fields: ['from', 'to', 'code', 'keepPath'] } },
+    ],
+    /* Stacks whose routes come from labels in their stack file, applied by a pipeline. A plan's change can end with who set the old value. */
+    stacks: [
+      { name: 'shop', project: 'shop', created: at(20, '10:05'), createdBy: 'ana@example.com', applied: at(0, '13:58'), token: 'gitlab-shop-deploy', commit: '4e1c9a2', pipeline: 'https://gitlab.example.com/shop/shop/-/pipelines/18234',
+        plan: { added: [['Redirect', 'www.shop.example.com']], changed: [['Route', 'shop.example.com/api', 'Rate limit', '300 a minute', '600 a minute', ['rui@example.com', at(3, '10:20')]], ['Route', 'checkout.example.com', 'Target', 'checkout:8000', 'checkout:8080']], removed: [['Route', 'shop.example.com/beta']] } },
+      { name: 'mqtt', project: 'internal', created: at(41, '16:30'), createdBy: 'ana@example.com', applied: at(6, '09:12'), token: 'gitlab-infra-deploy', commit: 'b07d3f1', pipeline: 'https://gitlab.example.com/infra/mqtt/-/pipelines/9921',
+        plan: { added: [], changed: [], removed: [] } },
+    ],
+    pipelineTokens: [
+      { id: 'pt1', name: 'gitlab-shop-deploy', stack: 'shop', created: at(20, '10:05'), by: 'ana@example.com', expires: at(-70, '10:05'), last: at(0, '13:58') },
+      { id: 'pt2', name: 'gitlab-infra-deploy', stack: 'mqtt', created: at(41, '16:30'), by: 'ana@example.com', expires: at(-49, '16:30'), last: at(6, '09:12') },
+      { id: 'pt3', name: 'jenkins-mqtt-old', stack: 'mqtt', created: at(78, '11:00'), by: 'rui@example.com', expires: at(-12, '11:00'), last: at(48, '02:15') },
+    ],
     replicas: [
       { id: 'a91c03d2', name: 'edge-1', node: 'swarm-node-1', role: 'voter', index: 184223, lag: 0, version: '0.4.0', seen: NOW - 1000 },
       { id: 'a3f9c41e', name: 'edge-2', node: 'swarm-node-2', role: 'leader', index: 184223, lag: 0, version: '0.4.0', seen: NOW },
@@ -1051,6 +1072,7 @@ function seedData() {
     audit: [
       { at: at(0, '14:32'), actor: 'ana@example.com', via: 'UI', text: 'changed route <code>shop.example.com</code>', meta: 'Weights 100/0 → 90/10 · from 10.0.4.21' },
       { at: at(0, '14:05'), actor: 'marta@example.com', agent: 'ops-assistant', via: 'MCP', text: 'purged the cache of <code>api.example.com</code>', meta: 'From 10.0.4.88' },
+      { at: at(0, '13:58'), actor: 'Pipeline gitlab-shop-deploy', via: 'API', text: 'applied stack <code>shop</code>', meta: '1 added, 2 changed, 1 removed · commit 4e1c9a2 · from 10.0.12.7' },
       { at: at(0, '13:47'), actor: 'rui@example.com', via: 'UI', denied: true, text: 'tried to delete user marta@example.com', meta: "Role Operator can't manage users · from 10.0.7.3" },
       { at: at(0, '11:20'), actor: 'System', via: 'System', text: 'renewed the certificate for <code>api.example.com</code>', meta: "Let's Encrypt · leader edge-2" },
       { at: at(0, '08:02'), actor: 'ana@example.com', via: 'UI', text: 'signed in', meta: 'Two-step sign-in · from 10.0.4.21' },
@@ -1071,7 +1093,7 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
 }
 
 /* Shared behavior: formatting, toasts, dialogs, menus, busy buttons, form validation and the date and time picker. */
@@ -1625,6 +1647,8 @@ if (Proto.state.data === 'empty') D = emptyData();
 const shell = $('#app-shell'), side = $('#side'), main = $('#main');
 const projectOf = id => D.projects.find(p => p.id === id);
 const routesOf = id => D.routes.filter(r => r.project === id);
+const stackOf = name => D.stacks.find(s => s.name === name);
+const declaredIn = name => ({ routes: D.routes.filter(r => r.stack && r.stack.name === name), streams: D.streams.filter(x => x.stack && x.stack.name === name), redirects: D.redirects.filter(x => x.stack && x.stack.name === name) });
 const rpmOf = id => routesOf(id).filter(r => !r.disabled).reduce((a, r) => a + r.rpm, 0);
 function projectHealth(id) {
   const rs = routesOf(id), active = rs.filter(r => !r.disabled);
@@ -1723,8 +1747,8 @@ function navGroups(voters) {
   return [
     ['', [['layout-dashboard', 'Overview', '#/']]],
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
-    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
-    ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
+    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['layers', 'Stacks', '#/stacks', D.stacks.length || null, D.stacks.some(s => s.failed)], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
+    ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on'], ['key-round', 'Pipeline tokens', '#/pipeline-tokens', D.pipelineTokens.length || null]] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
     ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
 }
@@ -2308,15 +2332,34 @@ function canaryOf(r) {
   return { source: 'header', name, value };
 }
 
+/* Routes, stream routes and redirects declared in a stack: a tag in lists, and the fields their labels set locked in editors */
+const stackTag = name => `<span class="ap-caption ap-stack-tag">${icon('layers')}Declared in stack <a class="ap-data" href="#/stacks/${esc(name)}">${esc(name)}</a></span>`;
+const lockNote = name => `<span class="ap-caption ap-stack-tag" data-lock>${icon('lock')}Set in stack <a class="ap-data" href="#/stacks/${esc(name)}">${esc(name)}</a></span>`;
+function lockFields(form, names, stack, rowsAt) {
+  const notes = new Set();
+  [...form.elements].filter(c => c.name && names.some(n => (n.endsWith('-') ? c.name.startsWith(n) : c.name === n))).forEach(c => {
+    if (['checkbox', 'radio'].includes(c.type) || c.tagName === 'SELECT') c.disabled = true; else c.readOnly = true;
+    const row = rowsAt && /^t-/.test(c.name);
+    const at = row ? rowsAt : c.closest('.ap-field, .ap-choice, fieldset');
+    if (at && !notes.has(at)) { notes.add(at); at.insertAdjacentHTML(row ? 'beforebegin' : 'beforeend', lockNote(stack)); }
+  });
+  paint();
+}
+const fromStackBanner = (stack, service, text) => banner('info', `Declared in stack <a href="#/stacks/${esc(stack)}">${esc(stack)}</a>`, `Fields with a ${icon('lock')} come from the labels of <span class="ap-data">${esc(service)}</span>: change them in the stack file${text}`, '', 'layers');
+const ROUTE_FIELDS = {
+  host: ['host'], path: ['path'], project: ['project'], targets: ['t-host-', 't-port-', 't-weight-', 'canarySource', 'canaryName', 'canaryValue', 'sticky'],
+  timeout: ['timeout'], rateLimit: ['rateLimited', 'rateLimit'],
+};
+
 function routeRow(r) {
   const [tone, text] = routeStatus(r);
   const label = esc(routeLabel(r)), [at, by] = changedOf(r);
   const upcoming = r.maintenance && NOW < r.maintenance.start ? `<span class="ap-caption">Maintenance ${fmtDate(r.maintenance.start)} UTC</span>` : '';
   const act = (ic, aria, key) => `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="${aria}" data-ract="${key}" data-id="${r.id}" data-write>${icon(ic)}</button>`;
   const actions = canOperate() ? (r.disabled ? act('play', 'Enable ' + label, 'enable') : act('pause', 'Disable ' + label, 'disable'))
-    + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + act('trash-2', 'Delete ' + label, 'delete') : '';
+    + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + (r.stack ? '' : act('trash-2', 'Delete ' + label, 'delete')) : '';
   return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
-<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
+<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a>${r.stack ? stackTag(r.stack.name) : ''}<span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
 <td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
 <td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
 <td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
@@ -2431,6 +2474,8 @@ ${sizeDefaultPanel()}`,
         const b = e.target.closest('[data-b]');
         if (!b) return;
         const rs = D.routes.filter(r => selected.includes(r.id));
+        const declared = rs.filter(r => r.stack);
+        if (declared.length && (b.dataset.b === 'delete' || b.dataset.b === 'move')) { toast(`${declared.length === 1 ? `${routeLabel(declared[0])} is` : `${declared.length} of them are`} declared in a stack file. Change ${declared.length === 1 ? 'it' : 'them'} there, or select only routes not from a stack.`, { tone: 'info' }); return; }
         if (b.dataset.b === 'clear') draw();
         if (b.dataset.b === 'purge' && await purge(rs)) draw();
         if (b.dataset.b === 'delete') deleteRoutes(rs);
@@ -2641,6 +2686,7 @@ function routeEditor(r, projectId) {
     sub: isNew ? 'Send requests for a hostname to services on the shared network.' : `${status(tone, text)} &nbsp;·&nbsp; ${num(r.rpm)} req/min &nbsp;·&nbsp; Changed ${ago(changedOf(r)[0])}${r.changed[1] ? ` by ${esc(r.changed[1])}` : ''}`,
   })}
 ${ops ? '' : banner('info', 'You can view this route', 'Changing it needs the Operator role. Ask an Administrator if you need it.')}
+${r && r.stack ? fromStackBanner(r.stack.name, r.stack.service, `, and the next apply updates this route.${stackOf(r.stack.name) && stackOf(r.stack.name).applied ? ` Last applied ${ago(stackOf(r.stack.name).applied)} by pipeline <span class="ap-data">${esc(stackOf(r.stack.name).token)}</span>, commit <span class="ap-data">${esc(stackOf(r.stack.name).commit)}</span>.` : ''} You can still disable the route or schedule maintenance here.`) : ''}
 <form class="ap-form" id="rt-form" novalidate style="max-width:800px">
 <div data-summary></div>
 <section class="ap-panel" aria-labelledby="s1"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s1">Requests</h2><p class="ap-panel-desc">Which requests this route answers.</p></div></div><div class="ap-panel-body ap-stack">
@@ -2702,7 +2748,8 @@ ${field({ name: 'mMsg', label: 'Message for visitors', optional: true, control: 
 
 ${isNew ? '' : `<section class="ap-panel ap-panel-danger" aria-labelledby="s7"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s7">Danger zone</h2></div></div><div class="ap-panel-body ap-list">
 <div class="ap-list-row"><div class="ap-list-text"><strong>${r.disabled ? 'Enable' : 'Disable'} this route</strong><span class="ap-muted">${r.disabled ? 'Traffic flows again with the saved settings.' : 'Visitors get a 503. Settings and certificate are kept.'}</span></div><button class="ap-btn" type="button" data-disable data-write${ops ? '' : ' disabled'}>${r.disabled ? 'Enable route' : 'Disable route…'}</button></div>
-<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests to it get a 404 on every replica.</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-delete data-write${ops ? '' : ' disabled'}>Delete route…</button></div></div></section>`}
+${r.stack ? `<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Remove it from the stack file instead. The next apply of ${esc(r.stack.name)} deletes it.</span></div><button class="ap-btn" type="button" disabled>Delete route…</button></div>`
+  : `<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests to it get a 404 on every replica.</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-delete data-write${ops ? '' : ' disabled'}>Delete route…</button></div>`}</div></section>`}
 ${ops ? `<div class="ap-savebar"><a class="ap-btn ap-btn-ghost" href="#/routes">Cancel</a><button class="ap-btn ap-btn-primary" type="submit" data-busy="Saving…" data-write>${isNew ? 'Create route' : 'Save route'}</button></div>` : ''}
 </form>`;
 
@@ -2901,6 +2948,10 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       },
     });
 
+    if (r && r.stack) {
+      lockFields(f, r.stack.fields.flatMap(k => ROUTE_FIELDS[k] || []), r.stack.name, rowsEl);
+      if (r.stack.fields.includes('targets')) { $('[data-add-target]', el).remove(); $$('[data-remove]', rowsEl).forEach(b => b.remove()); }
+    }
     const snap = () => JSON.stringify(v.values());
     const initial = snap();
     let dirty = false;
@@ -2942,10 +2993,10 @@ route('/streams', () => {
     html: `${pageHead({ title: 'Stream routes', sub: 'TCP and UDP traffic, such as MQTT or databases, forwarded as it is. Apiary doesn’t read or change it.', actions: list.length ? add : '' })}
 ${banner('info', 'Each stream route needs its port published', 'Swarm only sends traffic to ports your stack file publishes. After adding a stream route, add its port to the Apiary service and deploy the stack again.')}
 <section class="ap-panel">${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Stream routes</caption><thead><tr><th scope="col">Name</th><th scope="col">Listens on</th><th scope="col">Target</th><th scope="col">Project</th><th scope="col">Status</th><th scope="col" class="ap-num">Connections</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
-${list.map(s => { const [tone, text] = streamActivity(s); return `<tr><td><div class="ap-cell-main"><strong style="font-weight:500">${esc(s.name)}</strong>${s.serverNames.length ? `<span class="ap-caption ap-data">${esc(s.serverNames.join(', '))}</span>` : ''}</div></td><td><span class="ap-data">${s.listen}</span> <span class="ap-tag">${s.proto}</span></td><td class="ap-data ap-muted">${esc(s.target)}:${s.port}</td><td class="ap-muted">${esc(trafficProject(s.project))}</td><td>${status(tone, text)}${s.allow.length ? '<span class="ap-caption" style="display:block">Allowlist</span>' : ''}</td><td class="ap-num">${num(s.conns)}</td><td class="ap-col-actions"><div class="ap-row" style="gap:4px;justify-content:flex-end">
+${list.map(s => { const [tone, text] = streamActivity(s); return `<tr><td><div class="ap-cell-main"><strong style="font-weight:500">${esc(s.name)}</strong>${s.serverNames.length ? `<span class="ap-caption ap-data">${esc(s.serverNames.join(', '))}</span>` : ''}${s.stack ? stackTag(s.stack.name) : ''}</div></td><td><span class="ap-data">${s.listen}</span> <span class="ap-tag">${s.proto}</span></td><td class="ap-data ap-muted">${esc(s.target)}:${s.port}</td><td class="ap-muted">${esc(trafficProject(s.project))}</td><td>${status(tone, text)}${s.allow.length ? '<span class="ap-caption" style="display:block">Allowlist</span>' : ''}</td><td class="ap-num">${num(s.conns)}</td><td class="ap-col-actions"><div class="ap-row" style="gap:4px;justify-content:flex-end">
 <button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Edit ${esc(s.name)}" data-edit="${s.id}" data-write>${icon('pencil')}</button>
 ${s.disabled ? `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Enable ${esc(s.name)}" data-enable="${s.id}" data-write>${icon('play')}</button>` : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Disable ${esc(s.name)}" data-disable="${s.id}" data-write>${icon('power')}</button>`}
-<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete ${esc(s.name)}" data-del="${s.id}" data-write>${icon('trash-2')}</button></div></td></tr>`; }).join('')}
+${s.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete ${esc(s.name)}" data-del="${s.id}" data-write>${icon('trash-2')}</button>`}</div></td></tr>`; }).join('')}
 </tbody></table></div>` : emptyState('No stream routes', 'Forward TCP or UDP traffic, such as MQTT on port 1883, to a service on the shared network.', add)}</section>`,
     mount(el) {
       const find = id => D.streams.find(x => x.id === id);
@@ -2991,6 +3042,10 @@ ${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: te
   });
   applyWriteLock(d.el);
   const f = $('#st-form', d.el);
+  if (s && s.stack) {
+    $('[data-summary]', f).insertAdjacentHTML('afterend', fromStackBanner(s.stack.name, s.stack.service, '. You can still disable it from the list.'));
+    lockFields(f, s.stack.fields, s.stack.name);
+  }
   f.addEventListener('change', e => {
     if (e.target.name !== 'proto') return;
     $('[data-tcp]', f).hidden = e.target.value !== 'TCP';
@@ -3241,7 +3296,7 @@ route('/redirects', () => ({
   title: 'Redirects',
   html: `${pageHead({ title: 'Redirects', sub: 'Send one hostname to another address, such as www.example.com to example.com.', actions: D.redirects.length ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>` : '' })}
 <section class="ap-panel">${D.redirects.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Redirects</caption><thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Status code</th><th scope="col">Path</th><th scope="col">Project</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
-${D.redirects.map((x, i) => `<tr><td class="ap-data">${esc(x.from)}</td><td class="ap-data ap-muted">${esc(x.to)}</td><td><span class="ap-tag">${x.code}</span> <span class="ap-muted">${{ 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' }[x.code]}</span></td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(x.from)}" data-del="${i}" data-write>${icon('trash-2')}</button></td></tr>`).join('')}
+${D.redirects.map((x, i) => `<tr><td><div class="ap-cell-main"><span class="ap-data">${esc(x.from)}</span>${x.stack ? stackTag(x.stack.name) : ''}</div></td><td class="ap-data ap-muted">${esc(x.to)}</td><td><span class="ap-tag">${x.code}</span> <span class="ap-muted">${{ 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' }[x.code]}</span></td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions">${x.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(x.from)}" data-del="${i}" data-write>${icon('trash-2')}</button>`}</td></tr>`).join('')}
 </tbody></table></div>` : emptyState('No redirects yet', 'A redirect sends one hostname to another, such as <span class="ap-code">www.example.com</span> to <span class="ap-code">example.com</span>, with a 308 or 307.', `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>`)}</section>`,
   mount(el) {
     $$('[data-add]', el).forEach(b => b.addEventListener('click', redirectDialog));
@@ -3296,6 +3351,254 @@ ${field({ name: 'project', label: 'Project', help: 'Only for grouping.', control
     },
   });
 }
+
+/* Stacks: Swarm stacks whose routes come from apiary.* labels in their stack file. Apiary never reads Docker: the
+   stack's pipeline runs `apiary apply`, which reads the labels and sends them to the admin API with a pipeline token. */
+const STACK_NAME = /^[a-z0-9][a-z0-9_-]{0,62}$/;
+const waiting = s => !s.applied;
+const andList = xs => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const declaredText = d => [d.routes.length ? plural(d.routes.length, 'route') : '', d.streams.length ? plural(d.streams.length, 'stream route') : '', d.redirects.length ? plural(d.redirects.length, 'redirect') : ''].filter(Boolean);
+const tokenValue = () => 'apiary_pt_' + btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24)))).replace(/[+/=]/g, '');
+const applyCommand = stack => `docker stack deploy --compose-file stack.yaml ${stack}
+docker run --rm -e APIARY_TOKEN -v "$PWD:/work" datapointsoftware/apiary \\
+  apply --server ${APIARY_URL} --stack ${stack} /work/stack.yaml`;
+const dryRunCommand = stack => `docker run --rm -e APIARY_TOKEN -v "$PWD:/work" datapointsoftware/apiary \\
+  apply --dry-run --server ${APIARY_URL} --stack ${stack} /work/stack.yaml`;
+const sampleLabels = `services:
+  web:
+    image: registry.example.com/shop/web:2.14.0
+    deploy:
+      labels:
+        apiary.project: Shop
+        apiary.route.web.host: shop.example.com
+        apiary.route.web.port: "8080"
+        apiary.route.web.timeout: "30"
+        apiary.redirect.www.from: www.shop.example.com
+        apiary.redirect.www.to: https://shop.example.com`;
+const setupPanel = stack => `<section class="ap-panel" style="max-width:800px" aria-labelledby="su-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="su-t">Apply from your pipeline</h2><p class="ap-panel-desc">Apiary never connects to Docker. Your pipeline reads the labels from the stack file and sends them here, so routes change in the same commit as the services. It calls the admin port, so it must run inside your network, like the people who use this interface.</p></div></div><div class="ap-panel-body ap-stack">
+<ol class="ap-stack" style="gap:12px;margin:0;padding-left:20px">
+<li class="ap-stack" style="gap:8px"><span>Add <span class="ap-data">apiary.*</span> labels under <span class="ap-data">deploy.labels</span> of each service:</span>${copyText(sampleLabels, true)}<span class="ap-muted">Passwords, sign-in links, certificates and allowed addresses can’t be set by labels: anyone who can inspect the service could read them.</span></li>
+<li class="ap-stack" style="gap:8px"><span>In merge requests, show what an apply would change, without changing it:</span>${copyText(dryRunCommand(stack), true)}</li>
+<li class="ap-stack" style="gap:8px"><span>After the deploy, apply it. Routes of ${esc(stack)} missing from the file are removed.</span>${copyText(applyCommand(stack), true)}</li>
+</ol></div></section>`;
+
+function planList(p) {
+  const rows = [
+    ...p.added.map(([kind, what]) => [status('ok', 'Added'), `${kind} <span class="ap-data">${esc(what)}</span>`]),
+    ...p.changed.map(([kind, what, f, a, b, by]) => [status(by ? 'warn' : 'info', by ? 'Replaced a change' : 'Changed'), `${kind} <span class="ap-data">${esc(what)}</span>: ${esc(f)} <span class="ap-data">${esc(a)}</span> → <span class="ap-data">${esc(b)}</span>${by ? `<span class="ap-caption" style="display:block">${esc(a)} was set by ${esc(by[0])}, ${ago(by[1])}. A label now sets it, so it’s locked.</span>` : ''}`]),
+    ...p.removed.map(([kind, what]) => [status('warn', 'Removed'), `${kind} <span class="ap-data">${esc(what)}</span>`]),
+  ];
+  return rows.length ? `<div class="ap-list">${rows.map(([s, t]) => `<div class="ap-list-row"><div class="ap-list-text"><span>${t}</span></div>${s}</div>`).join('')}</div>` : '<p class="ap-muted" style="margin:0">Nothing changed: the stack file matched what Apiary had.</p>';
+}
+
+/* Pipeline tokens: created by an Administrator from a stack, so each reaches only that stack, and shown once */
+function tokenDialog(stack) {
+  const d = dialog({
+    title: `Create a pipeline token for ${esc(stack)}`, backdrop: false,
+    body: `<form id="pt-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'name', label: 'Name', data: true, placeholder: `${stack}-deploy`, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'Shown in the audit log for every apply, so name the pipeline that uses it.' })}
+<div style="max-width:280px">${field({ name: 'days', label: 'Expires after', control: select('days', [['30', '30 days'], ['90', '90 days'], ['365', '1 year']], '90'), help: 'Create a new one before it expires, and update the CI variable.' })}</div>
+<p class="ap-caption" style="margin:0">It can only apply ${esc(stack)}: it can’t change other stacks, routes not from a stack, users or settings.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="pt-form" data-busy="Creating…" data-write>Create token</button>`,
+  });
+  form($('#pt-form', d.el), { name: v => V.required(v, 'a name') || (D.pipelineTokens.some(t => t.name === String(v).trim()) ? 'Another token has this name. Choose another.' : null) }, {
+    verb: 'create the token',
+    submit: async v => {
+      await api();
+      const t = { id: 'pt' + Date.now().toString(36), name: v.name.trim(), stack, created: NOW, by: D.me.email, expires: NOW + +v.days * DAY, last: null };
+      D.pipelineTokens.push(t);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `created pipeline token <code>${esc(t.name)}</code> for stack <code>${esc(stack)}</code>`, meta: 'From 10.0.4.21' });
+      d.close();
+      refresh();
+      showToken(t);
+    },
+  });
+}
+function showToken(t) {
+  dialog({
+    title: `Token ${esc(t.name)}`, mark: ['ok', 'key-round'], initial: '[data-copy]',
+    body: `<p style="margin:0">Store it as a masked, protected CI variable named <span class="ap-data">APIARY_TOKEN</span>. You won’t see it again: Apiary keeps only a hash.</p>${copyText(tokenValue())}
+<p class="ap-caption" style="margin:0">Anyone with it can change or remove the routes of ${esc(t.stack)}. If it leaks, revoke it here.</p>`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>I stored it</button>',
+  });
+}
+function revokeToken(t) {
+  confirmDialog({
+    title: `Revoke ${esc(t.name)}?`, text: `Pipelines that use it can’t apply <span class="ap-data">${esc(t.stack)}</span> anymore. The routes it applied stay as they are.`,
+    confirm: 'Revoke token', busy: 'Revoking…',
+    onConfirm: async () => {
+      await api();
+      D.pipelineTokens.splice(D.pipelineTokens.indexOf(t), 1);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `revoked pipeline token <code>${esc(t.name)}</code>`, meta: 'From 10.0.4.21' });
+      refresh();
+      toast(`${t.name} no longer works.`);
+    },
+  });
+}
+const tokensTable = (list, withStack) => `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Pipeline tokens</caption><thead><tr><th scope="col">Token</th>${withStack ? '<th scope="col">Stack</th>' : ''}<th scope="col">Created</th><th scope="col">Last used</th><th scope="col">Expires</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map(t => `<tr><td class="ap-data">${esc(t.name)}</td>${withStack ? `<td><a class="ap-tag" href="#/stacks/${esc(t.stack)}">${esc(t.stack)}</a></td>` : ''}<td class="ap-muted">${ago(t.created)} by ${esc(t.by)}</td><td class="ap-muted">${t.last ? ago(t.last) : 'Never'}</td><td class="ap-data">${fmtDate(t.expires, false)}</td><td class="ap-col-actions">${isAdmin() ? `<button class="ap-btn ap-btn-sm" type="button" data-revoke="${t.id}" data-write>Revoke…</button>` : ''}</td></tr>`).join('')}
+</tbody></table></div>`;
+const bindTokens = el => $$('[data-revoke]', el).forEach(b => b.addEventListener('click', () => revokeToken(D.pipelineTokens.find(t => t.id === b.dataset.revoke))));
+
+/* Add stack makes an empty stack and its first token, so a new install has somewhere to start */
+function addStackDialog() {
+  const d = dialog({
+    title: 'Add a stack', backdrop: false,
+    body: `<form id="as-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'stack', label: 'Stack name', data: true, placeholder: 'shop', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'The name your pipeline gives <span class="ap-data">docker stack deploy</span>, such as <span class="ap-data">shop</span>.' })}
+${field({ name: 'project', label: 'Project', optional: true, control: select('project', [['', 'Set by the apiary.project label'], ...D.projects.map(p => [p.id, p.name])], ''), help: 'Where its routes go when their labels don’t name a project.' })}
+${field({ name: 'name', label: 'Token name', data: true, placeholder: 'shop-deploy', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'For the stack’s first pipeline token. It appears in the audit log for every apply, so name the pipeline that uses it.' })}
+<div style="max-width:280px">${field({ name: 'days', label: 'Token expires after', control: select('days', [['30', '30 days'], ['90', '90 days'], ['365', '1 year']], '90') })}</div>
+</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="as-form" data-busy="Adding…" data-write>Add stack</button>`,
+  });
+  const f = $('#as-form', d.el);
+  let named = false;
+  f.elements.name.addEventListener('input', () => { named = true; });
+  f.elements.stack.addEventListener('input', () => { if (!named) f.elements.name.value = f.elements.stack.value.trim() ? `${f.elements.stack.value.trim()}-deploy` : ''; });
+  form(f, {
+    stack: v => { const n = String(v).trim(); return !n ? 'Enter the stack name.' : !STACK_NAME.test(n) ? 'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores.' : stackOf(n) ? 'This stack is already here. Open it to create another token.' : null; },
+    name: v => V.required(v, 'a token name') || (D.pipelineTokens.some(t => t.name === String(v).trim()) ? 'Another token has this name. Choose another.' : null),
+  }, {
+    verb: 'add the stack',
+    links: { stack: ['name'] },
+    submit: async v => {
+      await api();
+      const s = { name: v.stack.trim(), project: v.project, created: NOW, createdBy: D.me.email, applied: null };
+      const t = { id: 'pt' + Date.now().toString(36), name: v.name.trim(), stack: s.name, created: NOW, by: D.me.email, expires: NOW + +v.days * DAY, last: null };
+      D.stacks.push(s);
+      D.pipelineTokens.push(t);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `added stack <code>${esc(s.name)}</code> and pipeline token <code>${esc(t.name)}</code>`, meta: 'From 10.0.4.21' });
+      d.close();
+      go('/stacks/' + s.name);
+      showToken(t);
+    },
+  });
+}
+/* Remove stack, after `docker stack rm`: deletes what the stack declared and revokes its tokens */
+function removeStack(s) {
+  const d = declaredIn(s.name), tokens = D.pipelineTokens.filter(t => t.stack === s.name), lost = declaredText(d);
+  confirmDialog({
+    title: `Remove stack ${esc(s.name)}?`,
+    text: `${lost.length ? `Apiary deletes its ${andList(lost)} on every replica, and requests to them get a 404 at once. ` : ''}${tokens.length ? `${tokens.length === 1 ? 'Its pipeline token stops' : `Its ${tokens.length} pipeline tokens stop`} working. ` : ''}Do this after <span class="ap-data">docker stack rm ${esc(s.name)}</span>: Apiary never touches Docker, so the services keep running until you run it. Routes not from this stack don’t change.`,
+    confirm: 'Remove stack', busy: 'Removing…', type: s.name,
+    onConfirm: async () => {
+      await api();
+      D.routes = D.routes.filter(r => !d.routes.includes(r));
+      D.streams = D.streams.filter(x => !d.streams.includes(x));
+      D.redirects = D.redirects.filter(x => !d.redirects.includes(x));
+      D.pipelineTokens = D.pipelineTokens.filter(t => t.stack !== s.name);
+      D.stacks = D.stacks.filter(x => x !== s);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `removed stack <code>${esc(s.name)}</code>`, meta: `${andList(lost) || 'Nothing declared'} · ${plural(tokens.length, 'token')} revoked · from 10.0.4.21` });
+      go('/stacks');
+      toast(`${s.name} is gone${lost.length ? `, with its ${andList(lost)}` : ''}.`);
+    },
+  });
+}
+
+/* Prototype only: what an apply does to a stack, and what the pipeline log shows, when it works and when it doesn't */
+const SIMULATIONS = [['works', 'works'], ['conflict', 'finds a hostname in use'], ['quorum', 'can’t reach a quorum'], ['empty', 'removes everything']];
+const commitId = () => [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 7);
+function pipelineLog(title, ok, log, note) {
+  dialog({
+    title, mark: ok ? ['ok', 'circle-check'] : ['critical', 'circle-alert'], size: 'lg',
+    body: `<p style="margin:0">What the pipeline log shows:</p><div class="ap-copy" style="align-items:flex-start"><code style="white-space:pre;line-height:1.6;overflow:auto">${esc(log)}</code></div>${note ? `<p class="ap-caption" style="margin:0">${note}</p>` : ''}`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>Close</button>',
+  });
+}
+function simulateApply(s, outcome) {
+  const t = D.pipelineTokens.find(x => x.stack === s.name);
+  const cmd = `$ apiary apply --server ${APIARY_URL} --stack ${s.name} /work/stack.yaml`;
+  if (!t) return pipelineLog('The apply was refused', false, `${cmd}\nerror: auth.invalidToken: APIARY_TOKEN isn't a valid pipeline token for stack ${s.name}.\n       It may have expired or been revoked. Ask an Administrator for a new one.\nNothing was changed.`, 'Apiary doesn’t record refused tokens on the stack page: anyone could send one. They’re in the audit log as failed sign-ins.');
+  if (outcome === 'quorum' || Proto.state.cluster === 'quorum') {
+    return pipelineLog('The apply failed', false, `${cmd}\nRead 3 services and 14 apiary labels from stack.yaml.\nerror: cluster.noQuorum: only 1 of 3 voting replicas can be reached, so Apiary can't save changes.\nNothing was changed. Every replica keeps serving the current routes. Run the job again when the cluster has quorum.`, 'Nothing appears on this page or in the audit log: without quorum, Apiary can’t save anything, its own records included. Only the pipeline log shows it, which is why the command exits with an error and fails the job.');
+  }
+  const fail = (code, title, text, log, labels = 14) => {
+    s.failed = { at: NOW, code, title, text, token: t.name };
+    t.last = NOW;
+    D.audit.unshift({ at: NOW, actor: `Pipeline ${t.name}`, via: 'API', denied: true, text: `tried to apply stack <code>${esc(s.name)}</code>`, meta: `${code} · from 10.0.12.7` });
+    refresh();
+    pipelineLog('The apply failed', false, `${cmd}\nRead 3 services and ${labels} apiary labels from stack.yaml.\n${log}\nNothing was changed.`);
+  };
+  if (outcome === 'conflict') {
+    return fail('route.hostInUse', 'a hostname is already in use', 'The stack file declares <span class="ap-data">grafana.internal.example.com</span>, which a route in Internal tools, not from a stack, already uses. Nothing changed.',
+      `error: route.hostInUse: grafana.internal.example.com is already used by a route that isn't in stack ${s.name}\n       (project Internal tools, not from a stack). Apiary won't take it over.\n       Remove the label, or delete or move the other route first.`);
+  }
+  const d = declaredIn(s.name), all = d.routes.length + d.streams.length + d.redirects.length;
+  if (outcome === 'empty') {
+    return fail('stack.removesEverything', 'it would remove everything', `The stack file declares nothing, so the apply would delete all ${plural(all, 'item')} of ${esc(s.name)}. That usually means the wrong file or labels that went missing.`,
+      `Plan for stack ${s.name}: 0 added, 0 changed, ${all} removed.\nerror: stack.removesEverything: this apply would remove everything stack ${s.name} declares,\n       which usually means the wrong file or missing labels.\n       If you mean it, run again with --allow-removing-all.`, 0);
+  }
+  const plan = { added: [], changed: [], removed: [] }, lines = [];
+  if (waiting(s)) {
+    const host = `${s.name}.example.com`;
+    D.routes.push({ id: 'r' + Date.now().toString(36), host, path: '/', project: s.project || D.projects[0].id, targets: [{ host: `${s.name}_web`, port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 0, timeout: 30, allow: [], changed: [NOW, t.name], stack: { name: s.name, service: `${s.name}_web`, fields: ['host', 'path', 'targets', 'timeout'] } });
+    plan.added.push(['Route', host]);
+    lines.push(`  + route ${host}   → ${s.name}_web:8080`);
+  } else {
+    const r = d.routes.find(x => x.hand && x.hand.timeout && !x.stack.fields.includes('timeout'));
+    if (r) {
+      const by = r.hand.timeout;
+      plan.changed.push(['Route', routeLabel(r), 'Timeout', `${r.timeout} seconds`, '30 seconds', by]);
+      lines.push(`  ~ route ${routeLabel(r)}   timeout ${r.timeout} s → 30 s`, `      replaces a value set by ${by[0]} on ${fmtDate(by[1], false)}; the label locks it from now on`);
+      Object.assign(r, { timeout: 30, changed: [NOW, t.name] });
+      r.stack.fields.push('timeout');
+      delete r.hand.timeout;
+    }
+  }
+  const n = plan.added.length + plan.changed.length + plan.removed.length;
+  Object.assign(s, { applied: NOW, token: t.name, commit: commitId(), pipeline: s.pipeline || `https://gitlab.example.com/${s.name}/-/pipelines/${18000 + D.audit.length}`, plan, failed: null });
+  t.last = NOW;
+  D.audit.unshift({ at: NOW, actor: `Pipeline ${t.name}`, via: 'API', text: `applied stack <code>${esc(s.name)}</code>`, meta: `${plan.added.length} added, ${plan.changed.length} changed, ${plan.removed.length} removed · commit ${s.commit} · from 10.0.12.7` });
+  refresh();
+  pipelineLog('The apply worked', true, `${cmd}\nRead 3 services and 14 apiary labels from stack.yaml.\n${n ? `Plan for stack ${s.name}:\n${lines.join('\n')}\n` : `Stack ${s.name} already matches stack.yaml.\n`}Applied to every replica at once: ${plan.added.length} added, ${plan.changed.length} changed, ${plan.removed.length} removed.`, n ? 'A dry run in the merge request prints the same plan, without applying it.' : 'Try another outcome, or run it again after a failure to see it clear.');
+}
+
+route('/stacks', () => {
+  const add = isAdmin() ? `<button class="ap-btn ap-btn-primary" type="button" data-add-stack data-write>${icon('plus')}Add stack</button>` : '';
+  const head = pageHead({ title: 'Stacks', sub: 'Swarm stacks whose routes come from labels in their stack file. Their pipeline applies the file after each deploy.', actions: D.stacks.length ? add : '' });
+  const mount = el => $$('[data-add-stack]', el).forEach(b => b.addEventListener('click', addStackDialog));
+  if (!D.stacks.length) return { title: 'Stacks', mount, html: `${head}<section class="ap-panel">${emptyState('No stacks yet', `Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels.${isAdmin() ? '' : ' Only Administrators can add stacks.'}`, add)}</section>` };
+  return {
+    title: 'Stacks', mount,
+    html: `${head}<section class="ap-panel"><div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Stacks</caption><thead><tr><th scope="col">Stack</th><th scope="col">Project</th><th scope="col">Declares</th><th scope="col">Last applied</th><th scope="col">Changes</th></tr></thead><tbody>
+${D.stacks.map(s => {
+    const n = waiting(s) ? 0 : s.plan.added.length + s.plan.changed.length + s.plan.removed.length;
+    return `<tr><td><a class="ap-data" href="#/stacks/${esc(s.name)}">${esc(s.name)}</a></td><td class="ap-muted">${esc((projectOf(s.project) || {}).name || 'From labels')}</td><td class="ap-muted">${waiting(s) ? '–' : declaredText(declaredIn(s.name)).join(' · ') || 'Nothing'}</td><td>${s.failed ? status('warn', 'Last apply failed') : waiting(s) ? status('info', 'Waiting for the first apply') : `<span class="ap-muted">${ago(s.applied)} by <span class="ap-data">${esc(s.token)}</span></span>`}</td><td class="ap-muted">${waiting(s) ? '–' : n ? plural(n, 'change') : 'No changes'}</td></tr>`;
+  }).join('')}</tbody></table></div></section>`,
+  };
+});
+route('/stacks/:name', name => {
+  const s = stackOf(name);
+  if (!s) return notFound();
+  const d = declaredIn(s.name), tokens = D.pipelineTokens.filter(t => t.stack === s.name), admin = isAdmin();
+  const items = [...d.routes.map(r => [`<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`, 'Route', r.stack.service]), ...d.streams.map(x => [`<span class="ap-data">${esc(x.name)}</span>`, `Stream route, ${x.proto} ${x.listen}`, x.stack.service]), ...d.redirects.map(x => [`<span class="ap-data">${esc(x.from)}</span>`, 'Redirect', x.stack.service])];
+  const sub = waiting(s) ? `${status('info', 'Waiting for the first apply')} &nbsp;·&nbsp; Added ${ago(s.created)} by ${esc(s.createdBy)}`
+    : `Last applied ${ago(s.applied)} by pipeline <span class="ap-data">${esc(s.token)}</span> &nbsp;·&nbsp; commit <a class="ap-data" href="${esc(s.pipeline)}" target="_blank" rel="noopener">${esc(s.commit)}</a>`;
+  const lastApply = waiting(s)
+    ? `<section class="ap-panel" style="max-width:800px" aria-labelledby="la-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="la-t">First apply</h2></div></div><div class="ap-panel-body">${banner('info', `Nothing has applied ${esc(s.name)} yet`, `Add the commands under Apply from your pipeline, below, to the pipeline that deploys ${esc(s.name)}, with its token as <span class="ap-data">APIARY_TOKEN</span>. After its first run, the routes in its labels appear here.`)}</div></section>`
+    : `<section class="ap-panel" style="max-width:800px" aria-labelledby="la-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="la-t">Last apply</h2><p class="ap-panel-desc">${fmtDate(s.applied)} UTC. Every apply is in the audit log.</p></div></div><div class="ap-panel-body">${planList(s.plan)}</div></section>
+<section class="ap-panel" style="max-width:800px" aria-labelledby="de-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="de-t">What it declares</h2><p class="ap-panel-desc">Fields the labels set are locked on their pages. Disabling and maintenance windows stay available.</p></div></div>
+<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">What ${esc(s.name)} declares</caption><thead><tr><th scope="col">Name</th><th scope="col">Kind</th><th scope="col">Service</th></tr></thead><tbody>${items.map(([a, b, c]) => `<tr><td>${a}</td><td class="ap-muted">${b}</td><td class="ap-data ap-muted">${esc(c)}</td></tr>`).join('')}</tbody></table></div></section>`;
+  return {
+    title: s.name,
+    html: `${pageHead({ crumbs: [['Stacks', '#/stacks']], title: s.name, sub })}
+${s.failed ? banner('critical', `The last apply failed ${ago(s.failed.at)}: ${esc(s.failed.title)}`, `${s.failed.text} Pipeline <span class="ap-data">${esc(s.failed.token)}</span>, error <span class="ap-data">${esc(s.failed.code)}</span>. This clears when an apply succeeds.`) : ''}
+<div class="pt-row"><span class="ap-caption">Prototype: simulate an apply that</span>${SIMULATIONS.map(([k, t]) => `<button class="ap-btn ap-btn-sm" type="button" data-simulate="${k}">${t}</button>`).join('')}</div>
+${lastApply}
+<section class="ap-panel" style="max-width:800px" aria-labelledby="tk-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tk-t">Pipeline tokens</h2><p class="ap-panel-desc">A pipeline needs one to apply ${esc(s.name)}.${admin ? '' : ' Only Administrators can create or revoke them.'}</p></div>${admin ? `<button class="ap-btn" type="button" data-new-token data-write>${icon('plus')}Create token</button>` : ''}</div>
+${tokens.length ? tokensTable(tokens, false) : emptyState('No tokens', `Nothing can apply ${esc(s.name)} until an Administrator creates a token.`)}</section>
+${setupPanel(s.name)}
+<section class="ap-panel ap-panel-danger" style="max-width:800px" aria-labelledby="dz-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="dz-t">Danger zone</h2></div></div><div class="ap-panel-body ap-list">
+<div class="ap-list-row"><div class="ap-list-text"><strong>Remove this stack</strong><span class="ap-muted">After <span class="ap-data">docker stack rm</span>. Deletes everything it declared and revokes its tokens.${admin ? '' : ' Needs the Administrator role.'}</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-remove-stack data-write${admin ? '' : ' disabled'}>Remove stack…</button></div></div></section>`,
+    mount(el) {
+      bindTokens(el);
+      $('[data-new-token]', el)?.addEventListener('click', () => tokenDialog(s.name));
+      $('[data-remove-stack]', el).addEventListener('click', () => removeStack(s));
+      $$('[data-simulate]', el).forEach(b => b.addEventListener('click', () => simulateApply(s, b.dataset.simulate)));
+    },
+  };
+});
 
 /* Replicas, backups and the root key. */
 const ROLE_NAMES = { leader: 'Leader', voter: 'Voter', follower: 'Joining', down: 'Voter' };
@@ -3792,6 +4095,21 @@ route('/connect', () => connectPage('local'), { bare: true });
 route('/connect/:kind', kind => connectPage(kind), { bare: true });
 
 /* Audit log: filters, including a custom date and time range, checked like any form */
+/* Pipeline tokens: every token, for Administrators to review and revoke. Tokens are created from their stack's page. */
+const expiringSoon = t => t.expires - NOW < 30 * DAY;
+const unusedToken = t => (!t.last ? NOW - t.created > 7 * DAY : NOW - t.last > 30 * DAY);
+route('/pipeline-tokens', () => {
+  const flagged = D.pipelineTokens.filter(t => expiringSoon(t) || unusedToken(t));
+  const why = t => [unusedToken(t) ? (t.last ? `hasn’t been used for ${ago(t.last).replace(' ago', '')}` : 'has never been used') : '', expiringSoon(t) ? `expires ${ago(t.expires)}` : ''].filter(Boolean).join(' and ');
+  return {
+    title: 'Pipeline tokens',
+    html: `${pageHead({ title: 'Pipeline tokens', sub: 'A CI pipeline uses a token to sign in to Apiary and apply a stack file, so the routes in its labels change in the same deploy as the services. You only need one if you deploy from CI.' })}
+${flagged.length ? banner('warn', `${plural(flagged.length, 'token needs', 'tokens need')} a look`, flagged.map(t => `<span class="ap-data">${esc(t.name)}</span> ${why(t)}`).join(' · ') + '. Revoke tokens nobody uses.') : ''}
+<section class="ap-panel" aria-labelledby="pp-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pp-t">Tokens</h2><p class="ap-panel-desc">Each token can only change the stack it was created for: it can’t change other stacks, routes not from a stack, users or settings. To create one, open the stack on the <a href="#/stacks">Stacks</a> page. Revoking a token stops its pipeline at once, and the routes it applied stay as they are.</p></div></div>${D.pipelineTokens.length ? tokensTable(D.pipelineTokens, true) : emptyState('No pipeline tokens', 'Nothing can apply a stack file yet, so routes change only here, in the API and through agents. To let a pipeline apply one, open its stack on the <a href="#/stacks">Stacks</a> page and create a token.')}</section>`,
+    mount: bindTokens,
+  };
+});
+
 const auditFilter = { range: '7d', from: null, to: null, who: '', via: 'all', failed: false, q: '' };
 const outcomeOf = e => e.outcome || (e.denied ? (e.actor === 'System' ? 'failed' : 'denied') : 'succeeded');
 const auditEvents = list => `<div>${list.map(e => { const o = outcomeOf(e); return `<div class="ap-event${o !== 'succeeded' ? ' ap-event-denied' : ''}${e.agent ? ' ap-event-agent' : ''}"><span class="ap-dot" aria-hidden="true"></span><div><div>${e.agent ? `Agent “${esc(e.agent)}” for ` : ''}<strong>${esc(e.actor)}</strong> ${e.text.replace(/<code>/g, '<span class="ap-data">').replace(/<\/code>/g, '</span>')}${o === 'denied' ? ' <span class="ap-tag">Denied</span>' : o === 'failed' ? ' <span class="ap-tag">Failed</span>' : ''}</div><div class="ap-event-meta">${esc(e.meta)}${e.agent ? ' · through MCP' : ''}</div></div><time datetime="${new Date(e.at).toISOString()}">${fmtTime(e.at)} UTC</time></div>`; }).join('')}</div>`;
@@ -3805,7 +4123,7 @@ route('/audit', () => {
 <div class="ap-toolbar" style="padding-top:4px">
 <div class="ap-seg" role="group" aria-label="Time range" data-range>${[['24h', 'Last 24 h'], ['7d', '7 days'], ['30d', '30 days'], ['365d', '1 year'], ['custom', 'Custom…']].map(([v, t]) => `<button type="button" aria-pressed="${f.range === v}" data-v="${v}">${t}</button>`).join('')}</div>
 ${select('f-who', [['', 'Everyone'], ...people], f.who, 'aria-label="Person" data-who')}
-<div class="ap-seg" role="group" aria-label="Through" data-via>${[['all', 'All'], ['UI', 'People'], ['MCP', 'Agents'], ['System', 'System']].map(([v, t]) => `<button type="button" aria-pressed="${f.via === v}" data-v="${v}">${t}</button>`).join('')}</div>
+<div class="ap-seg" role="group" aria-label="Through" data-via>${[['all', 'All'], ['UI', 'People'], ['MCP', 'Agents'], ['API', 'Pipelines'], ['System', 'System']].map(([v, t]) => `<button type="button" aria-pressed="${f.via === v}" data-v="${v}">${t}</button>`).join('')}</div>
 <div class="ap-search" style="flex:1 1 220px">${icon('search')}<input class="ap-input" type="search" aria-label="Search the audit log" placeholder="Search actions, people, addresses…" value="${esc(f.q)}" data-q></div>
 <label class="ap-choice" style="font-size:0.875rem"><input class="ap-switch" type="checkbox" data-failed${f.failed ? ' checked' : ''}>Denied and failed only</label>
 </div>
@@ -4901,6 +5219,68 @@ const PT_TEXT = new Map(Object.entries({
   "Brand saved": "Marca guardada",
   "Brand saved. Visitor pages use it now.": "Marca guardada. As páginas para visitantes já a usam.",
   "Powered by Apiary": "Com tecnologia Apiary",
+  // Stacks and pipeline tokens
+  'Kept': 'Mantido', 'Dropped': 'Descartado', 'Stacks': 'Stacks', 'Stack': 'Stack', 'Pipeline tokens': 'Tokens de pipeline', 'Pipelines': 'Pipelines', 'Tokens': 'Tokens', 'Token': 'Token',
+  'Swarm stacks whose routes come from labels in their stack file. Their pipeline applies the file after each deploy.': 'Stacks do Swarm cujas rotas vêm das etiquetas do ficheiro da stack. A pipeline de cada uma aplica o ficheiro depois de cada implementação.',
+  'Add stack': 'Adicionar stack', 'Add stack…': 'Adicionar stack…', 'Add a stack': 'Adicionar uma stack', 'No stacks yet': 'Ainda não há stacks',
+  'Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels.': 'Adicione as stacks que implementa a partir da CI. O Apiary dá a cada uma um token de pipeline, e a sua pipeline aplica as rotas das etiquetas do ficheiro da stack.',
+  'Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels. Only Administrators can add stacks.': 'Adicione as stacks que implementa a partir da CI. O Apiary dá a cada uma um token de pipeline, e a sua pipeline aplica as rotas das etiquetas do ficheiro da stack. Só os Administradores podem adicionar stacks.',
+  'Declares': 'Declara', 'Last applied': 'Última aplicação', 'Changes': 'Alterações', 'From labels': 'Das etiquetas', 'Nothing': 'Nada', 'No changes': 'Sem alterações',
+  'Last apply failed': 'A última aplicação falhou', 'Waiting for the first apply': 'À espera da primeira aplicação', 'commit': 'commit',
+  'Prototype: simulate an apply that': 'Protótipo: simular uma aplicação que', 'works': 'funciona', 'finds a hostname in use': 'encontra um nome de anfitrião em uso',
+  'can’t reach a quorum': 'não consegue quórum', 'removes everything': 'remove tudo',
+  'a hostname is already in use': 'um nome de anfitrião já está em uso', 'it would remove everything': 'removeria tudo',
+  'The stack file declares': 'O ficheiro da stack declara', ', which a route in Internal tools, not from a stack, already uses. Nothing changed.': ', que uma rota em Internal tools, que não vem de uma stack, já usa. Nada mudou.',
+  'Pipeline': 'Pipeline', ', error': ', erro', '. This clears when an apply succeeds.': '. Isto desaparece quando uma aplicação for bem-sucedida.',
+  'First apply': 'Primeira aplicação', 'Last apply': 'Última aplicação', 'What it declares': 'O que declara', 'Kind': 'Tipo', 'Service': 'Serviço',
+  'Fields the labels set are locked on their pages. Disabling and maintenance windows stay available.': 'Os campos definidos pelas etiquetas ficam bloqueados nas suas páginas. Desativar e as janelas de manutenção continuam disponíveis.',
+  'Added': 'Adicionado', 'Removed': 'Removido', 'Replaced a change': 'Substituiu uma alteração', 'Route': 'Rota', 'Redirect': 'Redirecionamento',
+  ': Rate limit': ': Limite de pedidos', ': Target': ': Destino', ': Timeout': ': Tempo limite',
+  'Nothing changed: the stack file matched what Apiary had.': 'Nada mudou: o ficheiro da stack correspondia ao que o Apiary tinha.',
+  'Create token': 'Criar token', 'No tokens': 'Sem tokens', 'Created': 'Criado', 'Last used': 'Última utilização', 'Revoke…': 'Revogar…', 'Revoke token': 'Revogar token',
+  'Apply from your pipeline': 'Aplicar a partir da pipeline',
+  'Apiary never connects to Docker. Your pipeline reads the labels from the stack file and sends them here, so routes change in the same commit as the services. It calls the admin port, so it must run inside your network, like the people who use this interface.': 'O Apiary nunca se liga ao Docker. A sua pipeline lê as etiquetas do ficheiro da stack e envia-as para aqui, para que as rotas mudem no mesmo commit que os serviços. Chama a porta de administração, por isso tem de correr dentro da sua rede, tal como as pessoas que usam esta interface.',
+  'Add': 'Adicione', 'labels under': 'etiquetas em', 'of each service:': 'de cada serviço:',
+  'Passwords, sign-in links, certificates and allowed addresses can’t be set by labels: anyone who can inspect the service could read them.': 'As palavras-passe, ligações de acesso, certificados e endereços permitidos não podem ser definidos por etiquetas: quem puder inspecionar o serviço poderia lê-los.',
+  'In merge requests, show what an apply would change, without changing it:': 'Nos merge requests, mostre o que uma aplicação mudaria, sem mudar nada:',
+  'Remove this stack': 'Remover esta stack', 'After': 'Depois de', 'Remove stack…': 'Remover stack…', 'Remove stack': 'Remover stack',
+  '. Deletes everything it declared and revokes its tokens.': '. Elimina tudo o que declarou e revoga os seus tokens.',
+  '. Deletes everything it declared and revokes its tokens. Needs the Administrator role.': '. Elimina tudo o que declarou e revoga os seus tokens. Precisa da função de Administrador.',
+  'Shown in the audit log for every apply, so name the pipeline that uses it.': 'Aparece no registo de auditoria em cada aplicação, por isso dê-lhe o nome da pipeline que o usa.',
+  'Expires after': 'Expira após', 'Token expires after': 'O token expira após', '90 days': '90 dias', 'Creating…': 'A criar…',
+  'Create a new one before it expires, and update the CI variable.': 'Crie um novo antes de expirar e atualize a variável da CI.',
+  'Another token has this name. Choose another.': 'Já há um token com este nome. Escolha outro.',
+  'Store it as a masked, protected CI variable named': 'Guarde-o como uma variável da CI mascarada e protegida chamada',
+  '. You won’t see it again: Apiary keeps only a hash.': '. Não o voltará a ver: o Apiary guarda só um hash.', 'I stored it': 'Já o guardei',
+  'Pipelines that use it can’t apply': 'As pipelines que o usam deixam de poder aplicar', 'anymore. The routes it applied stay as they are.': '. As rotas que aplicou ficam como estão.',
+  'Stack name': 'Nome da stack', 'The name your pipeline gives': 'O nome que a sua pipeline dá a', ', such as': ', como',
+  'Set by the apiary.project label': 'Definido pela etiqueta apiary.project', 'Where its routes go when their labels don’t name a project.': 'Onde ficam as rotas cujas etiquetas não indicam um projeto.',
+  'Token name': 'Nome do token', 'For the stack’s first pipeline token. It appears in the audit log for every apply, so name the pipeline that uses it.': 'Para o primeiro token de pipeline da stack. Aparece no registo de auditoria em cada aplicação, por isso dê-lhe o nome da pipeline que o usa.',
+  'Enter the stack name.': 'Introduza o nome da stack.', 'Enter a token name.': 'Introduza um nome para o token.', 'Enter a name.': 'Introduza um nome.',
+  'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores.': 'Use o nome tal como o Docker o escreve: letras minúsculas, algarismos, hífenes e sublinhados.',
+  'This stack is already here. Open it to create another token.': 'Esta stack já existe. Abra-a para criar outro token.',
+  'Do this after': 'Faça isto depois de', ': Apiary never touches Docker, so the services keep running until you run it. Routes not from this stack don’t change.': ': o Apiary nunca mexe no Docker, por isso os serviços continuam a correr até o executar. As rotas que não vêm desta stack não mudam.',
+  'Type the stack’s name to confirm.': 'Escreva o nome da stack para confirmar.', 'to confirm': 'para confirmar',
+  'The apply worked': 'A aplicação funcionou', 'The apply failed': 'A aplicação falhou', 'The apply was refused': 'A aplicação foi recusada', 'What the pipeline log shows:': 'O que o registo da pipeline mostra:',
+  'A dry run in the merge request prints the same plan, without applying it.': 'Uma simulação no merge request mostra o mesmo plano, sem o aplicar.',
+  'Try another outcome, or run it again after a failure to see it clear.': 'Experimente outro resultado, ou corra-a de novo depois de uma falha para a ver desaparecer.',
+  'Apiary doesn’t record refused tokens on the stack page: anyone could send one. They’re in the audit log as failed sign-ins.': 'O Apiary não regista tokens recusados na página da stack: qualquer pessoa poderia enviar um. Estão no registo de auditoria como inícios de sessão falhados.',
+  'Nothing appears on this page or in the audit log: without quorum, Apiary can’t save anything, its own records included. Only the pipeline log shows it, which is why the command exits with an error and fails the job.': 'Nada aparece nesta página nem no registo de auditoria: sem quórum, o Apiary não consegue guardar nada, incluindo os seus próprios registos. Só o registo da pipeline o mostra, e é por isso que o comando termina com um erro e faz falhar o job.',
+  'A CI pipeline uses a token to sign in to Apiary and apply a stack file, so the routes in its labels change in the same deploy as the services. You only need one if you deploy from CI.': 'Uma pipeline de CI usa um token para entrar no Apiary e aplicar um ficheiro de stack, para que as rotas das suas etiquetas mudem na mesma implementação que os serviços. Só precisa de um se implementar a partir da CI.',
+  'Each token can only change the stack it was created for: it can’t change other stacks, routes not from a stack, users or settings. To create one, open the stack on the': 'Cada token só pode mudar a stack para a qual foi criado: não pode mudar outras stacks, rotas que não vêm de uma stack, utilizadores nem definições. Para criar um, abra a stack na página',
+  'page. Revoking a token stops its pipeline at once, and the routes it applied stay as they are.': '. Revogar um token trava de imediato a sua pipeline, e as rotas que aplicou ficam como estão.',
+  'No pipeline tokens': 'Sem tokens de pipeline',
+  'Nothing can apply a stack file yet, so routes change only here, in the API and through agents. To let a pipeline apply one, open its stack on the': 'Ainda nada pode aplicar um ficheiro de stack, por isso as rotas só mudam aqui, na API e através de agentes. Para deixar uma pipeline aplicar um, abra a stack na página',
+  'page and create a token.': 'e crie um token.', '. Revoke tokens nobody uses.': '. Revogue os tokens que ninguém usa.',
+  'has never been used': 'nunca foi usado', 'Declared in stack': 'Vem da stack', 'Set in stack': 'Definido na stack',
+  'Fields with a': 'Os campos com um', 'come from the labels of': 'vêm das etiquetas de',
+  ': change them in the stack file, and the next apply updates this route.': ': mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota.',
+  ': change them in the stack file, and the next apply updates this route. You can still disable the route or schedule maintenance here.': ': mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota. Ainda pode desativar a rota ou agendar manutenção aqui.',
+  ': change them in the stack file. You can still disable it from the list.': ': mude-os no ficheiro da stack. Ainda a pode desativar a partir da lista.',
+  '. You can still disable the route or schedule maintenance here.': '. Ainda pode desativar a rota ou agendar manutenção aqui.',
+  'tried to apply stack': 'tentou aplicar a stack', 'applied stack': 'aplicou a stack', 'removed stack': 'removeu a stack', 'and pipeline token': 'e o token de pipeline',
+  'added stack': 'adicionou a stack', 'created pipeline token': 'criou o token de pipeline', 'for stack': 'para a stack', 'revoked pipeline token': 'revogou o token de pipeline',
+
   // Calendar
   'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril', 'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
   'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro', 'Monday': 'segunda-feira', 'Tuesday': 'terça-feira',
@@ -4910,7 +5290,46 @@ const PT_TEXT = new Map(Object.entries({
 }));
 
 const PT_MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December';
+const PT_COUNT = { route: ['rota', 'rotas'], 'stream route': ['rota TCP ou UDP', 'rotas TCP ou UDP'], redirect: ['redirecionamento', 'redirecionamentos'], change: ['alteração', 'alterações'], token: ['token', 'tokens'], item: ['item', 'itens'] };
+const ptCount = (n, w) => `${n} ${PT_COUNT[w.replace(/s$/, '')][n === '1' ? 0 : 1]}`;
+const ptCounts = t => t.replace(/(\d+) (stream routes?|routes?|redirects?|changes?|tokens?|items?)\b/g, (m, n, w) => ptCount(n, w)).replace(/, and |(?<=\S) and (?=\d)/g, ' e ');
 const PT_PATTERNS = [
+  // Stacks and pipeline tokens
+  [/^\d+ (?:stream routes?|routes?|redirects?|changes?)(?: · \d+ (?:stream routes?|routes?|redirects?))*$/, ptCounts],
+  [/^Last applied (.+) by pipeline$/, (m, a) => `Aplicada ${tr(a)} pela pipeline`],
+  [/^(.+ ago|just now) by$/, (m, a) => `${tr(a)} por`],
+  [/^Added (.+) by (\S+)$/, (m, a, b) => `Adicionada ${tr(a)} por ${b}`],
+  [/^The last apply failed (.+?): (.+)$/, (m, a, b) => `A última aplicação falhou ${tr(a)}: ${tr(b)}`],
+  [/^The stack file declares nothing, so the apply would delete all (\d+) items? of (\S+)\. That usually means the wrong file or labels that went missing\. Pipeline$/, (m, n, x) => `O ficheiro da stack não declara nada, por isso a aplicação eliminaria ${n === '1' ? 'o único item' : `os ${n} itens`} de ${x}. Normalmente, é o ficheiro errado ou etiquetas que desapareceram. Pipeline`],
+  [/^Nothing has applied (\S+) yet$/, 'A stack $1 ainda não foi aplicada'],
+  [/^Add the commands under Apply from your pipeline, below, to the pipeline that deploys (\S+), with its token as$/, 'Adicione os comandos de Aplicar a partir da pipeline, abaixo, à pipeline que implementa $1, com o seu token como'],
+  [/^\. After its first run, the routes in its labels appear here\.$/, '. Depois da primeira execução, as rotas das suas etiquetas aparecem aqui.'],
+  [/^(.+) UTC\. Every apply is in the audit log\.$/, '$1 UTC. Todas as aplicações estão no registo de auditoria.'],
+  [/^(.+) was set by (\S+), (.+)\. A label now sets it, so it’s locked\.$/, (m, a, b, c) => `${a.replace(/ a minute$/, ' por minuto').replace(/ seconds$/, ' segundos')} foi definido por ${b}, ${tr(c)}. Agora é uma etiqueta que o define, por isso está bloqueado.`],
+  [/^What (\S+) declares$/, 'O que $1 declara'],
+  [/^Stream route, (\w+) (\d+)$/, 'Rota TCP ou UDP, $1 $2'],
+  [/^A pipeline needs one to apply (\S+)\.( Only Administrators can create or revoke them\.)?$/, (m, x, o) => `Uma pipeline precisa de um para aplicar ${x}.${o ? ' Só os Administradores os podem criar ou revogar.' : ''}`],
+  [/^Nothing can apply (\S+) until an Administrator creates a token\.$/, 'Nada pode aplicar $1 até um Administrador criar um token.'],
+  [/^After the deploy, apply it\. Routes of (\S+) missing from the file are removed\.$/, 'Depois da implementação, aplique-o. As rotas de $1 que faltem no ficheiro são removidas.'],
+  [/^Create a pipeline token for (\S+)$/, 'Criar um token de pipeline para $1'],
+  [/^It can only apply (\S+): it can’t change other stacks, routes not from a stack, users or settings\.$/, 'Só pode aplicar $1: não pode mudar outras stacks, rotas que não vêm de uma stack, utilizadores nem definições.'],
+  [/^Anyone with it can change or remove the routes of (\S+)\. If it leaks, revoke it here\.$/, 'Quem o tiver pode mudar ou remover as rotas de $1. Se for divulgado, revogue-o aqui.'],
+  [/^Revoke (\S+)\?$/, 'Revogar $1?'], [/^(\S+) no longer works\.$/, '$1 deixou de funcionar.'],
+  [/^Remove stack (\S+)\?$/, 'Remover a stack $1?'],
+  [/^(?:Apiary deletes its (.+?) on every replica, and requests to them get a 404 at once\. )?(?:(Its pipeline token stops|Its (\d+) pipeline tokens stop) working\. )?Do this after$/, (m, l, t, n) => `${l ? `O Apiary elimina ${ptCounts(l).replace(/^1 /, 'a sua ').replace(/^(\d+) /, 'as suas $1 ')} em todas as réplicas, e os pedidos para elas recebem um 404 de imediato. ` : ''}${t ? (n ? `Os seus ${n} tokens de pipeline deixam de funcionar. ` : 'O seu token de pipeline deixa de funcionar. ') : ''}Faça isto depois de`],
+  [/^(\S+) is gone(?:, with its (.+))?\.$/, (m, x, l) => `${x} foi removida${l ? `, com ${ptCounts(l)}` : ''}.`],
+  [/^(\d+ tokens? needs?) a look$/, (m, a) => (a.startsWith('1 ') ? '1 token precisa de atenção' : `${parseInt(a)} tokens precisam de atenção`)],
+  [/^(?:hasn’t been used for|has never been used|expires in)\b.*$/, t => t.replace(/hasn’t been used for (\d+) (day|hour|minute)s?/g, (m, n, u) => `não é usado há ${tr(`${n} ${u}s ago`).replace(/^há /, '')}`)
+    .replace(/has never been used/g, 'nunca foi usado').replace(/ and expires in /g, ' e expira em ').replace(/(^|· )expires in /g, '$1expira em ')
+    .replace(/ (\d+) days?\b/g, (m, n) => ` ${n} ${n === '1' ? 'dia' : 'dias'}`).replace(/\. Revoke tokens nobody uses\.$/, '. Revogue os tokens que ninguém usa.')],
+  [/^Pipeline (\S+)$/, 'Pipeline $1'],
+  [/^(.+) is declared in a stack file\. Change it there, or select only routes not from a stack\.$/, '$1 está declarada num ficheiro de stack. Mude-a lá, ou selecione só rotas que não vêm de uma stack.'],
+  [/^(\d+) of them are declared in a stack file\. Change them there, or select only routes not from a stack\.$/, '$1 delas estão declaradas num ficheiro de stack. Mude-as lá, ou selecione só rotas que não vêm de uma stack.'],
+  [/^Remove it from the stack file instead\. The next apply of (\S+) deletes it\.$/, 'Em vez disso, remova-a do ficheiro da stack. A próxima aplicação de $1 elimina-a.'],
+  [/^: change them in the stack file, and the next apply updates this route\. Last applied (.+) by pipeline$/, (m, a) => `: mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota. Aplicada ${tr(a)} pela pipeline`],
+  [/^(\d+) added, (\d+) changed, (\d+) removed · commit (\w+) · from (.+)$/, (m, a, c, r, id, ip) => `${a} ${a === '1' ? 'adicionado' : 'adicionados'}, ${c} ${c === '1' ? 'alterado' : 'alterados'}, ${r} ${r === '1' ? 'removido' : 'removidos'} · commit ${id} · a partir de ${ip}`],
+  [/^(.+) · (\d+) tokens? revoked · from (.+)$/, (m, a, n, ip) => `${a === 'Nothing declared' ? 'Nada declarado' : ptCounts(a)} · ${ptCount(n, 'token')} ${n === '1' ? 'revogado' : 'revogados'} · a partir de ${ip}`],
+  [/^(route\.hostInUse|stack\.removesEverything) · from (.+)$/, '$1 · a partir de $2'],
   [/^Changed (.+) ago by (.+)$/, (m, a, b) => `Alterado ${tr(a + ' ago')} por ${b}`],
   [/^(Password|Not found|Starting|Unavailable|Not allowed|Too many requests|Maintenance) · (.+)$/, (m, a, b) => `${tr(a)} · ${b}`],
   [/^Remove the brand of (.+)\?$/, 'Remover a marca de $1?'], [/^Remove the brand of (.+)$/, 'Remover a marca de $1'],
@@ -5098,6 +5517,7 @@ const PT_PATTERNS = [
 const PT_VERBS = {
   save: 'guardar', 'save it': 'guardar', 'save them': 'guardar', 'save the membership': 'guardar a adesão', 'save single sign-on': 'guardar o início de sessão único',
   'save your profile': 'guardar o perfil', 'delete it': 'eliminar', 'add it': 'adicionar', 'check it': 'verificar', continue: 'continuar', recover: 'recuperar',
+  'create the token': 'criar o token', 'add the stack': 'adicionar a stack',
   'create the administrator': 'criar o administrador', 'create the invite': 'criar o convite', 'create your account': 'criar a conta',
   'change your password': 'alterar a palavra-passe', 'make new codes': 'criar novos códigos', 'move them': 'mover', 'sign in': 'iniciar sessão', 'turn it on': 'ativar',
 };
@@ -5118,7 +5538,8 @@ function translateNode(node) {
     // Between two dates, "to" reads "a"; elsewhere, such as in a redirect, "para".
     const prev = node.previousSibling;
     // As a label, "Preview" is the noun, "Pré-visualização"; on a button, the verb, "Pré-visualizar".
-    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : text === 'Preview' && el.classList.contains('ap-label') ? 'Pré-visualização' : tr(text);
+    // In "Type <name> to confirm", "Type" is the verb, "Escreva"; elsewhere, the noun, "Tipo".
+    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : text === 'Preview' && el.classList.contains('ap-label') ? 'Pré-visualização' : text === 'Type' && el.classList.contains('ap-label') ? 'Escreva' : tr(text);
     if (to !== text) node.nodeValue = raw.replace(raw.trim(), to);
     return;
   }

@@ -22,9 +22,13 @@ function seedData() {
       { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.', brand: { name: 'Example Lda.', logo: sampleLogo('EL', '#0F766E'), logoName: 'example-lda.svg', accent: '#0F766E', contact: 'Questions about the website? Write to hello@example.pt.', changed: [NOW - 2 * DAY, 'ana@example.com'] } },
     ],
     routes: [
-      { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'] },
-      { id: 'r2', host: 'shop.example.com', path: '/api', project: 'shop', targets: [{ host: 'shop-api', port: 8080, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 4120, timeout: 30, allow: [] },
-      { id: 'r3', host: 'checkout.example.com', path: '/', project: 'shop', targets: [{ host: 'checkout', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 2210, timeout: 60, allow: [] },
+      { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'],
+        stack: { name: 'shop', service: 'shop_web', fields: ['host', 'path', 'targets', 'project', 'timeout'] } },
+      { id: 'r2', host: 'shop.example.com', path: '/api', project: 'shop', targets: [{ host: 'shop-api', port: 8080, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 4120, timeout: 30, rateLimit: 600, allow: [],
+        stack: { name: 'shop', service: 'shop_api', fields: ['host', 'path', 'targets', 'project', 'timeout', 'rateLimit'] } },
+      /* `hand` keeps who last set a field that no label sets yet, so an apply that starts setting it can say whose change it replaced. */
+      { id: 'r3', host: 'checkout.example.com', path: '/', project: 'shop', targets: [{ host: 'checkout', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 2210, timeout: 60, allow: [],
+        stack: { name: 'shop', service: 'shop_checkout', fields: ['host', 'path', 'targets', 'project'] }, hand: { timeout: ['marta@example.com', at(5, '16:40')] } },
       { id: 'r4', host: 'static.example.com', path: '/', project: 'shop', targets: [{ host: 'static', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 591, timeout: 30, compression: true, caching: true, allow: [] },
       { id: 'r5', host: 'api.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-api', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 3020, timeout: 30, allow: [] },
       { id: 'r6', host: 'webhooks.example.com', path: '/', project: 'payments', targets: [{ host: 'payments-webhooks', port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 390, timeout: 30, allow: [] },
@@ -40,8 +44,8 @@ function seedData() {
         gate: { password: 'harbor-maple-lantern-58', set: NOW - 2 * DAY, by: 'ana@example.com', message: 'Preview of the new website for Example Lda.', days: 7, link: { key: 'q3Lx8VbN2pT7wRfK9mZs4A', made: NOW - 2 * DAY } } },
     ],
     streams: [
-      { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412 },
-      { id: 's2', name: 'MQTT over TLS', proto: 'TCP', listen: 8883, target: 'mqtt', port: 8883, project: 'internal', status: 'ok', conns: 95 },
+      { id: 's1', name: 'MQTT', proto: 'TCP', listen: 1883, target: 'mqtt', port: 1883, project: 'internal', status: 'ok', conns: 412, stack: { name: 'mqtt', service: 'mqtt_broker', fields: ['listen', 'target', 'port', 'proto'] } },
+      { id: 's2', name: 'MQTT over TLS', proto: 'TCP', listen: 8883, target: 'mqtt', port: 8883, project: 'internal', status: 'ok', conns: 95, stack: { name: 'mqtt', service: 'mqtt_broker', fields: ['listen', 'target', 'port', 'proto'] } },
       { id: 's3', name: 'Postgres (read replica)', proto: 'TCP', listen: 5433, target: 'pg-replica', port: 5432, project: 'payments', status: 'ok', conns: 18 },
       { id: 's4', name: 'Syslog', proto: 'UDP', listen: 514, target: 'vector', port: 514, project: 'internal', status: 'warn', statusText: 'No traffic for 2 h', conns: 0 },
     ],
@@ -57,7 +61,21 @@ function seedData() {
       { host: 'registry.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(35, '03:12'), expires: at(-55, '03:12'), status: 'ok' },
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
     ],
-    redirects: [],
+    redirects: [
+      { from: 'www.shop.example.com', to: 'https://shop.example.com', code: 308, keepPath: true, project: 'shop', stack: { name: 'shop', service: 'shop_web', fields: ['from', 'to', 'code', 'keepPath'] } },
+    ],
+    /* Stacks whose routes come from labels in their stack file, applied by a pipeline. A plan's change can end with who set the old value. */
+    stacks: [
+      { name: 'shop', project: 'shop', created: at(20, '10:05'), createdBy: 'ana@example.com', applied: at(0, '13:58'), token: 'gitlab-shop-deploy', commit: '4e1c9a2', pipeline: 'https://gitlab.example.com/shop/shop/-/pipelines/18234',
+        plan: { added: [['Redirect', 'www.shop.example.com']], changed: [['Route', 'shop.example.com/api', 'Rate limit', '300 a minute', '600 a minute', ['rui@example.com', at(3, '10:20')]], ['Route', 'checkout.example.com', 'Target', 'checkout:8000', 'checkout:8080']], removed: [['Route', 'shop.example.com/beta']] } },
+      { name: 'mqtt', project: 'internal', created: at(41, '16:30'), createdBy: 'ana@example.com', applied: at(6, '09:12'), token: 'gitlab-infra-deploy', commit: 'b07d3f1', pipeline: 'https://gitlab.example.com/infra/mqtt/-/pipelines/9921',
+        plan: { added: [], changed: [], removed: [] } },
+    ],
+    pipelineTokens: [
+      { id: 'pt1', name: 'gitlab-shop-deploy', stack: 'shop', created: at(20, '10:05'), by: 'ana@example.com', expires: at(-70, '10:05'), last: at(0, '13:58') },
+      { id: 'pt2', name: 'gitlab-infra-deploy', stack: 'mqtt', created: at(41, '16:30'), by: 'ana@example.com', expires: at(-49, '16:30'), last: at(6, '09:12') },
+      { id: 'pt3', name: 'jenkins-mqtt-old', stack: 'mqtt', created: at(78, '11:00'), by: 'rui@example.com', expires: at(-12, '11:00'), last: at(48, '02:15') },
+    ],
     replicas: [
       { id: 'a91c03d2', name: 'edge-1', node: 'swarm-node-1', role: 'voter', index: 184223, lag: 0, version: '0.4.0', seen: NOW - 1000 },
       { id: 'a3f9c41e', name: 'edge-2', node: 'swarm-node-2', role: 'leader', index: 184223, lag: 0, version: '0.4.0', seen: NOW },
@@ -90,6 +108,7 @@ function seedData() {
     audit: [
       { at: at(0, '14:32'), actor: 'ana@example.com', via: 'UI', text: 'changed route <code>shop.example.com</code>', meta: 'Weights 100/0 → 90/10 · from 10.0.4.21' },
       { at: at(0, '14:05'), actor: 'marta@example.com', agent: 'ops-assistant', via: 'MCP', text: 'purged the cache of <code>api.example.com</code>', meta: 'From 10.0.4.88' },
+      { at: at(0, '13:58'), actor: 'Pipeline gitlab-shop-deploy', via: 'API', text: 'applied stack <code>shop</code>', meta: '1 added, 2 changed, 1 removed · commit 4e1c9a2 · from 10.0.12.7' },
       { at: at(0, '13:47'), actor: 'rui@example.com', via: 'UI', denied: true, text: 'tried to delete user marta@example.com', meta: "Role Operator can't manage users · from 10.0.7.3" },
       { at: at(0, '11:20'), actor: 'System', via: 'System', text: 'renewed the certificate for <code>api.example.com</code>', meta: "Let's Encrypt · leader edge-2" },
       { at: at(0, '08:02'), actor: 'ana@example.com', via: 'UI', text: 'signed in', meta: 'Two-step sign-in · from 10.0.4.21' },
@@ -110,5 +129,5 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
 }

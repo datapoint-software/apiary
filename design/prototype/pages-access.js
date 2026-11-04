@@ -258,6 +258,21 @@ route('/connect', () => connectPage('local'), { bare: true });
 route('/connect/:kind', kind => connectPage(kind), { bare: true });
 
 /* Audit log: filters, including a custom date and time range, checked like any form */
+/* Pipeline tokens: every token, for Administrators to review and revoke. Tokens are created from their stack's page. */
+const expiringSoon = t => t.expires - NOW < 30 * DAY;
+const unusedToken = t => (!t.last ? NOW - t.created > 7 * DAY : NOW - t.last > 30 * DAY);
+route('/pipeline-tokens', () => {
+  const flagged = D.pipelineTokens.filter(t => expiringSoon(t) || unusedToken(t));
+  const why = t => [unusedToken(t) ? (t.last ? `hasn’t been used for ${ago(t.last).replace(' ago', '')}` : 'has never been used') : '', expiringSoon(t) ? `expires ${ago(t.expires)}` : ''].filter(Boolean).join(' and ');
+  return {
+    title: 'Pipeline tokens',
+    html: `${pageHead({ title: 'Pipeline tokens', sub: 'A CI pipeline uses a token to sign in to Apiary and apply a stack file, so the routes in its labels change in the same deploy as the services. You only need one if you deploy from CI.' })}
+${flagged.length ? banner('warn', `${plural(flagged.length, 'token needs', 'tokens need')} a look`, flagged.map(t => `<span class="ap-data">${esc(t.name)}</span> ${why(t)}`).join(' · ') + '. Revoke tokens nobody uses.') : ''}
+<section class="ap-panel" aria-labelledby="pp-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="pp-t">Tokens</h2><p class="ap-panel-desc">Each token can only change the stack it was created for: it can’t change other stacks, routes not from a stack, users or settings. To create one, open the stack on the <a href="#/stacks">Stacks</a> page. Revoking a token stops its pipeline at once, and the routes it applied stay as they are.</p></div></div>${D.pipelineTokens.length ? tokensTable(D.pipelineTokens, true) : emptyState('No pipeline tokens', 'Nothing can apply a stack file yet, so routes change only here, in the API and through agents. To let a pipeline apply one, open its stack on the <a href="#/stacks">Stacks</a> page and create a token.')}</section>`,
+    mount: bindTokens,
+  };
+});
+
 const auditFilter = { range: '7d', from: null, to: null, who: '', via: 'all', failed: false, q: '' };
 const outcomeOf = e => e.outcome || (e.denied ? (e.actor === 'System' ? 'failed' : 'denied') : 'succeeded');
 const auditEvents = list => `<div>${list.map(e => { const o = outcomeOf(e); return `<div class="ap-event${o !== 'succeeded' ? ' ap-event-denied' : ''}${e.agent ? ' ap-event-agent' : ''}"><span class="ap-dot" aria-hidden="true"></span><div><div>${e.agent ? `Agent “${esc(e.agent)}” for ` : ''}<strong>${esc(e.actor)}</strong> ${e.text.replace(/<code>/g, '<span class="ap-data">').replace(/<\/code>/g, '</span>')}${o === 'denied' ? ' <span class="ap-tag">Denied</span>' : o === 'failed' ? ' <span class="ap-tag">Failed</span>' : ''}</div><div class="ap-event-meta">${esc(e.meta)}${e.agent ? ' · through MCP' : ''}</div></div><time datetime="${new Date(e.at).toISOString()}">${fmtTime(e.at)} UTC</time></div>`; }).join('')}</div>`;
@@ -271,7 +286,7 @@ route('/audit', () => {
 <div class="ap-toolbar" style="padding-top:4px">
 <div class="ap-seg" role="group" aria-label="Time range" data-range>${[['24h', 'Last 24 h'], ['7d', '7 days'], ['30d', '30 days'], ['365d', '1 year'], ['custom', 'Custom…']].map(([v, t]) => `<button type="button" aria-pressed="${f.range === v}" data-v="${v}">${t}</button>`).join('')}</div>
 ${select('f-who', [['', 'Everyone'], ...people], f.who, 'aria-label="Person" data-who')}
-<div class="ap-seg" role="group" aria-label="Through" data-via>${[['all', 'All'], ['UI', 'People'], ['MCP', 'Agents'], ['System', 'System']].map(([v, t]) => `<button type="button" aria-pressed="${f.via === v}" data-v="${v}">${t}</button>`).join('')}</div>
+<div class="ap-seg" role="group" aria-label="Through" data-via>${[['all', 'All'], ['UI', 'People'], ['MCP', 'Agents'], ['API', 'Pipelines'], ['System', 'System']].map(([v, t]) => `<button type="button" aria-pressed="${f.via === v}" data-v="${v}">${t}</button>`).join('')}</div>
 <div class="ap-search" style="flex:1 1 220px">${icon('search')}<input class="ap-input" type="search" aria-label="Search the audit log" placeholder="Search actions, people, addresses…" value="${esc(f.q)}" data-q></div>
 <label class="ap-choice" style="font-size:0.875rem"><input class="ap-switch" type="checkbox" data-failed${f.failed ? ' checked' : ''}>Denied and failed only</label>
 </div>

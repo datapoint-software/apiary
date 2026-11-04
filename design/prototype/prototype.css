@@ -2,6 +2,7 @@
 .pt-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 65; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border: 1.5px dashed var(--ink-3); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink-2); font: 600 0.75rem/1rem var(--font-text); cursor: pointer; box-shadow: var(--shadow-card); }
 .pt-fab:hover { color: var(--ink); border-color: var(--ink-2); }
 .pt-panel { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 66; width: min(340px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow-y: auto; border: 1.5px dashed var(--ink-3); }
+.pt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 800px; padding: 10px 14px; border: 1.5px dashed var(--ink-3); border-radius: var(--radius-2); }
 .ap-toasts { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
 
 /* Idea being tried: a language menu in the top bar. Moves into apiary.css if it stays. */
@@ -13,6 +14,8 @@
 /* Idea being tried: routes that ask visitors for a password. Moves into apiary.css if it stays. */
 .ap .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
 .ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
+.ap .ap-stack-tag { display: inline-flex; align-items: center; gap: 4px; }
+.ap .ap-stack-tag .ap-icon { width: 12px; height: 12px; }
 .ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }
 
 /* Idea being tried: the brand dialog has the form and a live preview side by side. */

@@ -21,15 +21,34 @@ function canaryOf(r) {
   return { source: 'header', name, value };
 }
 
+/* Routes, stream routes and redirects declared in a stack: a tag in lists, and the fields their labels set locked in editors */
+const stackTag = name => `<span class="ap-caption ap-stack-tag">${icon('layers')}Declared in stack <a class="ap-data" href="#/stacks/${esc(name)}">${esc(name)}</a></span>`;
+const lockNote = name => `<span class="ap-caption ap-stack-tag" data-lock>${icon('lock')}Set in stack <a class="ap-data" href="#/stacks/${esc(name)}">${esc(name)}</a></span>`;
+function lockFields(form, names, stack, rowsAt) {
+  const notes = new Set();
+  [...form.elements].filter(c => c.name && names.some(n => (n.endsWith('-') ? c.name.startsWith(n) : c.name === n))).forEach(c => {
+    if (['checkbox', 'radio'].includes(c.type) || c.tagName === 'SELECT') c.disabled = true; else c.readOnly = true;
+    const row = rowsAt && /^t-/.test(c.name);
+    const at = row ? rowsAt : c.closest('.ap-field, .ap-choice, fieldset');
+    if (at && !notes.has(at)) { notes.add(at); at.insertAdjacentHTML(row ? 'beforebegin' : 'beforeend', lockNote(stack)); }
+  });
+  paint();
+}
+const fromStackBanner = (stack, service, text) => banner('info', `Declared in stack <a href="#/stacks/${esc(stack)}">${esc(stack)}</a>`, `Fields with a ${icon('lock')} come from the labels of <span class="ap-data">${esc(service)}</span>: change them in the stack file${text}`, '', 'layers');
+const ROUTE_FIELDS = {
+  host: ['host'], path: ['path'], project: ['project'], targets: ['t-host-', 't-port-', 't-weight-', 'canarySource', 'canaryName', 'canaryValue', 'sticky'],
+  timeout: ['timeout'], rateLimit: ['rateLimited', 'rateLimit'],
+};
+
 function routeRow(r) {
   const [tone, text] = routeStatus(r);
   const label = esc(routeLabel(r)), [at, by] = changedOf(r);
   const upcoming = r.maintenance && NOW < r.maintenance.start ? `<span class="ap-caption">Maintenance ${fmtDate(r.maintenance.start)} UTC</span>` : '';
   const act = (ic, aria, key) => `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="${aria}" data-ract="${key}" data-id="${r.id}" data-write>${icon(ic)}</button>`;
   const actions = canOperate() ? (r.disabled ? act('play', 'Enable ' + label, 'enable') : act('pause', 'Disable ' + label, 'disable'))
-    + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + act('trash-2', 'Delete ' + label, 'delete') : '';
+    + (r.caching ? act('eraser', 'Purge the cache of ' + label, 'purge') : '') + (r.stack ? '' : act('trash-2', 'Delete ' + label, 'delete')) : '';
   return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
-<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a><span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
+<td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a>${r.stack ? stackTag(r.stack.name) : ''}<span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
 <td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
 <td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
 <td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
@@ -144,6 +163,8 @@ ${sizeDefaultPanel()}`,
         const b = e.target.closest('[data-b]');
         if (!b) return;
         const rs = D.routes.filter(r => selected.includes(r.id));
+        const declared = rs.filter(r => r.stack);
+        if (declared.length && (b.dataset.b === 'delete' || b.dataset.b === 'move')) { toast(`${declared.length === 1 ? `${routeLabel(declared[0])} is` : `${declared.length} of them are`} declared in a stack file. Change ${declared.length === 1 ? 'it' : 'them'} there, or select only routes not from a stack.`, { tone: 'info' }); return; }
         if (b.dataset.b === 'clear') draw();
         if (b.dataset.b === 'purge' && await purge(rs)) draw();
         if (b.dataset.b === 'delete') deleteRoutes(rs);
@@ -354,6 +375,7 @@ function routeEditor(r, projectId) {
     sub: isNew ? 'Send requests for a hostname to services on the shared network.' : `${status(tone, text)} &nbsp;·&nbsp; ${num(r.rpm)} req/min &nbsp;·&nbsp; Changed ${ago(changedOf(r)[0])}${r.changed[1] ? ` by ${esc(r.changed[1])}` : ''}`,
   })}
 ${ops ? '' : banner('info', 'You can view this route', 'Changing it needs the Operator role. Ask an Administrator if you need it.')}
+${r && r.stack ? fromStackBanner(r.stack.name, r.stack.service, `, and the next apply updates this route.${stackOf(r.stack.name) && stackOf(r.stack.name).applied ? ` Last applied ${ago(stackOf(r.stack.name).applied)} by pipeline <span class="ap-data">${esc(stackOf(r.stack.name).token)}</span>, commit <span class="ap-data">${esc(stackOf(r.stack.name).commit)}</span>.` : ''} You can still disable the route or schedule maintenance here.`) : ''}
 <form class="ap-form" id="rt-form" novalidate style="max-width:800px">
 <div data-summary></div>
 <section class="ap-panel" aria-labelledby="s1"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s1">Requests</h2><p class="ap-panel-desc">Which requests this route answers.</p></div></div><div class="ap-panel-body ap-stack">
@@ -415,7 +437,8 @@ ${field({ name: 'mMsg', label: 'Message for visitors', optional: true, control: 
 
 ${isNew ? '' : `<section class="ap-panel ap-panel-danger" aria-labelledby="s7"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s7">Danger zone</h2></div></div><div class="ap-panel-body ap-list">
 <div class="ap-list-row"><div class="ap-list-text"><strong>${r.disabled ? 'Enable' : 'Disable'} this route</strong><span class="ap-muted">${r.disabled ? 'Traffic flows again with the saved settings.' : 'Visitors get a 503. Settings and certificate are kept.'}</span></div><button class="ap-btn" type="button" data-disable data-write${ops ? '' : ' disabled'}>${r.disabled ? 'Enable route' : 'Disable route…'}</button></div>
-<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests to it get a 404 on every replica.</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-delete data-write${ops ? '' : ' disabled'}>Delete route…</button></div></div></section>`}
+${r.stack ? `<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Remove it from the stack file instead. The next apply of ${esc(r.stack.name)} deletes it.</span></div><button class="ap-btn" type="button" disabled>Delete route…</button></div>`
+  : `<div class="ap-list-row"><div class="ap-list-text"><strong>Delete this route</strong><span class="ap-muted">Requests to it get a 404 on every replica.</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-delete data-write${ops ? '' : ' disabled'}>Delete route…</button></div>`}</div></section>`}
 ${ops ? `<div class="ap-savebar"><a class="ap-btn ap-btn-ghost" href="#/routes">Cancel</a><button class="ap-btn ap-btn-primary" type="submit" data-busy="Saving…" data-write>${isNew ? 'Create route' : 'Save route'}</button></div>` : ''}
 </form>`;
 
@@ -614,6 +637,10 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       },
     });
 
+    if (r && r.stack) {
+      lockFields(f, r.stack.fields.flatMap(k => ROUTE_FIELDS[k] || []), r.stack.name, rowsEl);
+      if (r.stack.fields.includes('targets')) { $('[data-add-target]', el).remove(); $$('[data-remove]', rowsEl).forEach(b => b.remove()); }
+    }
     const snap = () => JSON.stringify(v.values());
     const initial = snap();
     let dirty = false;

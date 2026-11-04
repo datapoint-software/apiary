@@ -24,10 +24,10 @@ route('/streams', () => {
     html: `${pageHead({ title: 'Stream routes', sub: 'TCP and UDP traffic, such as MQTT or databases, forwarded as it is. Apiary doesn’t read or change it.', actions: list.length ? add : '' })}
 ${banner('info', 'Each stream route needs its port published', 'Swarm only sends traffic to ports your stack file publishes. After adding a stream route, add its port to the Apiary service and deploy the stack again.')}
 <section class="ap-panel">${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Stream routes</caption><thead><tr><th scope="col">Name</th><th scope="col">Listens on</th><th scope="col">Target</th><th scope="col">Project</th><th scope="col">Status</th><th scope="col" class="ap-num">Connections</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
-${list.map(s => { const [tone, text] = streamActivity(s); return `<tr><td><div class="ap-cell-main"><strong style="font-weight:500">${esc(s.name)}</strong>${s.serverNames.length ? `<span class="ap-caption ap-data">${esc(s.serverNames.join(', '))}</span>` : ''}</div></td><td><span class="ap-data">${s.listen}</span> <span class="ap-tag">${s.proto}</span></td><td class="ap-data ap-muted">${esc(s.target)}:${s.port}</td><td class="ap-muted">${esc(trafficProject(s.project))}</td><td>${status(tone, text)}${s.allow.length ? '<span class="ap-caption" style="display:block">Allowlist</span>' : ''}</td><td class="ap-num">${num(s.conns)}</td><td class="ap-col-actions"><div class="ap-row" style="gap:4px;justify-content:flex-end">
+${list.map(s => { const [tone, text] = streamActivity(s); return `<tr><td><div class="ap-cell-main"><strong style="font-weight:500">${esc(s.name)}</strong>${s.serverNames.length ? `<span class="ap-caption ap-data">${esc(s.serverNames.join(', '))}</span>` : ''}${s.stack ? stackTag(s.stack.name) : ''}</div></td><td><span class="ap-data">${s.listen}</span> <span class="ap-tag">${s.proto}</span></td><td class="ap-data ap-muted">${esc(s.target)}:${s.port}</td><td class="ap-muted">${esc(trafficProject(s.project))}</td><td>${status(tone, text)}${s.allow.length ? '<span class="ap-caption" style="display:block">Allowlist</span>' : ''}</td><td class="ap-num">${num(s.conns)}</td><td class="ap-col-actions"><div class="ap-row" style="gap:4px;justify-content:flex-end">
 <button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Edit ${esc(s.name)}" data-edit="${s.id}" data-write>${icon('pencil')}</button>
 ${s.disabled ? `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Enable ${esc(s.name)}" data-enable="${s.id}" data-write>${icon('play')}</button>` : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Disable ${esc(s.name)}" data-disable="${s.id}" data-write>${icon('power')}</button>`}
-<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete ${esc(s.name)}" data-del="${s.id}" data-write>${icon('trash-2')}</button></div></td></tr>`; }).join('')}
+${s.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete ${esc(s.name)}" data-del="${s.id}" data-write>${icon('trash-2')}</button>`}</div></td></tr>`; }).join('')}
 </tbody></table></div>` : emptyState('No stream routes', 'Forward TCP or UDP traffic, such as MQTT on port 1883, to a service on the shared network.', add)}</section>`,
     mount(el) {
       const find = id => D.streams.find(x => x.id === id);
@@ -73,6 +73,10 @@ ${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: te
   });
   applyWriteLock(d.el);
   const f = $('#st-form', d.el);
+  if (s && s.stack) {
+    $('[data-summary]', f).insertAdjacentHTML('afterend', fromStackBanner(s.stack.name, s.stack.service, '. You can still disable it from the list.'));
+    lockFields(f, s.stack.fields, s.stack.name);
+  }
   f.addEventListener('change', e => {
     if (e.target.name !== 'proto') return;
     $('[data-tcp]', f).hidden = e.target.value !== 'TCP';
@@ -323,7 +327,7 @@ route('/redirects', () => ({
   title: 'Redirects',
   html: `${pageHead({ title: 'Redirects', sub: 'Send one hostname to another address, such as www.example.com to example.com.', actions: D.redirects.length ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>` : '' })}
 <section class="ap-panel">${D.redirects.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Redirects</caption><thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Status code</th><th scope="col">Path</th><th scope="col">Project</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
-${D.redirects.map((x, i) => `<tr><td class="ap-data">${esc(x.from)}</td><td class="ap-data ap-muted">${esc(x.to)}</td><td><span class="ap-tag">${x.code}</span> <span class="ap-muted">${{ 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' }[x.code]}</span></td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions"><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(x.from)}" data-del="${i}" data-write>${icon('trash-2')}</button></td></tr>`).join('')}
+${D.redirects.map((x, i) => `<tr><td><div class="ap-cell-main"><span class="ap-data">${esc(x.from)}</span>${x.stack ? stackTag(x.stack.name) : ''}</div></td><td class="ap-data ap-muted">${esc(x.to)}</td><td><span class="ap-tag">${x.code}</span> <span class="ap-muted">${{ 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' }[x.code]}</span></td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions">${x.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(x.from)}" data-del="${i}" data-write>${icon('trash-2')}</button>`}</td></tr>`).join('')}
 </tbody></table></div>` : emptyState('No redirects yet', 'A redirect sends one hostname to another, such as <span class="ap-code">www.example.com</span> to <span class="ap-code">example.com</span>, with a 308 or 307.', `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>`)}</section>`,
   mount(el) {
     $$('[data-add]', el).forEach(b => b.addEventListener('click', redirectDialog));
@@ -378,3 +382,251 @@ ${field({ name: 'project', label: 'Project', help: 'Only for grouping.', control
     },
   });
 }
+
+/* Stacks: Swarm stacks whose routes come from apiary.* labels in their stack file. Apiary never reads Docker: the
+   stack's pipeline runs `apiary apply`, which reads the labels and sends them to the admin API with a pipeline token. */
+const STACK_NAME = /^[a-z0-9][a-z0-9_-]{0,62}$/;
+const waiting = s => !s.applied;
+const andList = xs => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const declaredText = d => [d.routes.length ? plural(d.routes.length, 'route') : '', d.streams.length ? plural(d.streams.length, 'stream route') : '', d.redirects.length ? plural(d.redirects.length, 'redirect') : ''].filter(Boolean);
+const tokenValue = () => 'apiary_pt_' + btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24)))).replace(/[+/=]/g, '');
+const applyCommand = stack => `docker stack deploy --compose-file stack.yaml ${stack}
+docker run --rm -e APIARY_TOKEN -v "$PWD:/work" datapointsoftware/apiary \\
+  apply --server ${APIARY_URL} --stack ${stack} /work/stack.yaml`;
+const dryRunCommand = stack => `docker run --rm -e APIARY_TOKEN -v "$PWD:/work" datapointsoftware/apiary \\
+  apply --dry-run --server ${APIARY_URL} --stack ${stack} /work/stack.yaml`;
+const sampleLabels = `services:
+  web:
+    image: registry.example.com/shop/web:2.14.0
+    deploy:
+      labels:
+        apiary.project: Shop
+        apiary.route.web.host: shop.example.com
+        apiary.route.web.port: "8080"
+        apiary.route.web.timeout: "30"
+        apiary.redirect.www.from: www.shop.example.com
+        apiary.redirect.www.to: https://shop.example.com`;
+const setupPanel = stack => `<section class="ap-panel" style="max-width:800px" aria-labelledby="su-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="su-t">Apply from your pipeline</h2><p class="ap-panel-desc">Apiary never connects to Docker. Your pipeline reads the labels from the stack file and sends them here, so routes change in the same commit as the services. It calls the admin port, so it must run inside your network, like the people who use this interface.</p></div></div><div class="ap-panel-body ap-stack">
+<ol class="ap-stack" style="gap:12px;margin:0;padding-left:20px">
+<li class="ap-stack" style="gap:8px"><span>Add <span class="ap-data">apiary.*</span> labels under <span class="ap-data">deploy.labels</span> of each service:</span>${copyText(sampleLabels, true)}<span class="ap-muted">Passwords, sign-in links, certificates and allowed addresses can’t be set by labels: anyone who can inspect the service could read them.</span></li>
+<li class="ap-stack" style="gap:8px"><span>In merge requests, show what an apply would change, without changing it:</span>${copyText(dryRunCommand(stack), true)}</li>
+<li class="ap-stack" style="gap:8px"><span>After the deploy, apply it. Routes of ${esc(stack)} missing from the file are removed.</span>${copyText(applyCommand(stack), true)}</li>
+</ol></div></section>`;
+
+function planList(p) {
+  const rows = [
+    ...p.added.map(([kind, what]) => [status('ok', 'Added'), `${kind} <span class="ap-data">${esc(what)}</span>`]),
+    ...p.changed.map(([kind, what, f, a, b, by]) => [status(by ? 'warn' : 'info', by ? 'Replaced a change' : 'Changed'), `${kind} <span class="ap-data">${esc(what)}</span>: ${esc(f)} <span class="ap-data">${esc(a)}</span> → <span class="ap-data">${esc(b)}</span>${by ? `<span class="ap-caption" style="display:block">${esc(a)} was set by ${esc(by[0])}, ${ago(by[1])}. A label now sets it, so it’s locked.</span>` : ''}`]),
+    ...p.removed.map(([kind, what]) => [status('warn', 'Removed'), `${kind} <span class="ap-data">${esc(what)}</span>`]),
+  ];
+  return rows.length ? `<div class="ap-list">${rows.map(([s, t]) => `<div class="ap-list-row"><div class="ap-list-text"><span>${t}</span></div>${s}</div>`).join('')}</div>` : '<p class="ap-muted" style="margin:0">Nothing changed: the stack file matched what Apiary had.</p>';
+}
+
+/* Pipeline tokens: created by an Administrator from a stack, so each reaches only that stack, and shown once */
+function tokenDialog(stack) {
+  const d = dialog({
+    title: `Create a pipeline token for ${esc(stack)}`, backdrop: false,
+    body: `<form id="pt-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'name', label: 'Name', data: true, placeholder: `${stack}-deploy`, attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'Shown in the audit log for every apply, so name the pipeline that uses it.' })}
+<div style="max-width:280px">${field({ name: 'days', label: 'Expires after', control: select('days', [['30', '30 days'], ['90', '90 days'], ['365', '1 year']], '90'), help: 'Create a new one before it expires, and update the CI variable.' })}</div>
+<p class="ap-caption" style="margin:0">It can only apply ${esc(stack)}: it can’t change other stacks, routes not from a stack, users or settings.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="pt-form" data-busy="Creating…" data-write>Create token</button>`,
+  });
+  form($('#pt-form', d.el), { name: v => V.required(v, 'a name') || (D.pipelineTokens.some(t => t.name === String(v).trim()) ? 'Another token has this name. Choose another.' : null) }, {
+    verb: 'create the token',
+    submit: async v => {
+      await api();
+      const t = { id: 'pt' + Date.now().toString(36), name: v.name.trim(), stack, created: NOW, by: D.me.email, expires: NOW + +v.days * DAY, last: null };
+      D.pipelineTokens.push(t);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `created pipeline token <code>${esc(t.name)}</code> for stack <code>${esc(stack)}</code>`, meta: 'From 10.0.4.21' });
+      d.close();
+      refresh();
+      showToken(t);
+    },
+  });
+}
+function showToken(t) {
+  dialog({
+    title: `Token ${esc(t.name)}`, mark: ['ok', 'key-round'], initial: '[data-copy]',
+    body: `<p style="margin:0">Store it as a masked, protected CI variable named <span class="ap-data">APIARY_TOKEN</span>. You won’t see it again: Apiary keeps only a hash.</p>${copyText(tokenValue())}
+<p class="ap-caption" style="margin:0">Anyone with it can change or remove the routes of ${esc(t.stack)}. If it leaks, revoke it here.</p>`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>I stored it</button>',
+  });
+}
+function revokeToken(t) {
+  confirmDialog({
+    title: `Revoke ${esc(t.name)}?`, text: `Pipelines that use it can’t apply <span class="ap-data">${esc(t.stack)}</span> anymore. The routes it applied stay as they are.`,
+    confirm: 'Revoke token', busy: 'Revoking…',
+    onConfirm: async () => {
+      await api();
+      D.pipelineTokens.splice(D.pipelineTokens.indexOf(t), 1);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `revoked pipeline token <code>${esc(t.name)}</code>`, meta: 'From 10.0.4.21' });
+      refresh();
+      toast(`${t.name} no longer works.`);
+    },
+  });
+}
+const tokensTable = (list, withStack) => `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Pipeline tokens</caption><thead><tr><th scope="col">Token</th>${withStack ? '<th scope="col">Stack</th>' : ''}<th scope="col">Created</th><th scope="col">Last used</th><th scope="col">Expires</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map(t => `<tr><td class="ap-data">${esc(t.name)}</td>${withStack ? `<td><a class="ap-tag" href="#/stacks/${esc(t.stack)}">${esc(t.stack)}</a></td>` : ''}<td class="ap-muted">${ago(t.created)} by ${esc(t.by)}</td><td class="ap-muted">${t.last ? ago(t.last) : 'Never'}</td><td class="ap-data">${fmtDate(t.expires, false)}</td><td class="ap-col-actions">${isAdmin() ? `<button class="ap-btn ap-btn-sm" type="button" data-revoke="${t.id}" data-write>Revoke…</button>` : ''}</td></tr>`).join('')}
+</tbody></table></div>`;
+const bindTokens = el => $$('[data-revoke]', el).forEach(b => b.addEventListener('click', () => revokeToken(D.pipelineTokens.find(t => t.id === b.dataset.revoke))));
+
+/* Add stack makes an empty stack and its first token, so a new install has somewhere to start */
+function addStackDialog() {
+  const d = dialog({
+    title: 'Add a stack', backdrop: false,
+    body: `<form id="as-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'stack', label: 'Stack name', data: true, placeholder: 'shop', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'The name your pipeline gives <span class="ap-data">docker stack deploy</span>, such as <span class="ap-data">shop</span>.' })}
+${field({ name: 'project', label: 'Project', optional: true, control: select('project', [['', 'Set by the apiary.project label'], ...D.projects.map(p => [p.id, p.name])], ''), help: 'Where its routes go when their labels don’t name a project.' })}
+${field({ name: 'name', label: 'Token name', data: true, placeholder: 'shop-deploy', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'For the stack’s first pipeline token. It appears in the audit log for every apply, so name the pipeline that uses it.' })}
+<div style="max-width:280px">${field({ name: 'days', label: 'Token expires after', control: select('days', [['30', '30 days'], ['90', '90 days'], ['365', '1 year']], '90') })}</div>
+</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="as-form" data-busy="Adding…" data-write>Add stack</button>`,
+  });
+  const f = $('#as-form', d.el);
+  let named = false;
+  f.elements.name.addEventListener('input', () => { named = true; });
+  f.elements.stack.addEventListener('input', () => { if (!named) f.elements.name.value = f.elements.stack.value.trim() ? `${f.elements.stack.value.trim()}-deploy` : ''; });
+  form(f, {
+    stack: v => { const n = String(v).trim(); return !n ? 'Enter the stack name.' : !STACK_NAME.test(n) ? 'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores.' : stackOf(n) ? 'This stack is already here. Open it to create another token.' : null; },
+    name: v => V.required(v, 'a token name') || (D.pipelineTokens.some(t => t.name === String(v).trim()) ? 'Another token has this name. Choose another.' : null),
+  }, {
+    verb: 'add the stack',
+    links: { stack: ['name'] },
+    submit: async v => {
+      await api();
+      const s = { name: v.stack.trim(), project: v.project, created: NOW, createdBy: D.me.email, applied: null };
+      const t = { id: 'pt' + Date.now().toString(36), name: v.name.trim(), stack: s.name, created: NOW, by: D.me.email, expires: NOW + +v.days * DAY, last: null };
+      D.stacks.push(s);
+      D.pipelineTokens.push(t);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `added stack <code>${esc(s.name)}</code> and pipeline token <code>${esc(t.name)}</code>`, meta: 'From 10.0.4.21' });
+      d.close();
+      go('/stacks/' + s.name);
+      showToken(t);
+    },
+  });
+}
+/* Remove stack, after `docker stack rm`: deletes what the stack declared and revokes its tokens */
+function removeStack(s) {
+  const d = declaredIn(s.name), tokens = D.pipelineTokens.filter(t => t.stack === s.name), lost = declaredText(d);
+  confirmDialog({
+    title: `Remove stack ${esc(s.name)}?`,
+    text: `${lost.length ? `Apiary deletes its ${andList(lost)} on every replica, and requests to them get a 404 at once. ` : ''}${tokens.length ? `${tokens.length === 1 ? 'Its pipeline token stops' : `Its ${tokens.length} pipeline tokens stop`} working. ` : ''}Do this after <span class="ap-data">docker stack rm ${esc(s.name)}</span>: Apiary never touches Docker, so the services keep running until you run it. Routes not from this stack don’t change.`,
+    confirm: 'Remove stack', busy: 'Removing…', type: s.name,
+    onConfirm: async () => {
+      await api();
+      D.routes = D.routes.filter(r => !d.routes.includes(r));
+      D.streams = D.streams.filter(x => !d.streams.includes(x));
+      D.redirects = D.redirects.filter(x => !d.redirects.includes(x));
+      D.pipelineTokens = D.pipelineTokens.filter(t => t.stack !== s.name);
+      D.stacks = D.stacks.filter(x => x !== s);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `removed stack <code>${esc(s.name)}</code>`, meta: `${andList(lost) || 'Nothing declared'} · ${plural(tokens.length, 'token')} revoked · from 10.0.4.21` });
+      go('/stacks');
+      toast(`${s.name} is gone${lost.length ? `, with its ${andList(lost)}` : ''}.`);
+    },
+  });
+}
+
+/* Prototype only: what an apply does to a stack, and what the pipeline log shows, when it works and when it doesn't */
+const SIMULATIONS = [['works', 'works'], ['conflict', 'finds a hostname in use'], ['quorum', 'can’t reach a quorum'], ['empty', 'removes everything']];
+const commitId = () => [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 7);
+function pipelineLog(title, ok, log, note) {
+  dialog({
+    title, mark: ok ? ['ok', 'circle-check'] : ['critical', 'circle-alert'], size: 'lg',
+    body: `<p style="margin:0">What the pipeline log shows:</p><div class="ap-copy" style="align-items:flex-start"><code style="white-space:pre;line-height:1.6;overflow:auto">${esc(log)}</code></div>${note ? `<p class="ap-caption" style="margin:0">${note}</p>` : ''}`,
+    foot: '<button class="ap-btn ap-btn-primary" type="button" data-close>Close</button>',
+  });
+}
+function simulateApply(s, outcome) {
+  const t = D.pipelineTokens.find(x => x.stack === s.name);
+  const cmd = `$ apiary apply --server ${APIARY_URL} --stack ${s.name} /work/stack.yaml`;
+  if (!t) return pipelineLog('The apply was refused', false, `${cmd}\nerror: auth.invalidToken: APIARY_TOKEN isn't a valid pipeline token for stack ${s.name}.\n       It may have expired or been revoked. Ask an Administrator for a new one.\nNothing was changed.`, 'Apiary doesn’t record refused tokens on the stack page: anyone could send one. They’re in the audit log as failed sign-ins.');
+  if (outcome === 'quorum' || Proto.state.cluster === 'quorum') {
+    return pipelineLog('The apply failed', false, `${cmd}\nRead 3 services and 14 apiary labels from stack.yaml.\nerror: cluster.noQuorum: only 1 of 3 voting replicas can be reached, so Apiary can't save changes.\nNothing was changed. Every replica keeps serving the current routes. Run the job again when the cluster has quorum.`, 'Nothing appears on this page or in the audit log: without quorum, Apiary can’t save anything, its own records included. Only the pipeline log shows it, which is why the command exits with an error and fails the job.');
+  }
+  const fail = (code, title, text, log, labels = 14) => {
+    s.failed = { at: NOW, code, title, text, token: t.name };
+    t.last = NOW;
+    D.audit.unshift({ at: NOW, actor: `Pipeline ${t.name}`, via: 'API', denied: true, text: `tried to apply stack <code>${esc(s.name)}</code>`, meta: `${code} · from 10.0.12.7` });
+    refresh();
+    pipelineLog('The apply failed', false, `${cmd}\nRead 3 services and ${labels} apiary labels from stack.yaml.\n${log}\nNothing was changed.`);
+  };
+  if (outcome === 'conflict') {
+    return fail('route.hostInUse', 'a hostname is already in use', 'The stack file declares <span class="ap-data">grafana.internal.example.com</span>, which a route in Internal tools, not from a stack, already uses. Nothing changed.',
+      `error: route.hostInUse: grafana.internal.example.com is already used by a route that isn't in stack ${s.name}\n       (project Internal tools, not from a stack). Apiary won't take it over.\n       Remove the label, or delete or move the other route first.`);
+  }
+  const d = declaredIn(s.name), all = d.routes.length + d.streams.length + d.redirects.length;
+  if (outcome === 'empty') {
+    return fail('stack.removesEverything', 'it would remove everything', `The stack file declares nothing, so the apply would delete all ${plural(all, 'item')} of ${esc(s.name)}. That usually means the wrong file or labels that went missing.`,
+      `Plan for stack ${s.name}: 0 added, 0 changed, ${all} removed.\nerror: stack.removesEverything: this apply would remove everything stack ${s.name} declares,\n       which usually means the wrong file or missing labels.\n       If you mean it, run again with --allow-removing-all.`, 0);
+  }
+  const plan = { added: [], changed: [], removed: [] }, lines = [];
+  if (waiting(s)) {
+    const host = `${s.name}.example.com`;
+    D.routes.push({ id: 'r' + Date.now().toString(36), host, path: '/', project: s.project || D.projects[0].id, targets: [{ host: `${s.name}_web`, port: 8080, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 0, timeout: 30, allow: [], changed: [NOW, t.name], stack: { name: s.name, service: `${s.name}_web`, fields: ['host', 'path', 'targets', 'timeout'] } });
+    plan.added.push(['Route', host]);
+    lines.push(`  + route ${host}   → ${s.name}_web:8080`);
+  } else {
+    const r = d.routes.find(x => x.hand && x.hand.timeout && !x.stack.fields.includes('timeout'));
+    if (r) {
+      const by = r.hand.timeout;
+      plan.changed.push(['Route', routeLabel(r), 'Timeout', `${r.timeout} seconds`, '30 seconds', by]);
+      lines.push(`  ~ route ${routeLabel(r)}   timeout ${r.timeout} s → 30 s`, `      replaces a value set by ${by[0]} on ${fmtDate(by[1], false)}; the label locks it from now on`);
+      Object.assign(r, { timeout: 30, changed: [NOW, t.name] });
+      r.stack.fields.push('timeout');
+      delete r.hand.timeout;
+    }
+  }
+  const n = plan.added.length + plan.changed.length + plan.removed.length;
+  Object.assign(s, { applied: NOW, token: t.name, commit: commitId(), pipeline: s.pipeline || `https://gitlab.example.com/${s.name}/-/pipelines/${18000 + D.audit.length}`, plan, failed: null });
+  t.last = NOW;
+  D.audit.unshift({ at: NOW, actor: `Pipeline ${t.name}`, via: 'API', text: `applied stack <code>${esc(s.name)}</code>`, meta: `${plan.added.length} added, ${plan.changed.length} changed, ${plan.removed.length} removed · commit ${s.commit} · from 10.0.12.7` });
+  refresh();
+  pipelineLog('The apply worked', true, `${cmd}\nRead 3 services and 14 apiary labels from stack.yaml.\n${n ? `Plan for stack ${s.name}:\n${lines.join('\n')}\n` : `Stack ${s.name} already matches stack.yaml.\n`}Applied to every replica at once: ${plan.added.length} added, ${plan.changed.length} changed, ${plan.removed.length} removed.`, n ? 'A dry run in the merge request prints the same plan, without applying it.' : 'Try another outcome, or run it again after a failure to see it clear.');
+}
+
+route('/stacks', () => {
+  const add = isAdmin() ? `<button class="ap-btn ap-btn-primary" type="button" data-add-stack data-write>${icon('plus')}Add stack</button>` : '';
+  const head = pageHead({ title: 'Stacks', sub: 'Swarm stacks whose routes come from labels in their stack file. Their pipeline applies the file after each deploy.', actions: D.stacks.length ? add : '' });
+  const mount = el => $$('[data-add-stack]', el).forEach(b => b.addEventListener('click', addStackDialog));
+  if (!D.stacks.length) return { title: 'Stacks', mount, html: `${head}<section class="ap-panel">${emptyState('No stacks yet', `Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels.${isAdmin() ? '' : ' Only Administrators can add stacks.'}`, add)}</section>` };
+  return {
+    title: 'Stacks', mount,
+    html: `${head}<section class="ap-panel"><div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Stacks</caption><thead><tr><th scope="col">Stack</th><th scope="col">Project</th><th scope="col">Declares</th><th scope="col">Last applied</th><th scope="col">Changes</th></tr></thead><tbody>
+${D.stacks.map(s => {
+    const n = waiting(s) ? 0 : s.plan.added.length + s.plan.changed.length + s.plan.removed.length;
+    return `<tr><td><a class="ap-data" href="#/stacks/${esc(s.name)}">${esc(s.name)}</a></td><td class="ap-muted">${esc((projectOf(s.project) || {}).name || 'From labels')}</td><td class="ap-muted">${waiting(s) ? '–' : declaredText(declaredIn(s.name)).join(' · ') || 'Nothing'}</td><td>${s.failed ? status('warn', 'Last apply failed') : waiting(s) ? status('info', 'Waiting for the first apply') : `<span class="ap-muted">${ago(s.applied)} by <span class="ap-data">${esc(s.token)}</span></span>`}</td><td class="ap-muted">${waiting(s) ? '–' : n ? plural(n, 'change') : 'No changes'}</td></tr>`;
+  }).join('')}</tbody></table></div></section>`,
+  };
+});
+route('/stacks/:name', name => {
+  const s = stackOf(name);
+  if (!s) return notFound();
+  const d = declaredIn(s.name), tokens = D.pipelineTokens.filter(t => t.stack === s.name), admin = isAdmin();
+  const items = [...d.routes.map(r => [`<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`, 'Route', r.stack.service]), ...d.streams.map(x => [`<span class="ap-data">${esc(x.name)}</span>`, `Stream route, ${x.proto} ${x.listen}`, x.stack.service]), ...d.redirects.map(x => [`<span class="ap-data">${esc(x.from)}</span>`, 'Redirect', x.stack.service])];
+  const sub = waiting(s) ? `${status('info', 'Waiting for the first apply')} &nbsp;·&nbsp; Added ${ago(s.created)} by ${esc(s.createdBy)}`
+    : `Last applied ${ago(s.applied)} by pipeline <span class="ap-data">${esc(s.token)}</span> &nbsp;·&nbsp; commit <a class="ap-data" href="${esc(s.pipeline)}" target="_blank" rel="noopener">${esc(s.commit)}</a>`;
+  const lastApply = waiting(s)
+    ? `<section class="ap-panel" style="max-width:800px" aria-labelledby="la-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="la-t">First apply</h2></div></div><div class="ap-panel-body">${banner('info', `Nothing has applied ${esc(s.name)} yet`, `Add the commands under Apply from your pipeline, below, to the pipeline that deploys ${esc(s.name)}, with its token as <span class="ap-data">APIARY_TOKEN</span>. After its first run, the routes in its labels appear here.`)}</div></section>`
+    : `<section class="ap-panel" style="max-width:800px" aria-labelledby="la-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="la-t">Last apply</h2><p class="ap-panel-desc">${fmtDate(s.applied)} UTC. Every apply is in the audit log.</p></div></div><div class="ap-panel-body">${planList(s.plan)}</div></section>
+<section class="ap-panel" style="max-width:800px" aria-labelledby="de-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="de-t">What it declares</h2><p class="ap-panel-desc">Fields the labels set are locked on their pages. Disabling and maintenance windows stay available.</p></div></div>
+<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">What ${esc(s.name)} declares</caption><thead><tr><th scope="col">Name</th><th scope="col">Kind</th><th scope="col">Service</th></tr></thead><tbody>${items.map(([a, b, c]) => `<tr><td>${a}</td><td class="ap-muted">${b}</td><td class="ap-data ap-muted">${esc(c)}</td></tr>`).join('')}</tbody></table></div></section>`;
+  return {
+    title: s.name,
+    html: `${pageHead({ crumbs: [['Stacks', '#/stacks']], title: s.name, sub })}
+${s.failed ? banner('critical', `The last apply failed ${ago(s.failed.at)}: ${esc(s.failed.title)}`, `${s.failed.text} Pipeline <span class="ap-data">${esc(s.failed.token)}</span>, error <span class="ap-data">${esc(s.failed.code)}</span>. This clears when an apply succeeds.`) : ''}
+<div class="pt-row"><span class="ap-caption">Prototype: simulate an apply that</span>${SIMULATIONS.map(([k, t]) => `<button class="ap-btn ap-btn-sm" type="button" data-simulate="${k}">${t}</button>`).join('')}</div>
+${lastApply}
+<section class="ap-panel" style="max-width:800px" aria-labelledby="tk-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tk-t">Pipeline tokens</h2><p class="ap-panel-desc">A pipeline needs one to apply ${esc(s.name)}.${admin ? '' : ' Only Administrators can create or revoke them.'}</p></div>${admin ? `<button class="ap-btn" type="button" data-new-token data-write>${icon('plus')}Create token</button>` : ''}</div>
+${tokens.length ? tokensTable(tokens, false) : emptyState('No tokens', `Nothing can apply ${esc(s.name)} until an Administrator creates a token.`)}</section>
+${setupPanel(s.name)}
+<section class="ap-panel ap-panel-danger" style="max-width:800px" aria-labelledby="dz-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="dz-t">Danger zone</h2></div></div><div class="ap-panel-body ap-list">
+<div class="ap-list-row"><div class="ap-list-text"><strong>Remove this stack</strong><span class="ap-muted">After <span class="ap-data">docker stack rm</span>. Deletes everything it declared and revokes its tokens.${admin ? '' : ' Needs the Administrator role.'}</span></div><button class="ap-btn" type="button" style="color:var(--critical)" data-remove-stack data-write${admin ? '' : ' disabled'}>Remove stack…</button></div></div></section>`,
+    mount(el) {
+      bindTokens(el);
+      $('[data-new-token]', el)?.addEventListener('click', () => tokenDialog(s.name));
+      $('[data-remove-stack]', el).addEventListener('click', () => removeStack(s));
+      $$('[data-simulate]', el).forEach(b => b.addEventListener('click', () => simulateApply(s, b.dataset.simulate)));
+    },
+  };
+});
