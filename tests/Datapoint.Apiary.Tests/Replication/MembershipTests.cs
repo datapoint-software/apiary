@@ -21,7 +21,7 @@ public sealed class MembershipTests : IAsyncLifetime
     {
         var fourth = await _swarm.StartReplicaAsync(4);
 
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Leader.State.Replicas.ContainsKey(fourth.Cluster.Identity!.Id)));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => l.State.Replicas.ContainsKey(fourth.Cluster.Identity!.Id))));
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class MembershipTests : IAsyncLifetime
 
         var fourth = _swarm.Launch(4);
 
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Leader.Cluster.Pending.Count == 1, s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => l.Cluster.Pending.Count == 1), s_monitorCycles));
         Assert.False(fourth.Cluster.IsReady);
     }
 
@@ -42,11 +42,11 @@ public sealed class MembershipTests : IAsyncLifetime
         using var client = await AdminSession.SignedInAsync(_swarm.Leader);
         await AdminSession.PostAsync(client, "cluster/update-membership", new JsonObject { ["mode"] = "Manual", ["removeMissingAfterMinutes"] = 30 });
         var fourth = _swarm.Launch(4);
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Leader.Cluster.Pending.Count == 1, s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => l.Cluster.Pending.Count == 1), s_monitorCycles));
 
         await AdminSession.PostAsync(client, "cluster/approve-replica", new JsonObject { ["id"] = _swarm.Leader.Cluster.Pending[0].Id });
 
-        Assert.True(await Eventually.TrueAsync(() => fourth.Cluster.IsReady && _swarm.Leader.State.Replicas.Count == 4, s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => fourth.Cluster.IsReady && _swarm.LeaderHas(l => l.State.Replicas.Count == 4), s_monitorCycles));
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class MembershipTests : IAsyncLifetime
         var follower = _swarm.Followers[0];
         var id = follower.Cluster.Identity!.Id;
         await _swarm.CrashReplicaAsync(_swarm.SlotOf(follower));
-        Assert.True(await Eventually.TrueAsync(() => !_swarm.Leader.Cluster.IsReachable(_swarm.Leader.State.Replicas[id]), s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => !l.Cluster.IsReachable(l.State.Replicas[id])), s_monitorCycles));
 
         await AdminSession.PostAsync(client, "cluster/remove-replica", new JsonObject { ["id"] = id });
 
@@ -92,6 +92,6 @@ public sealed class MembershipTests : IAsyncLifetime
 
         await _swarm.CrashReplicaAsync(_swarm.SlotOf(follower));
 
-        Assert.True(await Eventually.TrueAsync(() => !_swarm.Leader.State.Replicas.ContainsKey(id), s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => !l.State.Replicas.ContainsKey(id)), s_monitorCycles));
     }
 }

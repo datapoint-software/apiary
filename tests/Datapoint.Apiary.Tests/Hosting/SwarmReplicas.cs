@@ -31,6 +31,8 @@ internal sealed class SwarmReplicas : IAsyncDisposable
 
     public ApiaryApp Leader => _running.Values.Single(r => r.Cluster.IsLeader);
 
+    public bool LeaderHas(Func<ApiaryApp, bool> condition) => _running.Values.Any(r => r.Cluster.IsLeader && condition(r));
+
     public IReadOnlyList<ApiaryApp> Followers => [.. _running.Values.Where(r => !r.Cluster.IsLeader)];
 
     public IReadOnlyCollection<ApiaryApp> Running => [.. _running.Values];

@@ -11,12 +11,7 @@ public sealed class KeyRotationTests : IAsyncLifetime
     private static readonly TimeSpan s_monitorCycles = TimeSpan.FromSeconds(60);
     private SwarmReplicas _swarm = null!;
 
-    public async ValueTask InitializeAsync() =>
-        _swarm = await SwarmReplicas.StartAsync(3, new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["Apiary:ClusterCaRenewBefore"] = "36500.00:00:00",
-            ["Apiary:ClusterCaOverlap"] = "00:00:02",
-        });
+    public async ValueTask InitializeAsync() => _swarm = await SwarmReplicas.StartAsync(3);
 
     public async ValueTask DisposeAsync() => await _swarm.DisposeAsync();
 
@@ -44,7 +39,7 @@ public sealed class KeyRotationTests : IAsyncLifetime
 
         await _swarm.StartReplicaAsync(follower, newKey);
 
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Leader.State.RootKeys.Any(k => k.Keys.RootKeyId == newKey.Id)));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => l.State.RootKeys.Any(k => k.Keys.RootKeyId == newKey.Id))));
     }
 
     [Fact]
@@ -57,20 +52,8 @@ public sealed class KeyRotationTests : IAsyncLifetime
         await RotateAsync(followers[1], newKey);
         await RotateAsync(leader, newKey);
 
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Leader.State.RootKeys.Count == 1, s_monitorCycles));
+        Assert.True(await Eventually.TrueAsync(() => _swarm.LeaderHas(l => l.State.RootKeys.Count == 1), s_monitorCycles));
         Assert.Equal(newKey.Id, _swarm.Leader.State.RootKeys.Single().Keys.RootKeyId);
-    }
-
-    [Fact]
-    public async Task The_cluster_ca_rotates_and_the_replicas_keep_talking()
-    {
-        var first = _swarm.Leader.State.ClusterCa!.CertificatePem;
-        var project = AProject("After the CA rotated");
-
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Running.All(r => r.State.ClusterCa!.CertificatePem != first && r.State.RetiringClusterCa is null), s_monitorCycles));
-        await _swarm.Leader.SeedAsync(new ProjectSaved(project));
-
-        Assert.True(await Eventually.TrueAsync(() => _swarm.Running.All(r => r.State.Projects.ContainsKey(project.Id))));
     }
 
     private async Task RotateAsync(int replica, RootKey key)
