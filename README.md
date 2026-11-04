@@ -2,6 +2,8 @@
 
 Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engine/swarm/) clusters that must stay available. It routes incoming HTTP and HTTPS requests to Swarm services and manages TLS certificates automatically through [Let's Encrypt](https://letsencrypt.org/).
 
+![Apiary's admin interface: a project's routes, with their health, targets including a canary, certificates and requests per minute, and the cluster's 4 of 4 replicas at the top](docs/images/admin-interface.png)
+
 > **Status: beta.** Apiary is feature-complete: milestones 0 to 12 of the [implementation plan](docs/implementation-plan.md) are built: routing, sign-in and users, HTTPS with automatic certificates, replication across a Swarm, running a cluster safely (membership, backups, recovery and key rotation), everyday route features (redirects, disabling, allowlists and maintenance windows), projects with the overview, observability (target health, request rates, metrics and traces), AI agents over MCP with Apiary's own OAuth authorization server, releasing new versions (weighted targets, canaries, sticky sessions, compression and caching), single sign-on with OpenID Connect, and TCP and UDP stream routes with TLS passthrough. Since then: password-protected routes with sign-in links, and branded visitor pages. Decisions made along the way wait for review in [docs/review-notes.md](docs/review-notes.md), so some behavior can still change before `1.0.0`. From `1.0.0-beta.1`, each version reads the state of the one before it, so a beta can be upgraded in place.
 
 ## Goals
