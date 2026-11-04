@@ -1,0 +1,20 @@
+# Keeps the Dockerfile's base images patched: when a pinned tag gets a new
+# digest, Dependabot opens one pull request that updates them all, and CI
+# builds and tests the image before anyone merges it. Version changes (a new
+# .NET or Node major or minor) stay manual, as they need code changes too.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      base-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
