@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Datapoint.Apiary.Cluster.Streams;
@@ -60,6 +61,32 @@ public sealed class StreamTests : IAsyncLifetime
         await _app.SeedAsync(new StreamRouteDeleted(route.Id));
 
         Assert.True(await Testing.Eventually.TrueAsync(() => !Accepts(_port)));
+    }
+
+    [Fact]
+    public async Task A_udp_stream_reaches_its_target_both_ways()
+    {
+        await using var echo = UdpEchoServer.Start();
+        var port = UdpEchoServer.FreePort();
+        var route = AStream(listenPort: port) with { Protocol = StreamProtocol.Udp, TargetHost = echo.Address.ToString(), TargetPort = echo.Port };
+        await _app.SeedAsync(new StreamRouteSaved(route));
+        using var client = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+
+        Assert.Equal("ping", await UdpRoundTripAsync(client, port, "ping"));
+    }
+
+    private static async Task<string> UdpRoundTripAsync(UdpClient client, int port, string message)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(s_timeout);
+        var reply = client.ReceiveAsync(timeout.Token).AsTask();
+        while (!reply.IsCompleted)
+        {
+            await client.SendAsync(Encoding.ASCII.GetBytes(message), new IPEndPoint(IPAddress.Loopback, port), timeout.Token);
+            await Task.WhenAny(reply, Task.Delay(100, timeout.Token));
+        }
+
+        return Encoding.ASCII.GetString((await reply).Buffer);
     }
 
     private StreamRoute StreamTo(EchoServer echo) =>
