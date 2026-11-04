@@ -36,8 +36,8 @@
   },
   "lastChange": {
     "by": "João Lopes",
-    "at": "2026-11-04T01:38:30Z",
+    "at": "2026-11-04T02:38:08Z",
     "via": "Claude Code",
-    "note": "Attribution moved from the sidebar to a page footer (Shell card, stylesheet, brand and Prototype notes), and the Prototype gained password-protected routes, branded visitor pages and the page footer."
+    "note": "Stylesheet: the language menu, the password tag on routes, the brand logo preview, the wide dialog and the sign-in link row (in bundle.css and the Prototype)."
   }
 }
