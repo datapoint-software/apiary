@@ -46,12 +46,7 @@ def sidebar(attribution=True):
     foot = ""
     if attribution:
         foot = f"""<div class="ap-side-foot">
-<nav class="ap-nav" aria-label="Help"><button class="ap-nav-item ap-nav-button" type="button" data-label="About Apiary" data-about>{icon("info")}<span class="ap-nav-label">About Apiary</span></button></nav>
-<div class="ap-attribution">
-<a href="https://datapoint.software/" aria-label="Datapoint Software" style="color:inherit">{logo}</a>
-<span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
-<span>Version 0.4.0 · <a href="#">AGPL-3.0</a> · <a href="#">Source</a></span>
-</div></div>"""
+<nav class="ap-nav" aria-label="Help"><button class="ap-nav-item ap-nav-button" type="button" data-label="About Apiary" data-about>{icon("info")}<span class="ap-nav-label">About Apiary</span></button></nav></div>"""
     return f"""<aside class="ap-side" id="side" aria-label="Sidebar">
 <div class="ap-side-head"><a class="ap-brand" href="#" aria-label="Apiary, Overview"><span class="ap-brand-mark" aria-hidden="true"></span><span class="ap-brand-name">Apiary</span></a></div>
 {"".join(groups)}
@@ -59,6 +54,12 @@ def sidebar(attribution=True):
 </aside>
 <div class="ap-side-scrim" data-drawer-close aria-hidden="true"></div>"""
 
+
+APP_FOOT = f"""<footer class="ap-app-foot">
+<div class="ap-app-foot-row"><a href="https://datapoint.software/" aria-label="Datapoint Software" class="ap-app-foot-logo">{logo}</a><span class="ap-app-foot-sep" aria-hidden="true"></span>
+<span><a href="https://apiary.datapoint.software/" class="ap-app-foot-apiary"><span class="ap-brand-mark" aria-hidden="true"></span>Apiary</a> 0.4.0 · <a href="#">AGPL-3.0</a> · <a href="#">Source</a></span></div>
+<span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
+</footer>"""
 
 DISPLAY = '<div class="ap-popover" role="dialog" aria-modal="false" aria-labelledby="display-t" id="display" hidden style="right:0;top:calc(100% + 8px)">\n<h2 class="ap-h ap-h-3" id="display-t">Display and accessibility</h2>\n<div class="ap-setting"><span class="ap-label" id="set-theme">Appearance</span><div class="ap-seg" role="group" aria-labelledby="set-theme" data-setting="theme"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="light">Light</button><button type="button" aria-pressed="false" data-value="dark">Dark</button></div></div>\n<div class="ap-setting"><span class="ap-label" id="set-text">Text size</span><div class="ap-seg" role="group" aria-labelledby="set-text" data-setting="text"><button type="button" aria-pressed="true" data-value="default">Default</button><button type="button" aria-pressed="false" data-value="large">Large</button><button type="button" aria-pressed="false" data-value="larger">Larger</button></div></div>\n<div class="ap-setting"><span class="ap-label" id="set-contrast">Contrast</span><div class="ap-seg" role="group" aria-labelledby="set-contrast" data-setting="contrast"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="more">More</button></div></div>\n<div class="ap-setting"><span class="ap-label" id="set-motion">Motion</span><div class="ap-seg" role="group" aria-labelledby="set-motion" data-setting="motion"><button type="button" aria-pressed="true" data-value="system">Automatic</button><button type="button" aria-pressed="false" data-value="standard">Standard</button><button type="button" aria-pressed="false" data-value="reduce">Reduced</button></div></div>\n<p class="ap-caption" style="margin:0">Automatic follows your device settings. Saved in this browser only.</p>\n</div>'
 
@@ -357,15 +358,16 @@ open(os.path.join(d, "preview.html"), "w").write(f"""<!-- @dsCard group="Navigat
 <head>
 <meta charset="utf-8">
 <title>Shell — preview</title>
-<style>html, body {{ margin: 0; }} body {{ background: var(--ground); }} .ap-shell {{ min-height: 560px; }}</style>
+<style>html, body {{ margin: 0; }} body {{ background: var(--ground); }} .ap-shell {{ min-height: 560px; }} .ap-shell-body {{ min-height: 560px; }}</style>
 </head>
 <body class="ap" lang="en">
 <a class="ap-skip" href="#main">Skip to content</a>
 <div class="ap-shell" data-shell>
 {sidebar()}
-<div style="min-width:0">
+<div class="ap-shell-body">
 {TOP}
 <main class="ap-content" id="main" tabindex="-1"><div class="ap-stack" style="gap:6px"><nav class="ap-crumbs" aria-label="Breadcrumb"><a href="#">prod-eu-west</a><span aria-hidden="true">/</span><span>Overview</span></nav><h1 class="ap-h ap-h-1">Overview</h1><p class="ap-muted" style="margin:0">Collapse the sidebar with the button next to the name, or Ctrl or ⌘ + B.</p></div></main>
+{APP_FOOT}
 </div>
 </div>
 {OVERLAYS}
@@ -378,13 +380,13 @@ open(os.path.join(d, "README.md"), "w").write("""# Shell
 The shell frames every page: sidebar, top bar and content area.
 
 - **Sidebar** (`ap-side`, `sidebar` wide): on `ground` with a hairline edge, with the Apiary name after a honey hexagon, the Overview, then navigation grouped under an `overline`: Projects (each with its route count), Traffic, Cluster, Access. Up to 7 items per group. The current page has `aria-current="page"` and `honey-soft`. Counts in `ap-count`; an item needing attention shows a status dot instead of a number.
-- **Attribution:** the sidebar footer shows the Datapoint logo, "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", the version, the license and a link to the source. Required by the license in every version: never remove it.
+- **Attribution** (`ap-app-foot`): a footer centered under the content of every page, with the Datapoint logo (linking to datapoint.software), a hairline, the honey hexagon and "Apiary" (linking to apiary.datapoint.software) with the version, the license and a link to the source, and "Based on Apiary by Datapoint - Sistemas de Informação, Lda." below. On short pages it sits at the bottom of the window; on long ones it follows the content. On phones it stacks: logo, then version, license and source, then the credit. It replaces the sidebar footer, which a collapsed sidebar hid. Required by the license in every version: never remove it. The sign-in and visitor pages end the same way.
 - **Top bar** (`ap-top`, 52px, sticky, on `ground` with a hairline below): the sidebar button, global search with its shortcut, the cluster's write status (Status: "3 of 3 voters"), the display and accessibility button, and the account.
 - **Account menu:** the avatar is a button (`aria-haspopup="menu"`) that opens a Menu anchored below it, right-aligned: a header with the user's name, email and role, then Your account, Security, Active sessions, and Sign out last, after a separator. Sign out is a plain item, not a danger one: it loses nothing. Arrow keys move, Escape closes and returns focus to the avatar.
 - **Content** (`ap-content`): breadcrumb starting with the cluster's name, the page title (`title-1`, one per page), then the page. At most `content-max` wide.
 - **Collapsing:** the sidebar button at the left of the top bar (or Ctrl or ⌘ + B) collapses the sidebar to icons (`sidebar-collapsed`, 68px) with a 300ms animation; labels and group titles fade, and each icon shows its label in a tooltip on hover and focus. The button stays in the same place in both states. The choice is remembered in the browser; below 1024px the sidebar starts collapsed.
 - **Phones:** under 640px the same button opens the sidebar as a drawer that slides in from the left over a scrim. Focus moves into it and stays there; Escape or the scrim closes it.
-- **About Apiary:** the last sidebar item opens a dialog with the version, the attribution, the license and a link to the source, so the attribution stays reachable when the sidebar is collapsed.
+- **About Apiary:** the last sidebar item opens a dialog with the version, the attribution, the full license notice and a link to the source.
 - **Skip link:** "Skip to content" is the first focusable element and jumps to `main`.
 
 **The consumer provides:** the cluster name, the navigation with counts, the page title and content.

@@ -593,6 +593,25 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap-shell[data-collapsed="true"] .ap-side-foot .ap-attribution { border-top-color: transparent; }
 .ap-side-scrim { display: none; }
 
+/* Page footer: the Datapoint logo, the version, license and source links, and the credit, centered under the content
+   of every page. It replaces the sidebar attribution above, which a collapsed sidebar hid; that stays until the app's
+   shell moves to the footer. Required by the license in every version: never remove it. */
+.ap-shell-body { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
+.ap-shell-body > .ap-content { flex: 1 0 auto; }
+.ap-app-foot { max-width: calc(var(--content-max) + 64px); width: 100%; box-sizing: border-box; padding: 0 var(--space-6) var(--space-7); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-3); }
+.ap .ap-app-foot a { color: var(--ink-2); }
+.ap-app-foot-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
+.ap-app-foot-logo svg { width: 80px; height: auto; display: block; }
+.ap-app-foot-sep { width: 1px; height: 16px; background: var(--line-strong); }
+.ap .ap-app-foot a.ap-app-foot-apiary { display: inline-flex; align-items: center; gap: 6px; vertical-align: bottom; }
+.ap-app-foot-apiary .ap-brand-mark { width: 13px; height: 12px; }
+/* On a phone: the logo on top, then the version, license and source, then the credit. */
+@media (max-width: 639px) {
+  .ap-app-foot { padding: 0 var(--space-4) var(--space-6); }
+  .ap-app-foot-row { flex-direction: column; gap: 8px; }
+  .ap-app-foot-sep { display: none; }
+}
+
 /* Skip link and screen-reader text */
 .ap-skip {
   position: absolute;
@@ -867,24 +886,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* Idea being tried: the brand dialog has the form and a live preview side by side. */
 .ap-dialog-xl { width: min(760px, 100%); }
 
-/* Idea being tried: the attribution and license links at the bottom of every admin page, like the visitor and
-   sign-in pages, instead of the sidebar, where a collapsed sidebar hid them. */
-.ap-col { display: flex; flex-direction: column; min-height: 100vh; }
-.ap-col > .ap-content { flex: 1 0 auto; }
-.ap-app-foot { max-width: calc(var(--content-max) + 64px); width: 100%; box-sizing: border-box; padding: 0 var(--space-6) var(--space-7); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-3); }
-.ap .ap-app-foot a { color: var(--ink-2); }
-.ap-app-foot-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
-.ap-app-foot-logo svg { width: 80px; height: auto; display: block; }
-.ap-app-foot-sep { width: 1px; height: 16px; background: var(--line-strong); }
-.ap .ap-app-foot a.ap-app-foot-apiary { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); vertical-align: bottom; }
-.ap-app-foot-apiary .ap-brand-mark { width: 13px; height: 12px; }
-@media (max-width: 720px) {
-  .ap-app-foot { padding: 0 var(--space-4) var(--space-6); }
-  /* On a phone: the logo on top, then the version, license and source, then the credit. */
-  .ap-app-foot-row { flex-direction: column; gap: 8px; }
-  .ap-app-foot-sep { display: none; }
-}
-
 </style>
 <div class="ap" lang="en" style="min-height:100%">
 <a class="ap-skip" href="#main" data-skip>Skip to content</a>
@@ -896,7 +897,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <nav class="ap-nav" aria-label="Help"><button class="ap-nav-item ap-nav-button" type="button" data-label="About Apiary" data-about><i data-lucide="info" class="ap-icon" aria-hidden="true"></i><span class="ap-nav-label">About Apiary</span></button></nav></div>
 </aside>
 <div class="ap-side-scrim" data-drawer-close aria-hidden="true"></div>
-<div class="ap-col" style="min-width:0">
+<div class="ap-shell-body">
 <header class="ap-top">
 <button class="ap-btn ap-btn-ghost ap-btn-icon ap-sidebar-btn" type="button" aria-controls="side" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl or ⌘ + B)" data-sidebar><i data-lucide="panel-left" class="ap-icon" aria-hidden="true"></i></button>
 <div class="ap-search" role="search"><i data-lucide="search" class="ap-icon" aria-hidden="true"></i><input class="ap-input" id="q" type="search" placeholder="Search routes, certificates, users" aria-label="Search" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list" autocomplete="off" spellcheck="false"><span class="ap-kbd" aria-hidden="true">⌘K</span><div class="ap-menu ap-search-pop" id="q-list" role="listbox" aria-label="Search results" hidden></div></div>
