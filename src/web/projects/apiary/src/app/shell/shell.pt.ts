@@ -44,7 +44,7 @@ export const shellPortuguese: TextCatalog = {
   'Only {reachable} of {total} replicas can be reached, so the cluster can’t agree on changes. Traffic keeps flowing with the last configuration.':
     'Só {reachable} de {total} réplicas estão contactáveis, por isso o cluster não consegue chegar a acordo sobre alterações. O tráfego continua com a última configuração.',
   'See replicas': 'Ver réplicas',
-  Source: 'Código-fonte',
+  'Source code': 'Código-fonte',
   'Based on Apiary by': 'Baseado no Apiary da',
   Language: 'Idioma',
   'Language: {name}': 'Idioma: {name}',

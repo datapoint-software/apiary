@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Status } from '@datapoint/apiary-ui';
+import { I18n, Status, TranslatePipe } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { CertificateSummary } from '../api/models';
 import { daysLeft, sourceName, statusText, statusTone } from '../certificates/certificate-status';
@@ -23,12 +23,12 @@ function meter(certificate: CertificateSummary): Meter {
 
 @Component({
   selector: 'ap-certificate-meters',
-  imports: [RouterLink, Status],
+  imports: [RouterLink, Status, TranslatePipe],
   template: `
     <section class="ap-panel" aria-labelledby="certificates-title">
       <div class="ap-panel-head">
-        <h2 class="ap-h ap-h-2" id="certificates-title">Certificates</h2>
-        <a class="ap-caption" style="color: var(--honey-text)" routerLink="/certificates">All {{ certificates.value().length }}</a>
+        <h2 class="ap-h ap-h-2" id="certificates-title">{{ 'Certificates' | t }}</h2>
+        <a class="ap-caption" style="color: var(--honey-text)" routerLink="/certificates">{{ 'All {count}' | t: { count: certificates.value().length } }}</a>
       </div>
       <div class="ap-panel-body ap-stack">
         @for (item of meters(); track item.certificate.id) {
@@ -44,14 +44,14 @@ function meter(certificate: CertificateSummary): Meter {
               aria-valuemin="0"
               [attr.aria-valuemax]="item.lifetime"
               [attr.aria-valuenow]="item.days"
-              [attr.aria-label]="'Days left for ' + item.certificate.name"
+              [attr.aria-label]="'Days left for {name}' | t: { name: item.certificate.name }"
             >
               <div class="ap-meter-fill" [style.width.%]="item.percent"></div>
             </div>
-            <span class="ap-caption">{{ sourceName(item.certificate) }}</span>
+            <span class="ap-caption">{{ sourceName(item.certificate) | t }}</span>
           </div>
         } @empty {
-          <p class="ap-muted" style="margin: 0">No certificates yet. Each route gets one automatically.</p>
+          <p class="ap-muted" style="margin: 0">{{ 'No certificates yet. Each route gets one automatically.' | t }}</p>
         }
       </div>
     </section>
@@ -60,6 +60,7 @@ function meter(certificate: CertificateSummary): Meter {
 })
 export class CertificateMeters {
   private readonly api = inject(Api);
+  private readonly i18n = inject(I18n);
   protected readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {
     defaultValue: [],
   });
@@ -71,6 +72,9 @@ export class CertificateMeters {
       .slice(0, 4),
   );
   protected readonly statusTone = statusTone;
-  protected readonly statusText = statusText;
+  protected statusText(certificate: CertificateSummary): string {
+    return statusText(certificate, this.i18n);
+  }
+
   protected readonly sourceName = sourceName;
 }

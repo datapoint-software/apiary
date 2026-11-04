@@ -1,43 +1,43 @@
-<ap-page-head heading="Security" [crumbs]="crumbs" />
+<ap-page-head [heading]="'Security' | t" [crumbs]="crumbs()" />
 <ap-account-tabs />
 
 @if (auth.user()?.singleSignOn) {
-  <ap-banner tone="info" heading="You sign in through your identity provider" style="max-width: 640px"
-    >Your password and two-step sign-in are set there, not in Apiary.</ap-banner
-  >
+  <ap-banner tone="info" [heading]="'You sign in through your identity provider' | t" style="max-width: 640px">{{
+    'Your password and two-step sign-in are set there, not in Apiary.' | t
+  }}</ap-banner>
 } @else {
   <form class="ap-panel" style="max-width: 640px" aria-labelledby="password-title" [apForm]="password" #passwordForm="apForm" (submit)="changePassword(passwordForm)">
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="password-title">Password</h2>
-        <p class="ap-panel-desc">Changing it signs you out of your other sessions.</p>
+        <h2 class="ap-h ap-h-3" id="password-title">{{ 'Password' | t }}</h2>
+        <p class="ap-panel-desc">{{ 'Changing it signs you out of your other sessions.' | t }}</p>
       </div>
     </div>
     <div class="ap-panel-body ap-stack">
       <ap-error-summary verb="change your password" />
-      <ap-field label="Current password" [field]="password.current">
+      <ap-field [label]="'Current password' | t" [field]="password.current">
         <div class="ap-affix">
           <input class="ap-input" type="password" #current [formField]="password.current" autocomplete="current-password" />
-          <ap-password-reveal [target]="current" label="current password" />
+          <ap-password-reveal [target]="current" [label]="'current password' | t" />
         </div>
       </ap-field>
-      <ap-field label="New password" [field]="password.next">
+      <ap-field [label]="'New password' | t" [field]="password.next">
         <div class="ap-affix">
           <input class="ap-input" type="password" #next [formField]="password.next" autocomplete="new-password" />
-          <ap-password-reveal [target]="next" label="new password" />
+          <ap-password-reveal [target]="next" [label]="'new password' | t" />
         </div>
         <ap-password-checklist [password]="password.next().value()" [email]="auth.user()?.email ?? ''" />
       </ap-field>
-      <ap-field label="New password again" [field]="password.again">
+      <ap-field [label]="'New password again' | t" [field]="password.again">
         <div class="ap-affix">
           <input class="ap-input" type="password" #again [formField]="password.again" autocomplete="new-password" />
-          <ap-password-reveal [target]="again" label="new password again" />
+          <ap-password-reveal [target]="again" [label]="'new password again' | t" />
         </div>
       </ap-field>
     </div>
     <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
       <button apWrite apButton="primary" type="submit" [disabled]="password().submitting()">
-        {{ password().submitting() ? 'Changing…' : 'Change password' }}
+        {{ (password().submitting() ? 'Changing…' : 'Change password') | t }}
       </button>
     </div>
   </form>
@@ -45,26 +45,26 @@
   <section class="ap-panel" style="max-width: 640px" aria-labelledby="two-step-title">
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="two-step-title">Two-step sign-in</h2>
-        <p class="ap-panel-desc">A code from an app on your phone, asked after your password. Every account needs it.</p>
+        <h2 class="ap-h ap-h-3" id="two-step-title">{{ 'Two-step sign-in' | t }}</h2>
+        <p class="ap-panel-desc">{{ 'A code from an app on your phone, asked after your password. Every account needs it.' | t }}</p>
       </div>
-      <ap-status tone="ok">On</ap-status>
+      <ap-status tone="ok">{{ 'On' | t }}</ap-status>
     </div>
     <div class="ap-panel-body">
       <div class="ap-list">
         <div class="ap-list-row">
           <div class="ap-list-text">
-            <strong>Authenticator app</strong>
-            <span class="ap-muted">Set up on {{ setUpOn() }}</span>
+            <strong>{{ 'Authenticator app' | t }}</strong>
+            <span class="ap-muted">{{ 'Set up on {date}' | t: { date: setUpOn() } }}</span>
           </div>
-          <button apWrite apButton type="button" (click)="setUpAgain()">Set up again…</button>
+          <button apWrite apButton type="button" (click)="setUpAgain()">{{ 'Set up again…' | t }}</button>
         </div>
         <div class="ap-list-row">
           <div class="ap-list-text">
-            <strong>Recovery codes</strong>
-            <span class="ap-muted">{{ auth.user()?.recoveryCodesLeft }} of 10 left. Each works once, if you lose your phone.</span>
+            <strong>{{ 'Recovery codes' | t }}</strong>
+            <span class="ap-muted">{{ '{count} of 10 left. Each works once, if you lose your phone.' | t: { count: auth.user()?.recoveryCodesLeft ?? 0 } }}</span>
           </div>
-          <button apWrite apButton type="button" (click)="newCodes()">Make new codes…</button>
+          <button apWrite apButton type="button" (click)="newCodes()">{{ 'Make new codes…' | t }}</button>
         </div>
       </div>
     </div>

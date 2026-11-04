@@ -2,24 +2,26 @@
   <section class="ap-panel" aria-labelledby="pending-title">
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="pending-title">Waiting for approval</h2>
+        <h2 class="ap-h ap-h-3" id="pending-title">{{ 'Waiting for approval' | t }}</h2>
         <p class="ap-panel-desc">
-          These replicas have the root key and ask to join. Approve the ones you deployed; the
-          others keep waiting.
+          {{
+            'These replicas have the root key and ask to join. Approve the ones you deployed; the others keep waiting.'
+              | t
+          }}
         </p>
       </div>
     </div>
     <div class="ap-table-wrap">
       <table class="ap-table">
         <caption class="ap-sr">
-          Replicas waiting for approval
+          {{ 'Replicas waiting for approval' | t }}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Replica</th>
-            <th scope="col">Address</th>
-            <th scope="col">Asking since</th>
-            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+            <th scope="col">{{ 'Replica' | t }}</th>
+            <th scope="col">{{ 'Address' | t }}</th>
+            <th scope="col">{{ 'Asking since' | t }}</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +44,7 @@
                     [disabled]="approving() === replica.id"
                     (click)="approve(replica)"
                   >
-                    {{ approving() === replica.id ? 'Approving…' : 'Approve' }}
+                    {{ (approving() === replica.id ? 'Approving…' : 'Approve') | t }}
                   </button>
                 }
               </td>

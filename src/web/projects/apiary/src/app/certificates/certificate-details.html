@@ -1,36 +1,36 @@
 @if (details.error()) {
-  <ap-page-head heading="Certificate" [crumbs]="[{ label: 'Certificates', link: '/certificates' }]" />
-  <ap-banner tone="critical" heading="This certificate doesn’t exist">
+  <ap-page-head [heading]="'Certificate' | t" [crumbs]="[{ label: ('Certificates' | t), link: '/certificates' }]" />
+  <ap-banner tone="critical" [heading]="'This certificate doesn’t exist' | t">
     {{ describe('certificate.notFound') }}
-    <a bannerActions apButton size="small" routerLink="/certificates">All certificates</a>
+    <a bannerActions apButton size="small" routerLink="/certificates">{{ 'All certificates' | t }}</a>
   </ap-banner>
 } @else if (details.value(); as value) {
   @let c = value.certificate;
-  <ap-page-head [heading]="c.name" [crumbs]="[{ label: 'Certificates', link: '/certificates' }]">
-    <span pageSub><ap-status [tone]="statusTone(c)">{{ statusText(c) }}</ap-status> &nbsp;·&nbsp; {{ sourceName(c) }}</span>
+  <ap-page-head [heading]="c.name" [crumbs]="[{ label: ('Certificates' | t), link: '/certificates' }]">
+    <span pageSub><ap-status [tone]="statusTone(c)">{{ statusText(c) }}</ap-status> &nbsp;·&nbsp; {{ sourceName(c) | t }}</span>
     @if (auth.canOperate() && c.source === 'automatic') {
       <button apWrite pageActions apButton="primary" type="button" [disabled]="renewing()" (click)="renew()">
-        <ap-icon [icon]="icons.renew" />{{ renewing() ? 'Renewing…' : 'Renew now' }}
+        <ap-icon [icon]="icons.renew" />{{ (renewing() ? 'Renewing…' : 'Renew now') | t }}
       </button>
     }
     @if (auth.canOperate() && c.source === 'uploaded') {
-      <button apWrite pageActions apButton type="button" (click)="replace()"><ap-icon [icon]="icons.upload" />Replace…</button>
+      <button apWrite pageActions apButton type="button" (click)="replace()"><ap-icon [icon]="icons.upload" />{{ 'Replace…' | t }}</button>
     }
   </ap-page-head>
 
   @if (lastFailure(); as failure) {
-    <ap-banner tone="critical" [heading]="c.notAfter ? 'Renewal is failing' : 'Apiary can’t get this certificate yet'">
+    <ap-banner tone="critical" [heading]="(c.notAfter ? 'Renewal is failing' : 'Apiary can’t get this certificate yet') | t">
       {{ failure.code ? describe(failure.code) : '' }}
       @if (failure.detail) {
         <span class="ap-code" style="display: block; margin-top: 6px">{{ failure.detail }}</span>
       }
       @if (c.nextAttemptAt) {
-        <span style="display: block; margin-top: 6px">Apiary tries again at {{ utcDateTime(c.nextAttemptAt) }} UTC. Fix the cause, then renew now.</span>
+        <span style="display: block; margin-top: 6px">{{ 'Apiary tries again at {time} UTC. Fix the cause, then renew now.' | t: { time: utcDateTime(c.nextAttemptAt) } }}</span>
       }
     </ap-banner>
   } @else if (c.status === 'pending') {
-    <ap-banner tone="info" heading="Requesting the certificate">
-      Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.
+    <ap-banner tone="info" [heading]="'Requesting the certificate' | t">
+      {{ 'Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.' | t }}
     </ap-banner>
   }
 
@@ -39,5 +39,5 @@
     <ap-certificate-history [events]="value.history" [heading]="c.source === 'automatic' ? 'Renewal log' : 'History'" />
   </div>
 } @else {
-  <div class="ap-panel" style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  <div class="ap-panel" style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
 }

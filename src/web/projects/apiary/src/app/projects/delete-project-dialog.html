@@ -1,15 +1,15 @@
 <form class="ap-dialog" role="alertdialog" aria-labelledby="delete-project-title" aria-describedby="delete-project-text" [apForm]="move" #moveForm="apForm" (submit)="delete(moveForm)">
   <div class="ap-dialog-head">
-    <h2 class="ap-h ap-h-2" id="delete-project-title">Delete {{ project.name }}?</h2>
+    <h2 class="ap-h ap-h-2" id="delete-project-title">{{ 'Delete {name}?' | t: { name: project.name } }}</h2>
   </div>
   <div class="ap-dialog-body ap-form" style="gap: 16px">
     <p id="delete-project-text" style="margin: 0">
-      {{ project.name }} has {{ contents() }}. They keep working: choose the project they move to.
+      {{ '{name} has {contents}. They keep working: choose the project they move to.' | t: { name: project.name, contents: contents() } }}
     </p>
     <ap-error-summary verb="delete it" />
-    <ap-field label="Move them to" [field]="move.moveTo">
+    <ap-field [label]="'Move them to' | t" [field]="move.moveTo">
       <select class="ap-select" [formField]="move.moveTo" cdkFocusInitial>
-        <option value="">Choose a project</option>
+        <option value="">{{ 'Choose a project' | t }}</option>
         @for (other of others(); track other.id) {
           <option [value]="other.id">{{ other.name }}</option>
         }
@@ -17,7 +17,7 @@
     </ap-field>
   </div>
   <div class="ap-dialog-foot">
-    <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
-    <button apButton="danger" type="submit" [disabled]="move().submitting()">{{ move().submitting() ? 'Deleting…' : 'Move and delete' }}</button>
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="danger" type="submit" [disabled]="move().submitting()">{{ (move().submitting() ? 'Deleting…' : 'Move and delete') | t }}</button>
   </div>
 </form>

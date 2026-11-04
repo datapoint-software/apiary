@@ -1,46 +1,49 @@
-<ap-auth-page heading="Welcome to Apiary" sub="Create the first administrator." [wide]="true">
+<ap-auth-page [heading]="'Welcome to Apiary' | t" [sub]="'Create the first administrator.' | t" [wide]="true">
   @if (status.value(); as status) {
     @if (!status.open && step() !== 'codes') {
-      <ap-banner tone="warn" heading="Setup is closed">
-        An administrator already exists, or setup waited more than 15 minutes. Sign in instead, or restart Apiary to open setup again.
-        <a bannerActions apButton size="small" routerLink="/sign-in">Sign in</a>
+      <ap-banner tone="warn" [heading]="'Setup is closed' | t">
+        {{ 'An administrator already exists, or setup waited more than 15 minutes. Sign in instead, or restart Apiary to open setup again.' | t }}
+        <a bannerActions apButton size="small" routerLink="/sign-in">{{ 'Sign in' | t }}</a>
       </ap-banner>
     } @else {
       @switch (step()) {
         @case ('details') {
           <ap-banner tone="info">
-            Whoever finishes this page first becomes the administrator. It works until {{ closesAt() }} UTC, and only from the internal network.
+            {{
+              'Whoever finishes this page first becomes the administrator. It works until {time} UTC, and only from the internal network.'
+                | t: { time: closesAt() }
+            }}
           </ap-banner>
           <form class="ap-form" style="gap: 16px" [apForm]="details" #detailsForm="apForm" (submit)="begin(detailsForm)">
             <ap-error-summary verb="continue" />
-            <ap-field label="Your name" [field]="details.name">
+            <ap-field [label]="'Your name' | t" [field]="details.name">
               <input class="ap-input" [formField]="details.name" autocomplete="name" />
             </ap-field>
-            <ap-field label="Email" [field]="details.email" help="You sign in with it.">
+            <ap-field [label]="'Email' | t" [field]="details.email" [help]="'You sign in with it.' | t">
               <input class="ap-input" type="email" [formField]="details.email" autocomplete="username" spellcheck="false" autocapitalize="none" />
             </ap-field>
-            <ap-field label="Password" [field]="details.password">
+            <ap-field [label]="'Password' | t" [field]="details.password">
               <div class="ap-affix">
                 <input class="ap-input" type="password" #password [formField]="details.password" autocomplete="new-password" />
                 <ap-password-reveal [target]="password" />
               </div>
               <ap-password-checklist [password]="details.password().value()" [email]="details.email().value()" />
             </ap-field>
-            <ap-field label="Password again" [field]="details.again">
+            <ap-field [label]="'Password again' | t" [field]="details.again">
               <div class="ap-affix">
                 <input class="ap-input" type="password" #again [formField]="details.again" autocomplete="new-password" />
-                <ap-password-reveal [target]="again" label="password again" />
+                <ap-password-reveal [target]="again" [label]="'password again' | t" />
               </div>
             </ap-field>
             <button apButton="primary" class="ap-btn-lg" type="submit" [disabled]="details().submitting()">
-              {{ details().submitting() ? 'Checking…' : 'Continue' }}
+              {{ (details().submitting() ? 'Checking…' : 'Continue') | t }}
             </button>
           </form>
           <p class="ap-caption" style="margin: 0; text-align: center">
-            Moving from another Apiary with the same root key?
+            {{ 'Moving from another Apiary with the same root key?' | t }}
             <input #backupFile type="file" accept=".backup" class="ap-sr" id="setup-backup" (change)="restore(backupFile)" />
             <button apButton="ghost" size="small" type="button" [disabled]="restoring()" (click)="backupFile.click()">
-              {{ restoring() ? 'Restoring…' : 'Restore a backup instead' }}
+              {{ (restoring() ? 'Restoring…' : 'Restore a backup instead') | t }}
             </button>
           </p>
           @if (restoreFailure()) {
@@ -53,13 +56,13 @@
             @if (enrollment(); as enrollment) {
               <ap-two-step-setup [enrollment]="enrollment" />
             }
-            <ap-field label="Code from the app" [field]="code.code">
+            <ap-field [label]="'Code from the app' | t" [field]="code.code">
               <input class="ap-input ap-otp" [formField]="code.code" inputmode="numeric" autocomplete="one-time-code" />
             </ap-field>
             <button apButton="primary" class="ap-btn-lg" type="submit" [disabled]="code().submitting()">
-              {{ code().submitting() ? 'Creating…' : 'Create administrator' }}
+              {{ (code().submitting() ? 'Creating…' : 'Create administrator') | t }}
             </button>
-            <button class="ap-link ap-caption" type="button" style="color: var(--honey-text)" (click)="step.set('details')">Back</button>
+            <button class="ap-link ap-caption" type="button" style="color: var(--honey-text)" (click)="step.set('details')">{{ 'Back' | t }}</button>
           </form>
         }
         @case ('codes') {

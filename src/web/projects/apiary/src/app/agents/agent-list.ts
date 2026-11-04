@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Banner, Button, Confirmer, EmptyState, PageHead, Toaster } from '@datapoint/apiary-ui';
+import { Banner, Button, Confirmer, EmptyState, I18n, PageHead, Toaster, TranslatePipe } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { AgentView } from '../api/models';
 import { timeAgo, utcDateTime } from '../api/time-ago';
@@ -12,7 +12,7 @@ import { TrustedOriginsPanel } from './trusted-origins-panel';
 
 @Component({
   selector: 'ap-agent-list',
-  imports: [WriteLock, PageHead, Banner, Button, EmptyState, CopyText, TrustedOriginsPanel],
+  imports: [WriteLock, PageHead, Banner, Button, EmptyState, CopyText, TrustedOriginsPanel, TranslatePipe],
   templateUrl: './agent-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -20,27 +20,30 @@ export class AgentList {
   private readonly api = inject(Api);
   private readonly confirmer = inject(Confirmer);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly agents = httpResource<AgentView[]>(() => this.api.query('agents.list'), { defaultValue: [] });
   protected readonly endpoint = `${location.origin}/mcp`;
   protected readonly command = `claude mcp add --transport http apiary ${this.endpoint}`;
   protected readonly role = computed(() => {
     const role = this.auth.user()?.role;
-    return role ? roleNames[role] : '';
+    return role ? this.i18n.t(roleNames[role]) : '';
   });
   protected readonly timeAgo = timeAgo;
   protected readonly utcDateTime = utcDateTime;
 
   protected async disconnect(agent: AgentView): Promise<void> {
     const done = await this.confirmer.confirm({
-      heading: `Disconnect ${agent.name}?`,
-      text: `It loses access at once, including any task it’s running. ${agent.mine ? 'You' : agent.user} can connect it again.`,
-      confirm: 'Disconnect',
-      busy: 'Disconnecting…',
+      heading: this.i18n.t('Disconnect {name}?', { name: agent.name }),
+      text: agent.mine
+        ? this.i18n.t('It loses access at once, including any task it’s running. You can connect it again.')
+        : this.i18n.t('It loses access at once, including any task it’s running. {name} can connect it again.', { name: agent.user ?? '' }),
+      confirm: this.i18n.t('Disconnect'),
+      busy: this.i18n.t('Disconnecting…'),
       action: () => this.api.send('agents.disconnect', { id: agent.id }),
     });
     if (done) {
-      this.toaster.show(`${agent.name} can no longer reach Apiary.`);
+      this.toaster.show(this.i18n.t('{name} can no longer reach Apiary.', { name: agent.name }));
     }
   }
 }

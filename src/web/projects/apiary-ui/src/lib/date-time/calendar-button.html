@@ -6,7 +6,7 @@
   type="button"
   aria-haspopup="dialog"
   [attr.aria-expanded]="isOpen()"
-  [attr.aria-label]="'Choose {field} on a calendar' | t: { field: label().toLowerCase() }"
+  [attr.aria-label]="'{label}: choose on a calendar' | t: { label: label() }"
   (click)="toggle()"
 >
   <ap-icon [icon]="icons.calendar" />
@@ -16,7 +16,7 @@
     #popover
     class="ap-popover ap-cal-pop"
     role="dialog"
-    [attr.aria-label]="'Choose {field}' | t: { field: label().toLowerCase() }"
+    [attr.aria-label]="'{label}: choose a date' | t: { label: label() }"
     cdkTrapFocus
     [style.top.px]="position().top"
     [style.left.px]="position().left"

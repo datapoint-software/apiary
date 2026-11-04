@@ -1,31 +1,30 @@
 @if (loadError()) {
-  <ap-auth-page heading="This agent can’t connect" [wide]="true">
-    <ap-banner tone="critical" heading="The request isn’t valid">{{ loadError() }}</ap-banner>
+  <ap-auth-page [heading]="'This agent can’t connect' | t" [wide]="true">
+    <ap-banner tone="critical" [heading]="'The request isn’t valid' | t">{{ loadError() }}</ap-banner>
   </ap-auth-page>
 } @else if (client.value(); as client) {
-  <ap-auth-page [heading]="'Connect ' + client.name + '?'" sub="An AI agent asks to manage Apiary for you." [wide]="true">
+  <ap-auth-page [heading]="'Connect {name}?' | t: { name: client.name }" [sub]="'An AI agent asks to manage Apiary for you.' | t" [wide]="true">
     <div class="ap-stack" style="gap: 16px">
       <ul class="ap-stack" style="gap: 8px; margin: 0; padding-left: 20px; font-size: 0.875rem">
-        <li>It acts as <strong>{{ auth.user()?.email }}</strong>, with your role: {{ role() }}.</li>
-        <li>It can view and change everything you can, except handling private keys and backups.</li>
-        <li>Everything it changes is in the audit log. You can disconnect it at any time from Connected agents.</li>
+        <li>{{ 'It acts as' | t }} <strong>{{ auth.user()?.email }}</strong>{{ ', with your role: {role}.' | t: { role: role() } }}</li>
+        <li>{{ 'It can view and change everything you can, except handling private keys and backups.' | t }}</li>
+        <li>{{ 'Everything it changes is in the audit log. You can disconnect it at any time from Connected agents.' | t }}</li>
       </ul>
       <p class="ap-muted" style="margin: 0; font-size: 0.875rem">
-        After you approve, your browser returns to <span class="ap-data">{{ client.returnsTo }}</span>.
+        {{ 'After you approve, your browser returns to' | t }} <span class="ap-data">{{ client.returnsTo }}</span>.
       </p>
       @if (!client.returnsToThisComputer) {
-        <ap-banner tone="warn" heading="It returns to a website">
-          This agent runs on <span class="ap-data">{{ client.returnsTo }}</span>, a site your Administrators trust, not on this
-          computer. Connect it only if you started connecting it yourself.
+        <ap-banner tone="warn" [heading]="'It returns to a website' | t">
+          {{ 'This agent runs on' | t }} <span class="ap-data">{{ client.returnsTo }}</span>{{ ', a site your Administrators trust, not on this computer. Connect it only if you started connecting it yourself.' | t }}
         </ap-banner>
       }
       @if (failure()) {
-        <ap-banner tone="critical" heading="Couldn’t connect it">{{ failure() }}</ap-banner>
+        <ap-banner tone="critical" [heading]="'Couldn’t connect it' | t">{{ failure() }}</ap-banner>
       }
       <div class="ap-row" style="justify-content: flex-end; gap: 8px">
-        <button apButton="ghost" type="button" (click)="deny()" [disabled]="working()">Don’t allow</button>
+        <button apButton="ghost" type="button" (click)="deny()" [disabled]="working()">{{ 'Don’t allow' | t }}</button>
         <button apButton="primary" type="button" (click)="approve()" [disabled]="working()">
-          {{ working() ? 'Connecting…' : 'Connect' }}
+          {{ (working() ? 'Connecting…' : 'Connect') | t }}
         </button>
       </div>
     </div>

@@ -12,7 +12,7 @@
     }
     @if (data.typeToConfirm) {
       <div class="ap-field">
-        <label class="ap-label" for="confirm-type">{{ 'Type' | t }} <span class="ap-data">{{ data.typeToConfirm }}</span> {{ 'to confirm' | t }}</label>
+        <label class="ap-label" for="confirm-type">{{ 'To confirm, type' | t }} <span class="ap-data">{{ data.typeToConfirm }}</span></label>
         <input class="ap-input ap-data" id="confirm-type" autocomplete="off" spellcheck="false" [value]="typed()" (input)="typed.set($any($event.target).value)" />
       </div>
     }

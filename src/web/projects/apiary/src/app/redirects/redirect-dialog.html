@@ -1,24 +1,24 @@
 <form class="ap-dialog" role="dialog" aria-labelledby="redirect-title" [apForm]="redirect" #redirectForm="apForm" (submit)="add(redirectForm)">
   <div class="ap-dialog-head">
-    <h2 class="ap-h ap-h-2" id="redirect-title">Add redirect</h2>
+    <h2 class="ap-h ap-h-2" id="redirect-title">{{ 'Add redirect' | t }}</h2>
   </div>
   <div class="ap-dialog-body ap-form" style="gap: 16px">
     <ap-error-summary verb="add it" />
-    <ap-field label="From hostname" [field]="redirect.from" help="Gets an automatic certificate, so HTTPS visitors are redirected too.">
+    <ap-field [label]="'From hostname' | t" [field]="redirect.from" [help]="'Gets an automatic certificate, so HTTPS visitors are redirected too.' | t">
       <input class="ap-input ap-data" [formField]="redirect.from" placeholder="www.example.com" autocomplete="off" spellcheck="false" autocapitalize="none" cdkFocusInitial />
     </ap-field>
-    <ap-field label="To" [field]="redirect.to">
+    <ap-field [label]="'To' | t" [field]="redirect.to">
       <input class="ap-input ap-data" [formField]="redirect.to" placeholder="https://example.com" inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="none" />
     </ap-field>
     <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-      <legend class="ap-label" style="margin-bottom: 8px">Type</legend>
+      <legend class="ap-label" style="margin-bottom: 8px">{{ 'Type' | t }}</legend>
       <div class="ap-stack" style="gap: 10px">
         @for (type of types; track type[0]) {
           <label class="ap-choice">
             <input class="ap-radio" type="radio" [value]="type[0]" [formField]="redirect.statusCode" />
             <span class="ap-choice-text">
-              <span>{{ type[1] }} <span class="ap-caption">{{ type[0] }}</span></span>
-              <span class="ap-help">{{ type[2] }}</span>
+              <span>{{ type[1] | t }} <span class="ap-caption">{{ type[0] }}</span></span>
+              <span class="ap-help">{{ type[2] | t }}</span>
             </span>
           </label>
         }
@@ -27,11 +27,11 @@
     <label class="ap-choice">
       <input class="ap-switch" type="checkbox" [formField]="redirect.keepPath" />
       <span class="ap-choice-text">
-        <span>Keep the path</span>
-        <span class="ap-help">www.example.com/shoes goes to example.com/shoes.</span>
+        <span>{{ 'Keep the path' | t }}</span>
+        <span class="ap-help">{{ 'www.example.com/shoes goes to example.com/shoes.' | t }}</span>
       </span>
     </label>
-    <ap-field label="Project" [field]="redirect.projectId" help="Only for grouping.">
+    <ap-field [label]="'Project' | t" [field]="redirect.projectId" [help]="'Only for grouping.' | t">
       <select class="ap-select" [formField]="redirect.projectId">
         @for (project of projects.value(); track project.id) {
           <option [value]="project.id">{{ project.name }}</option>
@@ -40,7 +40,7 @@
     </ap-field>
   </div>
   <div class="ap-dialog-foot">
-    <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
-    <button apButton="primary" type="submit" [disabled]="redirect().submitting()">{{ redirect().submitting() ? 'Adding…' : 'Add redirect' }}</button>
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="redirect().submitting()">{{ (redirect().submitting() ? 'Adding…' : 'Add redirect') | t }}</button>
   </div>
 </form>

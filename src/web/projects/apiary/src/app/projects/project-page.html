@@ -1,38 +1,38 @@
 @if (isMissing()) {
   <ap-not-found />
 } @else if (project(); as project) {
-  <ap-page-head [heading]="project.name" [crumbs]="crumbs">
+  <ap-page-head [heading]="project.name" [crumbs]="crumbs()">
     <span pageSub>{{ project.description }}</span>
     @if (auth.canOperate()) {
       <span pageActions class="ap-row" style="gap: 8px">
-        <button apWrite apButton="ghost" [iconOnly]="true" type="button" aria-label="Edit project" (click)="actions.edit(project)"><ap-icon [icon]="icons.edit" /></button>
-        <button apWrite apButton="ghost" [iconOnly]="true" type="button" aria-label="Delete project" (click)="actions.delete(project)"><ap-icon [icon]="icons.delete" /></button>
-        <a apWrite apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />Add route</a>
+        <button apWrite apButton="ghost" [iconOnly]="true" type="button" [attr.aria-label]="'Edit project' | t" (click)="actions.edit(project)"><ap-icon [icon]="icons.edit" /></button>
+        <button apWrite apButton="ghost" [iconOnly]="true" type="button" [attr.aria-label]="'Delete project' | t" (click)="actions.delete(project)"><ap-icon [icon]="icons.delete" /></button>
+        <a apWrite apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />{{ 'Add route' | t }}</a>
       </span>
     }
   </ap-page-head>
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
-    @let health = projectHealth(project);
-    <div class="ap-panel ap-stat"><span class="ap-overline">Health</span><span style="margin-top: 10px"><ap-status [tone]="health[0]">{{ health[1] }}</ap-status></span></div>
+    @let health = healthOf(project);
+    <div class="ap-panel ap-stat"><span class="ap-overline">{{ 'Health' | t }}</span><span style="margin-top: 10px"><ap-status [tone]="health[0]">{{ health[1] }}</ap-status></span></div>
     <div class="ap-panel ap-stat">
-      <span class="ap-overline">Routes</span><span class="ap-stat-value">{{ project.routeCount }}</span>
+      <span class="ap-overline">{{ 'Routes' | t }}</span><span class="ap-stat-value">{{ project.routeCount }}</span>
       @if (disabledCount()) {
-        <span class="ap-stat-delta">{{ disabledCount() }} disabled</span>
+        <span class="ap-stat-delta">{{ '{count} disabled' | t: { count: disabledCount() } }}</span>
       }
     </div>
     <div class="ap-panel ap-stat">
-      <span class="ap-overline">Requests</span><span class="ap-stat-value">{{ perMinute(project.requestsPerMinute) }}<span class="ap-stat-unit">/min</span></span>
+      <span class="ap-overline">{{ 'Requests' | t }}</span><span class="ap-stat-value">{{ perMinute(project.requestsPerMinute) }}<span class="ap-stat-unit">/min</span></span>
     </div>
-    <div class="ap-panel ap-stat"><span class="ap-overline">Redirects</span><span class="ap-stat-value">{{ project.redirectCount }}</span></div>
-    <div class="ap-panel ap-stat"><span class="ap-overline">Certificates</span><span class="ap-stat-value">{{ certificateCount() }}</span></div>
+    <div class="ap-panel ap-stat"><span class="ap-overline">{{ 'Redirects' | t }}</span><span class="ap-stat-value">{{ project.redirectCount }}</span></div>
+    <div class="ap-panel ap-stat"><span class="ap-overline">{{ 'Certificates' | t }}</span><span class="ap-stat-value">{{ certificateCount() }}</span></div>
   </div>
   <section class="ap-panel" aria-labelledby="project-routes-title">
-    <div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="project-routes-title">Routes</h2></div>
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-2" id="project-routes-title">{{ 'Routes' | t }}</h2></div>
     @if (projectRoutes().length === 0) {
-      <ap-empty-state heading="No routes in this project">
-        Add a route to send a hostname to a service. It appears in {{ project.name }} and in All routes.
+      <ap-empty-state [heading]="'No routes in this project' | t">
+        {{ 'Add a route to send a hostname to a service. It appears in {name} and in All routes.' | t: { name: project.name } }}
         @if (auth.canOperate()) {
-          <a apWrite emptyActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />Add route</a>
+          <a apWrite emptyActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: project.id }"><ap-icon [icon]="icons.add" />{{ 'Add route' | t }}</a>
         }
       </ap-empty-state>
     } @else {

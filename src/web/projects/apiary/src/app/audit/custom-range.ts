@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
 import { FormField, form, validate } from '@angular/forms/signals';
-import { Button, CalendarButton, Field, Form, dayMs, formatUtc, parseUtc, utcDateTime } from '@datapoint/apiary-ui';
+import { Button, CalendarButton, Field, Form, TranslatePipe, dayMs, formatUtc, parseUtc, utcDateTime } from '@datapoint/apiary-ui';
 
 export interface AuditRange {
   readonly from: number;
@@ -11,32 +11,32 @@ const kept = 365 * dayMs;
 
 @Component({
   selector: 'ap-custom-range',
-  imports: [Form, Field, FormField, Button, CalendarButton],
+  imports: [Form, Field, FormField, Button, CalendarButton, TranslatePipe],
   template: `
     <form class="ap-toolbar" style="align-items: flex-start" [apForm]="range" #rangeForm="apForm" (submit)="apply(rangeForm)">
       <div style="flex: 1 1 240px">
-        <ap-field label="From" [field]="range.from">
+        <ap-field [label]="'From' | t" [field]="range.from">
           <div class="ap-dtp">
             <div class="ap-affix">
               <input #from class="ap-input ap-data" [formField]="range.from" placeholder="YYYY-MM-DD HH:MM" autocomplete="off" spellcheck="false" />
               <span class="ap-affix-text">UTC</span>
             </div>
-            <ap-calendar-button [target]="from" label="From" [min]="earliest" [max]="now" />
+            <ap-calendar-button [target]="from" [label]="'From' | t" [min]="earliest" [max]="now" />
           </div>
         </ap-field>
       </div>
       <div style="flex: 1 1 240px">
-        <ap-field label="To" [field]="range.to">
+        <ap-field [label]="'Until' | t" [field]="range.to">
           <div class="ap-dtp">
             <div class="ap-affix">
               <input #to class="ap-input ap-data" [formField]="range.to" placeholder="YYYY-MM-DD HH:MM" autocomplete="off" spellcheck="false" />
               <span class="ap-affix-text">UTC</span>
             </div>
-            <ap-calendar-button [target]="to" label="To" [min]="earliest" [max]="now" />
+            <ap-calendar-button [target]="to" [label]="'Until' | t" [min]="earliest" [max]="now" />
           </div>
         </ap-field>
       </div>
-      <button apButton="primary" type="submit" style="margin-top: 24px">Apply</button>
+      <button apButton="primary" type="submit" style="margin-top: 24px">{{ 'Apply' | t }}</button>
     </form>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

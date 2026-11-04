@@ -1,21 +1,21 @@
 <form class="ap-dialog" role="dialog" aria-labelledby="project-title" [apForm]="project" #projectForm="apForm" (submit)="save(projectForm)">
   <div class="ap-dialog-head">
-    <h2 class="ap-h ap-h-2" id="project-title">{{ existing ? 'Edit project' : 'New project' }}</h2>
+    <h2 class="ap-h ap-h-2" id="project-title">{{ (existing ? 'Edit project' : 'New project') | t }}</h2>
   </div>
   <div class="ap-dialog-body ap-form" style="gap: 16px">
     <ap-error-summary [verb]="existing ? 'save it' : 'create it'" />
-    <ap-field label="Name" [field]="project.name">
+    <ap-field [label]="'Name' | t" [field]="project.name">
       <input class="ap-input" [formField]="project.name" autocomplete="off" cdkFocusInitial />
     </ap-field>
-    <ap-field label="Description" [field]="project.description" [optional]="true" help="Shown on the project card.">
+    <ap-field [label]="'Description' | t" [field]="project.description" [optional]="true" [help]="'Shown on the project card.' | t">
       <input class="ap-input" [formField]="project.description" autocomplete="off" />
     </ap-field>
     <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-      <legend class="ap-label" style="margin-bottom: 6px">Icon</legend>
+      <legend class="ap-label" style="margin-bottom: 6px">{{ 'Icon' | t }}</legend>
       <div class="ap-icon-pick">
         @for (option of icons; track option.name) {
           <label>
-            <input type="radio" [value]="option.name" [formField]="project.icon" [attr.aria-label]="option.label" />
+            <input type="radio" [value]="option.name" [formField]="project.icon" [attr.aria-label]="option.label | t" />
             <span><ap-icon [icon]="option.icon" /></span>
           </label>
         }
@@ -23,9 +23,9 @@
     </fieldset>
   </div>
   <div class="ap-dialog-foot">
-    <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
     <button apButton="primary" type="submit" [disabled]="project().submitting()">
-      {{ project().submitting() ? 'Saving…' : existing ? 'Save project' : 'Create project' }}
+      {{ submitLabel() | t }}
     </button>
   </div>
 </form>

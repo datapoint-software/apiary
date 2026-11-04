@@ -1,28 +1,28 @@
-import { Tone, formatUtc } from '@datapoint/apiary-ui';
+import { I18n, Tone, currentLanguage, formatUtc } from '@datapoint/apiary-ui';
 import { RouteView } from '../api/models';
 
-function healthStatus(route: RouteView): [Tone, string] {
+function healthStatus(route: RouteView, i18n: I18n): [Tone, string] {
   switch (route.health) {
     case 'down':
-      return ['critical', 'Route down'];
+      return ['critical', i18n.t('Route down')];
     case 'degraded':
-      return ['warn', route.targetsDown === 1 ? '1 target down' : `${route.targetsDown} targets down`];
+      return ['warn', i18n.plural(route.targetsDown, '{count} target down', '{count} targets down')];
     case 'healthy':
-      return ['ok', 'Healthy'];
+      return ['ok', i18n.t('Healthy')];
     default:
-      return ['off', 'Not checked yet'];
+      return ['off', i18n.t('Not checked yet')];
   }
 }
 
-export function routeStatus(route: RouteView, now = Date.now()): [Tone, string] {
+export function routeStatus(route: RouteView, i18n: I18n, now = Date.now()): [Tone, string] {
   if (route.disabled) {
-    return ['off', 'Disabled'];
+    return ['off', i18n.t('Disabled')];
   }
   const window = route.maintenance;
   if (window && Date.parse(window.start) <= now && now < Date.parse(window.end)) {
-    return ['info', 'In maintenance'];
+    return ['info', i18n.t('In maintenance')];
   }
-  return healthStatus(route);
+  return healthStatus(route, i18n);
 }
 
 export function needsAttention(route: RouteView): boolean {
@@ -35,5 +35,5 @@ export function upcomingMaintenance(route: RouteView, now = Date.now()): string 
 }
 
 export function perMinute(count: number): string {
-  return count.toLocaleString('en-US');
+  return count.toLocaleString(currentLanguage());
 }

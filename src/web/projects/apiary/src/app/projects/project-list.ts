@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
+import { Button, EmptyState, Icon, PageHead, TranslatePipe } from '@datapoint/apiary-ui';
 import { Plus } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView } from '../api/models';
@@ -11,21 +11,21 @@ import { ProjectCards } from './project-cards';
 
 @Component({
   selector: 'ap-project-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, ProjectCards],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, ProjectCards, TranslatePipe],
   template: `
-    <ap-page-head heading="Projects">
-      <span pageSub>Projects group routes and certificates so they’re easier to find. They don’t change who can see or edit them.</span>
+    <ap-page-head [heading]="'Projects' | t">
+      <span pageSub>{{ 'Projects group routes and certificates so they’re easier to find. They don’t change who can see or edit them.' | t }}</span>
       @if (auth.canOperate()) {
-        <button apWrite pageActions apButton="primary" type="button" (click)="actions.create()"><ap-icon [icon]="plus" />New project</button>
+        <button apWrite pageActions apButton="primary" type="button" (click)="actions.create()"><ap-icon [icon]="plus" />{{ 'New project' | t }}</button>
       }
     </ap-page-head>
     @if (isLoading()) {
-      <div class="ap-panel" style="padding: 24px" aria-busy="true" aria-label="Loading">
+      <div class="ap-panel" style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t">
         <span class="ap-skel" style="width: 60%; height: 14px"></span>
       </div>
     } @else if (projects.value().length === 0) {
       <section class="ap-panel">
-        <ap-empty-state heading="No projects yet">Create a project for each site, team or customer, then add routes to it.</ap-empty-state>
+        <ap-empty-state [heading]="'No projects yet' | t">{{ 'Create a project for each site, team or customer, then add routes to it.' | t }}</ap-empty-state>
       </section>
     } @else {
       <ap-project-cards [projects]="projects.value()" />

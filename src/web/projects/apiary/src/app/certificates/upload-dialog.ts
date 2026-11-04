@@ -1,12 +1,13 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FieldTree, FormField, form, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Banner, Button, ErrorMessages, ErrorSummary, Field, Form, Icon, Status, Toaster, isApiProblem, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Banner, Button, ErrorMessages, ErrorSummary, Field, Form, I18n, Icon, Status, Toaster, TranslatePipe, isApiProblem, problemErrors } from '@datapoint/apiary-ui';
 import { FileUp } from 'lucide';
 import { Api } from '../api/api';
 import { CertificatePreview, ProjectView } from '../api/models';
 import { utcDateTime } from '../api/time-ago';
+import { dateRangeWords } from './date-range';
 import { FileDrop } from './file-drop';
 
 interface UploadModel {
@@ -26,7 +27,7 @@ const maximumFileSize = 65_536;
 
 @Component({
   selector: 'ap-upload-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, Status, Banner, FileDrop],
+  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, Status, Banner, FileDrop, TranslatePipe],
   templateUrl: './upload-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,6 +37,7 @@ export class UploadDialog {
   private readonly api = inject(Api);
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   private readonly model = signal<UploadModel>({ projectId: this.replacing?.projectId ?? '', chainPem: '', keyPem: '' });
   protected readonly upload = form(this.model, (p) => {
@@ -59,6 +61,15 @@ export class UploadDialog {
   protected readonly failure = signal('');
   protected readonly fileIcon = FileUp;
   protected readonly utcDateTime = utcDateTime;
+  protected readonly range = computed(() => dateRangeWords(this.i18n));
+  protected readonly heading = computed(() => {
+    if (!this.replacing) {
+      return this.i18n.t('Upload certificate');
+    }
+    return this.replacing.admin
+      ? this.i18n.t('Replace the certificate for the admin interface')
+      : this.i18n.t('Replace the certificate for {name}', { name: this.replacing.name });
+  });
 
   constructor() {
     effect(() => {
@@ -89,16 +100,22 @@ export class UploadDialog {
       const id = this.replacing?.admin
         ? (await this.api.send('admin-certificate.upload', { chainPem, keyPem }), 'admin')
         : await this.api.send<string>('certificates.upload', { ...this.model(), replacingId: this.replacing?.id });
-      const preview = this.preview();
-      this.toaster.show(`It covers ${preview?.hosts.join(', ')} until ${preview?.notAfter.slice(0, 10)}.`, {
-        heading: this.replacing ? 'Certificate replaced' : 'Certificate added',
-      });
+      this.toaster.show(this.addedText(), { heading: this.i18n.t(this.replacing ? 'Certificate replaced' : 'Certificate added') });
       this.dialog.close(id);
     } catch (problem) {
       this.failure.set(this.messages.describe(isApiProblem(problem) ? problem.code : 'network.offline'));
     } finally {
       this.adding.set(false);
     }
+  }
+
+  protected chainText(length: number): string {
+    return this.i18n.plural(length, 'Complete, {count} certificate', 'Complete, {count} certificates');
+  }
+
+  private addedText(): string {
+    const preview = this.preview();
+    return this.i18n.t('It covers {hosts} until {date}.', { hosts: preview?.hosts.join(', ') ?? '', date: preview?.notAfter.slice(0, 10) ?? '' });
   }
 
   protected back(): void {

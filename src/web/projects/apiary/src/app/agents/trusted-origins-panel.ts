@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, Toaster, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorSummary, Field, Form, I18n, Toaster, TranslatePipe, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { AgentPolicyView } from '../api/models';
 import { WriteLock } from '../cluster/write-lock';
@@ -23,32 +23,31 @@ function isOrigin(value: string): boolean {
 
 @Component({
   selector: 'ap-trusted-origins-panel',
-  imports: [WriteLock, Form, Field, FormField, ErrorSummary, Button],
+  imports: [WriteLock, Form, Field, FormField, ErrorSummary, Button, TranslatePipe],
   template: `
     <form class="ap-panel" style="max-width: 760px" aria-labelledby="origins-title" [apForm]="policy" #policyForm="apForm" (submit)="save(policyForm)">
       <div class="ap-panel-head">
         <div>
-          <h2 class="ap-h ap-h-3" id="origins-title">Web-based agents</h2>
+          <h2 class="ap-h ap-h-3" id="origins-title">{{ 'Web-based agents' | t }}</h2>
           <p class="ap-panel-desc">
-            Agents like Claude Code run on your own computer, and always can. An agent that runs on a website can only connect if
-            its site is listed here, so nobody can send you a link that hands your access to a site of their own.
+            {{ 'Agents like Claude Code run on your own computer, and always can. An agent that runs on a website can only connect if its site is listed here, so nobody can send you a link that hands your access to a site of their own.' | t }}
           </p>
         </div>
       </div>
       <div class="ap-panel-body ap-stack">
         <ap-error-summary verb="save them" />
         <ap-field
-          label="Trusted sites"
+          [label]="'Trusted sites' | t"
           [field]="policy.origins"
           [optional]="true"
-          help="One HTTPS address per line, without a path, such as https://agents.example.com. At most 20. Removing a site disconnects the agents that run there."
+          [help]="'One HTTPS address per line, without a path, such as https://agents.example.com. At most 20. Removing a site disconnects the agents that run there.' | t"
         >
           <textarea class="ap-textarea ap-data" rows="3" placeholder="https://agents.example.com" spellcheck="false" [formField]="policy.origins"></textarea>
         </ap-field>
       </div>
       <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
         <button apWrite apButton="primary" type="submit" [disabled]="policy().submitting()">
-          {{ policy().submitting() ? 'Saving…' : 'Save' }}
+          {{ (policy().submitting() ? 'Saving…' : 'Save') | t }}
         </button>
       </div>
     </form>
@@ -58,6 +57,7 @@ function isOrigin(value: string): boolean {
 export class TrustedOriginsPanel {
   private readonly api = inject(Api);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   private readonly current = httpResource<AgentPolicyView>(() => this.api.query('agents.policy'));
   private readonly model = signal({ origins: '' });
   protected readonly policy = form(this.model, (p) => {
@@ -88,8 +88,10 @@ export class TrustedOriginsPanel {
       this.policy().reset();
       this.current.reload();
       this.toaster.show(
-        trustedOrigins.length ? 'Agents can connect from the sites listed, and from people’s own computers.' : 'Agents can only connect from people’s own computers.',
-        { heading: 'Saved' },
+        this.i18n.t(
+          trustedOrigins.length ? 'Agents can connect from the sites listed, and from people’s own computers.' : 'Agents can only connect from people’s own computers.',
+        ),
+        { heading: this.i18n.t('Saved') },
       );
     }
   }

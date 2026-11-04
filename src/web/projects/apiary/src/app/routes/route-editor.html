@@ -1,10 +1,10 @@
-<ap-page-head [heading]="heading()" [crumbs]="[{ label: 'All routes', link: '/routes' }]">
+<ap-page-head [heading]="heading()" [crumbs]="crumbs()">
   <span pageSub>
     @if (isNew()) {
-      Send requests for a hostname to services on the shared network.
+      {{ 'Send requests for a hostname to services on the shared network.' | t }}
     } @else {
       @if (status(); as status) {
-        <ap-status [tone]="status[0]">{{ status[1] }}</ap-status> &nbsp;·&nbsp; {{ requests() }} req/min &nbsp;·&nbsp;
+        <ap-status [tone]="status[0]">{{ status[1] }}</ap-status> &nbsp;·&nbsp; {{ '{requests} req/min' | t: { requests: requests() } }} &nbsp;·&nbsp;
       }
       {{ changed() }}
     }
@@ -12,15 +12,13 @@
 </ap-page-head>
 
 @if (loadError()) {
-  <ap-banner tone="critical" heading="This route doesn’t exist">
+  <ap-banner tone="critical" [heading]="'This route doesn’t exist' | t">
     {{ loadError() }}
-    <a bannerActions apButton size="small" routerLink="/routes">All routes</a>
+    <a bannerActions apButton size="small" routerLink="/routes">{{ 'All routes' | t }}</a>
   </ap-banner>
 } @else {
   @if (!auth.canOperate()) {
-    <ap-banner tone="info" heading="You can view this route"
-      >Changing it needs the Operator role. Ask an Administrator if you need it.</ap-banner
-    >
+    <ap-banner tone="info" [heading]="'You can view this route' | t">{{ 'Changing it needs the Operator role. Ask an Administrator if you need it.' | t }}</ap-banner>
   }
   <form
     class="ap-form"
@@ -34,16 +32,16 @@
     <section class="ap-panel" aria-labelledby="requests-title">
       <div class="ap-panel-head">
         <div>
-          <h2 class="ap-h ap-h-3" id="requests-title">Requests</h2>
-          <p class="ap-panel-desc">Which requests this route answers.</p>
+          <h2 class="ap-h ap-h-3" id="requests-title">{{ 'Requests' | t }}</h2>
+          <p class="ap-panel-desc">{{ 'Which requests this route answers.' | t }}</p>
         </div>
       </div>
       <div class="ap-panel-body ap-stack">
         <div class="ap-grid-2" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)">
           <ap-field
-            label="Hostname"
+            [label]="'Hostname' | t"
             [field]="route.host"
-            help="Point its DNS at your edge nodes first, so the certificate can be issued."
+            [help]="'Point its DNS at your edge nodes first, so the certificate can be issued.' | t"
           >
             <input
               class="ap-input ap-data"
@@ -54,7 +52,7 @@
               autocapitalize="none"
             />
           </ap-field>
-          <ap-field label="Path" [field]="route.path" help="Most routes use /.">
+          <ap-field [label]="'Path' | t" [field]="route.path" [help]="'Most routes use /.' | t">
             <input
               class="ap-input ap-data"
               [formField]="route.path"
@@ -64,12 +62,12 @@
           </ap-field>
         </div>
         <ap-field
-          label="Project"
+          [label]="'Project' | t"
           [field]="route.projectId"
-          help="Only for grouping: it doesn’t change who can edit the route."
+          [help]="'Only for grouping: it doesn’t change who can edit the route.' | t"
         >
           <select class="ap-select" [formField]="route.projectId">
-            <option value="">Choose a project</option>
+            <option value="">{{ 'Choose a project' | t }}</option>
             @for (project of projects.value(); track project.id) {
               <option [value]="project.id">{{ project.name }}</option>
             }
@@ -82,34 +80,34 @@
 
     <section class="ap-panel" aria-labelledby="certificate-title">
       <div class="ap-panel-head">
-        <div><h2 class="ap-h ap-h-3" id="certificate-title">Certificate</h2></div>
+        <div><h2 class="ap-h ap-h-3" id="certificate-title">{{ 'Certificate' | t }}</h2></div>
       </div>
       <div class="ap-panel-body ap-stack">
         <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-          <legend class="ap-sr">Certificate source</legend>
+          <legend class="ap-sr">{{ 'Certificate source' | t }}</legend>
           <div class="ap-stack" style="gap: 10px">
             <label class="ap-choice">
               <input class="ap-radio" type="radio" value="automatic" [formField]="route.certificate" />
               <span class="ap-choice-text">
-                <span>Automatic</span>
-                <span class="ap-help">From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.</span>
+                <span>{{ 'Automatic' | t }}</span>
+                <span class="ap-help">{{ 'From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.' | t }}</span>
               </span>
             </label>
             <label class="ap-choice">
               <input class="ap-radio" type="radio" value="uploaded" [formField]="route.certificate" />
               <span class="ap-choice-text">
-                <span>Uploaded certificate</span>
-                <span class="ap-help">For wildcards and internal certificate authorities.</span>
+                <span>{{ 'Uploaded certificate' | t }}</span>
+                <span class="ap-help">{{ 'For wildcards and internal certificate authorities.' | t }}</span>
               </span>
             </label>
           </div>
         </fieldset>
         @if (model().certificate === 'uploaded') {
-          <ap-field label="Uploaded certificate" [field]="route.certificateId" help="Upload a certificate on the Certificates page first if yours isn’t listed.">
+          <ap-field [label]="'Uploaded certificate' | t" [field]="route.certificateId" [help]="'Upload a certificate on the Certificates page first if yours isn’t listed.' | t">
             <select class="ap-select" [formField]="route.certificateId">
-              <option value="">Choose a certificate</option>
+              <option value="">{{ 'Choose a certificate' | t }}</option>
               @for (certificate of uploaded.value(); track certificate.id) {
-                <option [value]="certificate.id">{{ certificate.hosts.join(', ') }} (expires {{ certificate.notAfter?.slice(0, 10) }})</option>
+                <option [value]="certificate.id">{{ '{hosts} (expires {date})' | t: { hosts: certificate.hosts.join(', '), date: certificate.notAfter?.slice(0, 10) ?? '' } }}</option>
               }
             </select>
           </ap-field>
@@ -119,11 +117,11 @@
 
     <section class="ap-panel" aria-labelledby="rules-title">
       <div class="ap-panel-head">
-        <div><h2 class="ap-h ap-h-3" id="rules-title">Traffic rules</h2></div>
+        <div><h2 class="ap-h ap-h-3" id="rules-title">{{ 'Traffic rules' | t }}</h2></div>
       </div>
       <div class="ap-panel-body ap-stack">
         <div style="max-width: 220px">
-          <ap-field label="Timeout" [field]="route.timeoutSeconds" help="From 1 to 120.">
+          <ap-field [label]="'Timeout' | t" [field]="route.timeoutSeconds" [help]="'From 1 to 120.' | t">
             <div class="ap-affix">
               <input
                 class="ap-input ap-data"
@@ -131,37 +129,37 @@
                 inputmode="numeric"
                 [formField]="route.timeoutSeconds"
               />
-              <span class="ap-affix-text">seconds</span>
+              <span class="ap-affix-text">{{ 'seconds' | t }}</span>
             </div>
           </ap-field>
         </div>
         <label class="ap-choice">
           <input class="ap-switch" type="checkbox" [formField]="route.compression" />
           <span class="ap-choice-text">
-            <span>Compression</span>
-            <span class="ap-help">Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.</span>
+            <span>{{ 'Compression' | t }}</span>
+            <span class="ap-help">{{ 'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.' | t }}</span>
           </span>
         </label>
         <label class="ap-choice">
           <input class="ap-switch" type="checkbox" [formField]="route.caching" />
           <span class="ap-choice-text">
-            <span>Caching</span>
-            <span class="ap-help">Stores only what the target allows with Cache-Control, in memory on each replica.</span>
+            <span>{{ 'Caching' | t }}</span>
+            <span class="ap-help">{{ 'Stores only what the target allows with Cache-Control, in memory on each replica.' | t }}</span>
           </span>
         </label>
         <label class="ap-choice">
           <input class="ap-switch" type="checkbox" [formField]="route.strictTransport" />
           <span class="ap-choice-text">
-            <span>HTTPS only (HSTS)</span>
-            <span class="ap-help">Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.</span>
+            <span>{{ 'HTTPS only (HSTS)' | t }}</span>
+            <span class="ap-help">{{ 'Off by default. Browsers that visit this hostname over HTTPS then refuse plain HTTP to it, on any port, for a year. Hard to undo: turning it off doesn’t reach browsers that already have it.' | t }}</span>
           </span>
         </label>
         @if (route.strictTransport().value()) {
           <label class="ap-choice" style="margin-left: 40px">
             <input class="ap-check" type="checkbox" [formField]="route.strictTransportSubdomains" />
             <span class="ap-choice-text">
-              <span>Include subdomains</span>
-              <span class="ap-help">Also covers every subdomain of this hostname. Only turn it on when they all serve HTTPS.</span>
+              <span>{{ 'Include subdomains' | t }}</span>
+              <span class="ap-help">{{ 'Also covers every subdomain of this hostname. Only turn it on when they all serve HTTPS.' | t }}</span>
             </span>
           </label>
         }
@@ -178,9 +176,9 @@
 
     @if (auth.canOperate()) {
       <div class="ap-savebar">
-        <a apButton="ghost" routerLink="/routes">Cancel</a>
+        <a apButton="ghost" routerLink="/routes">{{ 'Cancel' | t }}</a>
         <button apWrite apButton="primary" type="submit" [disabled]="route().submitting()">
-          {{ route().submitting() ? 'Saving…' : isNew() ? 'Create route' : 'Save route' }}
+          {{ submitLabel() }}
         </button>
       </div>
     }

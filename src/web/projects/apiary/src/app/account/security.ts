@@ -13,6 +13,8 @@ import {
   PasswordReveal,
   Status,
   Toaster,
+  TranslatePipe,
+  I18n,
   newPassword,
   problemErrors,
 } from '@datapoint/apiary-ui';
@@ -29,7 +31,21 @@ import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-security',
-  imports: [WriteLock, PageHead, AccountTabs, Banner, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, PasswordChecklist, Status],
+  imports: [
+    WriteLock,
+    PageHead,
+    AccountTabs,
+    Banner,
+    Form,
+    Field,
+    FormField,
+    ErrorSummary,
+    Button,
+    PasswordReveal,
+    PasswordChecklist,
+    Status,
+    TranslatePipe,
+  ],
   templateUrl: './security.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,8 +53,9 @@ export class Security {
   private readonly api = inject(Api);
   private readonly dialog = inject(Dialog);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
-  protected readonly crumbs = [{ label: 'Your account', link: '/account' }];
+  protected readonly crumbs = computed(() => [{ label: this.i18n.t('Your account'), link: '/account' }]);
 
   private readonly model = signal({ current: '', next: '', again: '' });
   protected readonly password = form(this.model, (p) => {
@@ -62,17 +79,26 @@ export class Security {
       this.model.set({ current: '', next: '', again: '' });
       this.password().reset();
       apForm.attempted.set(false);
-      const signedOut = ended.sessions === 0 ? '' : ` Your ${ended.sessions === 1 ? 'other session was' : `${ended.sessions} other sessions were`} signed out.`;
-      const disconnected = ended.agents === 0 ? '' : ` ${ended.agents === 1 ? 'Your agent was' : `${ended.agents} agents were`} disconnected; connect them again.`;
-      this.toaster.show(`You stay signed in here.${signedOut}${disconnected}`, { heading: 'Password changed' });
+      this.toaster.show(this.passwordChanged(ended), { heading: this.i18n.t('Password changed') });
     }
+  }
+
+  private passwordChanged(ended: { sessions: number; agents: number }): string {
+    const parts = [this.i18n.t('You stay signed in here.')];
+    if (ended.sessions > 0) {
+      parts.push(this.i18n.plural(ended.sessions, 'Your other session was signed out.', 'Your {count} other sessions were signed out.'));
+    }
+    if (ended.agents > 0) {
+      parts.push(this.i18n.plural(ended.agents, 'Your agent was disconnected; connect them again.', '{count} agents were disconnected; connect them again.'));
+    }
+    return parts.join(' ');
   }
 
   protected async setUpAgain(): Promise<void> {
     const enrollment = await this.api.read<TwoStepEnrollment>('account.begin-two-step');
     if (await openDialog<boolean, TwoStepEnrollment>(this.dialog, TwoStepDialog, enrollment)) {
       await this.auth.load();
-      this.toaster.show('Use the new entry in your app from now on, and delete the old one.', { heading: 'Two-step sign-in set up' });
+      this.toaster.show(this.i18n.t('Use the new entry in your app from now on, and delete the old one.'), { heading: this.i18n.t('Two-step sign-in set up') });
     }
   }
 

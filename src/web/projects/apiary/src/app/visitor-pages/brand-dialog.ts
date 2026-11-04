@@ -1,7 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorMessages, ErrorSummary, Field, Form, Icon, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorMessages, ErrorSummary, Field, Form, I18n, Icon, TranslatePipe, problemErrors } from '@datapoint/apiary-ui';
 import { CircleAlert, ImageUp } from 'lucide';
 import { Api } from '../api/api';
 import { BrandView, ProjectView } from '../api/models';
@@ -29,7 +29,7 @@ const fallbackAccent = '#1C1C1E';
 
 @Component({
   selector: 'ap-brand-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, FileDrop, DatapointLogo],
+  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, FileDrop, DatapointLogo, TranslatePipe],
   templateUrl: './brand-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,6 +38,7 @@ export class BrandDialog {
   protected readonly dialog = inject<DialogRef<string>>(DialogRef);
   private readonly api = inject(Api);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
   protected readonly icons = { upload: ImageUp, alert: CircleAlert };
   protected readonly adding = this.data.choices.length > 0;
   protected readonly logo = signal(this.data.brand?.logo ?? '');
@@ -61,7 +62,7 @@ export class BrandDialog {
     validate(b.accent, ({ value }) => (isAccent(value()) ? undefined : { kind: 'brand.accentInvalid' }));
     validate(b.contact, ({ value }) => (value().trim().length > 120 ? { kind: 'tooLong', params: { max: 120 } } : undefined));
   });
-  protected readonly previewName = computed(() => this.model().name.trim() || 'Your name');
+  protected readonly previewName = computed(() => this.model().name.trim() || this.i18n.t('Your name'));
   protected readonly previewContact = computed(() => this.model().contact.trim());
   protected readonly previewAccent = computed(() => (isAccent(this.model().accent) ? this.model().accent.trim() : fallbackAccent));
   protected readonly previewText = computed(() => textOn(this.previewAccent()));
@@ -130,7 +131,7 @@ export class BrandDialog {
     });
     if (saved) {
       const project = this.data.choices.find((p) => p.id === projectId);
-      this.dialog.close(project ? `${project.name} has its own brand now.` : 'Visitor pages use it now.');
+      this.dialog.close(project ? this.i18n.t('{project} has its own brand now.', { project: project.name }) : this.i18n.t('Visitor pages use it now.'));
     }
   }
 }

@@ -1,7 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Button, Confirmer, EmptyState, Icon, PageHead, Toaster } from '@datapoint/apiary-ui';
+import { Button, Confirmer, EmptyState, I18n, Icon, PageHead, Toaster, TranslatePipe } from '@datapoint/apiary-ui';
 import { Plus, Trash2 } from 'lucide';
 import { Api } from '../api/api';
 import { ProjectView, RedirectView } from '../api/models';
@@ -19,7 +19,7 @@ const statusLabels: Record<number, string> = {
 
 @Component({
   selector: 'ap-redirect-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, TranslatePipe],
   templateUrl: './redirect-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -28,6 +28,7 @@ export class RedirectList {
   private readonly dialog = inject(Dialog);
   private readonly confirmer = inject(Confirmer);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly icons = { add: Plus, delete: Trash2 };
   protected readonly statusLabels = statusLabels;
@@ -39,20 +40,20 @@ export class RedirectList {
   protected async add(): Promise<void> {
     const added = await openDialog<AddedRedirect, null>(this.dialog, RedirectDialog, null);
     if (added) {
-      this.toaster.show(`${added.from} now redirects to ${added.to}.`, { heading: 'Redirect added' });
+      this.toaster.show(this.i18n.t('{from} now redirects to {to}.', { from: added.from, to: added.to }), { heading: this.i18n.t('Redirect added') });
     }
   }
 
   protected async delete(redirect: RedirectView): Promise<void> {
     const deleted = await this.confirmer.confirm({
-      heading: `Delete the redirect from ${redirect.from}?`,
-      text: 'Requests to it get a 404 at once. Browsers may remember a permanent redirect for a while.',
-      confirm: 'Delete redirect',
-      busy: 'Deleting…',
+      heading: this.i18n.t('Delete the redirect from {hostname}?', { hostname: redirect.from }),
+      text: this.i18n.t('Requests to it get a 404 at once. Browsers may remember a permanent redirect for a while.'),
+      confirm: this.i18n.t('Delete redirect'),
+      busy: this.i18n.t('Deleting…'),
       action: () => this.api.send('redirects.delete', { id: redirect.id }),
     });
     if (deleted) {
-      this.toaster.show(`The redirect from ${redirect.from} was deleted.`);
+      this.toaster.show(this.i18n.t('The redirect from {hostname} was deleted.', { hostname: redirect.from }));
     }
   }
 }

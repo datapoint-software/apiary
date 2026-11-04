@@ -1,9 +1,9 @@
 <section class="ap-panel" aria-labelledby="targets-title">
   <div class="ap-panel-head">
     <div>
-      <h2 class="ap-h ap-h-3" id="targets-title">Targets</h2>
+      <h2 class="ap-h ap-h-3" id="targets-title">{{ 'Targets' | t }}</h2>
       <p class="ap-panel-desc">
-        Services that receive the traffic, by their name on the shared network. With two or more, the weights split the traffic.
+        {{ 'Services that receive the traffic, by their name on the shared network. With two or more, the weights split the traffic.' | t }}
       </p>
     </div>
   </div>
@@ -11,52 +11,52 @@
     @for (target of route().targets; track $index) {
       <div class="ap-row" style="gap: 12px; align-items: flex-start; flex-wrap: wrap">
         <div style="flex: 2 1 220px">
-          <ap-field label="Service or host" [field]="target.host" summaryLabel="Target">
+          <ap-field [label]="'Service or host' | t" [field]="target.host" [summaryLabel]="'Target' | t">
             <input class="ap-input ap-data" [formField]="target.host" placeholder="shop-v1" autocomplete="off" spellcheck="false" autocapitalize="none" />
           </ap-field>
         </div>
         <div style="flex: 1 1 100px">
-          <ap-field label="Port" [field]="target.port" summaryLabel="Target port">
+          <ap-field [label]="'Port' | t" [field]="target.port" [summaryLabel]="'Target port' | t">
             <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="target.port" />
           </ap-field>
         </div>
         @if (many()) {
           <div style="flex: 1 1 100px">
-            <ap-field label="Weight" [field]="target.weight" summaryLabel="Target weight">
+            <ap-field [label]="'Weight' | t" [field]="target.weight" [summaryLabel]="'Target weight' | t">
               <div class="ap-affix">
                 <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="target.weight" />
                 <span class="ap-affix-text">%</span>
               </div>
             </ap-field>
           </div>
-          <button apButton="ghost" size="small" [iconOnly]="true" type="button" style="margin-top: 26px" [attr.aria-label]="'Remove target ' + ($index + 1)" (click)="remove($index)">
+          <button apButton="ghost" size="small" [iconOnly]="true" type="button" style="margin-top: 26px" [attr.aria-label]="'Remove target {number}' | t: { number: $index + 1 }" (click)="remove($index)">
             <ap-icon [icon]="icons.remove" />
           </button>
         }
       </div>
     }
     @if (many()) {
-      <ap-field label="Split" [field]="route().targets" summaryLabel="Weights">
+      <ap-field [label]="'Split' | t" [field]="route().targets" [summaryLabel]="'Weights' | t">
         <span class="ap-data ap-muted">{{ split() }}</span>
       </ap-field>
     }
     @if (canAdd()) {
-      <button apButton size="small" type="button" style="align-self: flex-start" (click)="add()"><ap-icon [icon]="icons.add" />Add target</button>
+      <button apButton size="small" type="button" style="align-self: flex-start" (click)="add()"><ap-icon [icon]="icons.add" />{{ 'Add target' | t }}</button>
     }
     @if (many()) {
-      <ap-field label="Canary" [field]="route().canary.source" [optional]="true" [help]="'Requests with this header or cookie always reach ' + lastTarget() + ', so testers reach it on purpose.'">
+      <ap-field [label]="'Canary' | t" [field]="route().canary.source" [optional]="true" [help]="'Requests with this header or cookie always reach {target}, so testers reach it on purpose.' | t: { target: lastTarget() }">
         <select class="ap-select" [formField]="route().canary.source">
-          <option value="none">No canary</option>
-          <option value="header">By header</option>
-          <option value="cookie">By cookie</option>
+          <option value="none">{{ 'No canary' | t }}</option>
+          <option value="header">{{ 'By header' | t }}</option>
+          <option value="cookie">{{ 'By cookie' | t }}</option>
         </select>
       </ap-field>
       @if (canary()) {
         <div class="ap-grid-2">
-          <ap-field label="Name" [field]="route().canary.name" summaryLabel="Canary name">
+          <ap-field [label]="'Name' | t" [field]="route().canary.name" [summaryLabel]="'Canary name' | t">
             <input class="ap-input ap-data" [formField]="route().canary.name" autocomplete="off" spellcheck="false" autocapitalize="none" />
           </ap-field>
-          <ap-field label="Value" [field]="route().canary.value" summaryLabel="Canary value">
+          <ap-field [label]="'Value' | t" [field]="route().canary.value" [summaryLabel]="'Canary value' | t">
             <input class="ap-input ap-data" [formField]="route().canary.value" autocomplete="off" spellcheck="false" autocapitalize="none" />
           </ap-field>
         </div>
@@ -64,8 +64,8 @@
       <label class="ap-choice">
         <input class="ap-switch" type="checkbox" [formField]="route().sticky" />
         <span class="ap-choice-text">
-          <span>Sticky sessions</span>
-          <span class="ap-help">Keeps each visitor on the target they first reached, for 1 hour, with a cookie.</span>
+          <span>{{ 'Sticky sessions' | t }}</span>
+          <span class="ap-help">{{ 'Keeps each visitor on the target they first reached, for 1 hour, with a cookie.' | t }}</span>
         </span>
       </label>
     }

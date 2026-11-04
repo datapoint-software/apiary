@@ -12,6 +12,8 @@ import {
   PasswordChecklist,
   PasswordReveal,
   Toaster,
+  TranslatePipe,
+  I18n,
   newPassword,
   problemErrors,
 } from '@datapoint/apiary-ui';
@@ -38,6 +40,7 @@ import { TwoStepSetup } from './two-step-setup';
     TwoStepSetup,
     RecoveryCodes,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './accept-invite.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +51,7 @@ export class AcceptInvite {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly messages = inject(ErrorMessages);
 
   protected readonly invite = resource({
@@ -79,6 +83,6 @@ export class AcceptInvite {
   protected async finish(): Promise<void> {
     const user = await this.auth.load();
     await this.router.navigateByUrl('/');
-    this.toaster.show(`Welcome to Apiary, ${user?.name.split(' ')[0] ?? ''}.`);
+    this.toaster.show(this.i18n.t('Welcome to Apiary, {name}.', { name: user?.name.split(' ')[0] ?? '' }));
   }
 }

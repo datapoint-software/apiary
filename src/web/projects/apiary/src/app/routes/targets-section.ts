@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
-import { Button, Field, Icon } from '@datapoint/apiary-ui';
+import { Button, Field, I18n, Icon, TranslatePipe } from '@datapoint/apiary-ui';
 import { Plus, X } from 'lucide';
 import { RouteModel } from './route-model';
 
@@ -8,21 +8,22 @@ const maximumTargets = 10;
 
 @Component({
   selector: 'ap-targets-section',
-  imports: [Field, FormField, Button, Icon],
+  imports: [Field, FormField, Button, Icon, TranslatePipe],
   templateUrl: './targets-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TargetsSection {
   readonly route = input.required<FieldTree<RouteModel>>();
+  private readonly i18n = inject(I18n);
   protected readonly icons = { add: Plus, remove: X };
   private readonly model = computed(() => this.route()().value());
   protected readonly many = computed(() => this.model().targets.length > 1);
   protected readonly canAdd = computed(() => this.model().targets.length < maximumTargets);
   protected readonly canary = computed(() => this.many() && this.model().canary.source !== 'none');
-  protected readonly lastTarget = computed(() => this.model().targets.at(-1)?.host || 'the last target');
+  protected readonly lastTarget = computed(() => this.model().targets.at(-1)?.host || this.i18n.t('the last target'));
   protected readonly split = computed(() =>
     this.model()
-      .targets.map((t) => `${t.host || 'target'} ${t.weight ?? 0}%`)
+      .targets.map((t) => `${t.host || this.i18n.t('target')} ${t.weight ?? 0}%`)
       .join(' · '),
   );
 

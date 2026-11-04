@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Banner, PageHead, Status } from '@datapoint/apiary-ui';
+import { Banner, PageHead, Status, TranslatePipe } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { RootKeyStatus } from '../api/models';
 import { timeAgo, utcDateTime } from '../api/time-ago';
@@ -11,7 +11,7 @@ const stalledAfter = 30 * 60_000;
 
 @Component({
   selector: 'ap-root-key-page',
-  imports: [PageHead, Banner, Status, CopyText],
+  imports: [PageHead, Banner, Status, CopyText, TranslatePipe],
   templateUrl: './root-key-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -29,6 +29,11 @@ export class RootKeyPage {
     const status = this.status.value();
     return status?.target ? status.replicas.filter((r) => r.rootKeyId !== status.target) : [];
   });
+  protected readonly behindNodes = computed(() =>
+    this.behind()
+      .map((r) => r.node)
+      .join(', '),
+  );
   protected readonly stalled = computed(() => {
     const since = this.status.value()?.targetSince;
     return !!since && Date.now() - Date.parse(since) > stalledAfter;

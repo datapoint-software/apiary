@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
+import { EmptyState, I18n, Icon, PageHead, TranslatePipe } from '@datapoint/apiary-ui';
 import { Search } from 'lucide';
 import { Api } from '../api/api';
 import { AuditEntry } from '../api/models';
@@ -19,12 +19,13 @@ interface Day {
 
 @Component({
   selector: 'ap-audit-log',
-  imports: [PageHead, EmptyState, Icon, CustomRange],
+  imports: [PageHead, EmptyState, Icon, CustomRange, TranslatePipe],
   templateUrl: './audit-log.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuditLog {
   private readonly api = inject(Api);
+  private readonly i18n = inject(I18n);
   protected readonly ranges: readonly [Range, string][] = [
     ['24h', 'Last 24 h'],
     ['7d', '7 days'],
@@ -74,8 +75,8 @@ export class AuditLog {
       groups.set(day, [...(groups.get(day) ?? []), entry]);
     }
     const names = new Map([
-      [today, 'Today'],
-      [yesterday, 'Yesterday'],
+      [today, this.i18n.t('Today')],
+      [yesterday, this.i18n.t('Yesterday')],
     ]);
     return [...groups].map(([day, entries]) => ({ title: names.get(day) ?? day, entries }));
   });

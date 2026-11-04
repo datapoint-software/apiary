@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Button, ErrorMessages, Toaster, isApiProblem } from '@datapoint/apiary-ui';
+import { Button, ErrorMessages, I18n, Toaster, TranslatePipe, isApiProblem } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { PendingReplica } from '../api/models';
 import { timeAgo } from '../api/time-ago';
@@ -9,7 +9,7 @@ import { WriteLock } from './write-lock';
 
 @Component({
   selector: 'ap-pending-replicas',
-  imports: [Button, WriteLock],
+  imports: [Button, WriteLock, TranslatePipe],
   templateUrl: './pending-replicas.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -18,6 +18,7 @@ export class PendingReplicas {
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
   private readonly cluster = inject(ClusterStatus);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly timeAgo = timeAgo;
   protected readonly pending = computed(() => this.cluster.view()?.pending ?? []);
@@ -28,15 +29,18 @@ export class PendingReplicas {
     try {
       await this.api.send('cluster.approve-replica', { id: replica.id });
       this.toaster.show(
-        `The replica on ${replica.node} joins in a few seconds, then catches up and starts serving traffic.`,
+        this.i18n.t(
+          'The replica on {node} joins in a few seconds, then catches up and starts serving traffic.',
+          { node: replica.node },
+        ),
         {
-          heading: 'Replica approved',
+          heading: this.i18n.t('Replica approved'),
         },
       );
     } catch (error) {
       this.toaster.show(
         this.messages.describe(isApiProblem(error) ? error.code : 'network.offline'),
-        { tone: 'error', heading: 'Couldn’t approve' },
+        { tone: 'error', heading: this.i18n.t('Couldn’t approve') },
       );
     } finally {
       this.approving.set(null);

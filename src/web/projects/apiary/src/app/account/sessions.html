@@ -1,14 +1,14 @@
-<ap-page-head heading="Active sessions" [crumbs]="crumbs" />
+<ap-page-head [heading]="'Active sessions' | t" [crumbs]="crumbs()" />
 <ap-account-tabs />
 
 <section class="ap-panel" style="max-width: 760px" aria-labelledby="sessions-title">
   <div class="ap-panel-head">
     <div>
-      <h2 class="ap-h ap-h-3" id="sessions-title">Where you’re signed in</h2>
-      <p class="ap-panel-desc">If you don’t recognize one, sign it out and change your password. Sessions end after 12 hours.</p>
+      <h2 class="ap-h ap-h-3" id="sessions-title">{{ 'Where you’re signed in' | t }}</h2>
+      <p class="ap-panel-desc">{{ 'If you don’t recognize one, sign it out and change your password. Sessions end after 12 hours.' | t }}</p>
     </div>
     @if (others() > 0) {
-      <button apWrite apButton size="small" type="button" (click)="endOthers()">Sign out of all others…</button>
+      <button apWrite apButton size="small" type="button" (click)="endOthers()">{{ 'Sign out of all others…' | t }}</button>
     }
   </div>
   <div class="ap-panel-body">
@@ -19,18 +19,19 @@
             <span class="ap-project-mark"><ap-icon [icon]="icon(session)" /></span>
             <div class="ap-list-text">
               <strong>
-                {{ session.device ?? 'Unknown browser' }}
+                {{ session.device ?? ('Unknown browser' | t) }}
                 @if (session.current) {
-                  <span class="ap-tag ap-tag-honey">This browser</span>
+                  <span class="ap-tag ap-tag-honey">{{ 'This browser' | t }}</span>
                 }
               </strong>
               <span class="ap-muted">
-                <span class="ap-data">{{ session.address ?? 'unknown address' }}</span> · signed in {{ utcDateTime(session.startedAt) }} UTC
+                <span class="ap-data">{{ session.address ?? ('unknown address' | t) }}</span> ·
+                {{ 'signed in {date} UTC' | t: { date: utcDateTime(session.startedAt) } }}
               </span>
             </div>
           </div>
           @if (!session.current) {
-            <button apWrite apButton size="small" type="button" (click)="end(session)">Sign out</button>
+            <button apWrite apButton size="small" type="button" (click)="end(session)">{{ 'Sign out' | t }}</button>
           }
         </div>
       }

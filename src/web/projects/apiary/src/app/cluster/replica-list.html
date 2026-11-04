@@ -1,11 +1,15 @@
-<ap-page-head heading="Replicas">
+<ap-page-head [heading]="'Replicas' | t">
   <span pageSub>
     @if (cluster.view()?.mode === 'Standalone') {
-      Apiary runs as one instance, so there’s nothing to replicate. Deploy it as a Swarm stack to
-      run several replicas.
+      {{
+        'Apiary runs as one instance, so there’s nothing to replicate. Deploy it as a Swarm stack to run several replicas.'
+          | t
+      }}
     } @else {
-      Every replica keeps a copy of the configuration and serves traffic. A majority of them must
-      agree on each change.
+      {{
+        'Every replica keeps a copy of the configuration and serves traffic. A majority of them must agree on each change.'
+          | t
+      }}
     }
   </span>
 </ap-page-head>
@@ -14,23 +18,23 @@
 
 <section class="ap-panel">
   @if (cluster.isLoading() && members().length === 0) {
-    <div style="padding: 24px" aria-busy="true" aria-label="Loading">
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t">
       <span class="ap-skel" style="width: 60%; height: 14px"></span>
     </div>
   } @else {
     <div class="ap-table-wrap">
       <table class="ap-table">
         <caption class="ap-sr">
-          Replicas
+          {{ 'Replicas' | t }}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Replica</th>
-            <th scope="col">Address</th>
-            <th scope="col">Role</th>
-            <th scope="col">Status</th>
-            <th scope="col">Joined</th>
-            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+            <th scope="col">{{ 'Replica' | t }}</th>
+            <th scope="col">{{ 'Address' | t }}</th>
+            <th scope="col">{{ 'Role' | t }}</th>
+            <th scope="col">{{ 'Status' | t }}</th>
+            <th scope="col">{{ 'Joined' | t }}</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -40,9 +44,9 @@
               <td>
                 <div class="ap-cell-main">
                   <span class="ap-data" style="font-weight: 500">
-                    {{ member.node ?? 'Unknown node' }}
+                    {{ member.node ?? ('Unknown node' | t) }}
                     @if (member.local) {
-                      <span class="ap-muted" style="font-weight: 400">(this replica)</span>
+                      <span class="ap-muted" style="font-weight: 400">{{ '(this replica)' | t }}</span>
                     }
                   </span>
                   @if (member.id) {
@@ -51,7 +55,7 @@
                 </div>
               </td>
               <td class="ap-data ap-muted">{{ member.address }}</td>
-              <td>{{ roles[member.role] }}</td>
+              <td>{{ roles[member.role] | t }}</td>
               <td>
                 <ap-status [tone]="state[0]">{{ state[1] }}</ap-status>
               </td>
@@ -59,7 +63,7 @@
               <td class="ap-col-actions">
                 @if (!member.reachable && member.id && auth.canAdminister()) {
                   <button apWrite apButton="ghost" type="button" (click)="remove(member)">
-                    Remove now…
+                    {{ 'Remove now…' | t }}
                   </button>
                 }
               </td>
@@ -81,35 +85,41 @@
   >
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="membership-title">Membership</h2>
+        <h2 class="ap-h ap-h-3" id="membership-title">{{ 'Membership' | t }}</h2>
         <p class="ap-panel-desc">
-          How replicas join and leave. Either way, a replica must prove it has the root key before
-          it can join.
+          {{
+            'How replicas join and leave. Either way, a replica must prove it has the root key before it can join.'
+              | t
+          }}
         </p>
       </div>
     </div>
     <div class="ap-panel-body ap-stack">
       <ap-error-summary verb="save the membership" />
       <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-        <legend class="ap-sr">Membership</legend>
+        <legend class="ap-sr">{{ 'Membership' | t }}</legend>
         <div class="ap-stack" style="gap: 10px">
           <label class="ap-choice">
             <input class="ap-radio" type="radio" value="automatic" [formField]="membership.mode" />
             <span class="ap-choice-text">
-              <span>Automatic</span>
+              <span>{{ 'Automatic' | t }}</span>
               <span class="ap-help"
-                >New replicas join on their own, so the cluster grows and shrinks with the
-                stack.</span
+                >{{
+                  'New replicas join on their own, so the cluster grows and shrinks with the stack.'
+                    | t
+                }}</span
               >
             </span>
           </label>
           <label class="ap-choice">
             <input class="ap-radio" type="radio" value="manual" [formField]="membership.mode" />
             <span class="ap-choice-text">
-              <span>Manual</span>
+              <span>{{ 'Manual' | t }}</span>
               <span class="ap-help"
-                >New replicas wait here until an administrator approves them, and missing ones stay
-                until removed.</span
+                >{{
+                  'New replicas wait here until an administrator approves them, and missing ones stay until removed.'
+                    | t
+                }}</span
               >
             </span>
           </label>
@@ -118,9 +128,9 @@
       @if (membership.mode().value() === 'automatic') {
         <div style="max-width: 300px">
           <ap-field
-            label="Remove missing replicas after"
+            [label]="'Remove missing replicas after' | t"
             [field]="membership.removeMissingAfterMinutes"
-            help="From 5 to 1440 minutes."
+            [help]="'From 5 to 1440 minutes.' | t"
           >
             <div class="ap-affix">
               <input
@@ -129,7 +139,7 @@
                 inputmode="numeric"
                 [formField]="membership.removeMissingAfterMinutes"
               />
-              <span class="ap-affix-text">minutes</span>
+              <span class="ap-affix-text">{{ 'minutes' | t }}</span>
             </div>
           </ap-field>
         </div>
@@ -138,7 +148,7 @@
     @if (auth.canAdminister()) {
       <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
         <button apWrite apButton="primary" type="submit" [disabled]="membership().submitting()">
-          {{ membership().submitting() ? 'Saving…' : 'Save' }}
+          {{ (membership().submitting() ? 'Saving…' : 'Save') | t }}
         </button>
       </div>
     }
@@ -148,18 +158,21 @@
 @if (isSwarm() && auth.canAdminister()) {
   <section class="ap-panel ap-panel-danger" aria-labelledby="recovery-zone-title">
     <div class="ap-panel-head">
-      <div><h2 class="ap-h ap-h-3" id="recovery-zone-title">Danger zone</h2></div>
+      <div><h2 class="ap-h ap-h-3" id="recovery-zone-title">{{ 'Danger zone' | t }}</h2></div>
     </div>
     <div class="ap-panel-body ap-list">
       <div class="ap-list-row">
         <div class="ap-list-text">
-          <strong>Recover from a lost majority</strong>
-          <span class="ap-muted">Only when most voters are gone for good. This replica becomes the only voter, and anything only the lost voters had is lost.</span>
+          <strong>{{ 'Recover from a lost majority' | t }}</strong>
+          <span class="ap-muted">{{
+            'Only when most voters are gone for good. This replica becomes the only voter, and anything only the lost voters had is lost.'
+              | t
+          }}</span>
         </div>
-        <button apButton="danger" type="button" (click)="recover()">Start recovery…</button>
+        <button apButton="danger" type="button" (click)="recover()">{{ 'Start recovery…' | t }}</button>
       </div>
     </div>
   </section>
 }
 
-<p class="ap-caption">Log index {{ cluster.view()?.index ?? 0 }}.</p>
+<p class="ap-caption">{{ 'Log index {index}.' | t: { index: cluster.view()?.index ?? 0 } }}</p>

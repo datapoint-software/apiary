@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ApiProblem, Banner, Button, ErrorMessages } from '@datapoint/apiary-ui';
+import { ApiProblem, Banner, Button, ErrorMessages, I18n, TranslatePipe } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { AgentClientView } from '../api/models';
 import { Auth } from '../auth/auth';
@@ -15,7 +15,7 @@ interface ConnectedAgent {
 
 @Component({
   selector: 'ap-connect-agent',
-  imports: [AuthPage, Banner, Button],
+  imports: [AuthPage, Banner, Button, TranslatePipe],
   templateUrl: './connect-agent.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,6 +31,7 @@ export class ConnectAgent {
   private readonly refused = this.query.get('error');
   private readonly api = inject(Api);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly client = httpResource<AgentClientView>(() =>
     this.api.query('agents.client', { clientId: this.request.clientId, redirectUri: this.request.redirectUri }),
@@ -45,7 +46,7 @@ export class ConnectAgent {
   });
   protected readonly role = computed(() => {
     const role = this.auth.user()?.role;
-    return role ? roleNames[role] : '';
+    return role ? this.i18n.t(roleNames[role]) : '';
   });
   protected readonly working = signal(false);
   protected readonly failure = signal('');

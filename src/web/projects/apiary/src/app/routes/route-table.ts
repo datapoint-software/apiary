@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Icon } from '@datapoint/apiary-ui';
+import { I18n, Icon, TranslatePipe } from '@datapoint/apiary-ui';
 import { Lock } from 'lucide';
 import { RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
@@ -13,7 +13,7 @@ import { RouteStatusLabel } from './route-status-label';
 
 @Component({
   selector: 'ap-route-table',
-  imports: [Icon, RouterLink, RouteStatusLabel, RouteRowActions],
+  imports: [Icon, RouterLink, RouteStatusLabel, RouteRowActions, TranslatePipe],
   templateUrl: './route-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -22,8 +22,8 @@ export class RouteTable {
   readonly grouped = input(true);
   readonly selected = model<ReadonlySet<string>>(new Set());
   protected readonly auth = inject(Auth);
+  private readonly i18n = inject(I18n);
   protected readonly routeLabel = routeLabel;
-  protected readonly targetLabel = targetLabel;
   protected readonly timeAgo = timeAgo;
   protected readonly perMinute = perMinute;
   protected readonly lockIcon = Lock;
@@ -42,8 +42,13 @@ export class RouteTable {
     this.selected.set(next);
   }
 
-  protected requests(group: RouteGroup): number {
-    return group.routes.reduce((sum, r) => sum + (r.disabled ? 0 : r.requestsPerMinute), 0);
+  protected targetLabel(route: RouteView): string {
+    return targetLabel(route, this.i18n);
+  }
+
+  protected groupMeta(group: RouteGroup): string {
+    const requests = perMinute(group.routes.reduce((sum, r) => sum + (r.disabled ? 0 : r.requestsPerMinute), 0));
+    return this.i18n.plural(group.routes.length, '{count} route · {requests} req/min', '{count} routes · {requests} req/min', { requests });
   }
 
   protected toggleAll(on: boolean): void {

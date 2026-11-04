@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '@datapoint/apiary-ui';
 import { BrandView } from '../api/models';
 
 @Component({
   selector: 'ap-brand-summary',
+  imports: [TranslatePipe],
   template: `
     <div style="display: flex; gap: 14px; align-items: center; min-width: 0">
       @if (brand().logo; as logo) {
@@ -12,7 +14,7 @@ import { BrandView } from '../api/models';
       }
       <div class="ap-cell-main" style="min-width: 0">
         <strong translate="no">{{ brand().name }}</strong>
-        <span class="ap-caption" translate="no">{{ brand().contact || 'No contact line' }}</span>
+        <span class="ap-caption" translate="no">{{ brand().contact || ('No contact line' | t) }}</span>
       </div>
     </div>
   `,

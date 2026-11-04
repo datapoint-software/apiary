@@ -2,7 +2,20 @@ import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-import { ApiProblem, Banner, Button, ErrorMessages, ErrorSummary, Field, Form, PasswordReveal, Toaster, problemErrors } from '@datapoint/apiary-ui';
+import {
+  ApiProblem,
+  Banner,
+  Button,
+  ErrorMessages,
+  ErrorSummary,
+  Field,
+  Form,
+  I18n,
+  PasswordReveal,
+  Toaster,
+  TranslatePipe,
+  problemErrors,
+} from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { SignInOptions, SignInStep } from '../api/models';
 import { Auth } from './auth';
@@ -16,7 +29,7 @@ type Step = 'password' | 'code' | 'enroll' | 'codes';
 
 @Component({
   selector: 'ap-sign-in',
-  imports: [AuthPage, Banner, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, TwoStepSetup, RecoveryCodes],
+  imports: [AuthPage, Banner, Form, Field, FormField, ErrorSummary, Button, PasswordReveal, TwoStepSetup, RecoveryCodes, TranslatePipe],
   templateUrl: './sign-in.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -28,6 +41,7 @@ export class SignIn {
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
 
   protected readonly options = httpResource<SignInOptions>(() => this.api.query('auth.options'));
   protected readonly ssoError = computed(() => (this.error() ? this.messages.describe(this.error()) : ''));
@@ -103,6 +117,6 @@ export class SignIn {
   protected async enter(): Promise<void> {
     const user = await this.auth.load();
     await this.router.navigateByUrl(this.next().startsWith('/') ? this.next() : '/');
-    this.toaster.show(`Welcome back, ${user?.name.split(' ')[0] ?? ''}.`);
+    this.toaster.show(this.i18n.t('Welcome back, {name}.', { name: user?.name.split(' ')[0] ?? '' }));
   }
 }

@@ -106,6 +106,9 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 - **Which brand a page uses** follows the prototype: maintenance, password and sign-in link pages use the route's project brand, the 403, 429 and disabled pages the cluster's, like the 404. The "Starting" page has no brand, since the state may not be loaded yet.
 - **Brand actions are for the admin UI only** (`brands.list`, `brands.save`, `brands.remove`, not on MCP), since they carry logos of up to 100 KB.
 - **Not built from the prototype: previews of each visitor page** from the Visitor pages screen. The brand dialog's live preview of the password page is built.
+- **The interface language uses runtime catalogs** keyed by the English text, not Angular's built-in i18n, which would build the app once per language and reload to switch (decided with the team on 2026-11-04). The choice is saved in the user's profile (`account.set-language`, en or pt-PT); `auth.me` returns it. It doesn't bump the state schema either. Before sign-in and on visitor pages, the browser's language decides.
+- **Visitor pages pick their language per request**, so they send `Vary: Accept-Language`; a cache in front of Apiary keeps one copy per language.
+- **Not translated:** MCP descriptions for agents (English, as engineering.md says), the server's log messages and ProblemDetails `title`s, and anything an operator types, such as a maintenance message or a visitor page's contact line.
 
 ## Security findings to resolve before 1.0
 

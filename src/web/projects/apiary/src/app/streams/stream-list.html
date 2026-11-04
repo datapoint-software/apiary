@@ -1,37 +1,37 @@
-<ap-page-head heading="Stream routes">
-  <span pageSub>TCP and UDP traffic, such as MQTT or databases, forwarded as it is. Apiary doesn’t read or change it.</span>
+<ap-page-head [heading]="'Stream routes' | t">
+  <span pageSub>{{ 'TCP and UDP traffic, such as MQTT or databases, forwarded as it is. Apiary doesn’t read or change it.' | t }}</span>
   @if (auth.canOperate() && streams.value().length > 0) {
-    <button apWrite pageActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />Add stream route</button>
+    <button apWrite pageActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />{{ 'Add stream route' | t }}</button>
   }
 </ap-page-head>
 
-<ap-banner tone="info" heading="Each stream route needs its port published">
-  Swarm only sends traffic to ports your stack file publishes. After adding a stream route, add its port to the Apiary service and deploy the stack again.
+<ap-banner tone="info" [heading]="'Each stream route needs its port published' | t">
+  {{ 'Swarm only sends traffic to ports your stack file publishes. After adding a stream route, add its port to the Apiary service and deploy the stack again.' | t }}
 </ap-banner>
 
 <section class="ap-panel">
   @if (isLoading()) {
-    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
   } @else if (streams.value().length === 0) {
-    <ap-empty-state heading="No stream routes">
-      Forward TCP or UDP traffic, such as MQTT on port 1883, to a service on the shared network.
+    <ap-empty-state [heading]="'No stream routes' | t">
+      {{ 'Forward TCP or UDP traffic, such as MQTT on port 1883, to a service on the shared network.' | t }}
       @if (auth.canOperate()) {
-        <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />Add stream route</button>
+        <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="icons.add" />{{ 'Add stream route' | t }}</button>
       }
     </ap-empty-state>
   } @else {
     <div class="ap-table-wrap">
       <table class="ap-table">
-        <caption class="ap-sr">Stream routes</caption>
+        <caption class="ap-sr">{{ 'Stream routes' | t }}</caption>
         <thead>
           <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Listens on</th>
-            <th scope="col">Target</th>
-            <th scope="col">Project</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="ap-num">Connections</th>
-            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+            <th scope="col">{{ 'Name' | t }}</th>
+            <th scope="col">{{ 'Listens on' | t }}</th>
+            <th scope="col">{{ 'Target' | t }}</th>
+            <th scope="col">{{ 'Project' | t }}</th>
+            <th scope="col">{{ 'Status' | t }}</th>
+            <th scope="col" class="ap-num">{{ 'Connections' | t }}</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -52,26 +52,26 @@
                 @let status = activity(stream);
                 <ap-status [tone]="status.tone">{{ status.text }}</ap-status>
                 @if (stream.allowedAddresses.length) {
-                  <span class="ap-caption" style="display: block">Allowlist</span>
+                  <span class="ap-caption" style="display: block">{{ 'Allowlist' | t }}</span>
                 }
               </td>
               <td class="ap-num">{{ stream.connections }}</td>
               <td class="ap-col-actions">
                 @if (auth.canOperate()) {
                   <div class="ap-row" style="gap: 4px; justify-content: flex-end">
-                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit ' + stream.name" (click)="edit(stream)">
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit {name}' | t: { name: stream.name }" (click)="edit(stream)">
                       <ap-icon [icon]="icons.edit" />
                     </button>
                     @if (stream.disabled) {
-                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Enable ' + stream.name" (click)="enable(stream)">
+                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Enable {name}' | t: { name: stream.name }" (click)="enable(stream)">
                         <ap-icon [icon]="icons.enable" />
                       </button>
                     } @else {
-                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Disable ' + stream.name" (click)="disable(stream)">
+                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Disable {name}' | t: { name: stream.name }" (click)="disable(stream)">
                         <ap-icon [icon]="icons.disable" />
                       </button>
                     }
-                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete ' + stream.name" (click)="delete(stream)">
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {name}' | t: { name: stream.name }" (click)="delete(stream)">
                       <ap-icon [icon]="icons.delete" />
                     </button>
                   </div>

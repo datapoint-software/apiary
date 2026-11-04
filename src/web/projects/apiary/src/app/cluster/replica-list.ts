@@ -15,10 +15,12 @@ import {
   ErrorSummary,
   Field,
   Form,
+  I18n,
   PageHead,
   Status,
   Toaster,
   Tone,
+  TranslatePipe,
   problemErrors,
   wholeNumber,
 } from '@datapoint/apiary-ui';
@@ -51,6 +53,7 @@ interface MembershipModel {
     ErrorSummary,
     WriteLock,
     PendingReplicas,
+    TranslatePipe,
   ],
   templateUrl: './replica-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +63,7 @@ export class ReplicaList {
   private readonly confirmer = inject(Confirmer);
   private readonly dialog = inject(Dialog);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly cluster = inject(ClusterStatus);
   protected readonly roles = roles;
   protected readonly timeAgo = timeAgo;
@@ -96,14 +100,14 @@ export class ReplicaList {
       return [
         'critical',
         member.missingSince
-          ? `Missing for ${timeSince(member.missingSince)}`
-          : 'Unreachable',
+          ? this.i18n.t('Missing for {time}', { time: timeSince(member.missingSince) })
+          : this.i18n.t('Unreachable'),
       ];
     }
     if (member.role === 'joining') {
-      return ['info', 'Catching up'];
+      return ['info', this.i18n.t('Catching up')];
     }
-    return ['ok', 'In sync'];
+    return ['ok', this.i18n.t('In sync')];
   }
 
   protected async save(apForm: Form): Promise<void> {
@@ -121,9 +125,14 @@ export class ReplicaList {
       this.cluster.reload();
       this.toaster.show(
         value.mode === 'manual'
-          ? 'New replicas now wait for your approval, and missing ones stay until you remove them.'
-          : `New replicas join on their own, and missing ones are removed after ${value.removeMissingAfterMinutes} minutes.`,
-        { heading: 'Membership saved' },
+          ? this.i18n.t(
+              'New replicas now wait for your approval, and missing ones stay until you remove them.',
+            )
+          : this.i18n.t(
+              'New replicas join on their own, and missing ones are removed after {minutes} minutes.',
+              { minutes: value.removeMissingAfterMinutes ?? '' },
+            ),
+        { heading: this.i18n.t('Membership saved') },
       );
     }
   }
@@ -134,19 +143,14 @@ export class ReplicaList {
 
   protected async remove(member: MemberView): Promise<void> {
     const node = member.node ?? member.address;
-    const settings = this.cluster.view()?.membership;
-    const missing = member.missingSince
-      ? `It has been missing for ${timeSince(member.missingSince)}`
-      : 'It can’t be reached';
-    const later =
-      settings?.mode === 'automatic'
-        ? `${missing}, and would be removed on its own after ${settings.removeMissingAfterMinutes} minutes.`
-        : `${missing}.`;
     const done = await this.confirmer.confirm({
-      heading: `Remove ${node} now?`,
-      text: `${later} Once removed, it no longer counts towards the majority. If ${node} comes back, its replica joins again as a new replica.`,
-      confirm: 'Remove replica',
-      busy: 'Removing…',
+      heading: this.i18n.t('Remove {node} now?', { node }),
+      text: this.i18n.t(
+        '{later} Once removed, it no longer counts towards the majority. If {node} comes back, its replica joins again as a new replica.',
+        { later: this.missing(member), node },
+      ),
+      confirm: this.i18n.t('Remove replica'),
+      busy: this.i18n.t('Removing…'),
       tone: 'danger',
       action: async () => {
         await this.api.send('cluster.remove-replica', { id: member.id });
@@ -154,7 +158,29 @@ export class ReplicaList {
     });
     this.cluster.reload();
     if (done) {
-      this.toaster.show(`${node} was removed from the cluster.`);
+      this.toaster.show(this.i18n.t('{node} was removed from the cluster.', { node }));
     }
+  }
+
+  private missing(member: MemberView): string {
+    const settings = this.cluster.view()?.membership;
+    const params = {
+      time: member.missingSince ? timeSince(member.missingSince) : '',
+      minutes: settings?.removeMissingAfterMinutes ?? 0,
+    };
+    if (settings?.mode === 'automatic') {
+      return member.missingSince
+        ? this.i18n.t(
+            'It has been missing for {time}, and would be removed on its own after {minutes} minutes.',
+            params,
+          )
+        : this.i18n.t(
+            'It can’t be reached, and would be removed on its own after {minutes} minutes.',
+            params,
+          );
+    }
+    return member.missingSince
+      ? this.i18n.t('It has been missing for {time}.', params)
+      : this.i18n.t('It can’t be reached.');
   }
 }

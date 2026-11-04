@@ -1,21 +1,25 @@
-<ap-page-head heading="Root key">
+<ap-page-head [heading]="'Root key' | t">
   <span pageSub>
-    The root key protects the stored configuration and backups. Swarm gives it to every replica as a
-    secret; Apiary never stores it.
+    {{
+      'The root key protects the stored configuration and backups. Swarm gives it to every replica as a secret; Apiary never stores it.'
+        | t
+    }}
   </span>
 </ap-page-head>
 
 @if (status.value(); as s) {
   @if (s.target && stalled()) {
-    <ap-banner tone="warn" heading="The rotation hasn’t finished">
-      It started {{ timeAgo(s.targetSince!) }}, and {{ behind().length }} of {{ total() }} replicas
-      still use another key. Check that the stack was deployed with the new secret, and that these
-      replicas restarted:
+    <ap-banner tone="warn" [heading]="'The rotation hasn’t finished' | t">
       {{
-        behind()
-          .map((r) => r.node)
-          .join(', ')
-      }}.
+        'It started {time}, and {behind} of {total} replicas still use another key. Check that the stack was deployed with the new secret, and that these replicas restarted: {nodes}.'
+          | t
+            : {
+                time: timeAgo(s.targetSince!),
+                behind: behind().length,
+                total: total(),
+                nodes: behindNodes(),
+              }
+      }}
     </ap-banner>
   }
 
@@ -29,48 +33,48 @@
   >
     <section class="ap-panel" aria-labelledby="current-key">
       <div class="ap-panel-head">
-        <h2 class="ap-h ap-h-3" id="current-key">This replica’s key</h2>
-        <ap-status tone="ok">In use</ap-status>
+        <h2 class="ap-h ap-h-3" id="current-key">{{ 'This replica’s key' | t }}</h2>
+        <ap-status tone="ok">{{ 'In use' | t }}</ap-status>
       </div>
       <div class="ap-panel-body">
         <dl class="ap-kv">
-          <dt>Key ID</dt>
+          <dt>{{ 'Key ID' | t }}</dt>
           <dd class="ap-data">{{ s.current }}</dd>
           @if (s.currentSince) {
-            <dt>Known since</dt>
+            <dt>{{ 'Known since' | t }}</dt>
             <dd>
               <span class="ap-data">{{ utcDateTime(s.currentSince) }} UTC</span>,
               {{ timeAgo(s.currentSince) }}
             </dd>
           }
-          <dt>Replicas using it</dt>
-          <dd>{{ onCurrent() }} of {{ total() }}</dd>
+          <dt>{{ 'Replicas using it' | t }}</dt>
+          <dd>{{ '{count} of {total}' | t: { count: onCurrent(), total: total() } }}</dd>
         </dl>
       </div>
     </section>
 
     <section class="ap-panel" aria-labelledby="rotation">
       <div class="ap-panel-head">
-        <h2 class="ap-h ap-h-3" id="rotation">Rotation</h2>
+        <h2 class="ap-h ap-h-3" id="rotation">{{ 'Rotation' | t }}</h2>
         @if (s.target) {
-          <ap-status tone="info">In progress</ap-status>
+          <ap-status tone="info">{{ 'In progress' | t }}</ap-status>
         } @else {
-          <ap-status tone="off">Not running</ap-status>
+          <ap-status tone="off">{{ 'Not running' | t }}</ap-status>
         }
       </div>
       <div class="ap-panel-body ap-stack">
         @if (s.target) {
-          <ol class="ap-steps" aria-label="Root key rotation">
-            <li class="ap-step ap-step-done">New key deployed</li>
-            <li class="ap-step" aria-current="step">Rolling update</li>
-            <li class="ap-step">Old key forgotten</li>
+          <ol class="ap-steps" [attr.aria-label]="'Root key rotation' | t">
+            <li class="ap-step ap-step-done">{{ 'New key deployed' | t }}</li>
+            <li class="ap-step" aria-current="step">{{ 'Rolling update' | t }}</li>
+            <li class="ap-step">{{ 'Old key forgotten' | t }}</li>
           </ol>
           <div class="ap-meter ap-meter-info">
             <div class="ap-meter-head">
               <span
-                >Replicas on <span class="ap-data">{{ s.target }}</span></span
+                >{{ 'Replicas on' | t }} <span class="ap-data">{{ s.target }}</span></span
               >
-              <span class="ap-data">{{ onTarget() }} of {{ total() }}</span>
+              <span class="ap-data">{{ '{count} of {total}' | t: { count: onTarget(), total: total() } }}</span>
             </div>
             <div
               class="ap-meter-track"
@@ -78,7 +82,7 @@
               aria-valuemin="0"
               [attr.aria-valuemax]="total()"
               [attr.aria-valuenow]="onTarget()"
-              aria-label="Replicas on the new root key"
+              [attr.aria-label]="'Replicas on the new root key' | t"
             >
               <div
                 class="ap-meter-fill"
@@ -87,39 +91,46 @@
             </div>
           </div>
           <p class="ap-caption" style="margin: 0">
-            Swarm restarts the replicas one by one. Each fetches the data keys from the others and
-            protects them with the new key. Traffic continues, and Apiary forgets the old key once
-            every replica uses the new one.
+            {{
+              'Swarm restarts the replicas one by one. Each fetches the data keys from the others and protects them with the new key. Traffic continues, and Apiary forgets the old key once every replica uses the new one.'
+                | t
+            }}
           </p>
         } @else {
           <p class="ap-muted" style="margin: 0">
-            Rotate the key if it may have leaked, or as your policy requires.
+            {{ 'Rotate the key if it may have leaked, or as your policy requires.' | t }}
           </p>
           <div class="ap-field">
-            <span class="ap-label">1. If your secret store doesn’t have the current key, save it from a node running a replica</span>
+            <span class="ap-label">{{
+              '1. If your secret store doesn’t have the current key, save it from a node running a replica'
+                | t
+            }}</span>
             <ap-copy-text [text]="saveCommand" />
           </div>
           <div class="ap-field">
-            <span class="ap-label">2. Create the new key on a manager node</span>
+            <span class="ap-label">{{ '2. Create the new key on a manager node' | t }}</span>
             <ap-copy-text [text]="createCommand" />
           </div>
           <p style="margin: 0">
-            3. Copy the file <span class="ap-code">apiary_root_key_2</span> into your secret store,
-            then delete it. Swarm never shows a secret again.
+            {{ '3. Copy the file' | t }} <span class="ap-code">apiary_root_key_2</span>
+            {{ 'into your secret store, then delete it. Swarm never shows a secret again.' | t }}
           </p>
           <p style="margin: 0">
-            4. Change the secret’s name in the stack file, then run
+            {{ '4. Change the secret’s name in the stack file, then run' | t }}
             <span class="ap-code">docker stack deploy</span>.
           </p>
           <p style="margin: 0">
-            5. Once every replica uses it, Apiary forgets the old key on its own. Remove the old
-            secret with <span class="ap-code">docker secret rm</span>, and export a new backup.
+            {{
+              '5. Once every replica uses it, Apiary forgets the old key on its own. Remove the old secret with'
+                | t
+            }}
+            <span class="ap-code">docker secret rm</span>{{ ', and export a new backup.' | t }}
           </p>
           <p class="ap-caption" style="margin: 0">
-            Backups can only be restored with the key they were taken with. Keep the old key in your
-            secret store, apart from the backups, for as long as you keep backups taken with it.
-            Rotation needs at least two replicas: a single replica can’t fetch the data keys from
-            another.
+            {{
+              'Backups can only be restored with the key they were taken with. Keep the old key in your secret store, apart from the backups, for as long as you keep backups taken with it. Rotation needs at least two replicas: a single replica can’t fetch the data keys from another.'
+                | t
+            }}
           </p>
         }
       </div>
@@ -127,16 +138,16 @@
   </div>
 
   <section class="ap-panel" aria-labelledby="replica-keys">
-    <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="replica-keys">Replicas</h2></div>
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="replica-keys">{{ 'Replicas' | t }}</h2></div>
     <div class="ap-table-wrap">
       <table class="ap-table">
         <caption class="ap-sr">
-          Root key of each replica
+          {{ 'Root key of each replica' | t }}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Replica</th>
-            <th scope="col">Root key</th>
+            <th scope="col">{{ 'Replica' | t }}</th>
+            <th scope="col">{{ 'Root key' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -145,10 +156,10 @@
               <td class="ap-data" style="font-weight: 500">{{ replica.node }}</td>
               <td>
                 @if (!replica.rootKeyId) {
-                  <span class="ap-muted">Not reported yet; it reports when it restarts</span>
+                  <span class="ap-muted">{{ 'Not reported yet; it reports when it restarts' | t }}</span>
                 } @else if (s.target && replica.rootKeyId !== s.target) {
                   <ap-status tone="warn"
-                    ><span class="ap-data">{{ replica.rootKeyId }}</span> (old)</ap-status
+                    ><span class="ap-data">{{ replica.rootKeyId }}</span> {{ '(old)' | t }}</ap-status
                   >
                 } @else {
                   <span class="ap-data">{{ replica.rootKeyId }}</span>

@@ -1,29 +1,29 @@
 <section class="ap-panel" aria-labelledby="access-title">
   <div class="ap-panel-head">
-    <div><h2 class="ap-h ap-h-3" id="access-title">Access</h2></div>
+    <div><h2 class="ap-h ap-h-3" id="access-title">{{ 'Access' | t }}</h2></div>
   </div>
   <div class="ap-panel-body ap-stack">
     <ap-field
-      label="Allowed addresses"
+      [label]="'Allowed addresses' | t"
       [field]="route().allowedAddresses"
       [optional]="true"
-      help="One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403."
+      [help]="'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' | t"
     >
       <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="route().allowedAddresses"></textarea>
     </ap-field>
     <label class="ap-choice">
       <input class="ap-switch" type="checkbox" [formField]="route().rateLimited" />
       <span class="ap-choice-text">
-        <span>Limit requests per visitor</span>
-        <span class="ap-help">Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.</span>
+        <span>{{ 'Limit requests per visitor' | t }}</span>
+        <span class="ap-help">{{ 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.' | t }}</span>
       </span>
     </label>
     @if (route().rateLimited().value()) {
       <div style="max-width: 280px; margin-left: 40px">
-        <ap-field label="Rate limit" [field]="route().rateLimit" help="From 1 to 100,000.">
+        <ap-field [label]="'Rate limit' | t" [field]="route().rateLimit" [help]="'From 1 to 100,000.' | t">
           <div class="ap-affix">
             <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="route().rateLimit" />
-            <span class="ap-affix-text">a&nbsp;minute</span>
+            <span class="ap-affix-text" style="white-space: nowrap">{{ 'a minute' | t }}</span>
           </div>
         </ap-field>
       </div>
@@ -31,8 +31,8 @@
     <label class="ap-choice">
       <input class="ap-switch" type="checkbox" [formField]="route().password.enabled" />
       <span class="ap-choice-text">
-        <span>Ask visitors for a password</span>
-        <span class="ap-help">For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.</span>
+        <span>{{ 'Ask visitors for a password' | t }}</span>
+        <span class="ap-help">{{ 'For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.' | t }}</span>
       </span>
     </label>
     @if (route().password.enabled().value()) {
@@ -40,60 +40,60 @@
         @if (current() && !route().password.replace().value()) {
           <div class="ap-list-row" style="padding: 0">
             <div class="ap-list-text">
-              <strong>Password set {{ timeAgo(current()!.setAt) }}</strong>
-              <span class="ap-muted">@if (current()!.setBy) {By {{ current()!.setBy }}. }Apiary keeps only a hash, so it can’t show it again.</span>
+              <strong>{{ 'Password set {time}' | t: { time: timeAgo(current()!.setAt) } }}</strong>
+              <span class="ap-muted">{{ passwordNote() }}</span>
             </div>
-            <button apButton type="button" [disabled]="!canWrite()" (click)="setNewPassword()">Set a new password…</button>
+            <button apButton type="button" [disabled]="!canWrite()" (click)="setNewPassword()">{{ 'Set a new password…' | t }}</button>
           </div>
         } @else {
           <ap-field
-            label="Password"
+            [label]="'Password' | t"
             [field]="route().password.newPassword"
-            [help]="current() ? 'Shown once more after you save, to copy. Saving signs out everyone who used the old one.' : 'Shown once more after you save, to copy. Then Apiary keeps only a hash.'"
+            [help]="(current() ? 'Shown once more after you save, to copy. Saving signs out everyone who used the old one.' : 'Shown once more after you save, to copy. Then Apiary keeps only a hash.') | t"
           >
             <div class="ap-row" style="gap: var(--space-2)">
               <input class="ap-input ap-data" style="flex: 1; min-width: 12rem" autocomplete="off" spellcheck="false" autocapitalize="none" [formField]="route().password.newPassword" />
-              <button apButton="ghost" size="small" type="button" (click)="generate()">Generate another</button>
+              <button apButton="ghost" size="small" type="button" (click)="generate()">{{ 'Generate another' | t }}</button>
             </div>
           </ap-field>
         }
         <label class="ap-choice">
           <input class="ap-check" type="checkbox" [formField]="route().password.link" />
           <span class="ap-choice-text">
-            <span>Also make a sign-in link</span>
-            <span class="ap-help">Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.</span>
+            <span>{{ 'Also make a sign-in link' | t }}</span>
+            <span class="ap-help">{{ 'Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.' | t }}</span>
           </span>
         </label>
         @if (current()?.linkMadeAt && route().password.link().value()) {
           <div class="ap-list-row" style="padding: 0 0 0 30px">
             @if (route().password.newLink().value()) {
               <div class="ap-list-text">
-                <strong>A new link is made when you save</strong>
-                <span class="ap-muted">The current one stops working then.</span>
+                <strong>{{ 'A new link is made when you save' | t }}</strong>
+                <span class="ap-muted">{{ 'The current one stops working then.' | t }}</span>
               </div>
             } @else {
               <div class="ap-list-text">
-                <strong>Sign-in link made {{ timeAgo(current()!.linkMadeAt!) }}</strong>
-                <span class="ap-muted">Shown once, like the password.</span>
+                <strong>{{ 'Sign-in link made {time}' | t: { time: timeAgo(current()!.linkMadeAt!) } }}</strong>
+                <span class="ap-muted">{{ 'Shown once, like the password.' | t }}</span>
               </div>
             }
-            <button apButton type="button" [disabled]="!canWrite() || route().password.newLink().value()" (click)="makeNewLink()">Make a new link</button>
+            <button apButton type="button" [disabled]="!canWrite() || route().password.newLink().value()" (click)="makeNewLink()">{{ 'Make a new link' | t }}</button>
           </div>
         }
         <ap-field
-          label="Message on the password page"
+          [label]="'Message on the password page' | t"
           [field]="route().password.message"
           [optional]="true"
-          help="Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private."
+          [help]="'Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private.' | t"
         >
-          <input class="ap-input" placeholder="Preview of the new website for Example Lda." [formField]="route().password.message" />
+          <input class="ap-input" [placeholder]="'Preview of the new website for Example Lda.' | t" [formField]="route().password.message" />
         </ap-field>
         <div style="max-width: 280px">
-          <ap-field label="Keep visitors signed in for" [field]="route().password.days" help="A new password signs everyone out at once.">
+          <ap-field [label]="'Keep visitors signed in for' | t" [field]="route().password.days" [help]="'A new password signs everyone out at once.' | t">
             <select class="ap-select" [formField]="route().password.days">
-              <option value="1">1 day</option>
-              <option value="7">7 days</option>
-              <option value="30">30 days</option>
+              <option value="1">{{ '1 day' | t }}</option>
+              <option value="7">{{ '7 days' | t }}</option>
+              <option value="30">{{ '30 days' | t }}</option>
             </select>
           </ap-field>
         </div>

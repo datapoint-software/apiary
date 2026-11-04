@@ -1,21 +1,22 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
+import { TranslatePipe } from '@datapoint/apiary-ui';
 import { Role } from '../api/models';
 import { roleDescriptions, roleNames } from '../auth/roles';
 
 @Component({
   selector: 'ap-role-choices',
-  imports: [FormField],
+  imports: [FormField, TranslatePipe],
   template: `
     <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-      <legend class="ap-label" style="margin-bottom: 8px">Role</legend>
+      <legend class="ap-label" style="margin-bottom: 8px">{{ 'Role' | t }}</legend>
       <div class="ap-stack" style="gap: 10px">
         @for (role of roles; track role) {
           <label class="ap-choice">
             <input class="ap-radio" type="radio" [value]="role" [formField]="field()" />
             <span class="ap-choice-text">
-              <span>{{ roleNames[role] }}</span>
-              <span class="ap-help">{{ roleDescriptions[role] }}</span>
+              <span>{{ roleNames[role] | t }}</span>
+              <span class="ap-help">{{ roleDescriptions[role] | t }}</span>
             </span>
           </label>
         }

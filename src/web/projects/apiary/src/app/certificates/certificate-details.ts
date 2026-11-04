@@ -2,10 +2,10 @@ import { Dialog } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Banner, Button, Confirmer, ErrorMessages, Icon, PageHead, Status, Toaster } from '@datapoint/apiary-ui';
+import { Banner, Button, Confirmer, ErrorMessages, I18n, Icon, PageHead, Status, Toaster, TranslatePipe } from '@datapoint/apiary-ui';
 import { RefreshCw, Upload } from 'lucide';
 import { Api } from '../api/api';
-import { CertificateDetails as Details, ProjectView, RenewResult } from '../api/models';
+import { CertificateDetails as Details, CertificateSummary, ProjectView, RenewResult } from '../api/models';
 import { utcDateTime } from '../api/time-ago';
 import { Auth } from '../auth/auth';
 import { openDialog } from '../shell/open-dialog';
@@ -17,7 +17,7 @@ import { WriteLock } from '../cluster/write-lock';
 
 @Component({
   selector: 'ap-certificate-details',
-  imports: [WriteLock, PageHead, Button, Icon, Banner, Status, RouterLink, CertificateFacts, CertificateHistory],
+  imports: [WriteLock, PageHead, Button, Icon, Banner, Status, RouterLink, CertificateFacts, CertificateHistory, TranslatePipe],
   templateUrl: './certificate-details.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -29,6 +29,7 @@ export class CertificateDetails {
   private readonly toaster = inject(Toaster);
   private readonly confirmer = inject(Confirmer);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly details = httpResource<Details>(() => this.api.query('certificates.get', { id: this.id() }));
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
@@ -40,10 +41,13 @@ export class CertificateDetails {
   });
   protected readonly renewing = signal(false);
   protected readonly icons = { renew: RefreshCw, upload: Upload };
-  protected readonly statusText = statusText;
   protected readonly statusTone = statusTone;
   protected readonly sourceName = sourceName;
   protected readonly utcDateTime = utcDateTime;
+
+  protected statusText(certificate: CertificateSummary): string {
+    return statusText(certificate, this.i18n);
+  }
 
   protected describe(code: string): string {
     return this.messages.describe(code);
@@ -54,10 +58,10 @@ export class CertificateDetails {
     try {
       const result = await this.api.send<RenewResult>('certificates.renew', { id: this.id() });
       if (result.renewed && result.notAfter) {
-        this.toaster.show(`Valid until ${result.notAfter.slice(0, 10)}. Every replica uses it now.`, { heading: 'Certificate renewed' });
+        this.toaster.show(this.i18n.t('Valid until {date}. Every replica uses it now.', { date: result.notAfter.slice(0, 10) }), { heading: this.i18n.t('Certificate renewed') });
       } else {
         const reason = result.failureCode ? this.messages.describe(result.failureCode) : '';
-        this.toaster.show([reason, result.failureDetail].filter(Boolean).join(' '), { heading: 'Renewal failed', tone: 'error' });
+        this.toaster.show([reason, result.failureDetail].filter(Boolean).join(' '), { heading: this.i18n.t('Renewal failed'), tone: 'error' });
       }
     } catch (problem) {
       this.toaster.show(this.messages.describe((problem as { code?: string }).code ?? 'internal'), { tone: 'error' });
@@ -79,14 +83,14 @@ export class CertificateDetails {
       return;
     }
     const deleted = await this.confirmer.confirm({
-      heading: `Delete the certificate for ${certificate.name}?`,
-      text: 'No route uses it. Its private key is deleted from every replica.',
-      confirm: 'Delete certificate',
-      busy: 'Deleting…',
+      heading: this.i18n.t('Delete the certificate for {name}?', { name: certificate.name }),
+      text: this.i18n.t('No route uses it. Its private key is deleted from every replica.'),
+      confirm: this.i18n.t('Delete certificate'),
+      busy: this.i18n.t('Deleting…'),
       action: () => this.api.send('certificates.delete', { id: certificate.id }),
     });
     if (deleted) {
-      this.toaster.show('Certificate deleted.');
+      this.toaster.show(this.i18n.t('Certificate deleted.'));
       await this.router.navigate(['/certificates']);
     }
   }

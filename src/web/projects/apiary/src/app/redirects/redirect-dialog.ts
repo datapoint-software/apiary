@@ -2,7 +2,7 @@ import { DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, hostname, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorSummary, Field, Form, TranslatePipe, hostname, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { serverCheck } from '../api/server-check';
 import { ProjectView } from '../api/models';
@@ -35,7 +35,7 @@ function checkTarget(to: string, from: string): string | undefined {
 
 @Component({
   selector: 'ap-redirect-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button],
+  imports: [Form, Field, FormField, ErrorSummary, Button, TranslatePipe],
   templateUrl: './redirect-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,56 +1,56 @@
-<ap-page-head heading="All routes">
-  <span pageSub>Every HTTP route in the cluster, grouped by project.</span>
+<ap-page-head [heading]="'All routes' | t">
+  <span pageSub>{{ 'Every HTTP route in the cluster, grouped by project.' | t }}</span>
   @if (auth.canOperate()) {
     <a apWrite pageActions apButton="primary" routerLink="/routes/new" [queryParams]="{ project: projectFilter() || null }">
-      <ap-icon [icon]="icons.plus" />Add route
+      <ap-icon [icon]="icons.plus" />{{ 'Add route' | t }}
     </a>
   }
 </ap-page-head>
 
 @if (isLoading()) {
-  <div class="ap-panel" style="padding: 24px" aria-busy="true" aria-label="Loading">
+  <div class="ap-panel" style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t">
     <span class="ap-skel" style="width: 60%; height: 14px"></span>
   </div>
 } @else if (total() === 0) {
   <section class="ap-panel">
-    <ap-empty-state heading="No routes yet">
-      A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.
+    <ap-empty-state [heading]="'No routes yet' | t">
+      {{ 'A route sends requests for a hostname, such as shop.example.com, to a service on the shared network.' | t }}
       @if (auth.canOperate()) {
-        <a apWrite emptyActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="icons.plus" />Add route</a>
+        <a apWrite emptyActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="icons.plus" />{{ 'Add route' | t }}</a>
       }
     </ap-empty-state>
   </section>
 } @else {
   <section class="ap-panel" aria-labelledby="routes-title">
-    <div class="ap-panel-head"><h2 class="ap-h ap-h-2 ap-sr" id="routes-title">Routes</h2></div>
-    <div class="ap-toolbar" role="search" aria-label="Filter routes" style="padding-top: 4px">
+    <div class="ap-panel-head"><h2 class="ap-h ap-h-2 ap-sr" id="routes-title">{{ 'Routes' | t }}</h2></div>
+    <div class="ap-toolbar" role="search" [attr.aria-label]="'Filter routes' | t" style="padding-top: 4px">
       <div class="ap-filter">
         <ap-icon [icon]="icons.search" />
         <input
           class="ap-input"
           type="search"
-          placeholder="Filter by hostname or target"
-          aria-label="Filter by hostname or target"
+          [placeholder]="'Filter by hostname or target' | t"
+          [attr.aria-label]="'Filter by hostname or target' | t"
           [value]="filter()"
           (input)="filter.set($any($event.target).value)"
         />
       </div>
-      <div class="ap-seg" role="group" aria-label="Status">
+      <div class="ap-seg" role="group" [attr.aria-label]="'Status' | t">
         @for (option of statuses; track option[0]) {
-          <button type="button" [attr.aria-pressed]="statusFilter() === option[0]" (click)="statusFilter.set(option[0])">{{ option[1] }}</button>
+          <button type="button" [attr.aria-pressed]="statusFilter() === option[0]" (click)="statusFilter.set(option[0])">{{ option[1] | t }}</button>
         }
       </div>
-      <select class="ap-select" aria-label="Project" [value]="projectFilter()" (change)="chooseProject($any($event.target).value)">
-        <option value="">All projects</option>
+      <select class="ap-select" [attr.aria-label]="'Project' | t" [value]="projectFilter()" (change)="chooseProject($any($event.target).value)">
+        <option value="">{{ 'All projects' | t }}</option>
         @for (project of projectOptions(); track project.id) {
           <option [value]="project.id">{{ project.name }}</option>
         }
       </select>
     </div>
     @if (groups().length === 0) {
-      <ap-empty-state heading="No routes match">
-        Try another word, or clear the filters to see every route.
-        <button emptyActions apButton type="button" (click)="clearFilters()">Clear filters</button>
+      <ap-empty-state [heading]="'No routes match' | t">
+        {{ 'Try another word, or clear the filters to see every route.' | t }}
+        <button emptyActions apButton type="button" (click)="clearFilters()">{{ 'Clear filters' | t }}</button>
       </ap-empty-state>
     } @else {
       @if (selectedRoutes().length > 0) {
@@ -58,6 +58,6 @@
       }
       <ap-route-table [groups]="groups()" [(selected)]="selected" />
     }
-    <div class="ap-panel-foot"><div class="ap-pager"><span aria-live="polite">{{ shown().length }} of {{ total() }} {{ total() === 1 ? 'route' : 'routes' }}</span></div></div>
+    <div class="ap-panel-foot"><div class="ap-pager"><span aria-live="polite">{{ count() }}</span></div></div>
   </section>
 }

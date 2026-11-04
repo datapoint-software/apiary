@@ -3,7 +3,7 @@ WORKDIR /src/web
 COPY src/web/package.json src/web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY src/web/ ./
-RUN npx ng build apiary
+RUN npm run check:translations && npx ng build apiary
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS server
 ARG TARGETARCH

@@ -1,33 +1,33 @@
-<ap-page-head heading="Audit log">
-  <span pageSub>Who changed what, from where. Entries are kept for 1 year.</span>
+<ap-page-head [heading]="'Audit log' | t">
+  <span pageSub>{{ 'Who changed what, from where. Entries are kept for 1 year.' | t }}</span>
 </ap-page-head>
 
 <section class="ap-panel">
-  <div class="ap-panel-head"><h2 class="ap-h ap-h-3 ap-sr">Filters</h2></div>
+  <div class="ap-panel-head"><h2 class="ap-h ap-h-3 ap-sr">{{ 'Filters' | t }}</h2></div>
   <div class="ap-toolbar" style="padding-top: 4px">
-    <div class="ap-seg" role="group" aria-label="Time range">
+    <div class="ap-seg" role="group" [attr.aria-label]="'Time range' | t">
       @for (option of ranges; track option[0]) {
-        <button type="button" [attr.aria-pressed]="range() === option[0]" (click)="range.set(option[0])">{{ option[1] }}</button>
+        <button type="button" [attr.aria-pressed]="range() === option[0]" (click)="range.set(option[0])">{{ option[1] | t }}</button>
       }
     </div>
-    <select class="ap-select" aria-label="Person" [value]="who()" (change)="who.set($any($event.target).value)">
-      <option value="">Everyone</option>
+    <select class="ap-select" [attr.aria-label]="'Person' | t" [value]="who()" (change)="who.set($any($event.target).value)">
+      <option value="">{{ 'Everyone' | t }}</option>
       @for (person of people(); track person) {
         <option [value]="person">{{ person }}</option>
       }
     </select>
-    <div class="ap-seg" role="group" aria-label="Through">
+    <div class="ap-seg" role="group" [attr.aria-label]="'Through' | t">
       @for (option of vias; track option[0]) {
-        <button type="button" [attr.aria-pressed]="via() === option[0]" (click)="via.set(option[0])">{{ option[1] }}</button>
+        <button type="button" [attr.aria-pressed]="via() === option[0]" (click)="via.set(option[0])">{{ option[1] | t }}</button>
       }
     </div>
     <div class="ap-search" style="flex: 1 1 220px">
       <ap-icon [icon]="searchIcon" />
-      <input #searchBox class="ap-input" type="search" aria-label="Search the audit log" placeholder="Search actions, people, addresses…" [value]="search()" (input)="type(searchBox.value)" />
+      <input #searchBox class="ap-input" type="search" [attr.aria-label]="'Search the audit log' | t" [placeholder]="'Search actions, people, addresses…' | t" [value]="search()" (input)="type(searchBox.value)" />
     </div>
     <label class="ap-choice" style="font-size: 0.875rem">
       <input class="ap-switch" type="checkbox" [checked]="failedOnly()" (change)="failedOnly.set($any($event.target).checked)" />
-      Denied and failed only
+      {{ 'Denied and failed only' | t }}
     </label>
   </div>
   @if (range() === 'custom') {
@@ -43,19 +43,19 @@
             <div>
               <div>
                 @if (byAgent(entry)) {
-                  Agent “{{ entry.client }}” for
+                  {{ 'Agent “{name}” for' | t: { name: entry.client ?? '' } }}
                 }
-                <strong>{{ entry.user ?? 'System' }}</strong> {{ actionLabel(entry.action) }}
+                <strong>{{ entry.user ?? ('System' | t) }}</strong> {{ actionLabel(entry.action) | t }}
                 @if (entry.outcome === 'denied') {
-                  <span class="ap-tag">Denied</span>
+                  <span class="ap-tag">{{ 'Denied' | t }}</span>
                 } @else if (entry.outcome === 'failed') {
-                  <span class="ap-tag">Failed</span>
+                  <span class="ap-tag">{{ 'Failed' | t }}</span>
                 }
               </div>
               <div class="ap-event-meta">
-                <span class="ap-data">{{ entry.action }}</span>{{ byAgent(entry) ? ' · through MCP' : '' }}
+                <span class="ap-data">{{ entry.action }}</span>{{ byAgent(entry) ? (' · through MCP' | t) : '' }}
                 @if (entry.address) {
-                  · from <span class="ap-data">{{ entry.address }}</span>
+                  {{ '· from' | t }} <span class="ap-data">{{ entry.address }}</span>
                 }
               </div>
             </div>
@@ -65,14 +65,14 @@
       </div>
     } @empty {
       @if (!entries.isLoading()) {
-        <ap-empty-state heading="No entries match">
-          Nothing in this range with these filters.
-          <button emptyActions class="ap-btn" type="button" (click)="reset()">Clear filters</button>
+        <ap-empty-state [heading]="'No entries match' | t">
+          {{ 'Nothing in this range with these filters.' | t }}
+          <button emptyActions class="ap-btn" type="button" (click)="reset()">{{ 'Clear filters' | t }}</button>
         </ap-empty-state>
       }
     }
   </div>
 </section>
 <p class="ap-caption" style="margin: 0">
-  The audit log includes email and IP addresses, which are personal data. They’re kept for 1 year, then deleted.
+  {{ 'The audit log includes email and IP addresses, which are personal data. They’re kept for 1 year, then deleted.' | t }}
 </p>

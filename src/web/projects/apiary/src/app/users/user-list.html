@@ -1,26 +1,26 @@
-<ap-page-head heading="Users">
-  <span pageSub>Everyone with access to this cluster. Give each person the least access they need.</span>
-  <button apWrite pageActions apButton="primary" type="button" (click)="invite()"><ap-icon [icon]="icons.invite" />Invite someone</button>
+<ap-page-head [heading]="'Users' | t">
+  <span pageSub>{{ 'Everyone with access to this cluster. Give each person the least access they need.' | t }}</span>
+  <button apWrite pageActions apButton="primary" type="button" (click)="invite()"><ap-icon [icon]="icons.invite" />{{ 'Invite someone' | t }}</button>
 </ap-page-head>
 
-@if (withoutTwoStep(); as count) {
-  <ap-banner tone="warn" [heading]="count === 1 ? '1 person must set up two-step sign-in' : count + ' people must set up two-step sign-in'">
-    Their two-step sign-in was reset. They set it up again at their next sign-in.
+@if (withoutTwoStep()) {
+  <ap-banner tone="warn" [heading]="withoutTwoStepHeading()">
+    {{ 'Their two-step sign-in was reset. They set it up again at their next sign-in.' | t }}
   </ap-banner>
 }
 
 <section class="ap-panel">
   <div class="ap-table-wrap">
     <table class="ap-table">
-      <caption class="ap-sr">Users</caption>
+      <caption class="ap-sr">{{ 'Users' | t }}</caption>
       <thead>
         <tr>
-          <th scope="col">Name</th>
-          <th scope="col">Role</th>
-          <th scope="col">Two-step sign-in</th>
-          <th scope="col">Last signed in</th>
-          <th scope="col">Status</th>
-          <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+          <th scope="col">{{ 'Name' | t }}</th>
+          <th scope="col">{{ 'Role' | t }}</th>
+          <th scope="col">{{ 'Two-step sign-in' | t }}</th>
+          <th scope="col">{{ 'Last signed in' | t }}</th>
+          <th scope="col">{{ 'Status' | t }}</th>
+          <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
         </tr>
       </thead>
       <tbody>
@@ -38,33 +38,33 @@
                   <span style="font-weight: 500">
                     {{ user.name }}
                     @for (tag of tags(user); track tag) {
-                      <span class="ap-tag">{{ tag }}</span>
+                      <span class="ap-tag">{{ tag | t }}</span>
                     }
                   </span>
                   <span class="ap-caption">{{ user.email }}</span>
                 </div>
               </div>
             </td>
-            <td>{{ roleNames[user.role] }}</td>
+            <td>{{ roleNames[user.role] | t }}</td>
             <td>
               @let state = twoStep(user);
               @if (state[0]) {
-                <ap-status [tone]="state[0]">{{ state[1] }}</ap-status>
+                <ap-status [tone]="state[0]">{{ state[1] | t }}</ap-status>
               } @else {
-                <span class="ap-muted">{{ state[1] }}</span>
+                <span class="ap-muted">{{ state[1] | t }}</span>
               }
             </td>
-            <td class="ap-muted">{{ user.lastSignInAt ? timeAgo(user.lastSignInAt) : 'Never' }}</td>
+            <td class="ap-muted">{{ user.lastSignInAt ? timeAgo(user.lastSignInAt) : ('Never' | t) }}</td>
             <td>
               @switch (user.status) {
                 @case ('active') {
-                  <ap-status tone="ok">Active</ap-status>
+                  <ap-status tone="ok">{{ 'Active' | t }}</ap-status>
                 }
                 @case ('invited') {
-                  <ap-status tone="info">Invited, link expires {{ user.inviteExpiresAt ? timeUntil(user.inviteExpiresAt) : '' }}</ap-status>
+                  <ap-status tone="info">{{ 'Invited, link expires {when}' | t: { when: user.inviteExpiresAt ? timeUntil(user.inviteExpiresAt) : '' } }}</ap-status>
                 }
                 @default {
-                  <ap-status tone="off">Disabled</ap-status>
+                  <ap-status tone="off">{{ 'Disabled' | t }}</ap-status>
                 }
               }
             </td>
@@ -74,24 +74,24 @@
                 size="small"
                 [iconOnly]="true"
                 type="button"
-                [attr.aria-label]="'Actions for ' + user.name"
+                [attr.aria-label]="'Actions for {name}' | t: { name: user.name }"
                 [cdkMenuTriggerFor]="menu"
               >
                 <ap-icon [icon]="icons.menu" />
               </button>
               <ng-template #menu>
-                <div class="ap-menu" cdkMenu [attr.aria-label]="'Actions for ' + user.name">
+                <div class="ap-menu" cdkMenu [attr.aria-label]="'Actions for {name}' | t: { name: user.name }">
                   @if (user.status === 'invited') {
                     <button class="ap-menu-item" cdkMenuItem type="button" (cdkMenuItemTriggered)="renew(user)">
-                      <ap-icon [icon]="icons.link" />Make a new invite link
+                      <ap-icon [icon]="icons.link" />{{ 'Make a new invite link' | t }}
                     </button>
                     <div class="ap-menu-sep" role="separator"></div>
                     <button class="ap-menu-item ap-menu-danger" cdkMenuItem type="button" (cdkMenuItemTriggered)="delete(user)">
-                      <ap-icon [icon]="icons.revoke" />Revoke invite…
+                      <ap-icon [icon]="icons.revoke" />{{ 'Revoke invite…' | t }}
                     </button>
                   } @else {
                     <button class="ap-menu-item" cdkMenuItem type="button" [cdkMenuItemDisabled]="user.singleSignOn" (cdkMenuItemTriggered)="changeRole(user)">
-                      <ap-icon [icon]="icons.role" />Change role…
+                      <ap-icon [icon]="icons.role" />{{ 'Change role…' | t }}
                     </button>
                     <button
                       class="ap-menu-item"
@@ -100,15 +100,15 @@
                       [cdkMenuItemDisabled]="!user.twoStepOn"
                       (cdkMenuItemTriggered)="resetTwoStep(user)"
                     >
-                      <ap-icon [icon]="icons.reset" />Reset two-step sign-in…
+                      <ap-icon [icon]="icons.reset" />{{ 'Reset two-step sign-in…' | t }}
                     </button>
                     @if (user.status === 'disabled') {
                       <button class="ap-menu-item" cdkMenuItem type="button" (cdkMenuItemTriggered)="enable(user)">
-                        <ap-icon [icon]="icons.enable" />Enable
+                        <ap-icon [icon]="icons.enable" />{{ 'Enable' | t }}
                       </button>
                     } @else {
                       <button class="ap-menu-item" cdkMenuItem type="button" [cdkMenuItemDisabled]="user.id === auth.user()?.id" (cdkMenuItemTriggered)="disable(user)">
-                        <ap-icon [icon]="icons.disable" />Disable…
+                        <ap-icon [icon]="icons.disable" />{{ 'Disable…' | t }}
                       </button>
                     }
                     <div class="ap-menu-sep" role="separator"></div>
@@ -119,7 +119,7 @@
                       [cdkMenuItemDisabled]="user.id === auth.user()?.id"
                       (cdkMenuItemTriggered)="delete(user)"
                     >
-                      <ap-icon [icon]="icons.delete" />Delete…
+                      <ap-icon [icon]="icons.delete" />{{ 'Delete…' | t }}
                     </button>
                   }
                 </div>
@@ -133,12 +133,12 @@
 </section>
 
 <section class="ap-panel" aria-labelledby="roles-title">
-  <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="roles-title">Roles</h2></div>
+  <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="roles-title">{{ 'Roles' | t }}</h2></div>
   <div class="ap-panel-body">
     <dl class="ap-kv">
       @for (role of roles; track role[0]) {
-        <dt>{{ roleNames[role[0]] }}</dt>
-        <dd>{{ role[1] }}</dd>
+        <dt>{{ roleNames[role[0]] | t }}</dt>
+        <dd>{{ role[1] | t }}</dd>
       }
     </dl>
   </div>

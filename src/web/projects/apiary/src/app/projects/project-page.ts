@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Button, EmptyState, Icon, PageHead, Status } from '@datapoint/apiary-ui';
+import { Button, EmptyState, I18n, Icon, PageHead, Status, Tone, TranslatePipe } from '@datapoint/apiary-ui';
 import { Pencil, Plus, Trash2 } from 'lucide';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
@@ -17,19 +17,19 @@ import { projectHealth } from './project-health';
 
 @Component({
   selector: 'ap-project-page',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, Status, RouterLink, RouteTable, RouteSelectionBar, NotFound],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, Status, RouterLink, RouteTable, RouteSelectionBar, NotFound, TranslatePipe],
   templateUrl: './project-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectPage {
   readonly id = input.required<string>();
   private readonly api = inject(Api);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly actions = inject(ProjectActions);
   protected readonly icons = { add: Plus, edit: Pencil, delete: Trash2 };
-  protected readonly projectHealth = projectHealth;
   protected readonly perMinute = perMinute;
-  protected readonly crumbs = [{ label: 'Projects', link: '/projects' }];
+  protected readonly crumbs = computed(() => [{ label: this.i18n.t('Projects'), link: '/projects' }]);
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'));
   private readonly projectsRefresh = reloadEvery(this.projects);
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
@@ -57,6 +57,10 @@ export class ProjectPage {
   });
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
   protected readonly selectedRoutes = computed(() => this.projectRoutes().filter((r) => this.selected().has(r.id)));
+
+  protected healthOf(project: ProjectView): [Tone, string] {
+    return projectHealth(project, this.i18n);
+  }
 
   protected clearSelection(): void {
     this.selected.set(new Set());

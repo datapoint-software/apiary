@@ -1,40 +1,40 @@
 @if (preview(); as checked) {
   <div class="ap-dialog ap-dialog-lg" role="dialog" aria-labelledby="upload-title" aria-describedby="upload-check">
     <div class="ap-dialog-head">
-      <h2 class="ap-h ap-h-2" id="upload-title">{{ replacing ? 'Replace the certificate for ' + replacing.name : 'Upload certificate' }}</h2>
+      <h2 class="ap-h ap-h-2" id="upload-title">{{ heading() }}</h2>
     </div>
     <div class="ap-dialog-body ap-stack">
       @if (failure()) {
         <ap-banner tone="critical" role="alert">{{ failure() }}</ap-banner>
       }
-      <p style="margin: 0" id="upload-check">Check that this is the certificate you expect.</p>
+      <p style="margin: 0" id="upload-check">{{ 'Check that this is the certificate you expect.' | t }}</p>
       <dl class="ap-kv">
-        <dt>Covers</dt>
+        <dt>{{ 'Covers' | t }}</dt>
         <dd class="ap-data">{{ checked.hosts.join(', ') }}</dd>
-        <dt>Issuer</dt>
+        <dt>{{ 'Issuer' | t }}</dt>
         <dd>{{ checked.issuer }}</dd>
-        <dt>Valid</dt>
-        <dd><span class="ap-data">{{ utcDateTime(checked.notBefore) }}</span> to <span class="ap-data">{{ utcDateTime(checked.notAfter) }}</span> UTC</dd>
-        <dt>Chain</dt>
-        <dd><ap-status tone="ok">Complete, {{ checked.chainLength === 1 ? '1 certificate' : checked.chainLength + ' certificates' }}</ap-status></dd>
+        <dt>{{ 'Valid' | t }}</dt>
+        <dd>{{ range()[0] }}<span class="ap-data">{{ utcDateTime(checked.notBefore) }}</span>{{ range()[1] }}<span class="ap-data">{{ utcDateTime(checked.notAfter) }}</span>{{ range()[2] }}</dd>
+        <dt>{{ 'Chain' | t }}</dt>
+        <dd><ap-status tone="ok">{{ chainText(checked.chainLength) }}</ap-status></dd>
       </dl>
     </div>
     <div class="ap-dialog-foot">
-      <button apButton="ghost" type="button" [disabled]="adding()" (click)="back()">Back</button>
+      <button apButton="ghost" type="button" [disabled]="adding()" (click)="back()">{{ 'Back' | t }}</button>
       <button apButton="primary" type="button" cdkFocusInitial [disabled]="adding()" (click)="add()">
-        {{ adding() ? 'Adding…' : replacing ? 'Replace certificate' : 'Add certificate' }}
+        {{ (adding() ? 'Adding…' : replacing ? 'Replace certificate' : 'Add certificate') | t }}
       </button>
     </div>
   </div>
 } @else {
   <form class="ap-dialog ap-dialog-lg" role="dialog" aria-labelledby="upload-title" [apForm]="upload" #uploadForm="apForm" (submit)="check(uploadForm)">
     <div class="ap-dialog-head">
-      <h2 class="ap-h ap-h-2" id="upload-title">{{ replacing ? 'Replace the certificate for ' + replacing.name : 'Upload certificate' }}</h2>
+      <h2 class="ap-h ap-h-2" id="upload-title">{{ heading() }}</h2>
     </div>
     <div class="ap-dialog-body ap-form" style="gap: 16px">
       <ap-error-summary verb="check it" />
       @if (!replacing) {
-        <ap-field label="Project" [field]="upload.projectId" help="Only for grouping. Routes in any project can use it.">
+        <ap-field [label]="'Project' | t" [field]="upload.projectId" [help]="'Only for grouping. Routes in any project can use it.' | t">
           <select class="ap-select" [formField]="upload.projectId">
             @for (project of projects.value(); track project.id) {
               <option [value]="project.id">{{ project.name }}</option>
@@ -42,29 +42,29 @@
           </select>
         </ap-field>
       }
-      <ap-field label="Certificate and chain" [field]="upload.chainPem" help="PEM, leaf certificate first, then the intermediates. Include the root if your CA isn’t publicly trusted.">
+      <ap-field [label]="'Certificate and chain' | t" [field]="upload.chainPem" [help]="'PEM, leaf certificate first, then the intermediates. Include the root if your CA isn’t publicly trusted.' | t">
         <textarea class="ap-textarea ap-data" rows="6" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----" [formField]="upload.chainPem" cdkFocusInitial></textarea>
       </ap-field>
       <label class="ap-drop" style="margin-top: -8px" (apFileDrop)="read($event, upload.chainPem)">
         <ap-icon [icon]="fileIcon" />
-        <span><strong>Choose a file</strong> or drop it here</span>
-        <span class="ap-caption">.pem, .crt or .cer</span>
+        <span><strong>{{ 'Choose a file' | t }}</strong> {{ 'or drop it here' | t }}</span>
+        <span class="ap-caption">{{ '.pem, .crt or .cer' | t }}</span>
         <input type="file" accept=".pem,.crt,.cer" (change)="load($event, upload.chainPem)" />
       </label>
-      <ap-field label="Private key" [field]="upload.keyPem" help="PEM, not protected by a passphrase. It’s encrypted with the root key and never shown again.">
+      <ap-field [label]="'Private key' | t" [field]="upload.keyPem" [help]="'PEM, not protected by a passphrase. It’s encrypted with the root key and never shown again.' | t">
         <textarea class="ap-textarea ap-data" rows="4" spellcheck="false" placeholder="-----BEGIN PRIVATE KEY-----" [formField]="upload.keyPem"></textarea>
       </ap-field>
       <label class="ap-drop" style="margin-top: -8px" (apFileDrop)="read($event, upload.keyPem)">
         <ap-icon [icon]="fileIcon" />
-        <span><strong>Choose a file</strong> or drop it here</span>
-        <span class="ap-caption">.pem or .key</span>
+        <span><strong>{{ 'Choose a file' | t }}</strong> {{ 'or drop it here' | t }}</span>
+        <span class="ap-caption">{{ '.pem or .key' | t }}</span>
         <input type="file" accept=".pem,.key" (change)="load($event, upload.keyPem)" />
       </label>
     </div>
     <div class="ap-dialog-foot">
-      <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+      <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
       <button apButton="primary" type="submit" [disabled]="upload().submitting()">
-        {{ upload().submitting() ? 'Checking…' : 'Continue' }}
+        {{ (upload().submitting() ? 'Checking…' : 'Continue') | t }}
       </button>
     </div>
   </form>

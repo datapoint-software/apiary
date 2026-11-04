@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
-import { ApiProblem, Banner, Button, ErrorSummary, Field, Form, PageHead, Toaster, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Banner, Button, ErrorSummary, Field, Form, I18n, PageHead, Toaster, TranslatePipe, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { SsoSettingsView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
@@ -39,13 +39,14 @@ function ssoModel(view: SsoSettingsView): SsoModel {
 
 @Component({
   selector: 'ap-sso-settings',
-  imports: [WriteLock, PageHead, Banner, Button, ErrorSummary, Field, Form, FormField, CopyText],
+  imports: [WriteLock, PageHead, Banner, Button, ErrorSummary, Field, Form, FormField, CopyText, TranslatePipe],
   templateUrl: './sso-settings.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SsoSettings {
   private readonly api = inject(Api);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   protected readonly current = httpResource<SsoSettingsView>(() => this.api.query('sso.get'));
   protected readonly redirectUri = `${location.origin}/auth/sso/callback`;
   protected readonly model = signal<SsoModel>({
@@ -67,7 +68,7 @@ export class SsoSettings {
   });
   protected readonly changed = computed(() => {
     const changedAt = this.current.value()?.changedAt;
-    return changedAt ? `Changed ${timeAgo(changedAt)}` : 'Not set up yet';
+    return changedAt ? this.i18n.t('Changed {time}', { time: timeAgo(changedAt) }) : this.i18n.t('Not set up yet');
   });
 
   constructor() {
@@ -102,7 +103,9 @@ export class SsoSettings {
     if (saved) {
       this.settings().reset();
       this.current.reload();
-      this.toaster.show(this.model().enabled ? 'Single sign-on saved. The sign-in page offers it now.' : 'Single sign-on saved. It’s off.');
+      this.toaster.show(
+        this.i18n.t(this.model().enabled ? 'Single sign-on saved. The sign-in page offers it now.' : 'Single sign-on saved. It’s off.'),
+      );
     }
   }
 }

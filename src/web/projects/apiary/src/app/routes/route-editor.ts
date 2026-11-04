@@ -11,9 +11,11 @@ import {
   ErrorSummary,
   Field,
   Form,
+  I18n,
   PageHead,
   Status,
   Toaster,
+  TranslatePipe,
   problemErrors,
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
@@ -36,7 +38,7 @@ import { RouteAccessData, RouteAccessDialog } from './route-access-dialog';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, TargetsSection, RouterLink],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, TargetsSection, RouterLink, TranslatePipe],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -49,6 +51,7 @@ export class RouteEditor implements HasUnsavedChanges {
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
   private readonly dialog = inject(Dialog);
+  private readonly i18n = inject(I18n);
   private saved = false;
 
   protected readonly isNew = computed(() => !this.id());
@@ -64,7 +67,7 @@ export class RouteEditor implements HasUnsavedChanges {
   protected readonly requests = computed(() => perMinute(this.existing.value()?.requestsPerMinute ?? 0));
   protected readonly status = computed(() => {
     const route = this.existing.value();
-    return route ? routeStatus(route) : undefined;
+    return route ? routeStatus(route, this.i18n) : undefined;
   });
 
   protected readonly model = signal<RouteModel>(emptyRoute(''));
@@ -75,11 +78,22 @@ export class RouteEditor implements HasUnsavedChanges {
   });
   protected readonly heading = computed(() => {
     const route = this.existing.value();
-    return this.isNew() || !route ? 'New route' : routeLabel(route);
+    return this.isNew() || !route ? this.i18n.t('New route') : routeLabel(route);
   });
   protected readonly changed = computed(() => {
     const route = this.existing.value();
-    return route ? `Changed ${timeAgo(route.changedAt)}${route.changedBy ? ` by ${route.changedBy}` : ''}` : '';
+    if (!route) {
+      return '';
+    }
+    const time = timeAgo(route.changedAt);
+    return route.changedBy ? this.i18n.t('Changed {time} by {name}', { time, name: route.changedBy }) : this.i18n.t('Changed {time}', { time });
+  });
+  protected readonly crumbs = computed(() => [{ label: this.i18n.t('All routes'), link: '/routes' }]);
+  protected readonly submitLabel = computed(() => {
+    if (this.route().submitting()) {
+      return this.i18n.t('Saving…');
+    }
+    return this.i18n.t(this.isNew() ? 'Create route' : 'Save route');
   });
 
   constructor() {
@@ -117,7 +131,7 @@ export class RouteEditor implements HasUnsavedChanges {
       if (access) {
         await openDialog<void, RouteAccessData>(this.dialog, RouteAccessDialog, access);
       } else {
-        this.toaster.show(`${routeLabel(this.model())} saved. It applies on every replica now.`);
+        this.toaster.show(this.i18n.t('{route} saved. It applies on every replica now.', { route: routeLabel(this.model()) }));
       }
       await this.router.navigate(['/routes']);
     }

@@ -1,30 +1,30 @@
 <ap-page-head [heading]="heading()">
-  <div pageActions class="ap-seg" role="group" aria-label="Time range">
+  <div pageActions class="ap-seg" role="group" [attr.aria-label]="'Time range' | t">
     @for (option of ranges; track option[0]) {
       <button type="button" [attr.aria-pressed]="range() === option[0]" (click)="range.set(option[0])">{{ option[1] }}</button>
     }
   </div>
   @if (auth.canOperate()) {
-    <a apWrite pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />Add route</a>
+    <a apWrite pageActions apButton="primary" routerLink="/routes/new"><ap-icon [icon]="plus" />{{ 'Add route' | t }}</a>
   }
 </ap-page-head>
 @if (unreachable() > 0) {
-  <ap-banner tone="critical" [heading]="unreachable() === 1 ? '1 replica is unreachable' : unreachable() + ' replicas are unreachable'">
-    The others keep serving traffic. Check the replica’s node in Docker.
-    <a bannerActions routerLink="/replicas">See the replicas</a>
+  <ap-banner tone="critical" [heading]="unreachableHeading()">
+    {{ 'The others keep serving traffic. Check the replica’s node in Docker.' | t }}
+    <a bannerActions routerLink="/replicas">{{ 'See the replicas' | t }}</a>
   </ap-banner>
 }
 @for (route of down(); track route.id) {
-  <ap-banner tone="critical" [heading]="route.host + ' is down'">
-    None of its targets answer health checks, so visitors get an error. Check that {{ route.targets[0].host }} is running and on a network Apiary can reach.
-    <a bannerActions [routerLink]="['/routes', route.id]">Open the route</a>
+  <ap-banner tone="critical" [heading]="'{host} is down' | t: { host: route.host }">
+    {{ 'None of its targets answer health checks, so visitors get an error. Check that {host} is running and on a network Apiary can reach.' | t: { host: route.targets[0].host } }}
+    <a bannerActions [routerLink]="['/routes', route.id]">{{ 'Open the route' | t }}</a>
   </ap-banner>
 }
 @for (certificate of failing(); track certificate.id) {
-  <ap-banner tone="warn" [heading]="'The certificate for ' + certificate.name + ' needs attention'">
-    {{ certificate.notAfter ? 'It expires in ' + daysLeft(certificate) + ' days.' : 'It hasn’t been issued yet.' }}
-    Its renewal log says what went wrong.
-    <a bannerActions [routerLink]="['/certificates', certificate.id]">See the renewal log</a>
+  <ap-banner tone="warn" [heading]="'The certificate for {name} needs attention' | t: { name: certificate.name }">
+    {{ expiry(certificate) }}
+    {{ 'Its renewal log says what went wrong.' | t }}
+    <a bannerActions [routerLink]="['/certificates', certificate.id]">{{ 'See the renewal log' | t }}</a>
   </ap-banner>
 }
 @if (firstRun()) {
@@ -34,8 +34,8 @@
 }
 <section class="ap-section" aria-labelledby="projects-title">
   <div class="ap-section-head">
-    <h2 class="ap-h ap-h-2" id="projects-title">Projects</h2>
-    <a routerLink="/projects" style="font-size: 14px">See all {{ projects.value().length }}</a>
+    <h2 class="ap-h ap-h-2" id="projects-title">{{ 'Projects' | t }}</h2>
+    <a routerLink="/projects" style="font-size: 14px">{{ 'See all {count}' | t: { count: projects.value().length } }}</a>
   </div>
   <ap-project-cards [projects]="firstProjects()" />
 </section>

@@ -2,7 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormField, applyWhen, form, hidden, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, ipRanges, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorSummary, Field, Form, TranslatePipe, ipRanges, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { serverCheck } from '../api/server-check';
 import { ProjectView, StreamProtocol, StreamRouteView } from '../api/models';
@@ -63,7 +63,7 @@ function streamModel(stream: StreamRouteView | null): StreamModel {
 
 @Component({
   selector: 'ap-stream-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, CopyText],
+  imports: [Form, Field, FormField, ErrorSummary, Button, CopyText, TranslatePipe],
   templateUrl: './stream-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

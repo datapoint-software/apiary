@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
-import { Button, Icon } from '@datapoint/apiary-ui';
+import { Button, Icon, TranslatePipe } from '@datapoint/apiary-ui';
 import { Check, Copy } from 'lucide';
 
 @Component({
   selector: 'ap-copy-text',
-  imports: [Button, Icon],
+  imports: [Button, Icon, TranslatePipe],
   template: `
     <div class="ap-copy" [style.align-items]="multiline() ? 'flex-start' : null">
       <code [style.white-space]="multiline() ? 'pre' : null" [style.line-height]="multiline() ? '1.6' : null">{{ text() }}</code>
       <button apButton size="small" type="button" (click)="copy()">
-        <ap-icon [icon]="copied() ? checkIcon : copyIcon" /><span>{{ copied() ? 'Copied' : 'Copy' }}</span>
+        <ap-icon [icon]="copied() ? checkIcon : copyIcon" /><span>{{ (copied() ? 'Copied' : 'Copy') | t }}</span>
       </button>
     </div>
   `,

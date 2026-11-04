@@ -1,5 +1,5 @@
-<ap-page-head heading="Single sign-on">
-  <span pageSub>Let people sign in through your identity provider, with OpenID Connect. {{ changed() }}</span>
+<ap-page-head [heading]="'Single sign-on' | t">
+  <span pageSub>{{ 'Let people sign in through your identity provider, with OpenID Connect.' | t }} {{ changed() }}</span>
 </ap-page-head>
 
 <form class="ap-form" style="max-width: 800px" [apForm]="settings" #ssoForm="apForm" (submit)="save(ssoForm)">
@@ -8,36 +8,36 @@
   <section class="ap-panel" aria-labelledby="provider-title">
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="provider-title">Identity provider</h2>
-        <p class="ap-panel-desc">Register Apiary at your provider as a confidential web client first, with this redirect URI.</p>
+        <h2 class="ap-h ap-h-3" id="provider-title">{{ 'Identity provider' | t }}</h2>
+        <p class="ap-panel-desc">{{ 'Register Apiary at your provider as a confidential web client first, with this redirect URI.' | t }}</p>
       </div>
     </div>
     <div class="ap-panel-body ap-stack">
       <div class="ap-field">
-        <span class="ap-label">Redirect URI</span>
+        <span class="ap-label">{{ 'Redirect URI' | t }}</span>
         <ap-copy-text [text]="redirectUri" />
-        <span class="ap-help">Use the address people open Apiary at. Each address needs its own redirect URI at the provider.</span>
+        <span class="ap-help">{{ 'Use the address people open Apiary at. Each address needs its own redirect URI at the provider.' | t }}</span>
       </div>
       <div class="ap-grid-2">
-        <ap-field label="Name on the sign-in button" [field]="settings.displayName" help="Such as Entra ID or Keycloak.">
+        <ap-field [label]="'Name on the sign-in button' | t" [field]="settings.displayName" [help]="'Such as Entra ID or Keycloak.' | t">
           <input class="ap-input" [formField]="settings.displayName" autocomplete="off" />
         </ap-field>
-        <ap-field label="Groups claim" [field]="settings.groupsClaim" help="The ID token claim that lists groups.">
+        <ap-field [label]="'Groups claim' | t" [field]="settings.groupsClaim" [help]="'The ID token claim that lists groups.' | t">
           <input class="ap-input ap-data" [formField]="settings.groupsClaim" autocomplete="off" spellcheck="false" />
         </ap-field>
       </div>
-      <ap-field label="Issuer" [field]="settings.issuer" help="Apiary reads its configuration from /.well-known/openid-configuration under this address.">
+      <ap-field [label]="'Issuer' | t" [field]="settings.issuer" [help]="'Apiary reads its configuration from /.well-known/openid-configuration under this address.' | t">
         <input class="ap-input ap-data" [formField]="settings.issuer" placeholder="https://login.example.com/realms/staff" autocomplete="off" spellcheck="false" autocapitalize="none" />
       </ap-field>
       <div class="ap-grid-2">
-        <ap-field label="Client id" [field]="settings.clientId">
+        <ap-field [label]="'Client id' | t" [field]="settings.clientId">
           <input class="ap-input ap-data" [formField]="settings.clientId" autocomplete="off" spellcheck="false" autocapitalize="none" />
         </ap-field>
         <ap-field
-          label="Client secret"
+          [label]="'Client secret' | t"
           [field]="settings.clientSecret"
           [optional]="current.value()?.hasClientSecret ?? false"
-          [help]="current.value()?.hasClientSecret ? 'Saved. Leave it empty to keep it.' : 'Stored encrypted, and never shown again.'"
+          [help]="(current.value()?.hasClientSecret ? 'Saved. Leave it empty to keep it.' : 'Stored encrypted, and never shown again.') | t"
         >
           <input class="ap-input ap-data" type="password" [formField]="settings.clientSecret" autocomplete="new-password" />
         </ap-field>
@@ -48,34 +48,37 @@
   <section class="ap-panel" aria-labelledby="groups-title">
     <div class="ap-panel-head">
       <div>
-        <h2 class="ap-h ap-h-3" id="groups-title">Roles from groups</h2>
-        <p class="ap-panel-desc">One group per line, as the provider names it. Someone in several groups gets the highest role; someone in none can’t sign in.</p>
+        <h2 class="ap-h ap-h-3" id="groups-title">{{ 'Roles from groups' | t }}</h2>
+        <p class="ap-panel-desc">{{ 'One group per line, as the provider names it. Someone in several groups gets the highest role; someone in none can’t sign in.' | t }}</p>
       </div>
     </div>
     <div class="ap-panel-body ap-stack">
-      <ap-field label="Administrators" [field]="settings.administratorGroups" [optional]="true">
+      <ap-field [label]="'Administrators' | t" [field]="settings.administratorGroups" [optional]="true">
         <textarea class="ap-textarea ap-data" rows="2" spellcheck="false" [formField]="settings.administratorGroups"></textarea>
       </ap-field>
-      <ap-field label="Operators" [field]="settings.operatorGroups" [optional]="true">
+      <ap-field [label]="'Operators' | t" [field]="settings.operatorGroups" [optional]="true">
         <textarea class="ap-textarea ap-data" rows="2" spellcheck="false" [formField]="settings.operatorGroups"></textarea>
       </ap-field>
-      <ap-field label="Viewers" [field]="settings.viewerGroups" [optional]="true">
+      <ap-field [label]="'Viewers' | t" [field]="settings.viewerGroups" [optional]="true">
         <textarea class="ap-textarea ap-data" rows="2" spellcheck="false" [formField]="settings.viewerGroups"></textarea>
       </ap-field>
-      <ap-banner tone="info" heading="Keep a password account">
-        Keep at least one Administrator who signs in with a password, for when the provider is down or misconfigured. Apiary never links a single sign-on identity to an existing password account.
+      <ap-banner tone="info" [heading]="'Keep a password account' | t">
+        {{
+          'Keep at least one Administrator who signs in with a password, for when the provider is down or misconfigured. Apiary never links a single sign-on identity to an existing password account.'
+            | t
+        }}
       </ap-banner>
     </div>
   </section>
 
   <section class="ap-panel" aria-labelledby="enabled-title">
-    <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="enabled-title">Sign-in page</h2></div></div>
+    <div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="enabled-title">{{ 'Sign-in page' | t }}</h2></div></div>
     <div class="ap-panel-body">
       <label class="ap-choice">
         <input class="ap-switch" type="checkbox" [formField]="settings.enabled" />
         <span class="ap-choice-text">
-          <span>Offer single sign-on</span>
-          <span class="ap-help">Turning it off, or changing the issuer, signs out everyone who signed in through it.</span>
+          <span>{{ 'Offer single sign-on' | t }}</span>
+          <span class="ap-help">{{ 'Turning it off, or changing the issuer, signs out everyone who signed in through it.' | t }}</span>
         </span>
       </label>
     </div>
@@ -83,7 +86,7 @@
 
   <div class="ap-savebar">
     <button apWrite apButton="primary" type="submit" [disabled]="settings().submitting()">
-      {{ settings().submitting() ? 'Saving…' : 'Save single sign-on' }}
+      {{ (settings().submitting() ? 'Saving…' : 'Save single sign-on') | t }}
     </button>
   </div>
 </form>

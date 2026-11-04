@@ -1,7 +1,7 @@
-<ap-page-head heading="Certificates">
-  <span pageSub>Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs. Using automatic certificates means accepting Let’s Encrypt’s <a href="https://letsencrypt.org/repository/">Subscriber Agreement</a>, which Apiary accepts for you.</span>
+<ap-page-head [heading]="'Certificates' | t">
+  <span pageSub>{{ 'Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs. Using automatic certificates means accepting Let’s Encrypt’s' | t }} <a href="https://letsencrypt.org/repository/">{{ 'Subscriber Agreement' | t }}</a>{{ ', which Apiary accepts for you.' | t }}</span>
   @if (auth.canOperate()) {
-    <button apWrite pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
+    <button apWrite pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />{{ 'Upload certificate' | t }}</button>
   }
 </ap-page-head>
 
@@ -10,34 +10,34 @@
     @if (certificate.status === 'failing') {
       {{ failure(certificate) }}
     } @else if (certificate.source === 'uploaded') {
-      Upload a new one before it expires. Apiary doesn’t renew uploaded certificates.
+      {{ 'Upload a new one before it expires. Apiary doesn’t renew uploaded certificates.' | t }}
     }
-    <a bannerActions [routerLink]="['/certificates', certificate.id]">See details</a>
+    <a bannerActions [routerLink]="['/certificates', certificate.id]">{{ 'See details' | t }}</a>
   </ap-banner>
 }
 
 <section class="ap-panel">
   @if (certificates.isLoading() && certificates.value().length === 0) {
-    <div style="padding: 24px" aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
   } @else if (certificates.value().length === 0) {
-    <ap-empty-state heading="No certificates yet">
-      Add a route and Apiary gets its certificate for you. Upload your own for a wildcard or internal hostname.
+    <ap-empty-state [heading]="'No certificates yet' | t">
+      {{ 'Add a route and Apiary gets its certificate for you. Upload your own for a wildcard or internal hostname.' | t }}
       @if (auth.canOperate()) {
-        <button apWrite emptyActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />Upload certificate</button>
+        <button apWrite emptyActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />{{ 'Upload certificate' | t }}</button>
       }
     </ap-empty-state>
   } @else {
     <div class="ap-table-wrap">
       <table class="ap-table">
-        <caption class="ap-sr">Certificates, soonest to expire first</caption>
+        <caption class="ap-sr">{{ 'Certificates, soonest to expire first' | t }}</caption>
         <thead>
           <tr>
-            <th scope="col">Hostname</th>
-            <th scope="col">Source</th>
-            <th scope="col">Issuer</th>
-            <th scope="col" aria-sort="ascending">Expires</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="ap-num">Routes</th>
+            <th scope="col">{{ 'Hostname' | t }}</th>
+            <th scope="col">{{ 'Source' | t }}</th>
+            <th scope="col">{{ 'Issuer' | t }}</th>
+            <th scope="col" aria-sort="ascending">{{ 'Expires' | t }}</th>
+            <th scope="col">{{ 'Status' | t }}</th>
+            <th scope="col" class="ap-num">{{ 'Routes' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,11 +47,11 @@
                 <div class="ap-cell-main">
                   <a class="ap-data" [routerLink]="['/certificates', certificate.id]">{{ certificate.name }}</a>
                   @if (certificate.hosts.length > 1) {
-                    <span class="ap-caption">and {{ certificate.hosts.length - 1 }} more</span>
+                    <span class="ap-caption">{{ 'and {count} more' | t: { count: certificate.hosts.length - 1 } }}</span>
                   }
                 </div>
               </td>
-              <td class="ap-muted">{{ sourceName(certificate) }}</td>
+              <td class="ap-muted">{{ sourceName(certificate) | t }}</td>
               <td class="ap-muted">{{ certificate.issuer ?? '–' }}</td>
               <td><span class="ap-data">{{ expires(certificate) }}</span></td>
               <td><ap-status [tone]="statusTone(certificate)">{{ statusText(certificate) }}</ap-status></td>

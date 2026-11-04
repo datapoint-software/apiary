@@ -1,12 +1,12 @@
-import { Tone } from '@datapoint/apiary-ui';
+import { I18n, Tone } from '@datapoint/apiary-ui';
 import { ProjectView } from '../api/models';
 
-export function projectHealth(project: ProjectView): [Tone, string] {
+export function projectHealth(project: ProjectView, i18n: I18n): [Tone, string] {
   if (project.routesDown > 0) {
-    return ['critical', project.routesDown === 1 ? '1 route down' : `${project.routesDown} routes down`];
+    return ['critical', i18n.plural(project.routesDown, '{count} route down', '{count} routes down')];
   }
   if (project.routesDegraded > 0) {
-    return ['warn', project.routesDegraded === 1 ? '1 route degraded' : `${project.routesDegraded} routes degraded`];
+    return ['warn', i18n.plural(project.routesDegraded, '{count} route degraded', '{count} routes degraded')];
   }
-  return project.routeCount > 0 ? ['ok', 'Healthy'] : ['off', 'No routes'];
+  return project.routeCount > 0 ? ['ok', i18n.t('Healthy')] : ['off', i18n.t('No routes')];
 }

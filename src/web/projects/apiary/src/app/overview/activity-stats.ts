@@ -1,5 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { I18n } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { ActivityPoint, ActivityRange, ActivityView } from '../api/models';
 import { reloadEvery } from '../api/reload-every';
@@ -13,19 +14,29 @@ interface Stat {
   readonly series: readonly number[];
 }
 
-const whole = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const fine = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
-const empty: ActivityView = { minutesPerPoint: 1, points: [] };
-
-function number(value: number): string {
-  if (value > 0 && value < 0.1) {
-    return '<0.1';
-  }
-  return (value < 10 ? fine : whole).format(value);
+interface Numbers {
+  readonly whole: Intl.NumberFormat;
+  readonly fine: Intl.NumberFormat;
 }
 
-function duration(milliseconds: number): [string, string] {
-  return milliseconds < 1000 ? [number(milliseconds), 'ms'] : [number(milliseconds / 1000), 's'];
+const empty: ActivityView = { minutesPerPoint: 1, points: [] };
+
+function numbers(language: string): Numbers {
+  return {
+    whole: new Intl.NumberFormat(language, { maximumFractionDigits: 0 }),
+    fine: new Intl.NumberFormat(language, { maximumFractionDigits: 1 }),
+  };
+}
+
+function number(value: number, formats: Numbers): string {
+  if (value > 0 && value < 0.1) {
+    return '<' + formats.fine.format(0.1);
+  }
+  return (value < 10 ? formats.fine : formats.whole).format(value);
+}
+
+function duration(milliseconds: number, formats: Numbers): [string, string] {
+  return milliseconds < 1000 ? [number(milliseconds, formats), 'ms'] : [number(milliseconds / 1000, formats), 's'];
 }
 
 function time(point: ActivityPoint): string {
@@ -38,10 +49,6 @@ function peak(points: readonly ActivityPoint[], measure: (p: ActivityPoint) => n
 
 function share(point: ActivityPoint): number {
   return point.requests ? (point.errors / point.requests) * 100 : 0;
-}
-
-function quietErrors(requests: number, quiet: string): string {
-  return requests ? 'None so far' : quiet;
 }
 
 @Component({
@@ -63,6 +70,7 @@ function quietErrors(requests: number, quiet: string): string {
 })
 export class ActivityStats {
   private readonly api = inject(Api);
+  private readonly i18n = inject(I18n);
   readonly range = input.required<ActivityRange>();
   private readonly activity = httpResource<ActivityView>(() => this.api.query('activity.get', { range: this.range() }), {
     defaultValue: empty,
@@ -71,12 +79,15 @@ export class ActivityStats {
 
   private readonly quiet = computed(() => {
     if (this.activity.status() === 'loading') {
-      return 'Loading…';
+      return this.i18n.t('Loading…');
     }
-    return this.range() === 'hour' ? 'No requests in the last hour' : 'No requests in the last 24 h';
+    return this.i18n.t(this.range() === 'hour' ? 'No requests in the last hour' : 'No requests in the last 24 h');
   });
 
+  private readonly formats = computed(() => numbers(this.i18n.language()));
+
   protected readonly stats = computed<readonly Stat[]>(() => {
+    const formats = this.formats();
     const { minutesPerPoint, points, p95Milliseconds } = this.activity.value();
     const quiet = this.quiet();
     const requests = points.reduce((sum, p) => sum + p.requests, 0);
@@ -87,26 +98,34 @@ export class ActivityStats {
     const worst = peak(points, share);
     return [
       {
-        label: 'Requests',
-        value: number(requests / elapsed),
+        label: this.i18n.t('Requests'),
+        value: number(requests / elapsed, formats),
         unit: '/min',
-        note: busiest ? `Peak ${number(busiest.requests / minutesPerPoint)}/min at ${time(busiest)}` : quiet,
+        note: busiest ? this.peak(`${number(busiest.requests / minutesPerPoint, formats)}/min`, busiest) : quiet,
         series: points.map((p) => p.requests / minutesPerPoint),
       },
       {
-        label: 'p95 latency',
-        value: p95Milliseconds === undefined ? '–' : duration(p95Milliseconds)[0],
-        unit: p95Milliseconds === undefined ? '' : duration(p95Milliseconds)[1],
-        note: slowest ? `Peak ${duration(slowest.p95Milliseconds ?? 0).join(' ')} at ${time(slowest)}` : quiet,
+        label: this.i18n.t('p95 latency'),
+        value: p95Milliseconds === undefined ? '–' : duration(p95Milliseconds, formats)[0],
+        unit: p95Milliseconds === undefined ? '' : duration(p95Milliseconds, formats)[1],
+        note: slowest ? this.peak(duration(slowest.p95Milliseconds ?? 0, formats).join(' '), slowest) : quiet,
         series: points.map((p) => p.p95Milliseconds ?? 0),
       },
       {
-        label: '5xx responses',
-        value: requests ? number((errors / requests) * 100) : '–',
+        label: this.i18n.t('5xx responses'),
+        value: requests ? number((errors / requests) * 100, formats) : '–',
         unit: '%',
-        note: worst ? `Peak ${number(share(worst))}% at ${time(worst)}` : quietErrors(requests, quiet),
+        note: worst ? this.peak(`${number(share(worst), formats)}%`, worst) : this.quietErrors(requests, quiet),
         series: points.map(share),
       },
     ];
   });
+
+  private peak(value: string, point: ActivityPoint): string {
+    return this.i18n.t('Peak {value} at {time}', { value, time: time(point) });
+  }
+
+  private quietErrors(requests: number, quiet: string): string {
+    return requests ? this.i18n.t('None so far') : quiet;
+  }
 }

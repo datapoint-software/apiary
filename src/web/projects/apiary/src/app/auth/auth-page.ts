@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '@datapoint/apiary-ui';
 import { DatapointLogo } from '../shell/datapoint-logo';
 import { sourceUrl, version } from '../version';
 
 @Component({
   selector: 'ap-auth-page',
-  imports: [DatapointLogo],
+  imports: [DatapointLogo, TranslatePipe],
   template: `
     <main class="ap-auth" id="main">
       <div class="ap-panel ap-auth-card" [style.width]="wide() ? 'min(460px, 100%)' : null">
@@ -21,8 +22,11 @@ import { sourceUrl, version } from '../version';
       </div>
       <div class="ap-attribution">
         <span style="color: var(--ink-2)"><ap-datapoint-logo /></span>
-        <span>Based on Apiary by <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
-        <span>Version {{ version }} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> · <a [href]="sourceUrl">Source</a></span>
+        <span>{{ 'Based on Apiary by' | t }} <a href="https://datapoint.software/">Datapoint - Sistemas de Informação, Lda.</a></span>
+        <span
+          >{{ 'Version {version}' | t: { version } }} · <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a> ·
+          <a [href]="sourceUrl">{{ 'Source code' | t }}</a></span
+        >
       </div>
     </main>
   `,

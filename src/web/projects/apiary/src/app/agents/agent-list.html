@@ -1,40 +1,39 @@
-<ap-page-head heading="Connected agents">
-  <span pageSub>AI agents that manage Apiary through MCP. Each acts with the permissions of the person who connected it.</span>
+<ap-page-head [heading]="'Connected agents' | t">
+  <span pageSub>{{ 'AI agents that manage Apiary through MCP. Each acts with the permissions of the person who connected it.' | t }}</span>
 </ap-page-head>
 
-<ap-banner tone="info" heading="Agents ask before they change anything">
-  Apiary tells agents to show each change and wait for your approval. Every change they make is in the audit log, under
-  your name and the agent’s.
+<ap-banner tone="info" [heading]="'Agents ask before they change anything' | t">
+  {{ 'Apiary tells agents to show each change and wait for your approval. Every change they make is in the audit log, under your name and the agent’s.' | t }}
 </ap-banner>
 
 <section class="ap-panel" aria-labelledby="agents-title">
   <div class="ap-panel-head">
-    <div><h2 class="ap-h ap-h-3" id="agents-title">{{ auth.canAdminister() ? 'Everyone’s agents' : 'Your agents' }}</h2></div>
+    <div><h2 class="ap-h ap-h-3" id="agents-title">{{ (auth.canAdminister() ? 'Everyone’s agents' : 'Your agents') | t }}</h2></div>
   </div>
   @if (agents.value().length) {
     <div class="ap-table-wrap">
       <table class="ap-table">
-        <caption class="ap-sr">Connected agents</caption>
+        <caption class="ap-sr">{{ 'Connected agents' | t }}</caption>
         <thead>
           <tr>
-            <th scope="col">Agent</th>
-            <th scope="col">On behalf of</th>
-            <th scope="col">Connected</th>
-            <th scope="col">Last active</th>
-            <th scope="col">Connected until</th>
-            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+            <th scope="col">{{ 'Agent' | t }}</th>
+            <th scope="col">{{ 'On behalf of' | t }}</th>
+            <th scope="col">{{ 'Connected' | t }}</th>
+            <th scope="col">{{ 'Last active' | t }}</th>
+            <th scope="col">{{ 'Connected until' | t }}</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
           </tr>
         </thead>
         <tbody>
           @for (agent of agents.value(); track agent.id) {
             <tr>
               <td><span style="font-weight: 500">{{ agent.name }}</span></td>
-              <td class="ap-muted">{{ agent.mine ? 'You' : agent.user }}</td>
+              <td class="ap-muted">{{ agent.mine ? ('You' | t) : agent.user }}</td>
               <td class="ap-data">{{ utcDateTime(agent.connectedAt) }} UTC</td>
               <td class="ap-muted">{{ timeAgo(agent.lastUsedAt) }}</td>
               <td class="ap-data">{{ utcDateTime(agent.endsAt) }} UTC</td>
               <td class="ap-col-actions">
-                <button apWrite apButton size="small" type="button" (click)="disconnect(agent)">Disconnect…</button>
+                <button apWrite apButton size="small" type="button" (click)="disconnect(agent)">{{ 'Disconnect…' | t }}</button>
               </td>
             </tr>
           }
@@ -42,8 +41,8 @@
       </table>
     </div>
   } @else {
-    <ap-empty-state heading="No agents connected">
-      Connect Claude Code or another MCP client to query and manage Apiary from your terminal.
+    <ap-empty-state [heading]="'No agents connected' | t">
+      {{ 'Connect Claude Code or another MCP client to query and manage Apiary from your terminal.' | t }}
     </ap-empty-state>
   }
 </section>
@@ -51,19 +50,19 @@
 <section class="ap-panel" style="max-width: 760px" aria-labelledby="connect-title">
   <div class="ap-panel-head">
     <div>
-      <h2 class="ap-h ap-h-3" id="connect-title">Connect an agent</h2>
-      <p class="ap-panel-desc">Like this interface, MCP answers only on the internal port.</p>
+      <h2 class="ap-h ap-h-3" id="connect-title">{{ 'Connect an agent' | t }}</h2>
+      <p class="ap-panel-desc">{{ 'Like this interface, MCP answers only on the internal port.' | t }}</p>
     </div>
   </div>
   <div class="ap-panel-body">
     <ol class="ap-stack" style="gap: 12px; margin: 0; padding-left: 20px">
       <li class="ap-stack" style="gap: 8px">
-        <span>Add this MCP server to your agent. In Claude Code, run:</span>
+        <span>{{ 'Add this MCP server to your agent. In Claude Code, run:' | t }}</span>
         <ap-copy-text [text]="command" />
-        <span class="ap-muted">Other agents need the address: <span class="ap-data">{{ endpoint }}</span></span>
+        <span class="ap-muted">{{ 'Other agents need the address:' | t }} <span class="ap-data">{{ endpoint }}</span></span>
       </li>
-      <li>Your agent opens Apiary in your browser. Sign in as yourself, and approve the connection.</li>
-      <li>It appears here, and acts with your role: {{ role() }}. After 90 days, connect it again.</li>
+      <li>{{ 'Your agent opens Apiary in your browser. Sign in as yourself, and approve the connection.' | t }}</li>
+      <li>{{ 'It appears here, and acts with your role: {role}. After 90 days, connect it again.' | t: { role: role() } }}</li>
     </ol>
   </div>
 </section>

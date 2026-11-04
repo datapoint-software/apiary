@@ -13,6 +13,8 @@ import {
   PasswordReveal,
   ErrorMessages,
   Toaster,
+  TranslatePipe,
+  I18n,
   isApiProblem,
   newPassword,
   problemErrors,
@@ -43,6 +45,7 @@ type Step = 'details' | 'enroll' | 'codes';
     TwoStepSetup,
     RecoveryCodes,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './setup.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +55,7 @@ export class Setup {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
 
   protected readonly status = httpResource<SetupStatus>(() => ({ url: '/api/setup/status', method: 'POST', body: {} }));
   protected readonly closesAt = computed(() => {
@@ -79,9 +83,14 @@ export class Setup {
     this.restoring.set(true);
     try {
       const restored = await restoreBackup(this.api, 'setup.restore', await file.text());
-      this.toaster.show(`${restored.users} users, ${restored.routes} routes and ${restored.certificates} certificates are back. Sign in as before.`, {
-        heading: 'Backup restored',
-      });
+      this.toaster.show(
+        this.i18n.t('{users}, {routes} and {certificates} are back. Sign in as before.', {
+          users: this.i18n.plural(restored.users, '{count} user', '{count} users'),
+          routes: this.i18n.plural(restored.routes, '{count} route', '{count} routes'),
+          certificates: this.i18n.plural(restored.certificates, '{count} certificate', '{count} certificates'),
+        }),
+        { heading: this.i18n.t('Backup restored') },
+      );
       await this.router.navigate(['/sign-in']);
     } catch (error) {
       this.restoreFailure.set(this.messages.describe(isApiProblem(error) ? error.code : 'network.offline'));
@@ -129,6 +138,6 @@ export class Setup {
   protected async finish(): Promise<void> {
     await this.auth.load();
     await this.router.navigateByUrl('/');
-    this.toaster.show('Next, invite the people who run Apiary with you, in Users.', { heading: 'You’re the first administrator' });
+    this.toaster.show(this.i18n.t('Next, invite the people who run Apiary with you, in Users.'), { heading: this.i18n.t('You’re the first administrator') });
   }
 }

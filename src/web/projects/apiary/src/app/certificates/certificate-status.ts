@@ -1,4 +1,4 @@
-import { Tone } from '@datapoint/apiary-ui';
+import { I18n, Tone } from '@datapoint/apiary-ui';
 import { CertificateStatus, CertificateSummary } from '../api/models';
 
 const day = 86_400_000;
@@ -19,20 +19,19 @@ export function statusTone(certificate: CertificateSummary): Tone {
   return certificate.status === 'failing' && !certificate.notAfter ? 'critical' : tones[certificate.status];
 }
 
-export function statusText(certificate: CertificateSummary): string {
+export function statusText(certificate: CertificateSummary, i18n: I18n): string {
   const days = daysLeft(certificate);
-  const left = days === 1 ? '1 day left' : `${days} days left`;
   switch (certificate.status) {
     case 'pending':
-      return 'Requesting from Let’s Encrypt';
+      return i18n.t('Requesting from Let’s Encrypt');
     case 'failing':
-      return certificate.notAfter ? `Renewal failing, ${left}` : 'Not issued yet';
+      return certificate.notAfter ? i18n.plural(days, 'Renewal failing, {count} day left', 'Renewal failing, {count} days left') : i18n.t('Not issued yet');
     case 'expiring':
-      return `Expires soon, ${left}`;
+      return i18n.plural(days, 'Expires soon, {count} day left', 'Expires soon, {count} days left');
     case 'expired':
-      return 'Expired';
+      return i18n.t('Expired');
     default:
-      return left;
+      return i18n.plural(days, '{count} day left', '{count} days left');
   }
 }
 

@@ -1,7 +1,7 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
-import { ApiProblem, Button, ErrorSummary, Field, Form, Icon, problemErrors } from '@datapoint/apiary-ui';
+import { ApiProblem, Button, ErrorSummary, Field, Form, Icon, TranslatePipe, problemErrors } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { serverCheck } from '../api/server-check';
 import { ProjectView } from '../api/models';
@@ -24,7 +24,7 @@ function tooLong(value: string, max: number) {
 
 @Component({
   selector: 'ap-project-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, Icon],
+  imports: [Form, Field, FormField, ErrorSummary, Button, Icon, TranslatePipe],
   templateUrl: './project-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -44,6 +44,13 @@ export class ProjectDialog {
     serverCheck(p.name, 'projects.check', ['name'], ({ value }) => ({ name: value(), id: this.existing?.id ?? null }));
     validate(p.description, ({ value }) => tooLong(value(), 120));
   });
+
+  protected submitLabel(): string {
+    if (this.project().submitting()) {
+      return 'Saving…';
+    }
+    return this.existing ? 'Save project' : 'Create project';
+  }
 
   protected async save(apForm: Form): Promise<void> {
     const value = this.model();

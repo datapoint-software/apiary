@@ -1,6 +1,6 @@
 <div class="ap-table-wrap">
   <table class="ap-table">
-    <caption class="ap-sr">{{ grouped() ? 'Routes, grouped by project' : 'Routes' }}</caption>
+    <caption class="ap-sr">{{ (grouped() ? 'Routes, grouped by project' : 'Routes') | t }}</caption>
     <thead>
       <tr>
         @if (auth.canOperate()) {
@@ -8,20 +8,20 @@
             <input
               class="ap-check"
               type="checkbox"
-              aria-label="Select all routes shown"
+              [attr.aria-label]="'Select all routes shown' | t"
               [checked]="allSelected()"
               [indeterminate]="someSelected()"
               (change)="toggleAll($any($event.target).checked)"
             />
           </th>
         }
-        <th scope="col">Hostname</th>
-        <th scope="col">Target</th>
-        <th scope="col">Status</th>
-        <th scope="col">Certificate</th>
-        <th scope="col" class="ap-num">Req/min</th>
-        <th scope="col">Changed</th>
-        <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+        <th scope="col">{{ 'Hostname' | t }}</th>
+        <th scope="col">{{ 'Target' | t }}</th>
+        <th scope="col">{{ 'Status' | t }}</th>
+        <th scope="col">{{ 'Certificate' | t }}</th>
+        <th scope="col" class="ap-num">{{ 'Req/min' | t }}</th>
+        <th scope="col">{{ 'Changed' | t }}</th>
+        <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
       </tr>
     </thead>
     @for (group of groups(); track group.project.id) {
@@ -29,7 +29,7 @@
         @if (grouped()) {
           <tr class="ap-group">
             <td [attr.colspan]="columns()">
-              <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ group.routes.length }} {{ group.routes.length === 1 ? 'route' : 'routes' }} · {{ perMinute(requests(group)) }} req/min</span></span>
+              <span class="ap-group-title">{{ group.project.name }}<span class="ap-group-meta">{{ groupMeta(group) }}</span></span>
             </td>
           </tr>
         }
@@ -41,7 +41,7 @@
                 <input
                   class="ap-check"
                   type="checkbox"
-                  [attr.aria-label]="'Select ' + routeLabel(route)"
+                  [attr.aria-label]="'Select {route}' | t: { route: routeLabel(route) }"
                   [checked]="isSelected"
                   (change)="toggle(route, $any($event.target).checked)"
                 />
@@ -52,15 +52,15 @@
                 <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}</a>
                 <span class="ap-caption ap-data">{{ route.path }}</span>
                 @if (route.password) {
-                  <span class="ap-caption ap-gate-tag"><ap-icon [icon]="lockIcon" />Needs a password</span>
+                  <span class="ap-caption ap-gate-tag"><ap-icon [icon]="lockIcon" />{{ 'Needs a password' | t }}</span>
                 }
               </div>
             </td>
             <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>
             <td><ap-route-status [route]="route" /></td>
-            <td class="ap-muted">{{ route.certificateId ? 'Uploaded' : 'Automatic' }}</td>
+            <td class="ap-muted">{{ (route.certificateId ? 'Uploaded' : 'Automatic') | t }}</td>
             <td class="ap-num">{{ route.disabled ? '–' : perMinute(route.requestsPerMinute) }}</td>
-            <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { by {{ route.changedBy }} }</td>
+            <td class="ap-muted">{{ timeAgo(route.changedAt) }}@if (route.changedBy) { {{ 'by {name}' | t: { name: route.changedBy } }} }</td>
             <td class="ap-col-actions">
               @if (auth.canOperate()) {
                 <ap-route-row-actions [route]="route" />

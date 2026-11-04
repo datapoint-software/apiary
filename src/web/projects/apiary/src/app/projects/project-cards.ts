@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Icon, Status } from '@datapoint/apiary-ui';
+import { I18n, Icon, Status, Tone, TranslatePipe } from '@datapoint/apiary-ui';
 import { ProjectView } from '../api/models';
 import { perMinute } from '../routes/route-status';
 import { projectIcon } from '../shell/project-icons';
@@ -8,11 +8,11 @@ import { projectHealth } from './project-health';
 
 @Component({
   selector: 'ap-project-cards',
-  imports: [RouterLink, Icon, Status],
+  imports: [RouterLink, Icon, Status, TranslatePipe],
   template: `
     <div class="ap-projects">
       @for (project of projects(); track project.id) {
-        @let health = projectHealth(project);
+        @let health = healthOf(project);
         <a class="ap-panel ap-project" [routerLink]="['/projects', project.id]">
           <div class="ap-project-head">
             <span class="ap-project-mark"><ap-icon [icon]="projectIcon(project.icon)" /></span>
@@ -20,13 +20,13 @@ import { projectHealth } from './project-health';
           </div>
           <div>
             <h3 class="ap-h ap-h-3">{{ project.name }}</h3>
-            <p class="ap-caption" style="margin: 2px 0 0; font-size: 13px; line-height: 18px">{{ project.description || 'No description' }}</p>
+            <p class="ap-caption" style="margin: 2px 0 0; font-size: 13px; line-height: 18px">{{ project.description || ('No description' | t) }}</p>
           </div>
           <div class="ap-project-facts">
-            <span><b>{{ project.routeCount }}</b> {{ project.routeCount === 1 ? 'route' : 'routes' }}</span>
-            <span><b>{{ perMinute(project.requestsPerMinute) }}</b> req/min</span>
+            <span><b>{{ project.routeCount }}</b> {{ plural(project.routeCount, 'route', 'routes') }}</span>
+            <span><b>{{ perMinute(project.requestsPerMinute) }}</b> {{ 'req/min' | t }}</span>
             @if (project.redirectCount) {
-              <span><b>{{ project.redirectCount }}</b> {{ project.redirectCount === 1 ? 'redirect' : 'redirects' }}</span>
+              <span><b>{{ project.redirectCount }}</b> {{ plural(project.redirectCount, 'redirect', 'redirects') }}</span>
             }
           </div>
         </a>
@@ -36,8 +36,16 @@ import { projectHealth } from './project-health';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectCards {
+  private readonly i18n = inject(I18n);
   readonly projects = input.required<readonly ProjectView[]>();
   protected readonly projectIcon = projectIcon;
-  protected readonly projectHealth = projectHealth;
   protected readonly perMinute = perMinute;
+
+  protected healthOf(project: ProjectView): [Tone, string] {
+    return projectHealth(project, this.i18n);
+  }
+
+  protected plural(count: number, one: string, other: string): string {
+    return this.i18n.plural(count, one, other);
+  }
 }

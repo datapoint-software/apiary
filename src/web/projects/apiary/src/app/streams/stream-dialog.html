@@ -1,41 +1,41 @@
 @if (published(); as value) {
   <div class="ap-dialog" role="dialog" aria-labelledby="stream-title">
     <div class="ap-dialog-head">
-      <h2 class="ap-h ap-h-2" id="stream-title">Publish port {{ value.listenPort }}</h2>
+      <h2 class="ap-h ap-h-2" id="stream-title">{{ 'Publish port {port}' | t: { port: value.listenPort ?? '' } }}</h2>
     </div>
     <div class="ap-dialog-body ap-stack">
       <p style="margin: 0">
-        {{ value.name.trim() }} is ready on every replica. To send it traffic, publish the port on the Apiary service in your stack file, then deploy the stack again.
+        {{ '{name} is ready on every replica. To send it traffic, publish the port on the Apiary service in your stack file, then deploy the stack again.' | t: { name: value.name.trim() } }}
       </p>
       <ap-copy-text [text]="portLine()" />
-      <span class="ap-help">Under <span class="ap-code">services.apiary.ports</span>. Host mode keeps each client’s address.</span>
+      <span class="ap-help">{{ 'Under' | t }} <span class="ap-code">services.apiary.ports</span>{{ '. Host mode keeps each client’s address.' | t }}</span>
     </div>
     <div class="ap-dialog-foot">
-      <button apButton="primary" type="button" (click)="done()">Done</button>
+      <button apButton="primary" type="button" (click)="done()">{{ 'Done' | t }}</button>
     </div>
   </div>
 } @else {
   <form class="ap-dialog" role="dialog" aria-labelledby="stream-title" [apForm]="stream" #streamForm="apForm" (submit)="save(streamForm)">
     <div class="ap-dialog-head">
-      <h2 class="ap-h ap-h-2" id="stream-title">{{ existing ? 'Edit stream route' : 'Add stream route' }}</h2>
+      <h2 class="ap-h ap-h-2" id="stream-title">{{ (existing ? 'Edit stream route' : 'Add stream route') | t }}</h2>
     </div>
     <div class="ap-dialog-body ap-form" style="gap: 16px">
       <ap-error-summary [verb]="existing ? 'save it' : 'add it'" />
-      <ap-field label="Name" [field]="stream.name">
+      <ap-field [label]="'Name' | t" [field]="stream.name">
         <input class="ap-input" [formField]="stream.name" placeholder="MQTT" autocomplete="off" cdkFocusInitial />
       </ap-field>
       <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
-        <legend class="ap-label" style="margin-bottom: 8px">Protocol</legend>
+        <legend class="ap-label" style="margin-bottom: 8px">{{ 'Protocol' | t }}</legend>
         <div class="ap-row" style="gap: 20px">
           <label class="ap-choice"><input class="ap-radio" type="radio" value="tcp" [formField]="stream.protocol" />TCP</label>
           <label class="ap-choice"><input class="ap-radio" type="radio" value="udp" [formField]="stream.protocol" />UDP</label>
         </div>
       </fieldset>
       <div class="ap-grid-2">
-        <ap-field label="Listens on port" [field]="stream.listenPort" help="On every replica.">
+        <ap-field [label]="'Listens on port' | t" [field]="stream.listenPort" [help]="'On every replica.' | t">
           <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="stream.listenPort" />
         </ap-field>
-        <ap-field label="Project" [field]="stream.projectId" help="Only for grouping.">
+        <ap-field [label]="'Project' | t" [field]="stream.projectId" [help]="'Only for grouping.' | t">
           <select class="ap-select" [formField]="stream.projectId">
             @for (project of projects.value(); track project.id) {
               <option [value]="project.id">{{ project.name }}</option>
@@ -44,45 +44,45 @@
         </ap-field>
       </div>
       <div class="ap-target-row" style="grid-template-columns: minmax(0, 2fr) minmax(84px, 1fr)">
-        <ap-field label="Target" [field]="stream.targetHost">
+        <ap-field [label]="'Target' | t" [field]="stream.targetHost">
           <input class="ap-input ap-data" [formField]="stream.targetHost" placeholder="mqtt" autocomplete="off" spellcheck="false" autocapitalize="none" />
         </ap-field>
-        <ap-field label="Port" [field]="stream.targetPort">
+        <ap-field [label]="'Port' | t" [field]="stream.targetPort">
           <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="stream.targetPort" />
         </ap-field>
       </div>
       @if (model().protocol === 'tcp') {
         <ap-field
-          label="TLS server names"
+          [label]="'TLS server names' | t"
           [field]="stream.serverNames"
           [optional]="true"
-          help="One per line, such as mqtt.example.com or *.example.com. Apiary reads the name from the TLS handshake without decrypting, so several TLS services can share a port. Leave it empty to take every connection on the port."
+          [help]="'One per line, such as mqtt.example.com or *.example.com. Apiary reads the name from the TLS handshake without decrypting, so several TLS services can share a port. Leave it empty to take every connection on the port.' | t"
         >
           <textarea class="ap-textarea ap-data" rows="2" spellcheck="false" [formField]="stream.serverNames"></textarea>
         </ap-field>
       } @else {
         <div style="max-width: 220px">
-          <ap-field label="Idle timeout" [field]="stream.idleTimeoutSeconds" help="A client’s session ends after this long without traffic.">
+          <ap-field [label]="'Idle timeout' | t" [field]="stream.idleTimeoutSeconds" [help]="'A client’s session ends after this long without traffic.' | t">
             <div class="ap-affix">
               <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="stream.idleTimeoutSeconds" />
-              <span class="ap-affix-text">seconds</span>
+              <span class="ap-affix-text">{{ 'seconds' | t }}</span>
             </div>
           </ap-field>
         </div>
       }
       <ap-field
-        label="Allowed addresses"
+        [label]="'Allowed addresses' | t"
         [field]="stream.allowedAddresses"
         [optional]="true"
-        help="One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; connections from anywhere else are closed. Needs the port published in host mode."
+        [help]="'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; connections from anywhere else are closed. Needs the port published in host mode.' | t"
       >
         <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="stream.allowedAddresses"></textarea>
       </ap-field>
     </div>
     <div class="ap-dialog-foot">
-      <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+      <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
       <button apButton="primary" type="submit" [disabled]="stream().submitting()">
-        {{ stream().submitting() ? (existing ? 'Saving…' : 'Adding…') : existing ? 'Save' : 'Add stream route' }}
+        {{ (stream().submitting() ? (existing ? 'Saving…' : 'Adding…') : existing ? 'Save' : 'Add stream route') | t }}
       </button>
     </div>
   </form>

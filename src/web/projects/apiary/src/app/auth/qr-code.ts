@@ -1,15 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '@datapoint/apiary-ui';
 import { create } from 'qrcode';
 
 @Component({
   selector: 'ap-qr-code',
+  imports: [TranslatePipe],
   template: `
     <svg
       [attr.viewBox]="viewBox()"
       width="148"
       height="148"
       role="img"
-      aria-label="QR code for your authenticator app"
+      [attr.aria-label]="'QR code for your authenticator app' | t"
       style="background: #fff; border-radius: 10px; flex: none"
     >
       <path [attr.d]="path()" fill="#000" />

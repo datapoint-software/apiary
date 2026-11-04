@@ -6,7 +6,7 @@ Researched against the official documentation on 2026-11-03, for .NET 10 with C#
 
 ## Language
 
-American English everywhere: our own names in code, documentation, commit messages and the interface's text. It's the language of the frameworks' names (`Color`, `AuthorizeAttribute`) and of the license text in `LICENSE`, which we can't change.
+American English everywhere: our own names in code, documentation, commit messages and the interface's text. It's the language of the frameworks' names (`Color`, `AuthorizeAttribute`) and of the license text in `LICENSE`, which we can't change. The interface is also translated into European Portuguese, from catalogs whose keys are the English text: see [Translations](#translations).
 
 ## Repository layout
 
@@ -198,7 +198,7 @@ The API's contract for errors is codes: the UI turns them into words, so it can 
 
 Where the words come from:
 
-- **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). The catalog is ready for Angular's internationalization when translations come. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
+- **The UI** has a message catalog that maps each code and its parameters to text, written as the prototype words it: say what to do, with an example ("Enter a hostname, such as shop.example.com", not "Invalid hostname"). There is one catalog per language, and a code missing from a translation falls back to English. An unknown code shows a generic message with the code, so a newer server never leaves an error blank.
 - **MCP** agents have no UI, and English is what they need: the model reads it, explains the problem to its user in their language, and often corrects its own call. So the MCP adapter adds an English description of each code from its own catalog, next to the code and parameters, and it can later share the UI's translations. For arguments it can't read, Datapoint.Mediator reports the field at fault, and Apiary turns it into a field error with the code `invalid`, like any other.
 - **A test** enumerates every code and fails when one is missing from the UI's or the MCP catalog.
 - **Another test** fails when the UI's code reads `title` or `detail` from an error response.
@@ -282,6 +282,18 @@ Short functions, full-word names, no comments, no side effects inside expression
 - **Library controls plug straight in.** Inputs, selects, switches and the date picker implement Signal Forms' custom-control interfaces, so forms bind to them like native inputs.
 - **Forms hold no business rules.** They check shape and give quick feedback. Anything that depends on the cluster's state is decided by the server.
 - **HTTP:** a client generated from the admin API's OpenAPI document, so the UI and the API can't drift apart. Uploads with progress use `withXhr()`; fetch is the default.
+
+### Translations
+
+The interface is in English and European Portuguese (`pt-PT`). A signed-in user's choice is saved in their profile; before that, the browser's language decides, then English. Visitor pages follow the browser's `Accept-Language`.
+
+- **Runtime catalogs, keyed by the English text,** like gettext. `{{ 'Save route' | t }}` in templates, `i18n.t('Save route')` in code, `{name}` for values (`'Delete {name}?' | t: { name }`). Text without a translation shows in English. One build serves every language, and switching doesn't reload the page. We chose this over Angular's built-in i18n, which builds the app once per language and needs a reload to switch.
+- **Plurals go through `i18n.plural(count, one, other)`,** which uses `Intl.PluralRules`. Never build a plural from English words with `count === 1`.
+- **Each feature folder has its catalog,** `routes/routes.pt.ts`, registered in `app.config.ts` with `provideTranslations('pt-PT', …)`. apiary-ui carries its own. Error codes have per-language message catalogs (`app-messages.pt.ts`), registered with `provideErrorMessages(catalog, 'pt-PT')`.
+- **Whoever owns the text translates it.** A library component translates its built-in words ("Cancel", "Checking…"); the app translates what it passes in (labels, headings, confirmation text, toasts).
+- **Dates and numbers use `Intl` with the current language,** never a fixed `'en-US'`.
+- **Names, hostnames and technical values aren't translated,** nor is text an operator wrote, such as a maintenance message.
+- **`npm run check:translations`** fails when a marked text has no Portuguese, its placeholders differ, or an error code has no Portuguese message. The container build runs it. It only sees literal keys, so text chosen from a table (`'Viewer'`, a status) is translated with `| t` where it's shown, and its keys are kept in the catalog by hand. When you add or change English text, add its translation in the same commit.
 
 ### The component library
 

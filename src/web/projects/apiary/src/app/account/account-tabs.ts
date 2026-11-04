@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslatePipe } from '@datapoint/apiary-ui';
 
 @Component({
   selector: 'ap-account-tabs',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TranslatePipe],
   template: `
-    <nav class="ap-tabs" aria-label="Account">
+    <nav class="ap-tabs" [attr.aria-label]="'Account' | t">
       @for (tab of tabs; track tab.link) {
         <a class="ap-tab" [routerLink]="tab.link" routerLinkActive ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">
-          {{ tab.label }}
+          {{ tab.label | t }}
         </a>
       }
     </nav>

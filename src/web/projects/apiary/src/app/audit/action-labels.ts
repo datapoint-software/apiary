@@ -49,6 +49,7 @@ const labels: Record<string, string> = {
   'users.delete': 'deleted a user',
   'users.create-admin': 'created an administrator from the command line',
   'account.update-profile': 'changed their profile',
+  'account.set-language': 'changed their language',
   'account.change-password': 'changed their password',
   'account.confirm-two-step': 'set up two-step sign-in again',
   'account.new-recovery-codes': 'made new recovery codes',

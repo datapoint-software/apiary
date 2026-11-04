@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { DOCUMENT, DestroyRef, Service, computed, inject, linkedSignal } from '@angular/core';
-import { Toaster } from '@datapoint/apiary-ui';
+import { I18n, Toaster } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { ClusterView } from '../api/models';
 
@@ -11,6 +11,7 @@ export const writesPaused =
 export class ClusterStatus {
   private readonly api = inject(Api);
   private readonly toaster = inject(Toaster);
+  private readonly i18n = inject(I18n);
   private readonly resource = httpResource<ClusterView>(() => this.api.query('cluster.status'));
   readonly view = linkedSignal<ClusterView | undefined, ClusterView | undefined>({
     source: () => (this.resource.hasValue() ? this.resource.value() : undefined),
@@ -48,9 +49,12 @@ export class ClusterStatus {
     }
     event.preventDefault();
     event.stopImmediatePropagation();
-    this.toaster.show(`${writesPaused} Routing continues with the last configuration.`, {
-      tone: 'info',
-      heading: 'Changes are paused',
-    });
+    this.toaster.show(
+      `${this.i18n.t(writesPaused)} ${this.i18n.t('Routing continues with the last configuration.')}`,
+      {
+        tone: 'info',
+        heading: this.i18n.t('Changes are paused'),
+      },
+    );
   }
 }

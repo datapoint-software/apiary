@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Button, EmptyState, Icon, PageHead } from '@datapoint/apiary-ui';
+import { Button, EmptyState, I18n, Icon, PageHead, TranslatePipe } from '@datapoint/apiary-ui';
 import { Plus, Search } from 'lucide';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
@@ -26,7 +26,7 @@ function matchesStatus(route: RouteView, status: string): boolean {
 
 @Component({
   selector: 'ap-route-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteTable, RouteSelectionBar, RouterLink],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteTable, RouteSelectionBar, RouterLink, TranslatePipe],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -35,6 +35,7 @@ export class RouteList {
   private readonly api = inject(Api);
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18n);
   protected readonly icons = { plus: Plus, search: Search };
   protected readonly statuses = [['all', 'All'], ['attention', 'Needs attention'], ['disabled', 'Disabled']] as const;
   protected readonly filter = linkedSignal(() => '');
@@ -56,6 +57,10 @@ export class RouteList {
       (r) => (!project || r.projectId === project) && matchesText(r, text) && matchesStatus(r, status),
     );
   });
+
+  protected readonly count = computed(() =>
+    this.i18n.plural(this.total(), '{shown} of {count} route', '{shown} of {count} routes', { shown: this.shown().length }),
+  );
 
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
   protected readonly selectedRoutes = computed(() => this.shown().filter((r) => this.selected().has(r.id)));
