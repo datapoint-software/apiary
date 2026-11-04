@@ -1,9 +1,8 @@
-using System.Net;
-using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.Join;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Security.Keys;
+using Datapoint.Apiary.Testing;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -44,12 +43,7 @@ public sealed class StandaloneReplica : IAsyncDisposable
 
     public RecordingLifetime Lifetime { get; } = new();
 
-    public static int FreePort()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        return ((IPEndPoint)listener.LocalEndpoint).Port;
-    }
+    public static int FreePort() => FreePorts.Next();
 
     public static async Task<StandaloneReplica> StartAsync(string directory, RootKey rootKey, int port, int snapshotEvery = 1000)
     {

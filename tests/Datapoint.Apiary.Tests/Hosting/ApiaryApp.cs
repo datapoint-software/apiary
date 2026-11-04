@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Testing;
@@ -62,13 +60,7 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
     public async Task SeedAsync(params IStateChange[] changes) =>
         await Cluster.AppendAsync(AnEntry(changes), TestContext.Current.CancellationToken);
 
-    public static int FreePort()
-    {
-        using var listener = new TcpListener(IPAddress.IPv6Any, 0);
-        listener.Server.DualMode = true;
-        listener.Start();
-        return ((IPEndPoint)listener.LocalEndpoint).Port;
-    }
+    public static int FreePort() => FreePorts.Next();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

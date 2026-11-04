@@ -237,6 +237,7 @@ From `1.0.0-beta.1`, every version reads the state the version before it wrote, 
   - `Datapoint.Apiary.Architecture.Tests`, which checks the dependency rules above.
 - `Datapoint.Apiary.Management.Tests` runs the management actions through `ManagementHost` on a standalone replica, with hand-written fakes in `Fakes/`.
 - `Datapoint.Apiary.Tests` starts the real app in-process with `ApiaryApp`, on free ports and a temporary directory, and seeds state with `SeedAsync`. Proxy tests send real traffic to a `Backend` or an `EchoServer`. Since the proxy refuses loopback targets, these listen on the machine's first routable IPv4 address, so those tests need one (any private address does).
+- Servers in tests listen on ports from `FreePorts.Next()`, which picks them from 20000 to 32767, below the range the operating system hands out for outgoing connections (from 32768 on Linux, 49152 on macOS and Windows). Asking the system for a free port instead (`port 0`) returns one from that range, which an outgoing connection can take before the server binds it; under load in CI, replicas then failed to start.
 - Run everything with `dotnet test --solution Datapoint.Apiary.slnx` (CI adds `--max-parallel-test-modules 2 --coverage --coverage-output-format cobertura --coverage-settings tests/coverage.config`; the multi-replica tests time out when every project runs at once), one project with `dotnet test --project <path>`, one class with `--filter-class "*Name"`.
 
 ## Angular
