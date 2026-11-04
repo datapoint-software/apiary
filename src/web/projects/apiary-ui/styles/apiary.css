@@ -638,6 +638,8 @@
 .ap .ap-cell-main a { color: var(--ink); font-weight: 500; }
 .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
 .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
+.ap-preview-logo { color: var(--ink-2); }
+.ap-preview-logo svg { width: 52px; height: auto; display: block; }
 
 /* Toasts: success, error and info, with an action */
 .ap-toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; width: min(440px, calc(100vw - 32px)); }
@@ -729,6 +731,7 @@
 .ap-dialog-pane { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .ap-dialog-pane > * { display: contents; }
 .ap-dialog-pane .ap-dialog { width: 100%; max-height: inherit; overflow: auto; }
+.ap-dialog-pane:has(.ap-dialog-xl) { width: min(760px, calc(100vw - 32px)); }
 
 /* Links styled as buttons keep the button's colors, not the link color. */
 .ap a.ap-btn { color: var(--ink); }

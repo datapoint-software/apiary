@@ -1,0 +1,108 @@
+<ap-page-head heading="Visitor pages">
+  <span pageSub>
+    What visitors see when Apiary answers instead of a site: an unknown address, a disabled route, maintenance, or a password. Each page ends with a
+    small “Powered by Apiary” line.
+  </span>
+</ap-page-head>
+
+<section class="ap-panel" aria-labelledby="cluster-brand-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="cluster-brand-title">Cluster brand</h2>
+      <p class="ap-panel-desc">On every visitor page, including addresses with no route, unless the route’s project has its own.</p>
+    </div>
+    @if (brands.value()?.cluster && auth.canOperate()) {
+      <div class="ap-row">
+        <button apWrite apButton type="button" (click)="remove(null)">Remove…</button>
+        <button apWrite apButton type="button" (click)="edit(null, brands.value()?.cluster, 'Cluster brand')">Edit…</button>
+      </div>
+    }
+  </div>
+  <div class="ap-panel-body ap-stack">
+    @if (brands.isLoading() && !brands.value()) {
+      <div aria-busy="true" aria-label="Loading"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+    } @else if (brands.value()?.cluster; as brand) {
+      <div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center">
+        <ap-brand-summary [brand]="brand" />
+        <div class="ap-cell-main" style="align-items: flex-end">
+          <span style="display: inline-flex; align-items: center; gap: 8px">
+            <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--line)" [style.background]="brand.accent"></span>
+            <span class="ap-data">{{ brand.accent }}</span>
+          </span>
+          <span class="ap-caption">Changed {{ timeAgo(brand.changedAt) }}@if (brand.changedBy) { by {{ brand.changedBy }} }</span>
+        </div>
+      </div>
+    } @else {
+      <ap-empty-state heading="No brand yet">
+        Visitor pages show only their message and “Powered by Apiary”. Add your logo, name and colors so visitors know who runs the site.
+        @if (auth.canOperate()) {
+          <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null, undefined, 'Set up the brand')">Set up the brand</button>
+        }
+      </ap-empty-state>
+    }
+  </div>
+</section>
+
+<section class="ap-panel" aria-labelledby="project-brands-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="project-brands-title">Projects with their own brand</h2>
+      <p class="ap-panel-desc">For a project that belongs to a client, so its visitors see the client’s brand on its password and maintenance pages.</p>
+    </div>
+    @if (canAddAnother()) {
+      <button apWrite apButton type="button" (click)="add()"><ap-icon [icon]="icons.add" />Give a project its own brand</button>
+    }
+  </div>
+  @if (brands.value()?.projects?.length) {
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">Projects with their own brand</caption>
+        <thead>
+          <tr>
+            <th scope="col">Project</th>
+            <th scope="col">Brand</th>
+            <th scope="col">Accent color</th>
+            <th scope="col">Changed</th>
+            <th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (project of brands.value()!.projects; track project.projectId) {
+            <tr>
+              <td>{{ project.projectName }}</td>
+              <td><ap-brand-summary [brand]="project.brand" /></td>
+              <td>
+                <span style="display: inline-flex; align-items: center; gap: 8px">
+                  <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--line)" [style.background]="project.brand.accent"></span>
+                  <span class="ap-data">{{ project.brand.accent }}</span>
+                </span>
+              </td>
+              <td class="ap-muted">{{ timeAgo(project.brand.changedAt) }}@if (project.brand.changedBy) { by {{ project.brand.changedBy }} }</td>
+              <td class="ap-col-actions">
+                @if (auth.canOperate()) {
+                  <div class="ap-row" style="justify-content: flex-end; gap: 4px; flex-wrap: nowrap">
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit the brand of ' + project.projectName" (click)="edit(project.projectId, project.brand, 'Brand of ' + project.projectName)">
+                      <ap-icon [icon]="icons.edit" />
+                    </button>
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Remove the brand of ' + project.projectName" (click)="remove(project.projectId, project.projectName)">
+                      <ap-icon [icon]="icons.remove" />
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="ap-panel-body">
+      <ap-empty-state heading="Every project uses the cluster brand">
+        Give a project its own brand when it belongs to a client.
+        @if (auth.canOperate() && unbranded().length > 0) {
+          <button apWrite emptyActions apButton type="button" (click)="add()"><ap-icon [icon]="icons.add" />Give a project its own brand</button>
+        }
+      </ap-empty-state>
+    </div>
+  }
+</section>

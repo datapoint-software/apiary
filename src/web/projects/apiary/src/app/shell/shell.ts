@@ -16,6 +16,7 @@ import {
   Bot,
   Cable,
   CornerUpRight,
+  PanelsTopLeft,
   DoorOpen,
   FolderOpen,
   Hexagon,
@@ -142,6 +143,7 @@ export class Shell {
             warn: this.certificates.value().some(needsAttention),
           },
           { icon: CornerUpRight, label: 'Redirects', link: '/redirects' },
+          { icon: PanelsTopLeft, label: 'Visitor pages', link: '/visitor-pages' },
         ],
       },
       {

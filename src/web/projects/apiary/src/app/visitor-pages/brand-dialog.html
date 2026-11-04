@@ -1,0 +1,87 @@
+<form class="ap-dialog ap-dialog-xl" role="dialog" aria-labelledby="brand-title" [apForm]="brand" #brandForm="apForm" (submit)="save(brandForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="brand-title">{{ data.heading }}</h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary verb="save it" />
+    <div class="ap-grid-2" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: start">
+      <div class="ap-stack" style="gap: 16px">
+        @if (adding) {
+          <ap-field label="Project" [field]="brand.projectId">
+            <select class="ap-select" [formField]="brand.projectId" cdkFocusInitial>
+              <option value="">Choose a project</option>
+              @for (project of data.choices; track project.id) {
+                <option [value]="project.id">{{ project.name }}</option>
+              }
+            </select>
+          </ap-field>
+        }
+        <ap-field label="Name" [field]="brand.name" help="Next to the logo, and the alternative text for it.">
+          <input class="ap-input" [formField]="brand.name" placeholder="Example Lda." autocomplete="off" />
+        </ap-field>
+        <div class="ap-field">
+          <span class="ap-label" id="logo-label">Logo <span class="ap-optional">(optional)</span></span>
+          @if (logo()) {
+            <div class="ap-row" style="gap: 10px">
+              <img [src]="logo()" alt="" style="height: 32px; width: auto" />
+              <span class="ap-caption ap-data" style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis">{{ logoName() }}</span>
+              <button apButton="ghost" size="small" type="button" (click)="removeLogo()">Remove logo</button>
+            </div>
+          } @else {
+            <label class="ap-drop" (apFileDrop)="read($event)">
+              <ap-icon [icon]="icons.upload" />
+              <span><strong>Choose a file</strong> or drop it here</span>
+              <span class="ap-caption">PNG, WebP or SVG, up to 100 KB</span>
+              <input type="file" accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml" aria-labelledby="logo-label" aria-describedby="logo-help logo-error" (change)="load($event)" />
+            </label>
+          }
+          <span class="ap-help" id="logo-help">Shown 32 pixels high, on light and dark backgrounds, so choose one that works on both.</span>
+          <span class="ap-error" id="logo-error" [hidden]="!logoError()"><ap-icon [icon]="icons.alert" />{{ logoError() }}</span>
+        </div>
+        <ap-field label="Accent color" [field]="brand.accent" help="For buttons. Apiary picks white or black text, whichever reads better on it.">
+          <div class="ap-row" style="gap: 8px">
+            <input type="color" aria-label="Pick the accent color" [value]="pickerValue()" (input)="pick($event)" style="width: 44px; height: 36px; padding: 0; border: 0; background: none; cursor: pointer" />
+            <input class="ap-input ap-data" style="max-width: 140px" [formField]="brand.accent" autocomplete="off" spellcheck="false" />
+          </div>
+        </ap-field>
+        <ap-field
+          label="Contact line"
+          [field]="brand.contact"
+          [optional]="true"
+          help="Up to 120 characters, on every page. Error pages tell visitors to contact whoever runs the site, so say how."
+        >
+          <input class="ap-input" [formField]="brand.contact" placeholder="Questions? Write to help@example.com." />
+        </ap-field>
+      </div>
+      <div class="ap-field">
+        <span class="ap-label">Preview</span>
+        <div style="border-radius: var(--radius-2); box-shadow: inset 0 0 0 1px var(--line); background: var(--ground); padding: 20px 18px 10px; font-size: 0.875rem; color: var(--ink)" aria-hidden="true">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px">
+            @if (logo()) {
+              <img [src]="logo()" alt="" style="height: 22px; width: auto" />
+            }
+            <strong translate="no">{{ previewName() }}</strong>
+          </div>
+          <div style="font: 600 1rem/1.3 var(--font-display); margin-bottom: 4px">Restricted access</div>
+          <div style="color: var(--ink-2); margin-bottom: 12px">Enter the password you were given.</div>
+          <div style="height: 30px; border-radius: var(--radius-1); box-shadow: inset 0 0 0 1px var(--line-strong); background: var(--surface); margin-bottom: 8px"></div>
+          <div style="text-align: center; font-weight: 600; padding: 6px; border-radius: var(--radius-1)" [style.background]="previewAccent()" [style.color]="previewText()">Continue</div>
+          @if (previewContact()) {
+            <div style="color: var(--ink-2); margin-top: 14px" translate="no">{{ previewContact() }}</div>
+          }
+          <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 18px; font-size: 0.6875rem; color: var(--ink-3)">
+            <span class="ap-preview-logo"><ap-datapoint-logo /></span>
+            <span style="width: 1px; height: 12px; background: var(--line-strong)"></span>
+            <span style="display: inline-flex; align-items: center; gap: 6px">
+              <span style="width: 10px; height: 9px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); background: var(--honey)"></span>Powered by Apiary
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">Cancel</button>
+    <button apWrite apButton="primary" type="submit" [disabled]="brand().submitting()">{{ brand().submitting() ? 'Saving…' : 'Save brand' }}</button>
+  </div>
+</form>

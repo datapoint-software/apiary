@@ -377,3 +377,24 @@ export interface ActivityView {
   readonly points: readonly ActivityPoint[];
   readonly p95Milliseconds?: number;
 }
+
+export interface BrandView {
+  readonly name: string;
+  readonly accent: string;
+  readonly contact?: string;
+  readonly logo?: string;
+  readonly logoName?: string;
+  readonly changedAt: string;
+  readonly changedBy?: string;
+}
+
+export interface ProjectBrandView {
+  readonly projectId: string;
+  readonly projectName: string;
+  readonly brand: BrandView;
+}
+
+export interface BrandsView {
+  readonly cluster?: BrandView;
+  readonly projects: readonly ProjectBrandView[];
+}
