@@ -32,4 +32,6 @@ public sealed record Route(
     public bool StrictTransportSubdomains { get; init; }
 
     public DateTimeOffset? CachePurgedAt { get; init; }
+
+    public RoutePassword? Password { get; init; }
 }

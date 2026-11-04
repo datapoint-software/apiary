@@ -51,6 +51,10 @@ public static class ErrorCodes
     public const string RouteCanaryName = "route.canaryName";
     public const string RouteTargetsRequired = "route.targetsRequired";
     public const string RouteRedirectExists = "route.redirectExists";
+    public const string RoutePasswordRequired = "route.passwordRequired";
+    public const string RoutePasswordShort = "route.passwordShort";
+    public const string RouteLinkKeyRequired = "route.linkKeyRequired";
+    public const string RouteLinkKeyInvalid = "route.linkKeyInvalid";
     public const string RedirectNotFound = "redirect.notFound";
     public const string RedirectDuplicate = "redirect.duplicate";
     public const string RedirectRouteExists = "redirect.routeExists";
@@ -140,6 +144,7 @@ public static class ErrorCodes
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
         ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired, RouteTargetsTooMany, RouteWeightsTotal, RouteCanaryName,
         MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
+        RoutePasswordRequired, RoutePasswordShort, RouteLinkKeyRequired, RouteLinkKeyInvalid,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,

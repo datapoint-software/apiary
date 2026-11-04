@@ -16,6 +16,8 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             throw ActionFailedException.NotFound(ErrorCodes.RouteNotFound);
         }
 
+        var now = time.GetUtcNow();
+        var by = principals.Principal?.Identity?.Name;
         var route = existing with
         {
             ProjectId = command.ProjectId,
@@ -33,8 +35,9 @@ public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvide
             Caching = command.Caching,
             StrictTransport = command.StrictTransport,
             StrictTransportSubdomains = command.StrictTransport && command.StrictTransportSubdomains,
-            ChangedAt = time.GetUtcNow(),
-            ChangedBy = principals.Principal?.Identity?.Name,
+            Password = RouteNormalization.Password(command.Password, existing.Password, now, by),
+            ChangedAt = now,
+            ChangedBy = by,
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);

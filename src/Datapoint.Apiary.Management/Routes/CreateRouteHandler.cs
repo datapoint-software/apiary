@@ -31,6 +31,7 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
             Caching = command.Caching,
             StrictTransport = command.StrictTransport,
             StrictTransportSubdomains = command.StrictTransport && command.StrictTransportSubdomains,
+            Password = RouteNormalization.Password(command.Password, null, now, principals.Principal?.Identity?.Name),
         };
         transaction.Record(new RouteSaved(route));
         transaction.Affects(route.Id, route.ProjectId);

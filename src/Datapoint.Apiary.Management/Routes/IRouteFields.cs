@@ -33,4 +33,6 @@ public interface IRouteFields
     bool StrictTransport { get; }
 
     bool StrictTransportSubdomains { get; }
+
+    RoutePasswordSettings? Password { get; }
 }

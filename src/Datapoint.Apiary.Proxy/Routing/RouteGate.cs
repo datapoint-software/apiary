@@ -1,12 +1,13 @@
 using System.Globalization;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Proxy.Pages;
+using Datapoint.Apiary.Proxy.Passwords;
 using Datapoint.Apiary.Proxy.RateLimits;
 using Microsoft.AspNetCore.Http;
 
 namespace Datapoint.Apiary.Proxy.Routing;
 
-public sealed class RouteGate(RequestDelegate next, IClusterState cluster, AddressAllowlists allowlists, ClientRateLimiter limiter, TimeProvider time)
+public sealed class RouteGate(RequestDelegate next, IClusterState cluster, AddressAllowlists allowlists, ClientRateLimiter limiter, PasswordGate passwords, TimeProvider time)
 {
     public Task InvokeAsync(HttpContext context)
     {
@@ -36,6 +37,11 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
         {
             context.Response.Headers.RetryAfter = ((long)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
             return PublicPages.TooManyRequests().ExecuteAsync(context);
+        }
+
+        if (route.Password is { } password)
+        {
+            return passwords.InvokeAsync(context, route, password, next);
         }
 
         return next(context);

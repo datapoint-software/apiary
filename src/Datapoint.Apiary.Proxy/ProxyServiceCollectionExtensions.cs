@@ -3,6 +3,7 @@ using Datapoint.Apiary.Proxy.AccessLogs;
 using Datapoint.Apiary.Proxy.Caching;
 using Datapoint.Apiary.Proxy.Health;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.Passwords;
 using Datapoint.Apiary.Proxy.RateLimits;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Proxy.Streams;
@@ -33,6 +34,7 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<IProxyConfigProvider, StateProxyConfigProvider>();
         services.AddSingleton<AddressAllowlists>();
         services.AddSingleton<ClientRateLimiter>();
+        services.AddSingleton<PasswordGate>();
         services.AddSingleton<AccessLogWriter>();
         services.AddSingleton<ProxyMetrics>();
         services.AddSingleton<RouteTelemetrySource>();
@@ -60,7 +62,7 @@ public static class ProxyServiceCollectionExtensions
         });
         services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
         services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
-        services.AddReverseProxy().AddTransforms(new AdminCookieFilter(adminCookies).Apply);
+        services.AddReverseProxy().AddTransforms(new ApiaryCookieFilter(adminCookies).Apply);
         return services;
     }
 }

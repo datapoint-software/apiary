@@ -1,7 +1,9 @@
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Management.Validation;
+using Datapoint.Apiary.Security.Tokens;
 using FluentValidation;
 
 namespace Datapoint.Apiary.Management.Routes;
@@ -14,6 +16,11 @@ public static class RouteRules
     public const int MaximumMaintenanceMessage = 200;
     public const int MaximumTargets = 10;
     public const int MaximumCanaryValue = 200;
+    public const int MinimumPassword = 12;
+    public const int MaximumPassword = 128;
+    public const int MaximumPasswordMessage = 120;
+    public const int MinimumLinkKeyBytes = 16;
+    public const int MaximumLinkKey = 128;
     public static readonly TimeSpan MaximumMaintenance = TimeSpan.FromDays(7);
 
     public static void AddRouteRules<T>(this AbstractValidator<T> validator, IClusterState cluster, TimeProvider time, Func<T, Guid?> existingId)
@@ -57,6 +64,7 @@ public static class RouteRules
                 .Must(end => end > time.GetUtcNow()).WithErrorCode(ErrorCodes.MaintenanceEnded);
             window.RuleFor(w => w.Message).MaximumLength(MaximumMaintenanceMessage).WithErrorCode(ErrorCodes.TooLong);
         }).When(r => r.Maintenance is not null);
+        validator.AddPasswordRules(cluster, existingId);
         validator.RuleFor(r => r.CertificateId).Cascade(CascadeMode.Stop)
             .Must(id => cluster.Current.Certificates.ContainsKey(id!.Value)).WithErrorCode(ErrorCodes.CertificateNotFound)
             .Must(id => cluster.Current.Certificates[id!.Value].Source == CertificateSource.Uploaded).WithErrorCode(ErrorCodes.CertificateNotUploaded)
@@ -74,6 +82,28 @@ public static class RouteRules
 
     private static bool IsToken(string name) =>
         name.Trim() is { Length: > 0 and <= 100 } trimmed && trimmed.All(c => char.IsAsciiLetterOrDigit(c) || "!#$%&'*+-.^_`|~".Contains(c));
+
+    private static void AddPasswordRules<T>(this AbstractValidator<T> validator, IClusterState cluster, Func<T, Guid?> existingId)
+        where T : IRouteFields
+    {
+        validator.RuleFor(r => r.Password!.NewPassword).Cascade(CascadeMode.Stop)
+            .Must((r, password) => password is not null || CurrentPassword(cluster.Current, existingId(r)) is not null).WithErrorCode(ErrorCodes.RoutePasswordRequired)
+            .Must(password => password is null || password.Length >= MinimumPassword).WithErrorCode(ErrorCodes.RoutePasswordShort)
+            .Must(password => password is null || password.Length <= MaximumPassword).WithErrorCode(ErrorCodes.TooLong)
+            .When(r => r.Password is not null);
+        validator.RuleFor(r => r.Password!.NewLinkKey).Cascade(CascadeMode.Stop)
+            .Must((r, key) => key is not null || CurrentPassword(cluster.Current, existingId(r))?.Link is not null).WithErrorCode(ErrorCodes.RouteLinkKeyRequired)
+            .Must(key => key is null || IsLinkKey(key)).WithErrorCode(ErrorCodes.RouteLinkKeyInvalid)
+            .When(r => r.Password is { Link: true });
+        validator.RuleFor(r => r.Password!.Days).Must(days => days is 1 or 7 or 30).WithErrorCode(ErrorCodes.Invalid).When(r => r.Password is not null);
+        validator.RuleFor(r => r.Password!.Message).MaximumLength(MaximumPasswordMessage).WithErrorCode(ErrorCodes.TooLong).When(r => r.Password is not null);
+    }
+
+    private static RoutePassword? CurrentPassword(ApiaryState state, Guid? id) =>
+        id is { } existing && state.Routes.TryGetValue(existing, out var route) ? route.Password : null;
+
+    private static bool IsLinkKey(string key) =>
+        key.Length <= MaximumLinkKey && key.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_') && Base64Url.TryDecode(key) is { Length: >= MinimumLinkKeyBytes };
 
     private static bool Covers(ApiaryState state, IRouteFields fields) =>
         state.Certificates[fields.CertificateId!.Value].Material?.Covers(RouteNormalization.Host(fields.Host)) == true;

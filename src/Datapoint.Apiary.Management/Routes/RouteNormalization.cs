@@ -1,4 +1,6 @@
 using Datapoint.Apiary.Cluster.Routes;
+using Datapoint.Apiary.Security.Passwords;
+using Datapoint.Apiary.Security.Tokens;
 
 namespace Datapoint.Apiary.Management.Routes;
 
@@ -25,5 +27,19 @@ public static class RouteNormalization
     {
         var trimmed = path.Trim();
         return trimmed.Length > 1 ? trimmed.TrimEnd('/') : trimmed;
+    }
+
+    public static RoutePassword? Password(RoutePasswordSettings? settings, RoutePassword? current, DateTimeOffset now, string? by)
+    {
+        if (settings is null)
+        {
+            return null;
+        }
+
+        var message = string.IsNullOrWhiteSpace(settings.Message) ? null : settings.Message.Trim();
+        var link = !settings.Link ? null : settings.NewLinkKey is { } key ? new RouteLink(SecretTokens.Hash(key), now) : current?.Link;
+        return settings.NewPassword is { } password
+            ? new RoutePassword(PasswordHasher.Hash(password), SecretTokens.New(), now, by, settings.Days, message, link)
+            : current! with { Days = settings.Days, Message = message, Link = link };
     }
 }

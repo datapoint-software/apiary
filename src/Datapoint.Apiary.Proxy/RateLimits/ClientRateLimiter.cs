@@ -11,16 +11,19 @@ public sealed class ClientRateLimiter : IDisposable
     private readonly PartitionedRateLimiter<ClientBucket> _limiter =
         PartitionedRateLimiter.Create<ClientBucket, ClientBucket>(bucket => RateLimitPartition.GetTokenBucketLimiter(bucket, Options));
 
-    public bool TryAcquire(string scope, IPAddress? client, int perMinute, out TimeSpan retryAfter)
+    public bool TryAcquire(string scope, IPAddress? client, int perMinute, out TimeSpan retryAfter) =>
+        TryAcquire(scope, client, perMinute, TimeSpan.FromMinutes(1), out retryAfter);
+
+    public bool TryAcquire(string scope, IPAddress? client, int limit, TimeSpan period, out TimeSpan retryAfter)
     {
         retryAfter = TimeSpan.Zero;
-        if (client is null || perMinute <= 0)
+        if (client is null || limit <= 0)
         {
             return true;
         }
 
-        using var lease = _limiter.AttemptAcquire(new ClientBucket(scope, NetworkOf(client), perMinute));
-        retryAfter = lease.IsAcquired ? TimeSpan.Zero : TimeSpan.FromMinutes(1) / perMinute;
+        using var lease = _limiter.AttemptAcquire(new ClientBucket(scope, NetworkOf(client), limit, period));
+        retryAfter = lease.IsAcquired ? TimeSpan.Zero : period / limit;
         return lease.IsAcquired;
     }
 
@@ -41,9 +44,9 @@ public sealed class ClientRateLimiter : IDisposable
 
     private static TokenBucketRateLimiterOptions Options(ClientBucket bucket) => new()
     {
-        TokenLimit = bucket.PerMinute,
-        TokensPerPeriod = bucket.PerMinute,
-        ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+        TokenLimit = bucket.Limit,
+        TokensPerPeriod = bucket.Limit,
+        ReplenishmentPeriod = bucket.Period,
         QueueLimit = 0,
         AutoReplenishment = true,
     };

@@ -25,5 +25,6 @@ public sealed record CreateRoute(
     [property: Description("Compresses responses with Brotli or gzip. Leave it off for pages that mix secrets with text visitors can influence (the BREACH attack).")] bool Compression = false,
     [property: Description("Caches responses in memory on each replica, only as the target allows with Cache-Control.")] bool Caching = false,
     [property: Description("Sends Strict-Transport-Security for a year, so browsers that visited the hostname over HTTPS refuse plain HTTP to it, on any port. Hard to undo: browsers keep it until it expires.")] bool StrictTransport = false,
-    [property: Description("With strictTransport, also covers every subdomain of the hostname. Only turn it on when they all serve HTTPS.")] bool StrictTransportSubdomains = false)
+    [property: Description("With strictTransport, also covers every subdomain of the hostname. Only turn it on when they all serve HTTPS.")] bool StrictTransportSubdomains = false,
+    [property: Description("Asks visitors for a shared password before they reach the site, on a page Apiary shows, or null to let everyone in. For demos and previews that aren't ready to be public. Apiary keeps only hashes, and never returns the password or the link key.")] RoutePasswordSettings? Password = null)
     : ICommand<Guid>, IRouteFields;
