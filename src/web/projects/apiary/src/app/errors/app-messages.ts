@@ -25,6 +25,7 @@ export const appMessages: MessageCatalog = {
   'route.passwordShort': () => 'Use at least 12 characters. A generated one is easier to share and harder to guess.',
   'route.linkKeyRequired': () => 'Something went wrong making the sign-in link. Save again.',
   'route.linkKeyInvalid': () => 'Something went wrong making the sign-in link. Save again.',
+  'route.requestSize': () => 'Enter a whole number from 1 MB to 100 GB.',
   'brand.accentInvalid': () => 'Enter a color like #1D4ED8, or pick one.',
   'brand.logoType': () => 'Choose a PNG, WebP or SVG file.',
   'brand.logoTooLarge': () => 'Choose a logo up to 100 KB.',

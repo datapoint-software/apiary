@@ -56,6 +56,7 @@ public static partial class McpErrorDescriptions
         ["route.canaryName"] = "A canary header or cookie name uses letters, digits and hyphens, such as X-Canary.",
         ["route.passwordRequired"] = "Asking visitors for a password needs a password. Generate one in the admin UI or pass one.",
         ["route.passwordShort"] = "A route's password needs at least 12 characters.",
+        ["route.requestSize"] = "A request size is a whole number of megabytes from 1 to 100000 (100 GB). For no limit, use requestSize unlimited.",
         ["route.linkKeyRequired"] = "The sign-in link couldn't be made. Save the route again.",
         ["route.linkKeyInvalid"] = "The sign-in link couldn't be made. Save the route again.",
         ["brand.accentInvalid"] = "The accent color must be a hex color, such as #1D4ED8.",

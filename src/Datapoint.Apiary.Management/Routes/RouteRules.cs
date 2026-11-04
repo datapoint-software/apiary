@@ -10,9 +10,10 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public static class RouteRules
 {
-    public const int MaximumTimeoutSeconds = 120;
+    public const int MaximumTimeoutSeconds = 3600;
     public const int MaximumAllowedAddresses = 100;
     public const int MaximumRateLimit = 100_000;
+    public const int MaximumRequestMegabytes = 100_000;
     public const int MaximumMaintenanceMessage = 200;
     public const int MaximumTargets = 10;
     public const int MaximumCanaryValue = 200;
@@ -56,6 +57,8 @@ public static class RouteRules
             .Must(a => RouteNormalization.Addresses(a) is not { Count: > MaximumAllowedAddresses }).WithErrorCode(ErrorCodes.IpRangeTooMany)
             .Must(a => RouteNormalization.Addresses(a)?.All(RuleExtensions.IsIpRange) ?? true).WithErrorCode(ErrorCodes.IpRangeInvalid);
         validator.RuleFor(r => r.RateLimit).InclusiveBetween(1, MaximumRateLimit).WithErrorCode(ErrorCodes.Range).When(r => r.RateLimit is not null);
+        validator.RuleFor(r => r.RequestSize).IsInEnum().WithErrorCode(ErrorCodes.Invalid);
+        validator.RuleFor(r => r.RequestMegabytes).RequestMegabytes().When(r => r.RequestSize is RequestSizeLimit.Custom);
         validator.RuleFor(r => r.Maintenance!).ChildRules(window =>
         {
             window.RuleFor(w => w.End)
@@ -79,6 +82,9 @@ public static class RouteRules
             .WithErrorCode(ErrorCodes.RouteDuplicate)
             .OverridePropertyName(nameof(IRouteFields.Path));
     }
+
+    public static IRuleBuilderOptions<T, int?> RequestMegabytes<T>(this IRuleBuilder<T, int?> rule) =>
+        rule.Must(megabytes => megabytes is >= 1 and <= MaximumRequestMegabytes).WithErrorCode(ErrorCodes.RouteRequestSize);
 
     private static bool IsToken(string name) =>
         name.Trim() is { Length: > 0 and <= 100 } trimmed && trimmed.All(c => char.IsAsciiLetterOrDigit(c) || "!#$%&'*+-.^_`|~".Contains(c));

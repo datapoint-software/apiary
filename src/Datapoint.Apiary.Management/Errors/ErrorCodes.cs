@@ -55,6 +55,7 @@ public static class ErrorCodes
     public const string RoutePasswordShort = "route.passwordShort";
     public const string RouteLinkKeyRequired = "route.linkKeyRequired";
     public const string RouteLinkKeyInvalid = "route.linkKeyInvalid";
+    public const string RouteRequestSize = "route.requestSize";
     public const string BrandAccentInvalid = "brand.accentInvalid";
     public const string BrandLogoType = "brand.logoType";
     public const string BrandLogoTooLarge = "brand.logoTooLarge";
@@ -149,7 +150,7 @@ public static class ErrorCodes
         TargetRequired, TargetInvalid, TargetLoopback, TargetLinkLocal, TargetUnspecified, IpRangeInvalid, IpRangeTooMany,
         ProjectNotFound, ProjectNameTaken, ProjectIconUnknown, ProjectNotEmpty, ProjectLast, ProjectMoveToSelf, RouteNotFound, RouteDuplicate, RouteTargetsRequired, RouteTargetsTooMany, RouteWeightsTotal, RouteCanaryName,
         MaintenanceEndBeforeStart, MaintenanceTooLong, MaintenanceEnded, RouteRedirectExists,
-        RoutePasswordRequired, RoutePasswordShort, RouteLinkKeyRequired, RouteLinkKeyInvalid,
+        RoutePasswordRequired, RoutePasswordShort, RouteLinkKeyRequired, RouteLinkKeyInvalid, RouteRequestSize,
         BrandAccentInvalid, BrandLogoType, BrandLogoTooLarge, BrandLogoInvalid, LanguageUnsupported,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,

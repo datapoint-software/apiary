@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Datapoint.Apiary.Cluster.Backups;
+using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Testing;
@@ -68,6 +70,19 @@ public sealed class StateSerializationTests
         var json = JsonSerializer.Serialize(AnEntry(new UserSaved(AUser())), ClusterJsonContext.Default.StateEntry);
 
         Assert.Contains("\"role\":\"Administrator\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_route_saved_before_request_size_limits_uses_the_default()
+    {
+        var json = JsonNode.Parse(JsonSerializer.Serialize(AnEntry(new RouteSaved(ARoute())), ClusterJsonContext.Default.StateEntry))!;
+        var saved = json["changes"]![0]!["route"]!.AsObject();
+        saved.Remove("requestSize");
+        saved.Remove("requestMegabytes");
+
+        var route = Assert.Single(json.Deserialize(ClusterJsonContext.Default.StateEntry)!.ApplyTo(ApiaryState.Empty, 1).Routes.Values);
+
+        Assert.Equal(RequestSizeLimit.Default, route.RequestSize);
     }
 
     [Fact]

@@ -112,6 +112,8 @@ public sealed record ApiaryState
 
     public SessionPolicy? SessionPolicy { get; init; }
 
+    public RouteDefaults? RouteDefaults { get; init; }
+
     public AgentPolicy? AgentPolicy { get; init; }
 
     public Brands.VisitorBrand? Brand { get; init; }

@@ -15,6 +15,8 @@ public sealed record RouteView(
     bool Disabled,
     IReadOnlyList<string> AllowedAddresses,
     int? RateLimit,
+    RequestSizeLimit RequestSize,
+    int? RequestMegabytes,
     MaintenanceWindow? Maintenance,
     RouteCanary? Canary,
     bool Sticky,
@@ -30,7 +32,7 @@ public sealed record RouteView(
 {
     public static RouteView From(Route route, RouteTelemetry telemetry) =>
         new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy,
-            route.Disabled, route.AllowedAddresses ?? [], route.RateLimit, route.Maintenance,
+            route.Disabled, route.AllowedAddresses ?? [], route.RateLimit, route.RequestSize, route.RequestMegabytes, route.Maintenance,
             route.Canary, route.Sticky, route.Compression, route.Caching, route.StrictTransport, route.StrictTransportSubdomains, route.CachePurgedAt,
             RoutePasswordView.From(route.Password), telemetry.RequestsPerMinute, telemetry.Health, telemetry.TargetsDown);
 }

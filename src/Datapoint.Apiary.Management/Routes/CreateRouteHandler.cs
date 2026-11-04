@@ -24,6 +24,8 @@ public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvide
         {
             AllowedAddresses = RouteNormalization.Addresses(command.AllowedAddresses),
             RateLimit = command.RateLimit,
+            RequestSize = command.RequestSize,
+            RequestMegabytes = RouteNormalization.RequestMegabytes(command),
             Maintenance = RouteNormalization.Maintenance(command.Maintenance),
             Canary = RouteNormalization.Canary(command.Canary, command.Targets.Count),
             Sticky = command.Sticky,

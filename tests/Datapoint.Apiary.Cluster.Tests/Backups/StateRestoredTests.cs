@@ -92,6 +92,14 @@ public sealed class StateRestoredTests
     }
 
     [Fact]
+    public void Restoring_replaces_the_route_defaults()
+    {
+        var restored = ApiaryState.Empty.With(new RouteDefaultsSaved(new RouteDefaults(5000)), new StateRestored(ApiaryState.Empty.With(new RouteDefaultsSaved(new RouteDefaults(30)))));
+
+        Assert.Equal(new RouteDefaults(30), restored.RouteDefaults);
+    }
+
+    [Fact]
     public void Restoring_replaces_the_agent_policy()
     {
         var policy = new AgentPolicy(["https://claude.ai"]);

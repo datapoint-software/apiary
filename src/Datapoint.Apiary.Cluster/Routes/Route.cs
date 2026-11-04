@@ -17,6 +17,10 @@ public sealed record Route(
 
     public int? RateLimit { get; init; }
 
+    public RequestSizeLimit RequestSize { get; init; }
+
+    public int? RequestMegabytes { get; init; }
+
     public MaintenanceWindow? Maintenance { get; init; }
 
     public RouteCanary? Canary { get; init; }

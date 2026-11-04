@@ -40,6 +40,8 @@ public static class EveryChange
         {
             AllowedAddresses = ["192.0.2.0/24"],
             RateLimit = 100,
+            RequestSize = RequestSizeLimit.Custom,
+            RequestMegabytes = 500,
             Maintenance = new MaintenanceWindow(TestClock.Now, TestClock.Now.AddHours(1), "Back soon"),
             Canary = new RouteCanary(CanarySource.Header, "X-Canary", "yes"),
             Sticky = true,
@@ -96,6 +98,7 @@ public static class EveryChange
             new StreamRouteDeleted(AnId()),
             new AdminCertificateSaved(new AdminCertificate(SomeMaterial("apiary.example.com"), SelfSigned: false, TestClock.Now, null)),
             new SessionPolicySaved(new SessionPolicy(30)),
+            new RouteDefaultsSaved(new RouteDefaults(100)),
             new AgentPolicySaved(new AgentPolicy(["https://claude.ai"])),
             new BrandSaved(project.Id, ABrand()),
         ];

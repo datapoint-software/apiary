@@ -1,9 +1,11 @@
 using System.Globalization;
+using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Proxy.Pages;
 using Datapoint.Apiary.Proxy.Passwords;
 using Datapoint.Apiary.Proxy.RateLimits;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Datapoint.Apiary.Proxy.Routing;
 
@@ -16,6 +18,7 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
             return next(context);
         }
 
+        LimitRequestBody(context, route);
         if (!allowlists.Allows(route.AllowedAddresses, context.Connection.RemoteIpAddress))
         {
             return pages.Forbidden().ExecuteAsync(context);
@@ -45,5 +48,15 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
         }
 
         return next(context);
+    }
+
+    private void LimitRequestBody(HttpContext context, Route route)
+    {
+        if (context.Features.Get<IHttpMaxRequestBodySizeFeature>() is not { IsReadOnly: false } limit)
+        {
+            return;
+        }
+
+        limit.MaxRequestBodySize = RouteDefaults.MaxRequestBodySize(cluster.Current, route);
     }
 }

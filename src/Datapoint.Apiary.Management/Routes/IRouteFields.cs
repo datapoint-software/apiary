@@ -20,6 +20,10 @@ public interface IRouteFields
 
     int? RateLimit { get; }
 
+    RequestSizeLimit RequestSize { get; }
+
+    int? RequestMegabytes { get; }
+
     MaintenanceWindow? Maintenance { get; }
 
     RouteCanary? Canary { get; }

@@ -40,10 +40,15 @@ internal sealed class Backend : IAsyncDisposable
         var address = RoutableAddress() ?? throw new InvalidOperationException("No routable IPv4 address to run a backend on.");
         var port = ApiaryApp.FreePort();
         var builder = WebApplication.CreateSlimBuilder();
-        builder.WebHost.ConfigureKestrel(k => k.Listen(address, port));
-        var app = builder.Build();
-        app.Run(context =>
+        builder.WebHost.ConfigureKestrel(k =>
         {
+            k.Listen(address, port);
+            k.Limits.MaxRequestBodySize = null;
+        });
+        var app = builder.Build();
+        app.Run(async context =>
+        {
+            var received = await ReceivedBytesAsync(context.Request.Body, context.RequestAborted);
             var headers = new JsonObject();
             foreach (var (key, value) in context.Request.Headers)
             {
@@ -51,9 +56,10 @@ internal sealed class Backend : IAsyncDisposable
             }
 
             context.Response.Headers.CacheControl = context.Request.Query["cache"].ToString() is { Length: > 0 } cache ? cache : "no-store";
-            return context.Response.WriteAsJsonAsync(new JsonObject
+            await context.Response.WriteAsJsonAsync(new JsonObject
             {
                 ["backend"] = name,
+                ["received"] = received,
                 ["path"] = context.Request.Path.Value + context.Request.QueryString.Value,
                 ["headers"] = headers,
                 ["at"] = DateTimeOffset.UtcNow.Ticks,
@@ -61,6 +67,20 @@ internal sealed class Backend : IAsyncDisposable
         });
         await app.StartAsync(TestContext.Current.CancellationToken);
         return new Backend(app, address, port, name);
+    }
+
+    private static async Task<long> ReceivedBytesAsync(Stream body, CancellationToken ct)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+        var read = await body.ReadAsync(buffer, ct);
+        while (read > 0)
+        {
+            total += read;
+            read = await body.ReadAsync(buffer, ct);
+        }
+
+        return total;
     }
 
     public async ValueTask DisposeAsync()

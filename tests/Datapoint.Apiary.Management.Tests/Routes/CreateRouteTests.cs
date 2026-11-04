@@ -289,7 +289,7 @@ public sealed class CreateRouteTests : IDisposable
 
     [Theory]
     [InlineData(0)]
-    [InlineData(121)]
+    [InlineData(3601)]
     public async Task A_timeout_out_of_range_is_refused(int seconds)
     {
         _host.SignedIn();
@@ -399,6 +399,71 @@ public sealed class CreateRouteTests : IDisposable
         IReadOnlyList<string> addresses = [.. Enumerable.Range(1, 101).Select(i => $"10.0.{i}.0/24")];
 
         Assert.Contains("AllowedAddresses: ipRange.tooMany", await _host.ErrorsAsync(ACreateRoute(project.Id) with { AllowedAddresses = addresses }));
+    }
+
+    [Fact]
+    public async Task A_timeout_can_last_an_hour()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        var id = await _host.SendAsync(ACreateRoute(project.Id) with { TimeoutSeconds = 3600 });
+
+        Assert.Equal(3600, _host.State.Routes[id].TimeoutSeconds);
+    }
+
+    [Fact]
+    public async Task A_new_route_uses_the_default_request_size()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        var id = await _host.SendAsync(ACreateRoute(project.Id));
+
+        Assert.Equal((RequestSizeLimit.Default, (int?)null), (_host.State.Routes[id].RequestSize, _host.State.Routes[id].RequestMegabytes));
+    }
+
+    [Fact]
+    public async Task A_route_can_set_its_own_request_size()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        var id = await _host.SendAsync(ACreateRoute(project.Id) with { RequestSize = RequestSizeLimit.Custom, RequestMegabytes = 10_000 });
+
+        Assert.Equal((RequestSizeLimit.Custom, (int?)10_000), (_host.State.Routes[id].RequestSize, _host.State.Routes[id].RequestMegabytes));
+    }
+
+    [Fact]
+    public async Task A_route_without_a_size_limit_keeps_no_size()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        var id = await _host.SendAsync(ACreateRoute(project.Id) with { RequestSize = RequestSizeLimit.Unlimited, RequestMegabytes = 500 });
+
+        Assert.Equal((RequestSizeLimit.Unlimited, (int?)null), (_host.State.Routes[id].RequestSize, _host.State.Routes[id].RequestMegabytes));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0)]
+    [InlineData(100_001)]
+    public async Task A_request_size_out_of_range_is_refused(int? megabytes)
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        Assert.Contains("RequestMegabytes: route.requestSize", await _host.ErrorsAsync(ACreateRoute(project.Id) with { RequestSize = RequestSizeLimit.Custom, RequestMegabytes = megabytes }));
+    }
+
+    [Fact]
+    public async Task A_size_isn_t_checked_when_the_route_uses_the_default()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+
+        Assert.Empty(await _host.ErrorsAsync(ACreateRoute(project.Id) with { RequestMegabytes = 0 }));
     }
 
     [Theory]

@@ -39,6 +39,17 @@ public sealed class ChangeRouteTests : IDisposable
     }
 
     [Fact]
+    public async Task Updating_a_route_back_to_the_default_request_size_forgets_its_own()
+    {
+        _host.SignedIn();
+        await _host.SendAsync(Update() with { RequestSize = RequestSizeLimit.Custom, RequestMegabytes = 100 });
+
+        await _host.SendAsync(Update());
+
+        Assert.Equal((RequestSizeLimit.Default, (int?)null), (_host.State.Routes[_route.Id].RequestSize, _host.State.Routes[_route.Id].RequestMegabytes));
+    }
+
+    [Fact]
     public async Task A_route_keeps_its_own_hostname_and_path_when_updated()
     {
         Assert.Empty(await _host.ErrorsAsync(Update()));

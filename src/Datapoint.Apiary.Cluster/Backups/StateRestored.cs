@@ -24,6 +24,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
         SingleSignOn = Restored.SingleSignOn,
         Brand = Restored.Brand,
         SessionPolicy = Restored.SessionPolicy,
+        RouteDefaults = Restored.RouteDefaults,
         AgentPolicy = Restored.AgentPolicy,
         Sessions = ImmutableDictionary<Guid, Session>.Empty,
         Agents = ImmutableDictionary<Guid, Agent>.Empty,

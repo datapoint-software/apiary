@@ -14,6 +14,8 @@ public static class RouteNormalization
         return trimmed.Count > 0 ? trimmed : null;
     }
 
+    public static int? RequestMegabytes(IRouteFields fields) => fields.RequestSize is RequestSizeLimit.Custom ? fields.RequestMegabytes : null;
+
     public static MaintenanceWindow? Maintenance(MaintenanceWindow? window) =>
         window is null ? null : new(window.Start.ToUniversalTime(), window.End.ToUniversalTime(), string.IsNullOrWhiteSpace(window.Message) ? null : window.Message.Trim());
 

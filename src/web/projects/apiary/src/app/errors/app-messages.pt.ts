@@ -25,6 +25,7 @@ export const appMessagesPortuguese: MessageCatalog = {
   'route.passwordShort': () => 'Use pelo menos 12 caracteres. Uma palavra-passe gerada é mais fácil de partilhar e mais difícil de adivinhar.',
   'route.linkKeyRequired': () => 'Algo correu mal ao criar a ligação de acesso. Guarde novamente.',
   'route.linkKeyInvalid': () => 'Algo correu mal ao criar a ligação de acesso. Guarde novamente.',
+  'route.requestSize': () => 'Introduza um número inteiro de 1 MB a 100 GB.',
   'brand.accentInvalid': () => 'Introduza uma cor como #1D4ED8, ou escolha uma.',
   'brand.logoType': () => 'Escolha um ficheiro PNG, WebP ou SVG.',
   'brand.logoTooLarge': () => 'Escolha um logótipo com até 100 KB.',
