@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Datapoint.Apiary.Proxy.Routing;
 
-public sealed class RouteGate(RequestDelegate next, IClusterState cluster, AddressAllowlists allowlists, ClientRateLimiter limiter, PasswordGate passwords, TimeProvider time)
+public sealed class RouteGate(RequestDelegate next, IClusterState cluster, AddressAllowlists allowlists, ClientRateLimiter limiter, PasswordGate passwords, PublicPages pages, TimeProvider time)
 {
     public Task InvokeAsync(HttpContext context)
     {
@@ -18,25 +18,25 @@ public sealed class RouteGate(RequestDelegate next, IClusterState cluster, Addre
 
         if (!allowlists.Allows(route.AllowedAddresses, context.Connection.RemoteIpAddress))
         {
-            return PublicPages.Forbidden().ExecuteAsync(context);
+            return pages.Forbidden().ExecuteAsync(context);
         }
 
         if (route.Disabled)
         {
-            return PublicPages.Disabled().ExecuteAsync(context);
+            return pages.Disabled().ExecuteAsync(context);
         }
 
         var now = time.GetUtcNow();
         if (route.Maintenance is { } window && window.IsActive(now))
         {
             context.Response.Headers.RetryAfter = ((long)Math.Ceiling((window.End - now).TotalSeconds)).ToString(CultureInfo.InvariantCulture);
-            return PublicPages.Maintenance(window.Message, window.End).ExecuteAsync(context);
+            return pages.Maintenance(route, window).ExecuteAsync(context);
         }
 
         if (route.RateLimit is { } perMinute && !limiter.TryAcquire(route.Id.ToString(), context.Connection.RemoteIpAddress, perMinute, out var retryAfter))
         {
             context.Response.Headers.RetryAfter = ((long)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
-            return PublicPages.TooManyRequests().ExecuteAsync(context);
+            return pages.TooManyRequests().ExecuteAsync(context);
         }
 
         if (route.Password is { } password)

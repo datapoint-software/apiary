@@ -39,7 +39,7 @@ public static class ApiaryPipeline
             proxy.UseLoadBalancing();
             proxy.UsePassiveHealthChecks();
         }).WithMetadata(ListenerMetadata.Public);
-        app.MapFallback(PublicPages.NotFound).WithMetadata(ListenerMetadata.Public);
+        app.MapFallback((PublicPages pages) => pages.NotFound()).WithMetadata(ListenerMetadata.Public);
         return app;
     }
 

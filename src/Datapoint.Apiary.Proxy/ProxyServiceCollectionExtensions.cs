@@ -3,6 +3,7 @@ using Datapoint.Apiary.Proxy.AccessLogs;
 using Datapoint.Apiary.Proxy.Caching;
 using Datapoint.Apiary.Proxy.Health;
 using Datapoint.Apiary.Proxy.Network;
+using Datapoint.Apiary.Proxy.Pages;
 using Datapoint.Apiary.Proxy.Passwords;
 using Datapoint.Apiary.Proxy.RateLimits;
 using Datapoint.Apiary.Proxy.Routing;
@@ -25,9 +26,11 @@ public static class ProxyServiceCollectionExtensions
     private const long CacheSizeLimit = 256L * 1024 * 1024;
     private const long CacheMaximumBody = 8L * 1024 * 1024;
 
-    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IReadOnlySet<int> internalPorts, IReadOnlySet<string> adminCookies, IConfiguration accessLogs)
+    public static IServiceCollection AddApiaryProxy(this IServiceCollection services, IReadOnlySet<int> ownPorts, IReadOnlySet<int> internalPorts, IReadOnlySet<string> adminCookies, IConfiguration accessLogs, IConfiguration visitorPages)
     {
         services.Configure<AccessLogOptions>(accessLogs);
+        services.Configure<VisitorPageOptions>(visitorPages);
+        services.AddSingleton<PublicPages>();
         services.AddSingleton(new OwnEndpoints(ownPorts, internalPorts));
         services.AddSingleton<TargetConnector>();
         services.AddSingleton<IForwarderHttpClientFactory, GuardedForwarderHttpClientFactory>();

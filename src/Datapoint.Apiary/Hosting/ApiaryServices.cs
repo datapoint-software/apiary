@@ -65,7 +65,8 @@ public static class ApiaryServices
             options.OwnPorts,
             options.InternalPorts,
             new HashSet<string>(StringComparer.Ordinal) { SessionCookie.Name, SessionActivity.CookieName, SsoFlowCookie.Name },
-            section.GetSection("AccessLogs"));
+            section.GetSection("AccessLogs"),
+            section.GetSection("VisitorPages"));
         services.AddApiaryTelemetry(section.GetSection("Telemetry"));
         return services;
     }

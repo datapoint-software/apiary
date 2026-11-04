@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace Datapoint.Apiary.Proxy.Passwords;
 
-public sealed class PasswordGate(ClientRateLimiter limiter, TimeProvider time)
+public sealed class PasswordGate(ClientRateLimiter limiter, PublicPages pages, TimeProvider time)
 {
     public const string KeyParameter = "apiary-key";
     public const string PasswordField = "apiary-password";
@@ -26,7 +26,7 @@ public sealed class PasswordGate(ClientRateLimiter limiter, TimeProvider time)
     {
         if (!context.Request.IsHttps)
         {
-            await PublicPages.SecureOnly().ExecuteAsync(context);
+            await pages.SecureOnly(route).ExecuteAsync(context);
             return;
         }
 
@@ -51,7 +51,7 @@ public sealed class PasswordGate(ClientRateLimiter limiter, TimeProvider time)
             return;
         }
 
-        await PublicPages.Password(password, PasswordProblem.None).ExecuteAsync(context);
+        await pages.Password(route, password, PasswordProblem.None).ExecuteAsync(context);
     }
 
     private static Task PassAsync(HttpContext context, string key, RequestDelegate next)
@@ -68,37 +68,37 @@ public sealed class PasswordGate(ClientRateLimiter limiter, TimeProvider time)
     {
         if (given.Length == 0)
         {
-            await PublicPages.Password(password, PasswordProblem.Empty).ExecuteAsync(context);
+            await pages.Password(route, password, PasswordProblem.Empty).ExecuteAsync(context);
             return;
         }
 
         if (!limiter.TryAcquire("password:" + route.Id.ToString("N"), context.Connection.RemoteIpAddress, Tries, s_tryPeriod, out _))
         {
             context.Response.Headers.RetryAfter = ((long)s_tryPeriod.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-            await PublicPages.Password(password, PasswordProblem.TooManyTries).ExecuteAsync(context);
+            await pages.Password(route, password, PasswordProblem.TooManyTries).ExecuteAsync(context);
             return;
         }
 
         if (!PasswordHasher.Verify(given, password.Hash))
         {
-            await PublicPages.Password(password, PasswordProblem.Wrong).ExecuteAsync(context);
+            await pages.Password(route, password, PasswordProblem.Wrong).ExecuteAsync(context);
             return;
         }
 
         await SignedInAsync(context, route, password, now);
     }
 
-    private static async Task OpenLinkAsync(HttpContext context, Route route, RoutePassword password, string key, bool submitted, DateTimeOffset now)
+    private async Task OpenLinkAsync(HttpContext context, Route route, RoutePassword password, string key, bool submitted, DateTimeOffset now)
     {
         if (!Matches(password.Link, key))
         {
-            await PublicPages.Password(password, PasswordProblem.LinkExpired).ExecuteAsync(context);
+            await pages.Password(route, password, PasswordProblem.LinkExpired).ExecuteAsync(context);
             return;
         }
 
         if (!submitted)
         {
-            await PublicPages.SignInLink(route.Host, password).ExecuteAsync(context);
+            await pages.SignInLink(route, password).ExecuteAsync(context);
             return;
         }
 

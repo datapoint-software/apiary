@@ -19,7 +19,7 @@ public static class ReadinessGate
 
             context.Response.Headers.RetryAfter = "10";
             var result = Listener.IsPublic(context)
-                ? PublicPages.Starting()
+                ? context.RequestServices.GetRequiredService<PublicPages>().Starting()
                 : context.Request.Path.StartsWithSegments(s_api)
                     ? new ApiProblem(StatusCodes.Status503ServiceUnavailable, ErrorCodes.NotReady).ToResult()
                     : null;

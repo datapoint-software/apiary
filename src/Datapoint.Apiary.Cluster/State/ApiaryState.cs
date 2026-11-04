@@ -114,5 +114,7 @@ public sealed record ApiaryState
 
     public AgentPolicy? AgentPolicy { get; init; }
 
+    public Brands.VisitorBrand? Brand { get; init; }
+
     public ImmutableList<AuditEntry> Audit { get; init; } = [];
 }

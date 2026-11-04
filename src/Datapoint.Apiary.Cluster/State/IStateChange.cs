@@ -3,6 +3,7 @@ using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
+using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
@@ -57,6 +58,7 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(AdminCertificateSaved), "admin-certificate.saved")]
 [JsonDerivedType(typeof(SessionPolicySaved), "session-policy.saved")]
 [JsonDerivedType(typeof(AgentPolicySaved), "agent-policy.saved")]
+[JsonDerivedType(typeof(BrandSaved), "brand.saved")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);
