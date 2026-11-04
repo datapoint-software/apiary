@@ -137,7 +137,7 @@ Confirmed by the team on 2026-11-03: the hand-written API client, reflection-bas
 
 ## Regulatory findings
 
-- **AGPL section 13.** The UI's "Source" link, in the sidebar and on the sign-in pages, points to the tag of the running version on `https://github.com/datapoint-software/apiary`. Before release, that repository must be public and the tag must exist, holding the code that's deployed.
+- **AGPL section 13.** The UI's "Source code" link, in the page footer and on the sign-in pages, points to `main` on `https://github.com/datapoint-software/apiary` (decided on 2026-11-04), next to the running version's number. Section 13 asks for the source of the version people use, so each release needs a tag matching that number, and an older deployment's users find its source through the tag, not the link. Before release, the repository must be public.
 - **Personal data:** the audit log shows email and IP addresses to every role, as the architecture allows, and the audit page says so.
 
 - **The sticky sessions cookie** (`apiary_affinity`, 1 hour, HttpOnly) is set on the visitors of the sites behind Apiary, not on admins. It only keeps a visitor on one version, so it should count as strictly necessary under the ePrivacy rules and need no consent, but the sites' cookie notices should list it. It holds a hash of the target, nothing about the visitor.
