@@ -64,6 +64,25 @@ public sealed class StreamTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_open_connection_shows_in_the_stream_list()
+    {
+        var route = StreamTo(_echo);
+        await _app.SeedAsync(new StreamRouteSaved(route));
+        using var admin = await AdminSession.SignedInAsync(_app);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(s_timeout);
+        using var client = await ConnectAsync(timeout.Token);
+        await client.GetStream().WriteAsync(Encoding.ASCII.GetBytes("ping"), timeout.Token);
+        await client.GetStream().ReadExactlyAsync(new byte[4], timeout.Token);
+
+        var streams = await AdminSession.PostAsync(admin, "streams/list");
+
+        var listed = Assert.Single(streams.AsArray())!;
+        Assert.Equal((route.Id, 1L), (listed["id"]!.GetValue<Guid>(), listed["connections"]!.GetValue<long>()));
+        Assert.NotNull(listed["lastConnectionAt"]?.GetValue<DateTimeOffset>());
+    }
+
+    [Fact]
     public async Task A_udp_stream_reaches_its_target_both_ways()
     {
         await using var echo = UdpEchoServer.Start();
