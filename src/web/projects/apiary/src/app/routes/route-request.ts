@@ -1,6 +1,7 @@
 import { linkKey } from './passphrase';
 import { RouteAccessData } from './route-access-dialog';
 import { routeLabel } from './route-label';
+import { toMegabytes } from './request-size';
 import { PasswordModel, RouteModel, maintenanceWindow } from './route-model';
 
 export interface PasswordSecrets {
@@ -28,6 +29,8 @@ export function routeRequest(value: RouteModel, secrets: PasswordSecrets) {
     certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
     allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
     rateLimit: value.rateLimited ? value.rateLimit : null,
+    requestSize: value.requestSize,
+    requestMegabytes: value.requestSize === 'custom' ? toMegabytes(value.requestCustom) : null,
     maintenance: maintenanceWindow(value.maintenance),
     canary: many && value.canary.source !== 'none'
       ? { source: value.canary.source, name: value.canary.name.trim(), value: value.canary.value.trim() }

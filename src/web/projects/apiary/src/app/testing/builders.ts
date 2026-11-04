@@ -29,6 +29,7 @@ export function aRoute(overrides: Partial<RouteView> = {}): RouteView {
     caching: false,
     strictTransport: false,
     strictTransportSubdomains: false,
+    requestSize: 'default',
     requestsPerMinute: 0,
     health: 'healthy',
     targetsDown: 0,

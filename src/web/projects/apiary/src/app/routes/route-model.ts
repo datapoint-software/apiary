@@ -1,6 +1,7 @@
 import { formatUtc, parseUtc } from '@datapoint/apiary-ui';
 import { MaintenanceWindow, RoutePasswordView, RouteView } from '../api/models';
 import { passphrase } from './passphrase';
+import { RequestSizeLimit, RequestSizeModel, sizeModel } from './request-size';
 
 export interface RouteTargetModel {
   host: string;
@@ -42,6 +43,8 @@ export interface RouteModel {
   allowedAddresses: string;
   rateLimited: boolean;
   rateLimit: number | null;
+  requestSize: RequestSizeLimit;
+  requestCustom: RequestSizeModel;
   maintenance: MaintenanceModel;
   canary: CanaryModel;
   sticky: boolean;
@@ -67,11 +70,11 @@ function noMaintenance(): MaintenanceModel {
   return { scheduled: false, start: '', end: '', message: '' };
 }
 
-export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false, password: passwordModel(undefined) };
+export function emptyRoute(projectId: string, defaultMegabytes = 30): RouteModel {
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, requestSize: 'default', requestCustom: sizeModel(defaultMegabytes), maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false, password: passwordModel(undefined) };
 }
 
-export function routeModel(route: RouteView): RouteModel {
+export function routeModel(route: RouteView, defaultMegabytes = 30): RouteModel {
   return {
     projectId: route.projectId,
     host: route.host,
@@ -83,6 +86,8 @@ export function routeModel(route: RouteView): RouteModel {
     allowedAddresses: route.allowedAddresses.join('\n'),
     rateLimited: route.rateLimit !== undefined,
     rateLimit: route.rateLimit ?? 600,
+    requestSize: route.requestSize,
+    requestCustom: sizeModel(route.requestMegabytes ?? defaultMegabytes),
     maintenance: route.maintenance
       ? {
           scheduled: true,

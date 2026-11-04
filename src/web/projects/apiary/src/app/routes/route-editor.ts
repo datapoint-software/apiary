@@ -19,7 +19,7 @@ import {
   problemErrors,
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, RouteView } from '../api/models';
+import { CertificateSummary, ProjectView, RouteDefaultsView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
@@ -28,6 +28,8 @@ import { routeRules } from './route-rules';
 import { perMinute, routeStatus } from './route-status';
 import { AccessSection } from './access-section';
 import { MaintenanceSection } from './maintenance-section';
+import { RequestSizeSection } from './request-size-section';
+import { sizeModel } from './request-size';
 import { TargetsSection } from './targets-section';
 import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
@@ -38,7 +40,7 @@ import { RouteAccessData, RouteAccessDialog } from './route-access-dialog';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, TargetsSection, RouterLink, TranslatePipe],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, RouterLink, TranslatePipe],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -64,6 +66,8 @@ export class RouteEditor implements HasUnsavedChanges {
     const id = this.id();
     return id ? this.api.query('routes.get', { id }) : undefined;
   });
+  private readonly defaults = httpResource<RouteDefaultsView>(() => this.api.query('routes.defaults'));
+  protected readonly defaultMegabytes = computed(() => (this.defaults.hasValue() ? this.defaults.value().requestMegabytes : 30));
   protected readonly current = computed(() => (this.existing.hasValue() ? this.existing.value() : undefined));
   protected readonly requests = computed(() => perMinute(this.current()?.requestsPerMinute ?? 0));
   protected readonly status = computed(() => {
@@ -101,7 +105,13 @@ export class RouteEditor implements HasUnsavedChanges {
     effect(() => {
       const route = this.current();
       if (route && !untracked(() => this.route().dirty())) {
-        this.model.set(routeModel(route));
+        this.model.set(routeModel(route, untracked(() => this.defaultMegabytes())));
+      }
+    });
+    effect(() => {
+      const custom = sizeModel(this.defaultMegabytes());
+      if (this.isNew() && !untracked(() => this.route().dirty())) {
+        this.model.update((m) => ({ ...m, requestCustom: custom }));
       }
     });
     effect(() => {

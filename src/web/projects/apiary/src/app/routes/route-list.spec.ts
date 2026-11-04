@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ProjectView, Role, RouteView } from '../api/models';
 import { Auth } from '../auth/auth';
+import { answerAll } from '../testing/answer-all';
 import { aCluster, aProject, aRoute, aSignedInUser } from '../testing/builders';
 import {
   allByRole,
@@ -39,11 +40,12 @@ async function render(
   TestBed.inject(Auth).user.set(aSignedInUser({ role }));
   const fixture = TestBed.createComponent(RouteList);
   const backend = TestBed.inject(HttpTestingController);
-  fixture.detectChanges();
-  backend.expectOne('/api/routes/list').flush(routes);
-  backend.expectOne('/api/projects/list').flush(projects);
-  backend.match('/api/cluster/status').forEach((request) => request.flush(aCluster()));
-  await settle(fixture);
+  await answerAll(fixture, backend, {
+    '/api/routes/list': routes,
+    '/api/projects/list': projects,
+    '/api/routes/defaults': { requestMegabytes: 30 },
+    '/api/cluster/status': aCluster(),
+  });
   return fixture;
 }
 

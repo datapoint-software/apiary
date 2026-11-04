@@ -1,0 +1,57 @@
+<form class="ap-panel" aria-labelledby="route-defaults-title" [apForm]="defaults" #defaultsForm="apForm" (submit)="save(defaultsForm)">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="route-defaults-title">{{ 'Request size limit' | t }}</h2>
+      <p class="ap-panel-desc">{{ 'The largest request a route accepts, unless it sets its own. Larger requests get a 413 and never reach the target.' | t }}</p>
+    </div>
+  </div>
+  <div class="ap-panel-body ap-stack">
+    @if (auth.canAdminister()) {
+      <ap-error-summary verb="save it" />
+      <div class="ap-row" style="gap: 12px; align-items: flex-start; flex-wrap: wrap; max-width: 420px">
+        <div style="flex: 2 1 160px">
+          <ap-field [label]="'Largest request' | t" [field]="defaults.amount" [help]="('From 1 MB to 100 GB.' | t) + ' ' + usage()">
+            <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="defaults.amount" />
+          </ap-field>
+        </div>
+        <div style="flex: 1 1 90px">
+          <ap-field [label]="'Unit' | t" [field]="defaults.unit">
+            <select class="ap-select" [formField]="defaults.unit">
+              <option value="MB">MB</option>
+              <option value="GB">GB</option>
+            </select>
+          </ap-field>
+        </div>
+      </div>
+    } @else {
+      <dl class="ap-kv">
+        <dt>{{ 'Default size' | t }}</dt>
+        <dd><span class="ap-data">{{ currentSize() }}</span>. {{ usage() }} {{ 'Only Administrators can change it.' | t }}</dd>
+      </dl>
+    }
+    @if (ownLimits().length > 0) {
+      <div class="ap-stack" style="gap: 4px">
+        <span class="ap-label" id="own-limits-title">{{ 'Routes with their own limit' | t }}</span>
+        <div class="ap-list" role="list" aria-labelledby="own-limits-title">
+          @for (route of ownLimits(); track route.id) {
+            <div class="ap-list-row" role="listitem">
+              <div class="ap-list-text"><a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.label }}</a></div>
+              @if (route.size) {
+                <span class="ap-data">{{ route.size }}</span>
+              } @else if (route.isOpen) {
+                <ap-status tone="warn">{{ 'No limit, open to everyone' | t }}</ap-status>
+              } @else {
+                <span class="ap-tag">{{ 'No limit' | t }}</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  @if (auth.canAdminister()) {
+    <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
+      <button apWrite apButton type="submit" [disabled]="defaults().submitting()">{{ (defaults().submitting() ? 'Saving…' : 'Save default') | t }}</button>
+    </div>
+  }
+</form>

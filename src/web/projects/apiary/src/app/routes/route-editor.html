@@ -121,7 +121,7 @@
       </div>
       <div class="ap-panel-body ap-stack">
         <div style="max-width: 220px">
-          <ap-field [label]="'Timeout' | t" [field]="route.timeoutSeconds" [help]="'From 1 to 120.' | t">
+          <ap-field [label]="'Timeout' | t" [field]="route.timeoutSeconds" [help]="'From 1 to 3600. Counts only time without any data moving, so a long upload that keeps sending isn’t cut off.' | t">
             <div class="ap-affix">
               <input
                 class="ap-input ap-data"
@@ -133,6 +133,7 @@
             </div>
           </ap-field>
         </div>
+        <ap-request-size-section [route]="route" [defaultMegabytes]="defaultMegabytes()" />
         <label class="ap-choice">
           <input class="ap-switch" type="checkbox" [formField]="route.compression" />
           <span class="ap-choice-text">

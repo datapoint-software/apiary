@@ -8,6 +8,7 @@ import { Api } from '../api/api';
 import { ProjectView, RouteView } from '../api/models';
 import { RouteGroup } from './route-group';
 import { needsAttention } from './route-status';
+import { RouteDefaultsPanel } from './route-defaults-panel';
 import { RouteSelectionBar } from './route-selection-bar';
 import { RouteTable } from './route-table';
 import { Auth } from '../auth/auth';
@@ -26,7 +27,7 @@ function matchesStatus(route: RouteView, status: string): boolean {
 
 @Component({
   selector: 'ap-route-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteTable, RouteSelectionBar, RouterLink, TranslatePipe],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, RouteTable, RouteSelectionBar, RouteDefaultsPanel, RouterLink, TranslatePipe],
   templateUrl: './route-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -43,6 +44,7 @@ export class RouteList {
   protected readonly statusFilter = linkedSignal<string>(() => 'all');
 
   private readonly routes = httpResource<RouteView[]>(() => this.api.query('routes.list'), { defaultValue: [] });
+  protected readonly allRoutes = computed(() => this.routes.value());
   private readonly routesRefresh = reloadEvery(this.routes);
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   protected readonly isLoading = computed(() => this.routes.isLoading() && this.routes.value().length === 0);

@@ -6,6 +6,7 @@ const labels: Record<string, string> = {
   'routes.enable': 'enabled a route',
   'routes.move': 'moved routes to another project',
   'routes.purge-cache': 'purged the cache of routes',
+  'routes.update-defaults': 'changed the default request size of routes',
   'projects.create': 'created a project',
   'projects.update': 'changed a project',
   'projects.delete': 'deleted a project',

@@ -135,7 +135,8 @@ export const routesPortuguese: TextCatalog = {
   '{hosts} (expires {date})': '{hosts} (expira a {date})',
   'Traffic rules': 'Regras de tráfego',
   Timeout: 'Tempo limite',
-  'From 1 to 120.': 'De 1 a 120.',
+  'From 1 to 3600. Counts only time without any data moving, so a long upload that keeps sending isn’t cut off.':
+    'De 1 a 3600. Conta só o tempo sem dados a passar, por isso um carregamento longo que continua a enviar não é interrompido.',
   seconds: 'segundos',
   Compression: 'Compressão',
   'Off by default. Turn it on only for public, static content: compressing pages that mix secrets with text visitors can change lets attackers guess the secrets.':
@@ -251,4 +252,45 @@ export const routesPortuguese: TextCatalog = {
   'Message for visitors': 'Mensagem para os visitantes',
   'Up to 200 characters.': 'Até 200 caracteres.',
   'We’re upgrading the shop. Back by 00:30 UTC.': 'Estamos a atualizar a loja. Voltamos até às 00:30 UTC.',
+  'Request size limit': 'Limite de tamanho dos pedidos',
+  'Cluster default, {size}': 'Predefinição do cluster, {size}',
+  'Follows the default on the All routes page, so it changes when an Administrator changes the default.':
+    'Segue a predefinição da página Todas as rotas, por isso muda quando um Administrador muda a predefinição.',
+  Custom: 'Personalizado',
+  'For routes that take large uploads, such as a container registry, or should only take small ones.':
+    'Para rotas que recebem carregamentos grandes, como um registo de contentores, ou que só devem receber pequenos.',
+  'Largest request': 'Maior pedido',
+  Unit: 'Unidade',
+  'From 1 MB to 100 GB. Larger requests get a 413 and never reach the target.': 'De 1 MB a 100 GB. Pedidos maiores recebem um 413 e nunca chegam ao destino.',
+  'No limit': 'Sem limite',
+  'Anyone who can reach this route can send it uploads of any size. Use it only when the target checks who is uploading, as a container registry does, or with allowed addresses.':
+    'Quem conseguir chegar a esta rota pode enviar-lhe carregamentos de qualquer tamanho. Use-o só quando o destino verifica quem está a carregar, como faz um registo de contentores, ou com endereços permitidos.',
+  'Anyone can upload any amount to this route': 'Qualquer pessoa pode carregar qualquer quantidade para esta rota',
+  'The route allows every address and has no size limit. Make sure the target checks who is uploading, or add allowed addresses under Access.':
+    'A rota permite todos os endereços e não tem limite de tamanho. Confirme que o destino verifica quem está a carregar, ou adicione endereços permitidos em Acesso.',
+  'The largest request a route accepts, unless it sets its own. Larger requests get a 413 and never reach the target.':
+    'O maior pedido que uma rota aceita, a menos que defina o seu. Pedidos maiores recebem um 413 e nunca chegam ao destino.',
+  'From 1 MB to 100 GB.': 'De 1 MB a 100 GB.',
+  'Every route uses it.': 'Todas as rotas a usam.',
+  '{count} of {total} routes uses it.': '{count} de {total} rotas usa-a.',
+  '{count} of {total} routes use it.': '{count} de {total} rotas usam-na.',
+  'Default size': 'Tamanho predefinido',
+  'Only Administrators can change it.': 'Só os Administradores a podem mudar.',
+  'Routes with their own limit': 'Rotas com limite próprio',
+  'No limit, open to everyone': 'Sem limite, aberta a todos',
+  'Save default': 'Guardar predefinição',
+  'The default is already {size}.': 'A predefinição já é {size}.',
+  'Change the limit on {count} route?': 'Mudar o limite de {count} rota?',
+  'Change the limit on {count} routes?': 'Mudar o limite de {count} rotas?',
+  'Change the default': 'Mudar a predefinição',
+  'One route uses the cluster default. It will accept requests up to {size} instead of {previous}, on every replica as soon as you save.':
+    'Uma rota usa a predefinição do cluster. Passa a aceitar pedidos até {size} em vez de {previous}, em todas as réplicas, assim que guardar.',
+  '{count} routes use the cluster default. They will accept requests up to {size} instead of {previous}, on every replica as soon as you save.':
+    '{count} rotas usam a predefinição do cluster. Passam a aceitar pedidos até {size} em vez de {previous}, em todas as réplicas, assim que guardar.',
+  'Uploads larger than that start failing with a 413.': 'Os carregamentos maiores começam a falhar com um 413.',
+  'Routes with their own limit don’t change.': 'As rotas com limite próprio não mudam.',
+  'New routes accept requests up to {size}, on every replica.': 'As rotas novas aceitam pedidos até {size}, em todas as réplicas.',
+  '{count} route now accepts requests up to {size}, on every replica.': '{count} rota passa a aceitar pedidos até {size}, em todas as réplicas.',
+  '{count} routes now accept requests up to {size}, on every replica.': '{count} rotas passam a aceitar pedidos até {size}, em todas as réplicas.',
+  'Default saved': 'Predefinição guardada',
 };

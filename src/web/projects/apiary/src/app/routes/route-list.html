@@ -61,3 +61,6 @@
     <div class="ap-panel-foot"><div class="ap-pager"><span aria-live="polite">{{ count() }}</span></div></div>
   </section>
 }
+@if (!isLoading()) {
+  <ap-route-defaults-panel style="display: block; margin-top: var(--space-5)" [routes]="allRoutes()" />
+}

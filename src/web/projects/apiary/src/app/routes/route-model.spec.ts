@@ -20,7 +20,30 @@ describe('emptyRoute', () => {
   });
 });
 
+describe('emptyRoute request size', () => {
+  it('uses the cluster default, with the default filled in for a custom size', () => {
+    const model = emptyRoute('project-1', 5000);
+
+    expect(model.requestSize).toBe('default');
+    expect(model.requestCustom).toEqual({ amount: 5, unit: 'GB' });
+  });
+});
+
 describe('routeModel', () => {
+  it('keeps the route’s own request size', () => {
+    const model = routeModel(aRoute({ requestSize: 'custom', requestMegabytes: 500 }), 30);
+
+    expect(model.requestSize).toBe('custom');
+    expect(model.requestCustom).toEqual({ amount: 500, unit: 'MB' });
+  });
+
+  it('offers the cluster default as a custom size when the route has none', () => {
+    const model = routeModel(aRoute({ requestSize: 'unlimited' }), 2000);
+
+    expect(model.requestSize).toBe('unlimited');
+    expect(model.requestCustom).toEqual({ amount: 2, unit: 'GB' });
+  });
+
   it('chooses an uploaded certificate when the route has one', () => {
     const model = routeModel(aRoute({ certificateId: 'certificate-9' }));
 

@@ -17,6 +17,8 @@ export interface RouteView {
   readonly disabled: boolean;
   readonly allowedAddresses: readonly string[];
   readonly rateLimit?: number;
+  readonly requestSize: 'default' | 'custom' | 'unlimited';
+  readonly requestMegabytes?: number;
   readonly maintenance?: MaintenanceWindow;
   readonly canary?: RouteCanary;
   readonly sticky: boolean;
@@ -29,6 +31,10 @@ export interface RouteView {
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;
   readonly targetsDown: number;
+}
+
+export interface RouteDefaultsView {
+  readonly requestMegabytes: number;
 }
 
 export interface RoutePasswordView {

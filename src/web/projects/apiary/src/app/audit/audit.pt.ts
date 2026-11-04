@@ -58,6 +58,7 @@ export const auditPortuguese: TextCatalog = {
   'started using a new key to encrypt the stored configuration': 'começou a usar uma chave nova para cifrar a configuração guardada',
   'uploaded a certificate': 'carregou um certificado',
   'deleted a certificate': 'eliminou um certificado',
+  'changed the default request size of routes': 'alterou o tamanho predefinido dos pedidos das rotas',
   'changed when people are signed out for inactivity': 'alterou quando as sessões das pessoas terminam por inatividade',
   'uploaded the admin interface’s certificate': 'carregou o certificado da interface de administração',
   'switched the admin interface to a self-signed certificate': 'mudou a interface de administração para um certificado autoassinado',

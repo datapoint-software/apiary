@@ -123,12 +123,42 @@ describe('routeRules', () => {
     expect(allKinds(route)).toEqual([]);
   });
 
-  it('keeps the timeout between 1 and 120 seconds', () => {
-    const route = routeForm({ timeoutSeconds: 121 });
+  it('keeps the timeout between 1 and 3600 seconds', () => {
+    const route = routeForm({ timeoutSeconds: 3601 });
 
     expect(route.timeoutSeconds().errors()).toEqual([
-      expect.objectContaining({ kind: 'range', params: { min: 1, max: 120 } }),
+      expect.objectContaining({ kind: 'range', params: { min: 1, max: 3600 } }),
     ]);
+  });
+
+  it('accepts a timeout of an hour', () => {
+    const route = routeForm({ timeoutSeconds: 3600 });
+
+    expect(route.timeoutSeconds().errors()).toEqual([]);
+  });
+
+  it('keeps a custom request size between 1 MB and 100 GB', () => {
+    const route = routeForm({ requestSize: 'custom', requestCustom: { amount: 101, unit: 'GB' } });
+
+    expect(route.requestCustom.amount().errors()).toEqual([expect.objectContaining({ kind: 'route.requestSize' })]);
+  });
+
+  it('accepts 100 GB as a custom request size', () => {
+    const route = routeForm({ requestSize: 'custom', requestCustom: { amount: 100, unit: 'GB' } });
+
+    expect(route.requestCustom.amount().errors()).toEqual([]);
+  });
+
+  it('refuses a fraction of a megabyte', () => {
+    const route = routeForm({ requestSize: 'custom', requestCustom: { amount: 0.5, unit: 'MB' } });
+
+    expect(route.requestCustom.amount().errors()).toEqual([expect.objectContaining({ kind: 'route.requestSize' })]);
+  });
+
+  it('ignores the custom size when the route uses the default', () => {
+    const route = routeForm({ requestSize: 'default', requestCustom: { amount: null, unit: 'MB' } });
+
+    expect(allKinds(route)).toEqual([]);
   });
 
   it('checks each allowed address range', () => {

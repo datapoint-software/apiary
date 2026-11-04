@@ -2,6 +2,7 @@ import { applyEach, applyWhen, hidden, required, schema, validate } from '@angul
 import { dayMs, hostname, ipRanges, parseUtc, port, target, utcDateTime, wholeNumber } from '@datapoint/apiary-ui';
 import { serverCheck } from '../api/server-check';
 import { RouteModel } from './route-model';
+import { requestSize } from './request-size';
 
 export const routeRules = (id: () => string | undefined) => schema<RouteModel>((route) => {
   required(route.projectId, { error: { kind: 'project.notFound' } });
@@ -38,7 +39,9 @@ export const routeRules = (id: () => string | undefined) => schema<RouteModel>((
     }
     return text.length > 200 ? { kind: 'tooLong', params: { max: 200 } } : undefined;
   });
-  wholeNumber(route.timeoutSeconds, 1, 120);
+  wholeNumber(route.timeoutSeconds, 1, 3600);
+  hidden(route.requestCustom.amount, ({ valueOf }) => valueOf(route.requestSize) !== 'custom');
+  requestSize(route.requestCustom.amount, route.requestCustom.unit);
   ipRanges(route.allowedAddresses);
   hidden(route.rateLimit, ({ valueOf }) => !valueOf(route.rateLimited));
   wholeNumber(route.rateLimit, 1, 100000);

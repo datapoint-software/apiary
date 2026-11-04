@@ -41,6 +41,7 @@ async function render(
   fixture.detectChanges();
   backend.expectOne('/api/projects/list').flush(projects);
   backend.expectOne('/api/certificates/list').flush([]);
+  backend.expectOne('/api/routes/defaults').flush({ requestMegabytes: 30 });
   backend.match('/api/routes/get').forEach((request) => request.flush(existing ?? null));
   backend.match('/api/cluster/status').forEach((request) => request.flush(aCluster()));
   await settle(fixture);
@@ -110,6 +111,8 @@ describe('RouteEditor', () => {
       certificateId: null,
       allowedAddresses: [],
       rateLimit: null,
+      requestSize: 'default',
+      requestMegabytes: null,
       maintenance: null,
       canary: null,
       sticky: false,
@@ -194,6 +197,7 @@ describe('RouteEditor', () => {
     fixture.detectChanges();
     backend.expectOne('/api/projects/list').flush([aProject()]);
     backend.expectOne('/api/certificates/list').flush([]);
+    backend.expectOne('/api/routes/defaults').flush({ requestMegabytes: 30 });
     backend
       .expectOne('/api/routes/get')
       .flush(aProblem(404, 'route.notFound'), { status: 404, statusText: 'Not Found' });

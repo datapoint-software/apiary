@@ -11,6 +11,18 @@ function twoTargets() {
 }
 
 describe('routeRequest', () => {
+  it('sends a custom request size in megabytes', () => {
+    const model = aRouteModel({ requestSize: 'custom', requestCustom: { amount: 5, unit: 'GB' } });
+
+    expect(routeRequest(model, noSecrets)).toMatchObject({ requestSize: 'custom', requestMegabytes: 5000 });
+  });
+
+  it('sends no size when the route uses the default or has no limit', () => {
+    const model = aRouteModel({ requestSize: 'unlimited', requestCustom: { amount: 5, unit: 'GB' } });
+
+    expect(routeRequest(model, noSecrets)).toMatchObject({ requestSize: 'unlimited', requestMegabytes: null });
+  });
+
   it('trims the hostname, path and target names', () => {
     const model = aRouteModel({
       host: ' shop.example.com ',

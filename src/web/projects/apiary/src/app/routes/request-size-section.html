@@ -1,0 +1,52 @@
+<fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+  <legend class="ap-label">{{ 'Request size limit' | t }}</legend>
+  <div class="ap-stack" style="gap: 10px">
+    <label class="ap-choice">
+      <input class="ap-radio" type="radio" value="default" [formField]="route().requestSize" />
+      <span class="ap-choice-text">
+        <span>{{ defaultLabel() }}</span>
+        <span class="ap-help">{{ 'Follows the default on the All routes page, so it changes when an Administrator changes the default.' | t }}</span>
+      </span>
+    </label>
+    <label class="ap-choice">
+      <input class="ap-radio" type="radio" value="custom" [formField]="route().requestSize" />
+      <span class="ap-choice-text">
+        <span>{{ 'Custom' | t }}</span>
+        <span class="ap-help">{{ 'For routes that take large uploads, such as a container registry, or should only take small ones.' | t }}</span>
+      </span>
+    </label>
+    @if (isCustom()) {
+      <div class="ap-row" style="gap: 12px; align-items: flex-start; flex-wrap: wrap; max-width: 420px; margin-left: 30px">
+        <div style="flex: 2 1 160px">
+          <ap-field
+            [label]="'Largest request' | t"
+            [field]="route().requestCustom.amount"
+            [help]="'From 1 MB to 100 GB. Larger requests get a 413 and never reach the target.' | t"
+          >
+            <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="route().requestCustom.amount" />
+          </ap-field>
+        </div>
+        <div style="flex: 1 1 90px">
+          <ap-field [label]="'Unit' | t" [field]="route().requestCustom.unit">
+            <select class="ap-select" [formField]="route().requestCustom.unit">
+              <option value="MB">MB</option>
+              <option value="GB">GB</option>
+            </select>
+          </ap-field>
+        </div>
+      </div>
+    }
+    <label class="ap-choice">
+      <input class="ap-radio" type="radio" value="unlimited" [formField]="route().requestSize" />
+      <span class="ap-choice-text">
+        <span>{{ 'No limit' | t }}</span>
+        <span class="ap-help">{{ 'Anyone who can reach this route can send it uploads of any size. Use it only when the target checks who is uploading, as a container registry does, or with allowed addresses.' | t }}</span>
+      </span>
+    </label>
+  </div>
+</fieldset>
+@if (isOpenWithoutLimit()) {
+  <ap-banner tone="warn" [heading]="'Anyone can upload any amount to this route' | t">
+    {{ 'The route allows every address and has no size limit. Make sure the target checks who is uploading, or add allowed addresses under Access.' | t }}
+  </ap-banner>
+}
