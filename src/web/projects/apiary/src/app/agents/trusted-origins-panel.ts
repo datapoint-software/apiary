@@ -38,11 +38,11 @@ function isOrigin(value: string): boolean {
         <ap-error-summary verb="save them" />
         <ap-field
           [label]="'Trusted sites' | t"
-          [field]="policy.origins"
+          [field]="policy.trustedOrigins"
           [optional]="true"
           [help]="'One HTTPS address per line, without a path, such as https://agents.example.com. At most 20. Removing a site disconnects the agents that run there.' | t"
         >
-          <textarea class="ap-textarea ap-data" rows="3" placeholder="https://agents.example.com" spellcheck="false" [formField]="policy.origins"></textarea>
+          <textarea class="ap-textarea ap-data" rows="3" placeholder="https://agents.example.com" spellcheck="false" [formField]="policy.trustedOrigins"></textarea>
         </ap-field>
       </div>
       <div class="ap-panel-foot ap-row" style="justify-content: flex-end">
@@ -59,23 +59,23 @@ export class TrustedOriginsPanel {
   private readonly toaster = inject(Toaster);
   private readonly i18n = inject(I18n);
   private readonly current = httpResource<AgentPolicyView>(() => this.api.query('agents.policy'));
-  private readonly model = signal({ origins: '' });
+  private readonly model = signal({ trustedOrigins: '' });
   protected readonly policy = form(this.model, (p) => {
-    validate(p.origins, ({ value }) => (lines(value()).length > maximumOrigins ? { kind: 'agent.originsTooMany' } : undefined));
-    validate(p.origins, ({ value }) => (lines(value()).every(isOrigin) ? undefined : { kind: 'agent.originInvalid' }));
+    validate(p.trustedOrigins, ({ value }) => (lines(value()).length > maximumOrigins ? { kind: 'agent.originsTooMany' } : undefined));
+    validate(p.trustedOrigins, ({ value }) => (lines(value()).every(isOrigin) ? undefined : { kind: 'agent.originInvalid' }));
   });
 
   constructor() {
     effect(() => {
       const current = this.current.value();
       if (current && !this.policy().dirty()) {
-        this.model.set({ origins: current.trustedOrigins.join('\n') });
+        this.model.set({ trustedOrigins: current.trustedOrigins.join('\n') });
       }
     });
   }
 
   protected async save(apForm: Form): Promise<void> {
-    const trustedOrigins = lines(this.model().origins);
+    const trustedOrigins = lines(this.model().trustedOrigins);
     const saved = await apForm.submit(async () => {
       try {
         await this.api.send('agents.update-policy', { trustedOrigins });
