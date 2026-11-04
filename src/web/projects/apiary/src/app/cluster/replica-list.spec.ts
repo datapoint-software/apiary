@@ -1,10 +1,15 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Confirmer, Toaster, provideErrorMessages } from '@datapoint/apiary-ui';
 import { ClusterView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
+import { appMessages } from '../errors/app-messages';
+import { AcceptingConfirmer } from '../testing/accepting-confirmer';
 import { nextRequest } from '../testing/backend';
 import { aCluster, aMember, aSignedInUser } from '../testing/builders';
+import { ClosingDialog } from '../testing/closing-dialog';
 import {
   byLabel,
   byRole,
@@ -15,6 +20,7 @@ import {
   textOf,
   type,
 } from '../testing/dom';
+import { RecoveryDialog } from './recovery-dialog';
 import { ReplicaList } from './replica-list';
 
 const now = new Date('2026-11-04T12:00:00Z');
@@ -22,14 +28,24 @@ const now = new Date('2026-11-04T12:00:00Z');
 async function render(cluster: ClusterView, role: Role = 'administrator') {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(now);
-  TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+  const confirmer = new AcceptingConfirmer();
+  const dialog = new ClosingDialog();
+  TestBed.configureTestingModule({
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideErrorMessages(appMessages),
+      { provide: Confirmer, useValue: confirmer },
+      { provide: Dialog, useValue: dialog },
+    ],
+  });
   TestBed.inject(Auth).user.set(aSignedInUser({ role }));
   const fixture = TestBed.createComponent(ReplicaList);
   const backend = TestBed.inject(HttpTestingController);
   fixture.detectChanges();
   backend.expectOne('/api/cluster/status').flush(cluster);
   await settle(fixture);
-  return { fixture, backend };
+  return { fixture, backend, confirmer, dialog };
 }
 
 function replicaNames(fixture: ComponentFixture<ReplicaList>): string[] {
@@ -154,5 +170,117 @@ describe('ReplicaList', () => {
     const request = await nextRequest(backend, '/api/cluster/update-membership');
 
     expect(request.request.body).toEqual({ mode: 'automatic', removeMissingAfterMinutes: 45 });
+  });
+
+  it('confirms the membership settings once saved', async () => {
+    const { fixture, backend } = await render(aCluster());
+
+    type(byLabel(fixture, 'Remove missing replicas after'), '45');
+    byRole(fixture, 'button', 'Save').click();
+    (await nextRequest(backend, '/api/cluster/update-membership')).flush(null);
+
+    await vi.waitFor(() =>
+      expect(TestBed.inject(Toaster).toasts()[0]).toMatchObject({
+        heading: 'Membership saved',
+        text: 'New replicas join on their own, and missing ones are removed after 45 minutes.',
+      }),
+    );
+  });
+
+  it('saves manual membership', async () => {
+    const { fixture, backend } = await render(aCluster());
+
+    modeChoice(fixture, 'manual').click();
+    await settle(fixture);
+    byRole(fixture, 'button', 'Save').click();
+    (await nextRequest(backend, '/api/cluster/update-membership')).flush(null);
+
+    await vi.waitFor(() =>
+      expect(TestBed.inject(Toaster).toasts()[0].text).toBe(
+        'New replicas now wait for your approval, and missing ones stay until you remove them.',
+      ),
+    );
+  });
+
+  it('removes an unreachable replica once confirmed', async () => {
+    const { fixture, backend } = await render(
+      aCluster({ members: [aMember({ id: 'member-2', node: 'node-b', reachable: false })] }),
+    );
+
+    byRole(fixture, 'button', 'Remove now…').click();
+    const request = await nextRequest(backend, '/api/cluster/remove-replica');
+    request.flush(null);
+
+    expect(request.request.body).toEqual({ id: 'member-2' });
+    await vi.waitFor(() =>
+      expect(TestBed.inject(Toaster).toasts()[0].text).toBe('node-b was removed from the cluster.'),
+    );
+  });
+
+  it.each([
+    [
+      'automatic',
+      aMember({ node: 'node-b', reachable: false, missingSince: '2026-11-04T11:40:00Z' }),
+      'It has been missing for 20 minutes, and would be removed on its own after 15 minutes.',
+    ],
+    [
+      'automatic',
+      aMember({ node: 'node-b', reachable: false }),
+      'It can’t be reached, and would be removed on its own after 15 minutes.',
+    ],
+    [
+      'manual',
+      aMember({ node: 'node-b', reachable: false, missingSince: '2026-11-04T11:40:00Z' }),
+      'It has been missing for 20 minutes.',
+    ],
+    ['manual', aMember({ node: 'node-b', reachable: false }), 'It can’t be reached.'],
+  ] as const)(
+    'explains what happens to a missing replica with %s membership',
+    async (mode, member, explanation) => {
+      const { fixture, confirmer } = await render(
+        aCluster({ members: [member], membership: { mode, removeMissingAfterMinutes: 15 } }),
+      );
+
+      byRole(fixture, 'button', 'Remove now…').click();
+      await settle(fixture);
+
+      expect(confirmer.asked[0].text).toBe(
+        `${explanation} Once removed, it no longer counts towards the majority. If node-b comes back, its replica joins again as a new replica.`,
+      );
+    },
+  );
+
+  it('opens the recovery dialog', async () => {
+    const { fixture, dialog } = await render(aCluster());
+
+    byRole(fixture, 'button', 'Start recovery…').click();
+    await settle(fixture);
+
+    expect(dialog.opened[0].component).toBe(RecoveryDialog);
+  });
+
+  it('offers recovery to administrators only', async () => {
+    const { fixture } = await render(aCluster(), 'operator');
+
+    expect(queryByRole(fixture, 'button', 'Start recovery…')).toBeUndefined();
+  });
+
+  it('marks this replica and replicas without a known node', async () => {
+    const { fixture } = await render(
+      aCluster({
+        members: [
+          aMember({ address: '10.0.0.1:7946', local: true, node: 'node-a' }),
+          aMember({ id: 'member-2', address: '10.0.0.2:7946', node: undefined }),
+        ],
+      }),
+    );
+
+    expect([
+      cellsOfRow(fixture, '10.0.0.1:7946')[0],
+      cellsOfRow(fixture, '10.0.0.2:7946')[0],
+    ]).toEqual([
+      expect.stringContaining('node-a (this replica)'),
+      expect.stringContaining('Unknown node'),
+    ]);
   });
 });
