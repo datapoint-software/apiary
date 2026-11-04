@@ -114,3 +114,19 @@ export function definitionOf(fixture: ComponentFixture<unknown>, term: string): 
   const found = terms.find((dt) => normalized(dt.textContent) === term);
   return normalized(found?.nextElementSibling?.textContent ?? null);
 }
+
+function menuItems(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+}
+
+export function menuItem(name: string): HTMLElement {
+  const found = menuItems().find((e) => nameOf(e) === name);
+  if (!found) {
+    throw new Error(`No menu item named “${name}”`);
+  }
+  return found;
+}
+
+export function menuItemNames(): string[] {
+  return menuItems().map(nameOf);
+}
