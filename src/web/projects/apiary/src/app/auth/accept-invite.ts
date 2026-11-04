@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, resource, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, resource, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -58,11 +58,12 @@ export class AcceptInvite {
     params: () => ({ token: this.token() }),
     loader: ({ params }) => this.api.read<InviteView>('invites.get', params),
   });
+  protected readonly loaded = computed(() => (this.invite.hasValue() ? this.invite.value() : undefined));
   protected readonly codes = signal<readonly string[]>([]);
 
   private readonly model = signal({ password: '', again: '', code: '' });
   protected readonly account = form(this.model, (p) => {
-    newPassword(p.password, () => this.invite.value()?.email ?? '');
+    newPassword(p.password, () => this.loaded()?.email ?? '');
     matchesPassword(p.again, () => this.model().password);
     required(p.code);
   });
@@ -71,7 +72,7 @@ export class AcceptInvite {
     await apForm.submit(async () => {
       try {
         const { password, code } = this.model();
-        const challenge = this.invite.value()?.enrollment.challenge;
+        const challenge = this.loaded()?.enrollment.challenge;
         this.codes.set(await this.api.send<string[]>('invites.accept', { token: this.token(), password, challenge, code }));
         return undefined;
       } catch (problem) {
