@@ -121,4 +121,10 @@ describe('ActivityStats', () => {
 
     expect(stat(fixture, 'p95 latency')[0]).toBe('–');
   });
+
+  it('shows no 5xx share, without a unit, for a quiet hour', async () => {
+    const fixture = await render(quietHour);
+
+    expect(stat(fixture, '5xx responses')[0]).toBe('–');
+  });
 });

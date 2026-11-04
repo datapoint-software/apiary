@@ -114,7 +114,7 @@ export class ActivityStats {
       {
         label: this.i18n.t('5xx responses'),
         value: requests ? number((errors / requests) * 100, formats) : '–',
-        unit: '%',
+        unit: requests ? '%' : '',
         note: worst ? this.peak(`${number(share(worst), formats)}%`, worst) : this.quietErrors(requests, quiet),
         series: points.map(share),
       },
