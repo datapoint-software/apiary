@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Testing;
 using Datapoint.Apiary.Tests.Hosting;
 
@@ -82,6 +83,15 @@ public sealed class MembershipTests : IAsyncLifetime
         await AdminSession.PostAsync(client, "cluster/remove-replica", new JsonObject { ["id"] = id });
 
         Assert.False(_swarm.Leader.State.Replicas.ContainsKey(id));
+    }
+
+    [Fact]
+    public async Task Removing_a_replica_without_being_the_leader_reports_the_cluster_unavailable()
+    {
+        var follower = _swarm.Followers[0];
+        var other = _swarm.Followers[1].Cluster.Identity!.Id;
+
+        await Assert.ThrowsAsync<ClusterUnavailableException>(() => follower.Cluster.RemoveReplicaAsync(follower.State.Replicas[other], TestContext.Current.CancellationToken));
     }
 
     [Fact]

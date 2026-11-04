@@ -7,6 +7,7 @@ using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Trust;
 using Datapoint.Apiary.Security.Tokens;
 using DotNext.Net.Cluster;
+using DotNext.Net.Cluster.Consensus.Raft;
 using Microsoft.Extensions.Logging;
 
 namespace Datapoint.Apiary.Cluster.Raft;
@@ -498,7 +499,15 @@ public sealed partial class RaftClusterState
             return;
         }
 
-        await _raft!.RemoveMemberAsync(address, cancellationToken);
+        try
+        {
+            await _raft!.RemoveMemberAsync(address, cancellationToken);
+        }
+        catch (Exception exception) when (exception is NotLeaderException or QuorumUnreachableException
+            || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            throw new ClusterUnavailableException("The removal wasn't confirmed by a majority of replicas.", exception);
+        }
     }
 
     private bool IsMember(IPEndPoint address) => _raft!.Members.Any(m => address.Equals(m.EndPoint));
