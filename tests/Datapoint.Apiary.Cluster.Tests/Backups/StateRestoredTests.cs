@@ -2,6 +2,7 @@ using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
+using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
@@ -70,6 +71,34 @@ public sealed class StateRestoredTests
         var restored = ApiaryState.Empty.With(new StateRestored(backup));
 
         Assert.Equal((settings, true), (restored.SingleSignOn, restored.SetupCompleted));
+    }
+
+    [Fact]
+    public void Restoring_replaces_the_visitor_brand()
+    {
+        var brand = ABrand();
+
+        var restored = ApiaryState.Empty.With(new BrandSaved(null, ABrand("Other")), new StateRestored(ApiaryState.Empty.With(new BrandSaved(null, brand))));
+
+        Assert.Same(brand, restored.Brand);
+    }
+
+    [Fact]
+    public void Restoring_replaces_the_session_policy()
+    {
+        var restored = ApiaryState.Empty.With(new SessionPolicySaved(new SessionPolicy(60)), new StateRestored(ApiaryState.Empty.With(new SessionPolicySaved(new SessionPolicy(30)))));
+
+        Assert.Equal(new SessionPolicy(30), restored.SessionPolicy);
+    }
+
+    [Fact]
+    public void Restoring_replaces_the_agent_policy()
+    {
+        var policy = new AgentPolicy(["https://claude.ai"]);
+
+        var restored = ApiaryState.Empty.With(new AgentPolicySaved(new AgentPolicy([])), new StateRestored(ApiaryState.Empty.With(new AgentPolicySaved(policy))));
+
+        Assert.Same(policy, restored.AgentPolicy);
     }
 
     [Fact]
