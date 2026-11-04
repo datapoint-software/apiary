@@ -6,6 +6,7 @@ using Datapoint.Apiary.Cluster.Telemetry;
 using Datapoint.Apiary.Cluster.Users;
 using Datapoint.Apiary.Management.Accounts;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Management.Streams;
 using Datapoint.Apiary.Management.Tests.Fakes;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Apiary.Security.Keys;
@@ -26,7 +27,7 @@ public sealed class ManagementHost : IDisposable
 
     private readonly ServiceProvider _services;
 
-    public ManagementHost()
+    public ManagementHost(IReadOnlySet<int>? reservedPorts = null)
     {
         var services = new ServiceCollection();
         services.AddSingleton<TimeProvider>(Time);
@@ -41,6 +42,7 @@ public sealed class ManagementHost : IDisposable
         services.AddLogging();
         services.AddMetrics();
         services.AddSingleton<ClusterMetrics>();
+        services.AddSingleton(new StreamPortPolicy(reservedPorts ?? new HashSet<int>()));
         services.AddApiaryManagement();
         services.AddMediator(o => o
             .AddHandlersFromAssemblyContaining<StateTransaction>()
