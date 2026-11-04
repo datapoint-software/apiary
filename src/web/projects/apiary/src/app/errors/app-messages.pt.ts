@@ -28,6 +28,7 @@ export const appMessagesPortuguese: MessageCatalog = {
   'brand.accentInvalid': () => 'Introduza uma cor como #1D4ED8, ou escolha uma.',
   'brand.logoType': () => 'Escolha um ficheiro PNG, WebP ou SVG.',
   'brand.logoTooLarge': () => 'Escolha um logótipo com até 100 KB.',
+  'language.unsupported': () => 'Escolha inglês ou português.',
   'brand.logoInvalid': () => 'Este ficheiro não é uma imagem válida do seu tipo. Exporte-o novamente, ou escolha outro.',
   'route.redirectExists': () =>
     'Este nome de anfitrião redireciona para outro sítio. Um nome de anfitrião pode ser uma rota ou um redirecionamento, não ambos: elimine primeiro o redirecionamento.',

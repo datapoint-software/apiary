@@ -28,6 +28,7 @@ export const appMessages: MessageCatalog = {
   'brand.accentInvalid': () => 'Enter a color like #1D4ED8, or pick one.',
   'brand.logoType': () => 'Choose a PNG, WebP or SVG file.',
   'brand.logoTooLarge': () => 'Choose a logo up to 100 KB.',
+  'language.unsupported': () => 'Choose English or Portuguese.',
   'brand.logoInvalid': () => 'This file isn’t a valid image of its type. Export it again, or choose another.',
   'route.redirectExists': () => 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
   'redirect.notFound': () => 'This redirect was already deleted. The list now shows the current redirects.',
