@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.Json.Nodes;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Tests.Hosting;
@@ -9,6 +11,7 @@ namespace Datapoint.Apiary.Tests.Proxy;
 public sealed class RequestSizeTests : IAsyncLifetime
 {
     private const long OneMegabyte = 1_000_000;
+    private static readonly TimeSpan s_responseTimeout = TimeSpan.FromSeconds(30);
     private ApiaryApp _app = null!;
     private Backend _web = null!;
     private HttpClient _client = null!;
@@ -53,9 +56,9 @@ public sealed class RequestSizeTests : IAsyncLifetime
     {
         await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
 
-        using var response = await PostAsync(new StreamContent(new MemoryStream(new byte[2 * OneMegabyte])));
+        var statusLine = await SendOneChunkAsync(OneMegabyte + 1);
 
-        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+        Assert.StartsWith("HTTP/1.1 413 ", statusLine, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -93,6 +96,20 @@ public sealed class RequestSizeTests : IAsyncLifetime
 
     private static async Task<long> ReceivedAsync(HttpResponseMessage response) =>
         JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))?["received"]?.GetValue<long>() ?? 0;
+
+    private async Task<string?> SendOneChunkAsync(long bytes)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(s_responseTimeout);
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _app.HttpPort, timeout.Token);
+        var stream = client.GetStream();
+        var head = $"POST /upload HTTP/1.1\r\nHost: shop.example.com\r\nTransfer-Encoding: chunked\r\n\r\n{bytes:x}\r\n";
+        await stream.WriteAsync(Encoding.ASCII.GetBytes(head), timeout.Token);
+        await stream.WriteAsync(new byte[bytes], timeout.Token);
+        using var reader = new StreamReader(stream, Encoding.ASCII);
+        return await reader.ReadLineAsync(timeout.Token);
+    }
 
     private async Task<HttpResponseMessage> PostAsync(HttpContent content)
     {
