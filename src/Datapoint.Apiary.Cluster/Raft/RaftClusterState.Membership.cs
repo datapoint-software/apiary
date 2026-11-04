@@ -193,8 +193,17 @@ public sealed partial class RaftClusterState
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "The first call starts _stop on this instance, and later calls wait for it.")]
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        lock (_stopGate)
+        {
+            return _stop ??= StopOnceAsync(cancellationToken);
+        }
+    }
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "StartAsync starts _run on this instance.")]
-    public async Task StopAsync(CancellationToken cancellationToken)
+    private async Task StopOnceAsync(CancellationToken cancellationToken)
     {
         if (_raft is not null && discovery.IsSwarm && IsReady)
         {

@@ -35,6 +35,17 @@ public sealed class StandaloneClusterTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Stopping_twice_at_once_stops_the_replica_once()
+    {
+        var replica = await StartAsync();
+
+        await Task.WhenAll(replica.Cluster.StopAsync(CancellationToken.None), replica.Cluster.StopAsync(CancellationToken.None));
+        await replica.Cluster.DisposeAsync();
+
+        Assert.Same(replica.Cluster.StopAsync(CancellationToken.None), replica.Cluster.StopAsync(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task A_new_cluster_has_an_id_and_a_ca()
     {
         var state = (await StartAsync()).Cluster.Current;

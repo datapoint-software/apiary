@@ -30,12 +30,15 @@ public sealed partial class RaftClusterState(
     private static readonly TimeSpan s_writeTimeout = TimeSpan.FromSeconds(30);
     private readonly SemaphoreSlim _writes = new(1, 1);
     private readonly CancellationTokenSource _stopping = new();
+    private readonly Lock _stopGate = new();
     private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private CancellationTokenSource _changed = new();
     private ApiaryStateMachine? _machine;
     private WriteAheadLog? _log;
     private RaftCluster? _raft;
     private Task _run = Task.CompletedTask;
+    private Task? _stop;
+    private int _disposed;
 
     public ApiaryState Current => _machine?.Current ?? ApiaryState.Empty;
 
@@ -213,6 +216,11 @@ public sealed partial class RaftClusterState(
 
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+        {
+            return;
+        }
+
         if (_raft is not null)
         {
             await _raft.DisposeAsync();
