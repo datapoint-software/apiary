@@ -17,6 +17,9 @@ public sealed partial class RaftClusterState
 {
     private static readonly TimeSpan s_joinRetry = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan s_peerWait = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan s_raftRequestTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan s_raftConnectTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan s_raftShutdownTimeout = TimeSpan.FromSeconds(1);
     private readonly Dictionary<Guid, IPEndPoint> _peerAddresses = [];
     private ClusterCa? _bootstrapCa;
 
@@ -307,6 +310,9 @@ public sealed partial class RaftClusterState
             ColdStart = bootstrap,
             Announcer = discovery.IsSwarm && !recovering ? AnnounceAsync : null,
             LoggerFactory = loggers,
+            RequestTimeout = s_raftRequestTimeout,
+            ConnectTimeout = s_raftConnectTimeout,
+            GracefulShutdownTimeout = s_raftShutdownTimeout,
             SslOptions = new SslOptions
             {
                 ServerOptions = ReplicaCredentials.ServerOptions(() => Credentials, IsTrustedReplica),
