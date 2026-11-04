@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/datapoint-software/apiary/discussions
+    about: Questions about deploying or using Apiary, and ideas still being shaped.
   - name: Report a vulnerability
     url: https://github.com/datapoint-software/apiary/security/advisories/new
     about: Report security issues privately, never in a public issue. See SECURITY.md.
