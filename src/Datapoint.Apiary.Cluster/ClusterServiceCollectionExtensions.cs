@@ -16,6 +16,7 @@ public static class ClusterServiceCollectionExtensions
         services.AddSingleton<JoinProtocol>();
         services.AddSingleton<Backups.BackupSealer>();
         services.AddSingleton<ClusterClient>();
+        services.AddSingleton<IPeerNetwork, DockerPeerNetwork>();
         services.AddSingleton<PeerDiscovery>();
         services.AddSingleton<RaftClusterState>();
         services.AddSingleton<IClusterState>(provider => provider.GetRequiredService<RaftClusterState>());

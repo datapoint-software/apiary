@@ -31,7 +31,7 @@ public sealed class StandaloneReplica : IAsyncDisposable
             Encryption,
             new JoinProtocol(rootKey),
             _client,
-            new PeerDiscovery(options, TimeProvider.System),
+            new PeerDiscovery(options, new DockerPeerNetwork(), TimeProvider.System),
             Lifetime,
             TimeProvider.System,
             NullLoggerFactory.Instance,
