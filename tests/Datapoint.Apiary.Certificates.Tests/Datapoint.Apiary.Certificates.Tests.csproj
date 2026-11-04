@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Apiary.Testing\Datapoint.Apiary.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Datapoint.Apiary.Certificates\Datapoint.Apiary.Certificates.csproj" />
+  </ItemGroup>
+</Project>
