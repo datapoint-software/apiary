@@ -115,7 +115,7 @@ public sealed partial class CertificateSelector : IDisposable
         {
             return CertificateBundle.Context(material);
         }
-        catch (System.Security.Cryptography.CryptographicException exception)
+        catch (Exception exception) when (exception is ArgumentException or System.Security.Cryptography.CryptographicException)
         {
             LogLoadFailed(exception, name);
             return null;
