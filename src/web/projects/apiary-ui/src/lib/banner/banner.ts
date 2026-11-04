@@ -9,6 +9,7 @@ const icons = { info: Info, ok: CircleCheck, warn: TriangleAlert, critical: Circ
 @Component({
   selector: 'ap-banner',
   imports: [Icon],
+  host: { '[attr.role]': 'null' },
   template: `<div class="ap-banner" [class]="'ap-banner-' + tone()" [attr.role]="role()">
     <ap-icon [icon]="icon()" />
     <div class="ap-banner-body">
