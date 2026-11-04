@@ -41,7 +41,7 @@
           </form>
           <p class="ap-caption" style="margin: 0; text-align: center">
             {{ 'Moving from another Apiary with the same root key?' | t }}
-            <input #backupFile type="file" accept=".backup" class="ap-sr" id="setup-backup" (change)="restore(backupFile)" />
+            <input #backupFile type="file" accept=".backup" class="ap-sr" id="setup-backup" tabindex="-1" aria-hidden="true" (change)="restore(backupFile)" />
             <button apButton="ghost" size="small" type="button" [disabled]="restoring()" (click)="backupFile.click()">
               {{ (restoring() ? 'Restoring…' : 'Restore a backup instead') | t }}
             </button>

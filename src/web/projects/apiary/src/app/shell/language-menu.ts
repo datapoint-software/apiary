@@ -9,7 +9,7 @@ import { LanguageChoice } from '../auth/language-choice';
   selector: 'ap-language-menu',
   imports: [Button, Icon, CdkMenu, CdkMenuItemRadio, CdkMenuTrigger, TranslatePipe],
   template: `
-    <button apButton="ghost" class="ap-lang-btn" type="button" [attr.aria-label]="'Language: {name}' | t: { name: current().name }" [cdkMenuTriggerFor]="menu">
+    <button apButton="ghost" class="ap-lang-btn" type="button" [attr.aria-label]="'Language: {name}' | t: { name: current().name + ', ' + current().short }" [cdkMenuTriggerFor]="menu">
       <ap-icon [icon]="icons.languages" /><span aria-hidden="true">{{ current().short }}</span>
     </button>
     <ng-template #menu>

@@ -327,7 +327,7 @@
 
 /* Copy field */
 .ap-copy { display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding: 4px 4px 4px 12px; border-radius: var(--radius-2); background: var(--sunken); }
-.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-x: auto; white-space: nowrap; padding: 6px 0; }
+.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-wrap: anywhere; padding: 6px 0; }
 .ap-copy .ap-btn { background: var(--surface); }
 
 /* Cluster map: one hexagon per replica */
@@ -426,7 +426,7 @@
 .ap .ap-crumbs a { color: var(--ink-2); }
 .ap-page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
 .ap-attribution { display: flex; flex-direction: column; gap: 6px; font-size: 0.6875rem; line-height: 0.9375rem; color: var(--ink-3); }
-.ap .ap-attribution a { color: var(--ink-2); }
+.ap .ap-attribution a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .ap-attribution svg { width: 92px; height: auto; color: var(--ink-2); }
 
 

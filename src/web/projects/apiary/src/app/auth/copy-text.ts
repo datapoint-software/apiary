@@ -7,7 +7,7 @@ import { Check, Copy } from 'lucide';
   imports: [Button, Icon, TranslatePipe],
   template: `
     <div class="ap-copy" [style.align-items]="multiline() ? 'flex-start' : null">
-      <code [style.white-space]="multiline() ? 'pre' : null" [style.line-height]="multiline() ? '1.6' : null">{{ text() }}</code>
+      <code [style.white-space]="multiline() ? 'pre-wrap' : null" [style.line-height]="multiline() ? '1.6' : null">{{ text() }}</code>
       <button apButton size="small" type="button" (click)="copy()">
         <ap-icon [icon]="copied() ? checkIcon : copyIcon" /><span>{{ (copied() ? 'Copied' : 'Copy') | t }}</span>
       </button>

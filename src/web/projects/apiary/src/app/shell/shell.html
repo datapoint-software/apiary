@@ -65,7 +65,7 @@
           <button
             class="ap-avatar ap-avatar-btn"
             type="button"
-            [attr.aria-label]="'Account: {name}' | t: { name: user.name }"
+            [attr.aria-label]="'Account: {name}' | t: { name: user.name + ', ' + initials() }"
             [cdkMenuTriggerFor]="accountMenu"
           >
             {{ initials() }}

@@ -50,7 +50,7 @@
     </div>
   </div>
   <div class="ap-panel-body">
-    <input #file type="file" accept=".backup" class="ap-sr" id="backup-file" (change)="restore(file)" />
+    <input #file type="file" accept=".backup" class="ap-sr" id="backup-file" tabindex="-1" aria-hidden="true" (change)="restore(file)" />
     <button apWrite apButton type="button" (click)="file.click()"><ap-icon [icon]="icons.file" />{{ 'Choose a backup file…' | t }}</button>
   </div>
 </section>
