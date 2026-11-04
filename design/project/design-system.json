@@ -36,8 +36,8 @@
   },
   "lastChange": {
     "by": "João Lopes",
-    "at": "2026-11-04T02:38:08Z",
+    "at": "2026-11-04T02:44:06Z",
     "via": "Claude Code",
-    "note": "Stylesheet: the language menu, the password tag on routes, the brand logo preview, the wide dialog and the sign-in link row (in bundle.css and the Prototype)."
+    "note": "Layout: on wide screens the content, top bar and footer are centered on the screen, whether the sidebar is collapsed or not (bundle.css, Prototype and README)."
   }
 }

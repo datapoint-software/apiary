@@ -62,7 +62,7 @@ Rules:
 - Control heights: `control-md` (36px) by default, `control-sm` (28px) in tables and filter bars, `control-lg` (44px) on setup screens and touch layouts.
 - Lists and dashboards at most `content-max` wide; forms at most `form-max`, in one column.
 - Breakpoints: 640px (phone), 1024px (tablet), 1440px (wide).
-- The shell: a `sidebar`-wide navigation with task groups, a 56px top bar, and the content. See Shell.
+- The shell: a `sidebar`-wide navigation with task groups, a 56px top bar, and the content. See Shell. On wide screens the content, the top bar's search and buttons, and the footer share one column centered on the screen, not beside the sidebar, so collapsing the sidebar doesn't move them; when there's no room to center, the column sits beside the sidebar.
 
 ## Shape
 
