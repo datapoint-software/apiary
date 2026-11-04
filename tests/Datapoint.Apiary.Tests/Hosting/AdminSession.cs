@@ -34,6 +34,14 @@ internal static class AdminSession
 
     public static string CurrentCode() => Totp.Compute(Base32.Decode(Secret), Totp.Step(DateTimeOffset.UtcNow));
 
+    public static async Task<string> NextCodeAsync()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var next = Totp.Step(now) + 1;
+        await Task.Delay(DateTimeOffset.FromUnixTimeSeconds(next * 30) - now, TestContext.Current.CancellationToken);
+        return Totp.Compute(Base32.Decode(Secret), next);
+    }
+
     public static async Task<JsonNode> PostAsync(HttpClient client, string action, JsonObject? body = null)
     {
         using var response = await client.PostAsJsonAsync(new Uri("/api/" + action, UriKind.Relative), body ?? [], TestContext.Current.CancellationToken);

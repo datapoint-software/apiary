@@ -35,6 +35,8 @@ internal sealed class SwarmReplicas : IAsyncDisposable
 
     public IReadOnlyCollection<ApiaryApp> Running => [.. _running.Values];
 
+    public string DataDirectoryOf(int replica) => Path.Combine(_directory.Path, $"replica-{replica}", "data");
+
     public int SlotOf(ApiaryApp app) => _running.Single(r => r.Value == app).Key;
 
     public int[] OtherSlots(int replica) => [.. _running.Keys.Where(n => n != replica).Order()];
@@ -111,7 +113,7 @@ internal sealed class SwarmReplicas : IAsyncDisposable
                 ["Apiary:RaftPort"] = Text(_raftPort),
                 ["Apiary:ClusterPort"] = Text(_clusterPort),
                 ["Apiary:RootKeyFile"] = RootKeyFile(rootKey),
-                ["Apiary:DataDirectory"] = Path.Combine(home, "data"),
+                ["Apiary:DataDirectory"] = DataDirectoryOf(replica),
                 ["Apiary:KeyDirectory"] = Path.Combine(home, "keys"),
             }.Concat(_settings).GroupBy(s => s.Key, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal),
             TestServices = services => services.AddSingleton<IPeerNetwork>(new FakePeerNetwork(Dns, LoopbackAliases.Address(replica))),
