@@ -5000,7 +5000,8 @@ function translateNode(node) {
     if (!text) return;
     // Between two dates, "to" reads "a"; elsewhere, such as in a redirect, "para".
     const prev = node.previousSibling;
-    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : tr(text);
+    // As a label, "Preview" is the noun, "Pré-visualização"; on a button, the verb, "Pré-visualizar".
+    const to = text === 'to' && prev && /^\d{4}-/.test(prev.textContent) ? 'a' : text === 'Preview' && el.classList.contains('ap-label') ? 'Pré-visualização' : tr(text);
     if (to !== text) node.nodeValue = raw.replace(raw.trim(), to);
     return;
   }
