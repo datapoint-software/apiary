@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Testing;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,11 +31,20 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
 
     public ApiaryState State => Cluster.Current;
 
-    public static async Task<ApiaryApp> StartAsync(IReadOnlyDictionary<string, string>? settings = null)
+    public static async Task<ApiaryApp> StartAsync(IReadOnlyDictionary<string, string>? settings = null, int attempts = 3)
     {
         var app = new ApiaryApp { Settings = settings ?? new Dictionary<string, string>(StringComparer.Ordinal) };
         app.UseKestrel();
-        app.StartServer();
+        try
+        {
+            app.StartServer();
+        }
+        catch (IOException exception) when (exception.InnerException is AddressInUseException && attempts > 1)
+        {
+            await app.DisposeAsync();
+            return await StartAsync(settings, attempts - 1);
+        }
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
         await app.Cluster.WaitUntilReadyAsync(timeout.Token);
@@ -46,7 +56,8 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
 
     public static int FreePort()
     {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var listener = new TcpListener(IPAddress.IPv6Any, 0);
+        listener.Server.DualMode = true;
         listener.Start();
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
