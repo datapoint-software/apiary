@@ -175,6 +175,18 @@ Agreed on 2026-11-04, after large image pushes to a container registry failed. N
 
 **Try it:** set the default to 1 MB and `curl --data-binary @big.file` a route: it gets a 413. Give the route its own 10 MB limit and try again.
 
+## 18. Routes declared in stack files
+
+Agreed on 2026-11-04, for teams that deploy their Swarm from CI. Not tied to 1.0. See [architecture.md](architecture.md#stacks).
+
+- `stacks.apply`, with a dry run: one Raft entry that adds, changes and removes a stack's routes, stream routes and redirects, refusing hostnames in use and an apply that removes everything. A new state change, so it needs `[StateSchema(2)]`.
+- An optional source on routes, stream routes and redirects (the stack, its service and the fields its labels set), locking those fields in the UI, the API and MCP.
+- Pipeline tokens: one stack each, created by an Administrator, shown once, stored as a hash, expiring and revocable, with their own audit entries.
+- `apiary apply` in the image: it parses the stack file's `apiary.*` labels, finds the commit and pipeline link in the CI system's variables, prints the plan and exits with an error when the apply fails.
+- The Stacks page and each stack's page (last apply, what it declares, tokens, the commands for CI, Add stack and Remove stack), the Pipeline tokens page, and the stack tag and locked fields on route, stream route and redirect pages, as the prototype shows them.
+
+**Try it:** add a stack, put its token in a GitLab CI variable on a runner inside the network, and add `apiary apply` after `docker stack deploy`. Push a label change: the route changes, and its locked field says "Set in stack". Delete the labels of one route and push again: the route is gone. Run with an empty file: the apply fails with `stack.removesEverything`.
+
 ## What you'll need to try it
 
 - **Milestones 0 to 2:** Docker on your machine.
