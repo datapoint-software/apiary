@@ -22,6 +22,8 @@ public static class HostnameRules
 
     public static bool HasOnlyAllowedCharacters(string hostname) => hostname.All(IsAllowed);
 
+    public static bool HasOnlyServiceNameCharacters(string name) => name.All(character => IsAllowed(character) || character is '_');
+
     public static bool HasValidLabels(string hostname) => hostname.Split('.').All(IsValidLabel);
 
     private static bool IsAllowed(char character) =>

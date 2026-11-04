@@ -27,7 +27,7 @@ public static class RuleExtensions
             .Must(host => TargetRules.Classify(host) is not AddressKind.Loopback).WithErrorCode(ErrorCodes.TargetLoopback)
             .Must(host => TargetRules.Classify(host) is not AddressKind.LinkLocal).WithErrorCode(ErrorCodes.TargetLinkLocal)
             .Must(host => TargetRules.Classify(host) is not AddressKind.Unspecified).WithErrorCode(ErrorCodes.TargetUnspecified)
-            .Must(host => TargetRules.IsAddress(host) || IsHostname(host)).WithErrorCode(ErrorCodes.TargetInvalid);
+            .Must(host => TargetRules.IsAddress(host) || IsServiceName(host)).WithErrorCode(ErrorCodes.TargetInvalid);
 
     public static IRuleBuilderOptions<T, string> CurrentPassword<T>(this IRuleBuilderInitial<T, string> rule) =>
         rule.Cascade(CascadeMode.Stop)
@@ -45,9 +45,9 @@ public static class RuleExtensions
     public static IRuleBuilderOptions<T, string> IpRange<T>(this IRuleBuilder<T, string> rule) =>
         rule.Must(IsIpRange).WithErrorCode(ErrorCodes.IpRangeInvalid);
 
-    private static bool IsHostname(string host) =>
+    private static bool IsServiceName(string host) =>
         host.Length <= HostnameRules.MaximumLength
-        && HostnameRules.HasOnlyAllowedCharacters(host)
+        && HostnameRules.HasOnlyServiceNameCharacters(host)
         && HostnameRules.HasNoConsecutiveDots(host)
         && HostnameRules.HasValidLabels(host)
         && !host.StartsWith('.');
