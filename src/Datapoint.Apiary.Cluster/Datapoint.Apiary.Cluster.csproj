@@ -4,4 +4,7 @@
     <ProjectReference Include="..\Datapoint.Apiary.Security\Datapoint.Apiary.Security.csproj" />
     <PackageReference Include="DotNext.Net.Cluster" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Datapoint.Apiary.Tests" />
+  </ItemGroup>
 </Project>

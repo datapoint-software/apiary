@@ -6,6 +6,7 @@ using Datapoint.Apiary.Testing;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using static Datapoint.Apiary.Testing.Builders.StateBuilders;
 
@@ -27,13 +28,20 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
 
     public IReadOnlyDictionary<string, string> Settings { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
+    public Action<IServiceCollection> TestServices { get; init; } = _ => { };
+
+    public string DataDirectory => Path.Combine(_directory.Path, "data");
+
     public RaftClusterState Cluster => Services.GetRequiredService<RaftClusterState>();
 
     public ApiaryState State => Cluster.Current;
 
-    public static async Task<ApiaryApp> StartAsync(IReadOnlyDictionary<string, string>? settings = null, int attempts = 3)
+    public static Task<ApiaryApp> StartAsync(IReadOnlyDictionary<string, string>? settings = null, int attempts = 3) =>
+        StartAsync(() => new ApiaryApp { Settings = settings ?? new Dictionary<string, string>(StringComparer.Ordinal) }, attempts);
+
+    public static async Task<ApiaryApp> StartAsync(Func<ApiaryApp> create, int attempts = 3)
     {
-        var app = new ApiaryApp { Settings = settings ?? new Dictionary<string, string>(StringComparer.Ordinal) };
+        var app = create();
         app.UseKestrel();
         try
         {
@@ -42,7 +50,7 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
         catch (IOException exception) when (exception.InnerException is AddressInUseException && attempts > 1)
         {
             await app.DisposeAsync();
-            return await StartAsync(settings, attempts - 1);
+            return await StartAsync(create, attempts - 1);
         }
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
@@ -71,7 +79,7 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
         builder.UseSetting("Apiary:ClusterPort", Text(ClusterPort));
         builder.UseSetting("Apiary:Mode", "Standalone");
         builder.UseSetting("Apiary:NodeName", "node-a");
-        builder.UseSetting("Apiary:DataDirectory", Path.Combine(_directory.Path, "data"));
+        builder.UseSetting("Apiary:DataDirectory", DataDirectory);
         builder.UseSetting("Apiary:KeyDirectory", Path.Combine(_directory.Path, "keys"));
         builder.UseSetting("Apiary:RootKeyFile", Path.Combine(_directory.Path, "none"));
         builder.UseSetting("Apiary:Acme:DirectoryUrl", "https://127.0.0.1:1/directory");
@@ -79,6 +87,8 @@ internal sealed class ApiaryApp : WebApplicationFactory<Program>
         {
             builder.UseSetting(key, value);
         }
+
+        builder.ConfigureTestServices(TestServices);
     }
 
     protected override void Dispose(bool disposing)

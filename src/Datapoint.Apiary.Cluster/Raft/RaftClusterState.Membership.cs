@@ -18,6 +18,7 @@ public sealed partial class RaftClusterState
     private static readonly TimeSpan s_peerWaitTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan s_stuckTimeout = TimeSpan.FromSeconds(45);
     private DateTimeOffset? _stuckSince;
+    private bool _leavesWithoutNotice;
     private readonly SemaphoreSlim _membership = new(1, 1);
     private static readonly TimeSpan s_pendingExpiry = TimeSpan.FromMinutes(1);
     private readonly ConcurrentDictionary<IPEndPoint, DateTimeOffset> _missingSince = [];
@@ -193,6 +194,8 @@ public sealed partial class RaftClusterState
         }
     }
 
+    internal void LeaveWithoutNotice() => _leavesWithoutNotice = true;
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "The first call starts _stop on this instance, and later calls wait for it.")]
     public Task StopAsync(CancellationToken cancellationToken)
     {
@@ -205,7 +208,7 @@ public sealed partial class RaftClusterState
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "StartAsync starts _run on this instance.")]
     private async Task StopOnceAsync(CancellationToken cancellationToken)
     {
-        if (_raft is not null && discovery.IsSwarm && IsReady)
+        if (_raft is not null && discovery.IsSwarm && IsReady && !_leavesWithoutNotice)
         {
             await WaitForPeersAsync(cancellationToken);
             await LeaveAsync(cancellationToken);
