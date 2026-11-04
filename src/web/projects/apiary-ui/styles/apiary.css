@@ -16,6 +16,7 @@
 .ap :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ap a { color: var(--honey-text); text-decoration: none; }
 .ap a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.ap p a:not(.ap-btn), .ap .ap-banner-body a:not(.ap-btn) { text-decoration: underline; text-underline-offset: 2px; }
 .ap-h { font-family: var(--font-display); margin: 0; text-wrap: balance; color: var(--ink); }
 .ap-h-1 { font-size: 2rem; line-height: 2.375rem; font-weight: 700; letter-spacing: -0.022em; }
 .ap-h-2 { font-size: 1.3125rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.015em; }
