@@ -259,46 +259,43 @@ const PUBLIC_PAGES = [
    scanners don't; then Apiary sets the cookie and redirects to the address without the key. */
 let gateTries = 0;
 const PUB_H1 = 'font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)';
-const PUB_BTN = 'font:600 1rem/1.5 var(--font-text);margin-top:var(--space-2);padding:10px 16px;border:0;border-radius:var(--radius-2);background:var(--honey);color:var(--on-honey);cursor:pointer';
 const PUB_SMALL = 'margin:var(--space-5) 0 0;font-size:0.875rem;color:var(--ink-3)';
 const PUB_PROTO = 'margin:var(--space-6) 0 0;font-size:0.8125rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:var(--space-3)';
-function passwordPage(mode) {
-  const r = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set)[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
-  const g = r.gate;
+/* target: 'cluster' or a project ID to preview with that brand; otherwise the brand of the route the page is about. */
+const brandFor = (target, r) => (target === 'cluster' ? D.brand || null : target ? brandOf(target) : brandOf(r && r.project));
+function passwordPage(mode, target) {
+  const gated = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set);
+  const r = (target && target !== 'cluster' && gated.find(x => x.project === target)) || gated[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
+  const g = r.gate, brand = brandFor(target, r);
   const box = 'font:inherit;padding:10px 12px;border-radius:var(--radius-2);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box';
   const stay = `You stay signed in on this browser for ${plural(g.days, 'day')}.`;
+  const t = target ? '/' + target : '';
   const signedIn = el => {
     gateTries = 0;
-    $('[data-gate-page]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password">See the password page</a> · <a href="#/public/link">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
+    $('[data-visitor-body]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password${t}">See the password page</a> · <a href="#/public/link${t}">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
   };
   if (mode === 'link' && g.link) return {
     title: r.host,
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
-<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
+    html: visitorPage(brand, `<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
 <p style="margin:0;color:var(--ink-2)">${g.message ? esc(g.message) : 'Someone shared this site with you.'}</p>
-<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${PUB_BTN}">Continue</button></form>
-<p style="${PUB_SMALL}">${stay}</p>
-<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>
-</main></div>`,
+<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${visitorButton(brand)}">Continue</button></form>
+<p style="${PUB_SMALL}">${stay}</p>`, { note: `<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>` }),
     mount(el) { document.title = r.host; $('form', el).addEventListener('submit', e => { e.preventDefault(); signedIn(el); }); },
   };
   const old = mode === 'link-old';
   return {
     title: 'Password',
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
-<h1 style="${PUB_H1}">Restricted access</h1>
+    html: visitorPage(brand, `<h1 style="${PUB_H1}">Restricted access</h1>
 <p style="margin:0;color:var(--ink-2)">${old ? 'This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.' : g.message ? esc(g.message) : 'Enter the password you were given.'}</p>
 <form method="post" novalidate style="margin-top:var(--space-5);display:grid;gap:var(--space-2)">
 <label for="gate-pw" style="font-weight:600;font-size:0.875rem">Password</label>
 <input id="gate-pw" name="password" type="password" autocomplete="current-password" required aria-describedby="gate-err" style="${box}">
 <p id="gate-err" role="alert" style="margin:0;color:var(--critical);font-size:0.875rem" hidden></p>
-<button type="submit" style="${PUB_BTN}">Continue</button>
+<button type="submit" style="${visitorButton(brand)}">Continue</button>
 </form>
-<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>
-<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>
-</main></div>`,
+<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>`, { note: `<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>` }),
     mount(el) {
-      document.title = 'Password';
+      document.title = brand ? `Password · ${brand.name}` : 'Password';
       const f = $('form', el), input = $('#gate-pw', el), err = $('#gate-err', el);
       const say = text => { err.textContent = text; err.hidden = !text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };
       f.addEventListener('submit', e => {
@@ -319,16 +316,21 @@ function passwordPage(mode) {
     },
   };
 }
-route('/public/:page', key => {
-  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key);
+function publicPage(key, target) {
+  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key, target);
   const page = PUBLIC_PAGES.find(x => x[0] === key);
-  if (!page) return notFound();
+  /* Any other address is one Apiary has no route for: the branded 404, as in the real proxy. */
+  if (!page) return publicPage('not-found', target);
   const [, , title, heading, fixed] = page;
-  const w = (D.routes.find(r => r.maintenance) || {}).maintenance;
-  const text = fixed || esc(w && w.message ? w.message : `This site is being worked on. Try again after ${fmtDate(w ? w.end : NOW + HOUR)} UTC.`);
+  const mr = D.routes.find(r => r.maintenance), w = (mr || {}).maintenance;
+  const text = fixed || (w && w.message ? w.message : `This site is being worked on. Try again after ${fmtDate(w ? w.end : NOW + HOUR)} UTC.`);
+  /* An unknown address has no route, so it gets the cluster brand; the others get their route's project brand. */
+  const brand = brandFor(target, key === 'maintenance' ? mr : null);
   return {
     title,
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="max-width:32rem;padding:var(--space-6)"><h1 style="font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)">${esc(heading)}</h1><p style="margin:0;color:var(--ink-2)">${fixed ? esc(text) : text}</p></main></div>`,
-    mount() { document.title = title; },
+    html: visitorPage(brand, `<h1 style="${PUB_H1}">${esc(heading)}</h1><p style="margin:0;color:var(--ink-2)">${esc(text)}</p>`, { width: '32rem' }),
+    mount() { document.title = brand ? `${title} · ${brand.name}` : title; },
   };
-}, { bare: true });
+}
+route('/public/:page', key => publicPage(key), { bare: true });
+route('/public/:page/:target', (key, target) => publicPage(key, target), { bare: true });

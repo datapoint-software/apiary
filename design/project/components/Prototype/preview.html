@@ -864,6 +864,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
 .ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }
 
+/* Idea being tried: the brand dialog has the form and a live preview side by side. */
+.ap-dialog-xl { width: min(760px, 100%); }
+
 </style>
 <div class="ap" lang="en" style="min-height:100%">
 <a class="ap-skip" href="#main" data-skip>Skip to content</a>
@@ -937,8 +940,13 @@ const NOW = Date.UTC(2026, 10, 2, 14, 40);
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const at = (days, hhmm) => { const [h, m] = hhmm.split(':').map(Number); return Date.UTC(2026, 10, 2 - days, h, m); };
 
+/* A simple logo for the sample brands: initials on a rounded square, as an SVG data URI. */
+const sampleLogo = (text, bg) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${bg}"/><text x="32" y="41" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">${text}</text></svg>`);
+
 function seedData() {
   return {
+    /* Idea being tried: visitor pages carry the operator's brand; a project can have its own. */
+    brand: { name: 'Example Cloud', logo: sampleLogo('EC', '#1D4ED8'), logoName: 'example-cloud.svg', accent: '#1D4ED8', contact: 'Questions? Write to help@example.com.', changed: [NOW - 9 * DAY, 'ana@example.com'] },
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
@@ -946,7 +954,7 @@ function seedData() {
       { id: 'payments', name: 'Payments API', icon: 'credit-card', desc: 'Card and SEPA payment endpoints.' },
       { id: 'internal', name: 'Internal tools', icon: 'wrench', desc: 'Grafana, MQTT and staff tools.' },
       { id: 'legacy', name: 'Legacy', icon: 'archive', desc: 'Old storefront, kept for redirects.' },
-      { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.' },
+      { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.', brand: { name: 'Example Lda.', logo: sampleLogo('EL', '#0F766E'), logoName: 'example-lda.svg', accent: '#0F766E', contact: 'Questions about the website? Write to hello@example.pt.', changed: [NOW - 2 * DAY, 'ana@example.com'] } },
     ],
     routes: [
       { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'] },
@@ -1035,7 +1043,7 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
 }
 
 /* Shared behavior: formatting, toasts, dialogs, menus, busy buttons, form validation and the date and time picker. */
@@ -1688,7 +1696,7 @@ function renderNav(p) {
   const groups = [
     ['', [['layout-dashboard', 'Overview', '#/']]],
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
-    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects']]],
+    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
     ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
     ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
@@ -1809,7 +1817,7 @@ $('[data-about]').addEventListener('click', () => {
 /* Search: a combobox over pages, projects, routes, certificates and users */
 const q = $('#q'), qList = $('#q-list');
 let qItems = [], qActive = -1;
-const SEARCH_PAGES = [['layout-dashboard', 'Overview', '/'], ['route', 'All routes', '/routes'], ['cable', 'Stream routes', '/streams'], ['shield-check', 'Certificates', '/certificates'], ['corner-up-right', 'Redirects', '/redirects'], ['hexagon', 'Replicas', '/replicas'], ['archive', 'Backups', '/backups', true], ['key-round', 'Root key', '/root-key', true], ['users', 'Users', '/users', true], ['door-open', 'Single sign-on', '/single-sign-on', true], ['bot', 'Connected agents', '/agents'], ['scroll-text', 'Audit log', '/audit'], ['user-round', 'Your account', '/account']];
+const SEARCH_PAGES = [['layout-dashboard', 'Overview', '/'], ['route', 'All routes', '/routes'], ['cable', 'Stream routes', '/streams'], ['shield-check', 'Certificates', '/certificates'], ['corner-up-right', 'Redirects', '/redirects'], ['panels-top-left', 'Visitor pages', '/visitor-pages'], ['hexagon', 'Replicas', '/replicas'], ['archive', 'Backups', '/backups', true], ['key-round', 'Root key', '/root-key', true], ['users', 'Users', '/users', true], ['door-open', 'Single sign-on', '/single-sign-on', true], ['bot', 'Connected agents', '/agents'], ['scroll-text', 'Audit log', '/audit'], ['user-round', 'Your account', '/account']];
 const shortDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 function searchIndex() {
   const admin = isAdmin();
@@ -2168,46 +2176,43 @@ const PUBLIC_PAGES = [
    scanners don't; then Apiary sets the cookie and redirects to the address without the key. */
 let gateTries = 0;
 const PUB_H1 = 'font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)';
-const PUB_BTN = 'font:600 1rem/1.5 var(--font-text);margin-top:var(--space-2);padding:10px 16px;border:0;border-radius:var(--radius-2);background:var(--honey);color:var(--on-honey);cursor:pointer';
 const PUB_SMALL = 'margin:var(--space-5) 0 0;font-size:0.875rem;color:var(--ink-3)';
 const PUB_PROTO = 'margin:var(--space-6) 0 0;font-size:0.8125rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:var(--space-3)';
-function passwordPage(mode) {
-  const r = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set)[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
-  const g = r.gate;
+/* target: 'cluster' or a project ID to preview with that brand; otherwise the brand of the route the page is about. */
+const brandFor = (target, r) => (target === 'cluster' ? D.brand || null : target ? brandOf(target) : brandOf(r && r.project));
+function passwordPage(mode, target) {
+  const gated = D.routes.filter(x => x.gate).sort((a, b) => b.gate.set - a.gate.set);
+  const r = (target && target !== 'cluster' && gated.find(x => x.project === target)) || gated[0] || { host: 'preview.example.com', path: '/', gate: { password: '', message: '', days: 7 } };
+  const g = r.gate, brand = brandFor(target, r);
   const box = 'font:inherit;padding:10px 12px;border-radius:var(--radius-2);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box';
   const stay = `You stay signed in on this browser for ${plural(g.days, 'day')}.`;
+  const t = target ? '/' + target : '';
   const signedIn = el => {
     gateTries = 0;
-    $('[data-gate-page]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password">See the password page</a> · <a href="#/public/link">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
+    $('[data-visitor-body]', el).innerHTML = `<h1 style="${PUB_H1}">${esc(r.host)}</h1><p style="margin:0;color:var(--ink-2)">Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for${mode === 'link' ? ', without the key in the address' : ''}, now served by the site itself. The site never sees the password, the key or the cookie.</p><p style="margin:var(--space-4) 0 0"><a href="#/public/password${t}">See the password page</a> · <a href="#/public/link${t}">See the sign-in link page</a> · <a href="#/">Back to Apiary</a></p>`;
   };
   if (mode === 'link' && g.link) return {
     title: r.host,
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
-<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
+    html: visitorPage(brand, `<h1 style="${PUB_H1}" class="ap-data">${esc(r.host)}</h1>
 <p style="margin:0;color:var(--ink-2)">${g.message ? esc(g.message) : 'Someone shared this site with you.'}</p>
-<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${PUB_BTN}">Continue</button></form>
-<p style="${PUB_SMALL}">${stay}</p>
-<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>
-</main></div>`,
+<form method="post" style="margin-top:var(--space-5);display:grid"><button type="submit" style="${visitorButton(brand)}">Continue</button></form>
+<p style="${PUB_SMALL}">${stay}</p>`, { note: `<p style="${PUB_PROTO}">Prototype: you opened <span class="ap-data" style="word-break:break-all">${esc(gateLink(r))}</span>. A link preview or an email scanner that opens it gets only this page.</p>` }),
     mount(el) { document.title = r.host; $('form', el).addEventListener('submit', e => { e.preventDefault(); signedIn(el); }); },
   };
   const old = mode === 'link-old';
   return {
     title: 'Password',
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="width:100%;max-width:26rem;padding:var(--space-6);box-sizing:border-box" data-gate-page>
-<h1 style="${PUB_H1}">Restricted access</h1>
+    html: visitorPage(brand, `<h1 style="${PUB_H1}">Restricted access</h1>
 <p style="margin:0;color:var(--ink-2)">${old ? 'This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.' : g.message ? esc(g.message) : 'Enter the password you were given.'}</p>
 <form method="post" novalidate style="margin-top:var(--space-5);display:grid;gap:var(--space-2)">
 <label for="gate-pw" style="font-weight:600;font-size:0.875rem">Password</label>
 <input id="gate-pw" name="password" type="password" autocomplete="current-password" required aria-describedby="gate-err" style="${box}">
 <p id="gate-err" role="alert" style="margin:0;color:var(--critical);font-size:0.875rem" hidden></p>
-<button type="submit" style="${PUB_BTN}">Continue</button>
+<button type="submit" style="${visitorButton(brand)}">Continue</button>
 </form>
-<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>
-<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>
-</main></div>`,
+<p style="${PUB_SMALL}">${stay} No password? Ask whoever sent you the link.</p>`, { note: `<p style="${PUB_PROTO}">Prototype: this is <span class="ap-data">${esc(r.host)}</span>, and its password is <span class="ap-data">${esc(g.password)}</span>.</p>` }),
     mount(el) {
-      document.title = 'Password';
+      document.title = brand ? `Password · ${brand.name}` : 'Password';
       const f = $('form', el), input = $('#gate-pw', el), err = $('#gate-err', el);
       const say = text => { err.textContent = text; err.hidden = !text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };
       f.addEventListener('submit', e => {
@@ -2228,19 +2233,24 @@ function passwordPage(mode) {
     },
   };
 }
-route('/public/:page', key => {
-  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key);
+function publicPage(key, target) {
+  if (['password', 'link', 'link-old'].includes(key)) return passwordPage(key, target);
   const page = PUBLIC_PAGES.find(x => x[0] === key);
-  if (!page) return notFound();
+  /* Any other address is one Apiary has no route for: the branded 404, as in the real proxy. */
+  if (!page) return publicPage('not-found', target);
   const [, , title, heading, fixed] = page;
-  const w = (D.routes.find(r => r.maintenance) || {}).maintenance;
-  const text = fixed || esc(w && w.message ? w.message : `This site is being worked on. Try again after ${fmtDate(w ? w.end : NOW + HOUR)} UTC.`);
+  const mr = D.routes.find(r => r.maintenance), w = (mr || {}).maintenance;
+  const text = fixed || (w && w.message ? w.message : `This site is being worked on. Try again after ${fmtDate(w ? w.end : NOW + HOUR)} UTC.`);
+  /* An unknown address has no route, so it gets the cluster brand; the others get their route's project brand. */
+  const brand = brandFor(target, key === 'maintenance' ? mr : null);
   return {
     title,
-    html: `<div style="font:16px/1.5 var(--font-text);display:grid;place-items:center;min-height:100vh;background:var(--ground);color:var(--ink)"><main style="max-width:32rem;padding:var(--space-6)"><h1 style="font:600 1.5rem/1.25 var(--font-display);margin:0 0 var(--space-2)">${esc(heading)}</h1><p style="margin:0;color:var(--ink-2)">${fixed ? esc(text) : text}</p></main></div>`,
-    mount() { document.title = title; },
+    html: visitorPage(brand, `<h1 style="${PUB_H1}">${esc(heading)}</h1><p style="margin:0;color:var(--ink-2)">${esc(text)}</p>`, { width: '32rem' }),
+    mount() { document.title = brand ? `${title} · ${brand.name}` : title; },
   };
-}, { bare: true });
+}
+route('/public/:page', key => publicPage(key), { bare: true });
+route('/public/:page/:target', (key, target) => publicPage(key, target), { bare: true });
 
 /* Routes: the list, with filters and bulk actions, and the route editor. */
 const routeLabel = r => r.host + (r.path === '/' ? '' : r.path);
@@ -4064,6 +4074,162 @@ ${passwordField('again', 'Password again')}
   },
 }), { bare: true });
 
+/* Idea being tried: visitor pages carry the operator's brand (logo, name, accent color, contact line), and a project
+   can have its own, such as one project per client. Every page ends with a small "Powered by Apiary" line, which a
+   commercial license can remove. */
+
+const brandOf = projectId => (projectId && projectOf(projectId) && projectOf(projectId).brand) || D.brand || null;
+
+/* Button text is white or near-black, whichever reads better on the accent, so every accent color meets WCAG AA. */
+function luminance(hex) {
+  const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+const onAccent = hex => (contrast(hex, '#FFFFFF') >= contrast(hex, '#111111') ? '#FFFFFF' : '#111111');
+
+/* The frame of every visitor page: brand at the top, the page, the contact line, and "Powered by Apiary". */
+/* note: a prototype-only remark, kept last so it doesn't read as part of the page. */
+function visitorPage(brand, inner, { width = '26rem', attrs = '', note = '' } = {}) {
+  return `<div style="font:16px/1.5 var(--font-text);display:grid;grid-template-rows:1fr auto;min-height:100vh;background:var(--ground);color:var(--ink)">
+<div style="display:grid;place-items:center"><main style="width:100%;max-width:${width};padding:var(--space-6);box-sizing:border-box"${attrs}>
+${brand ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-6)" translate="no">${brand.logo ? `<img src="${brand.logo}" alt="" style="height:32px;width:auto">` : ''}<span style="font-weight:600">${esc(brand.name)}</span></div>` : ''}
+<div data-visitor-body>${inner}</div>
+${brand && brand.contact ? `<p style="margin:var(--space-6) 0 0;font-size:0.875rem;color:var(--ink-2)" translate="no">${esc(brand.contact)}</p>` : ''}
+${note}
+</main></div>
+${poweredBy()}</div>`;
+}
+/* The Datapoint logo, then the Apiary mark and "Powered by Apiary", inline so the page needs no stylesheet. */
+const datapointLogo = (w = 64) => $('.ap-side-foot .ap-attribution a').innerHTML.replace('<svg', `<svg style="width:${w}px;height:auto;display:block"`);
+const poweredBy = ({ small = false } = {}) => `<footer style="padding:${small ? '0' : 'var(--space-6) var(--space-4) var(--space-8)'};display:flex;justify-content:center;align-items:center;gap:${small ? '8px' : '14px'};font-size:${small ? '0.6875rem' : '0.8125rem'};color:var(--ink-3)${small ? ';margin-top:18px' : ''}">
+<a href="https://datapoint.software/"${small ? ' target="_blank" rel="noopener"' : ''} style="color:var(--ink-2)">${datapointLogo(small ? 52 : 88)}</a>
+<span aria-hidden="true" style="width:1px;height:${small ? 12 : 18}px;background:var(--line-strong)"></span>
+<a href="https://apiary.datapoint.software/"${small ? ' target="_blank" rel="noopener"' : ''} style="display:inline-flex;align-items:center;gap:${small ? 6 : 8}px;color:inherit;text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px"><span aria-hidden="true" style="width:${small ? 10 : 16}px;height:${small ? 9 : 14}px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);background:var(--honey)"></span>Powered by Apiary</a></footer>`;
+const visitorButton = brand => {
+  const bg = brand ? brand.accent : '#1C1C1E';
+  return `font:600 1rem/1.5 var(--font-text);margin-top:var(--space-2);padding:10px 16px;border:0;border-radius:var(--radius-2);background:${bg};color:${onAccent(bg)};cursor:pointer`;
+};
+
+const VISITOR_PREVIEWS = [['not-found', 'Not found'], ['unavailable', 'Unavailable'], ['maintenance', 'Maintenance'], ['not-allowed', 'Not allowed'], ['too-many-requests', 'Too many requests'], ['starting', 'Starting'], ['password', 'Password'], ['link', 'Sign-in link']];
+
+function brandSummary(b) {
+  return `<div style="display:flex;gap:14px;align-items:center;min-width:0">${b.logo ? `<img src="${b.logo}" alt="" style="height:40px;width:40px;object-fit:contain;flex:none">` : `<span class="ap-avatar" aria-hidden="true" style="width:40px;height:40px;flex:none">${esc(initialsOf(b.name))}</span>`}
+<div class="ap-cell-main" style="min-width:0"><strong translate="no">${esc(b.name)}</strong><span class="ap-caption" translate="no">${b.contact ? esc(b.contact) : 'No contact line'}</span></div></div>`;
+}
+const swatch = hex => `<span style="display:inline-flex;align-items:center;gap:8px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:4px;background:${hex};box-shadow:inset 0 0 0 1px var(--line)"></span><span class="ap-data">${hex.toUpperCase()}</span></span>`;
+
+route('/visitor-pages', () => {
+  const ops = canOperate();
+  const own = D.projects.filter(p => p.brand);
+  const others = D.projects.filter(p => !p.brand);
+  const b = D.brand;
+  const previews = target => `<div class="ap-row" style="flex-wrap:wrap;gap:8px">${VISITOR_PREVIEWS.map(([k, t]) => `<a class="ap-btn ap-btn-sm" href="#/public/${k}/${target}">${t}</a>`).join('')}</div>`;
+  return {
+    title: 'Visitor pages',
+    html: `${pageHead({ title: 'Visitor pages', sub: 'What visitors see when Apiary answers instead of a site: an unknown address, a disabled route, maintenance, or a password. Each page ends with a small “Powered by Apiary” line.' })}
+<section class="ap-panel" aria-labelledby="vb-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="vb-t">Cluster brand</h2><p class="ap-panel-desc">On every visitor page, including addresses with no route, unless the route’s project has its own.</p></div>${b && ops ? `<div class="ap-row"><button class="ap-btn" type="button" data-brand-remove="" data-write>Remove…</button><button class="ap-btn" type="button" data-brand-edit="" data-write>Edit…</button></div>` : ''}</div>
+<div class="ap-panel-body ap-stack">${b ? `<div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center">${brandSummary(b)}<div class="ap-cell-main" style="align-items:flex-end">${swatch(b.accent)}<span class="ap-caption">Changed ${ago(b.changed[0])} by ${esc(b.changed[1])}</span></div></div>
+<div class="ap-field"><span class="ap-label">See the pages with this brand</span>${previews('cluster')}</div>`
+    : emptyState('No brand yet', 'Visitor pages show only their message and “Powered by Apiary”. Add your logo, name and colors so visitors know who runs the site.', ops ? '<button class="ap-btn ap-btn-primary" type="button" data-brand-edit="" data-write>Set up the brand</button>' : '')}</div></section>
+
+<section class="ap-panel" aria-labelledby="vp-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="vp-t">Projects with their own brand</h2><p class="ap-panel-desc">For a project that belongs to a client, so its visitors see the client’s brand.</p></div>${ops && others.length && own.length ? `<button class="ap-btn" type="button" data-brand-add data-write>${icon('plus')}Give a project its own brand</button>` : ''}</div>
+${own.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Projects with their own brand</caption><thead><tr><th scope="col">Project</th><th scope="col">Brand</th><th scope="col">Accent color</th><th scope="col">Changed</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${own.map(p => `<tr><td><a href="#/projects/${p.id}">${esc(p.name)}</a></td><td>${brandSummary(p.brand)}</td><td>${swatch(p.brand.accent)}</td><td class="ap-muted">${ago(p.brand.changed[0])} by ${esc(p.brand.changed[1])}</td>
+<td class="ap-col-actions"><div class="ap-row" style="justify-content:flex-end;gap:4px;flex-wrap:nowrap"><a class="ap-btn ap-btn-sm ap-btn-ghost" href="#/public/password/${p.id}">Preview</a>${ops ? `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Edit the brand of ${esc(p.name)}" data-brand-edit="${p.id}" data-write>${icon('pencil')}</button><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Remove the brand of ${esc(p.name)}" data-brand-remove="${p.id}" data-write>${icon('trash-2')}</button>` : ''}</div></td></tr>`).join('')}
+</tbody></table></div>` : `<div class="ap-panel-body">${emptyState('Every project uses the cluster brand', 'Give a project its own brand when it belongs to a client.', ops && others.length ? `<button class="ap-btn" type="button" data-brand-add data-write>${icon('plus')}Give a project its own brand</button>` : '')}</div>`}
+</section>`,
+    mount(el) {
+      $$('[data-brand-edit]', el).forEach(btn => btn.addEventListener('click', () => brandDialog(btn.dataset.brandEdit || null)));
+      $$('[data-brand-add]', el).forEach(btn => btn.addEventListener('click', () => brandDialog(null, true)));
+      $$('[data-brand-remove]', el).forEach(btn => btn.addEventListener('click', () => {
+        const p = btn.dataset.brandRemove ? projectOf(btn.dataset.brandRemove) : null;
+        confirmDialog({
+          title: p ? `Remove the brand of ${esc(p.name)}?` : 'Remove the cluster brand?',
+          text: p ? 'Its visitor pages use the cluster brand again.' : 'Visitor pages without a project brand show only their message and “Powered by Apiary”.',
+          confirm: 'Remove brand', busy: 'Removing…',
+          onConfirm: async () => { await api(); if (p) delete p.brand; else D.brand = null; refresh(); toast(p ? `${p.name} uses the cluster brand again.` : 'The cluster brand was removed.'); },
+        });
+      }));
+    },
+  };
+});
+
+/* Edits the cluster brand (projectId null), a project's brand, or gives a project one (adding). */
+function brandDialog(projectId, adding) {
+  const p = projectId ? projectOf(projectId) : null;
+  const cur = (p ? p.brand : adding ? null : D.brand) || { name: '', logo: null, logoName: '', accent: '#1D4ED8', contact: '' };
+  let logo = cur.logo, logoName = cur.logoName, logoError = null;
+  const choices = D.projects.filter(x => !x.brand);
+  const title = adding ? 'Give a project its own brand' : p ? `Brand of ${esc(p.name)}` : D.brand ? 'Cluster brand' : 'Set up the brand';
+  const d = dialog({
+    title, size: 'xl', backdrop: false,
+    body: `<form class="ap-form" id="br-form" novalidate style="gap:16px"><div data-summary></div>
+<div class="ap-grid-2" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start"><div class="ap-stack" style="gap:16px">
+${adding ? field({ name: 'project', label: 'Project', control: select('project', [['', 'Choose a project'], ...choices.map(x => [x.id, x.name])], '') }) : ''}
+${field({ name: 'name', label: 'Name', value: cur.name, placeholder: 'Example Lda.', attrs: 'autocomplete="off"', help: 'Next to the logo, and the alternative text for it.' })}
+<div class="ap-field" data-field="logo"><span class="ap-label">Logo <span class="ap-optional">(optional)</span></span>
+<div data-logo-current></div>
+<label class="ap-drop" data-logo-drop>${icon('image-up')}<span><strong>Choose a file</strong> or drop it here</span><span class="ap-caption">PNG, WebP or SVG, up to 100 KB</span><input type="file" accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"></label>
+<span class="ap-help" id="h-logo">Shown 32 pixels high, on light and dark backgrounds, so choose one that works on both.</span><span class="ap-error" id="e-logo" hidden></span></div>
+<div class="ap-field" data-field="accent"><label class="ap-label" for="f-accent">Accent color</label><div class="ap-row" style="gap:8px"><input type="color" value="${cur.accent}" aria-label="Pick the accent color" data-accent-pick style="width:44px;height:36px;padding:0;border:0;background:none;cursor:pointer"><input class="ap-input ap-data" id="f-accent" name="accent" value="${cur.accent.toUpperCase()}" style="max-width:140px" autocomplete="off" spellcheck="false" aria-describedby="h-accent e-accent"></div><span class="ap-help" id="h-accent">For buttons. Apiary picks white or black text, whichever reads better on it.</span><span class="ap-error" id="e-accent" hidden></span></div>
+${field({ name: 'contact', label: 'Contact line', optional: true, value: cur.contact, placeholder: 'Questions? Write to help@example.com.', help: 'Up to 120 characters, on every page. Error pages tell visitors to contact whoever runs the site, so say how.' })}
+</div>
+<div class="ap-field"><span class="ap-label">Preview</span><div data-brand-preview style="border-radius:var(--radius-2);box-shadow:inset 0 0 0 1px var(--line);background:var(--ground);padding:20px 18px 10px;font-size:0.875rem"></div></div></div>
+</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="br-form" data-busy="Saving…" data-write>Save brand</button>`,
+  });
+  applyWriteLock(d.el);
+  const f = $('#br-form', d.el), pick = $('[data-accent-pick]', d.el);
+  const hexOk = s => /^#[0-9a-f]{6}$/i.test(String(s).trim());
+  function draw() {
+    const name = f.elements.name.value.trim() || 'Your name', accent = hexOk(f.elements.accent.value) ? f.elements.accent.value.trim() : '#1C1C1E';
+    $('[data-brand-preview]', d.el).innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">${logo ? `<img src="${logo}" alt="" style="height:22px;width:auto">` : ''}<strong translate="no">${esc(name)}</strong></div>
+<div style="font:600 1rem/1.3 var(--font-display);margin-bottom:4px">Restricted access</div><div style="color:var(--ink-2);margin-bottom:12px">Enter the password you were given.</div>
+<div style="height:30px;border-radius:var(--radius-1);box-shadow:inset 0 0 0 1px var(--line-strong);background:var(--surface);margin-bottom:8px"></div>
+<div style="text-align:center;font-weight:600;padding:6px;border-radius:var(--radius-1);background:${accent};color:${onAccent(accent)}">Continue</div>
+${f.elements.contact.value.trim() ? `<div style="color:var(--ink-2);margin-top:14px" translate="no">${esc(f.elements.contact.value.trim())}</div>` : ''}
+${poweredBy({ small: true })}`;
+    $('[data-logo-current]', d.el).innerHTML = logo ? `<div class="ap-row" style="gap:10px;margin-bottom:8px"><img src="${logo}" alt="" style="height:32px;width:auto"><span class="ap-caption ap-data" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(logoName || '')}</span><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-logo-remove>Remove logo</button></div>` : '';
+    $('[data-logo-drop]', d.el).hidden = !!logo;
+    $('[data-logo-remove]', d.el)?.addEventListener('click', () => { logo = null; logoName = ''; draw(); });
+    const err = $('#e-logo', d.el); err.textContent = logoError || ''; err.hidden = !logoError;
+  }
+  const readLogo = file => {
+    logoError = !/^image\/(png|webp|svg\+xml)$/.test(file.type) ? 'Choose a PNG, WebP or SVG file.' : file.size > 100 * 1024 ? `This file is ${Math.ceil(file.size / 1024)} KB. Choose one up to 100 KB.` : null;
+    if (logoError) { draw(); return; }
+    const reader = new FileReader();
+    reader.onload = () => { logo = reader.result; logoName = file.name; draw(); };
+    reader.readAsDataURL(file);
+  };
+  const zone = $('[data-logo-drop]', d.el), input = $('input', zone);
+  input.addEventListener('change', () => { const file = input.files[0]; input.value = ''; if (file) readLogo(file); });
+  zone.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); zone.dataset.over = ''; } });
+  zone.addEventListener('dragleave', () => { delete zone.dataset.over; });
+  zone.addEventListener('drop', e => { delete zone.dataset.over; const file = e.dataTransfer.files[0]; if (file) { e.preventDefault(); readLogo(file); } });
+  pick.addEventListener('input', () => { f.elements.accent.value = pick.value.toUpperCase(); f.elements.accent.dispatchEvent(new Event('input', { bubbles: true })); });
+  f.addEventListener('input', e => { if (e.target.name === 'accent' && hexOk(e.target.value)) pick.value = e.target.value.trim(); draw(); });
+  draw();
+  form(f, {
+    project: v => (adding && !v ? 'Choose a project.' : null),
+    name: v => (!String(v).trim() ? 'Enter a name, such as Example Lda.' : String(v).trim().length > 60 ? 'Use at most 60 characters.' : null),
+    accent: v => (hexOk(v) ? null : 'Enter a color like #1D4ED8, or pick one.'),
+    contact: v => (String(v).trim().length > 120 ? 'Use at most 120 characters.' : null),
+  }, {
+    verb: 'save it',
+    submit: async v => {
+      if (logoError) { $('#e-logo', d.el).focus?.(); return; }
+      await api();
+      const target = adding ? projectOf(v.project) : p;
+      const next = { name: v.name.trim(), logo, logoName, accent: v.accent.trim().toUpperCase(), contact: v.contact.trim(), changed: [NOW, D.me.email] };
+      if (target) target.brand = next; else D.brand = next;
+      d.close();
+      refresh();
+      toast(target ? `${target.name} has its own brand now.` : 'Brand saved. Visitor pages use it now.', { title: 'Brand saved' });
+    },
+  });
+}
+
 /* Idea being tried: the interface in European Portuguese. A layer over the English pages: while Português is
    chosen, it swaps text and labels after each render. Names, project descriptions and technical values stay as
    they are. The application would use message catalogs instead. */
@@ -4565,6 +4731,49 @@ const PT_TEXT = new Map(Object.entries({
   "This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.": "Esta ligação de acesso já não funciona. Introduza a palavra-passe, ou peça uma nova ligação a quem a enviou.",
   "See the password page": "Ver a página da palavra-passe",
   "See the sign-in link page": "Ver a página da ligação de acesso",
+  // Branded visitor pages
+  "Visitor pages": "Páginas para visitantes",
+  "What visitors see when Apiary answers instead of a site: an unknown address, a disabled route, maintenance, or a password. Each page ends with a small “Powered by Apiary” line.": "O que os visitantes veem quando é o Apiary a responder em vez de um site: um endereço desconhecido, uma rota desativada, manutenção ou uma palavra-passe. Cada página termina com uma pequena linha “Com tecnologia Apiary”.",
+  "Cluster brand": "Marca do cluster",
+  "On every visitor page, including addresses with no route, unless the route’s project has its own.": "Em todas as páginas para visitantes, incluindo endereços sem rota, exceto se o projeto da rota tiver a sua.",
+  "Edit…": "Editar…",
+  "Remove…": "Remover…",
+  "No contact line": "Sem linha de contacto",
+  "See the pages with this brand": "Ver as páginas com esta marca",
+  "No brand yet": "Ainda sem marca",
+  "Visitor pages show only their message and “Powered by Apiary”. Add your logo, name and colors so visitors know who runs the site.": "As páginas para visitantes mostram só a mensagem e “Com tecnologia Apiary”. Adicione o logótipo, o nome e as cores para que os visitantes saibam quem gere o site.",
+  "Set up the brand": "Configurar a marca",
+  "Projects with their own brand": "Projetos com marca própria",
+  "For a project that belongs to a client, so its visitors see the client’s brand.": "Para um projeto que pertence a um cliente, para que os visitantes vejam a marca do cliente.",
+  "Give a project its own brand": "Dar marca própria a um projeto",
+  "Brand": "Marca",
+  "Accent color": "Cor de destaque",
+  "Preview": "Pré-visualizar",
+  "Every project uses the cluster brand": "Todos os projetos usam a marca do cluster",
+  "Give a project its own brand when it belongs to a client.": "Dê marca própria a um projeto quando pertencer a um cliente.",
+  "Remove the cluster brand?": "Remover a marca do cluster?",
+  "Its visitor pages use the cluster brand again.": "As páginas para visitantes voltam a usar a marca do cluster.",
+  "Visitor pages without a project brand show only their message and “Powered by Apiary”.": "As páginas para visitantes sem marca de projeto mostram só a mensagem e “Com tecnologia Apiary”.",
+  "Remove brand": "Remover marca",
+  "The cluster brand was removed.": "A marca do cluster foi removida.",
+  "Next to the logo, and the alternative text for it.": "Ao lado do logótipo, e o texto alternativo dele.",
+  "Logo": "Logótipo",
+  "PNG, WebP or SVG, up to 100 KB": "PNG, WebP ou SVG, até 100 KB",
+  "Shown 32 pixels high, on light and dark backgrounds, so choose one that works on both.": "Mostrado com 32 píxeis de altura, em fundos claros e escuros, por isso escolha um que funcione em ambos.",
+  "Pick the accent color": "Escolher a cor de destaque",
+  "For buttons. Apiary picks white or black text, whichever reads better on it.": "Para os botões. O Apiary escolhe texto branco ou preto, o que se ler melhor sobre ela.",
+  "Contact line": "Linha de contacto",
+  "Up to 120 characters, on every page. Error pages tell visitors to contact whoever runs the site, so say how.": "Até 120 caracteres, em todas as páginas. As páginas de erro dizem aos visitantes que contactem quem gere o site, por isso diga como.",
+  "Remove logo": "Remover logótipo",
+  "Choose a PNG, WebP or SVG file.": "Escolha um ficheiro PNG, WebP ou SVG.",
+  "Save brand": "Guardar marca",
+  "Enter a name, such as Example Lda.": "Introduza um nome, como Example Lda.",
+  "Use at most 60 characters.": "Use no máximo 60 caracteres.",
+  "Enter a color like #1D4ED8, or pick one.": "Introduza uma cor como #1D4ED8, ou escolha uma.",
+  "Use at most 120 characters.": "Use no máximo 120 caracteres.",
+  "Brand saved": "Marca guardada",
+  "Brand saved. Visitor pages use it now.": "Marca guardada. As páginas para visitantes já a usam.",
+  "Powered by Apiary": "Com tecnologia Apiary",
   // Calendar
   'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril', 'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
   'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro', 'Monday': 'segunda-feira', 'Tuesday': 'terça-feira',
@@ -4575,6 +4784,12 @@ const PT_TEXT = new Map(Object.entries({
 
 const PT_MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December';
 const PT_PATTERNS = [
+  [/^Changed (.+) ago by (.+)$/, (m, a, b) => `Alterado ${tr(a + ' ago')} por ${b}`],
+  [/^(Password|Not found|Starting|Unavailable|Not allowed|Too many requests|Maintenance) · (.+)$/, (m, a, b) => `${tr(a)} · ${b}`],
+  [/^Remove the brand of (.+)\?$/, 'Remover a marca de $1?'], [/^Remove the brand of (.+)$/, 'Remover a marca de $1'],
+  [/^Edit the brand of (.+)$/, 'Editar a marca de $1'], [/^Brand of (.+)$/, 'Marca de $1'],
+  [/^(.+) uses the cluster brand again\.$/, '$1 volta a usar a marca do cluster.'], [/^(.+) has its own brand now\.$/, '$1 tem agora marca própria.'],
+  [/^This file is (\d+) KB\. Choose one up to 100 KB\.$/, 'Este ficheiro tem $1 KB. Escolha um até 100 KB.'],
   [new RegExp(`^(${PT_MONTHS}) (\\d{4})$`), (m, mo, y) => `${tr(mo)} de ${y}`],
   [new RegExp(`^(\\w+day), (\\d+) (${PT_MONTHS}) (\\d{4})$`), (m, w, d, mo, y) => `${tr(w)}, ${d} de ${tr(mo)} de ${y}`],
   [/^(.+) · Apiary$/, (m, a) => `${tr(a)} · Apiary`],

@@ -19,7 +19,7 @@ REPO = os.path.dirname(DESIGN)
 PROJECT = os.path.join(DESIGN, "project")
 STYLES = os.path.join(REPO, "src", "web", "projects", "apiary-ui", "styles")
 LUCIDE = "https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"
-SCRIPTS = ["data.js", "ui.js", "shell.js", "pages-projects.js", "pages-routes.js", "pages-traffic.js", "pages-cluster.js", "pages-access.js", "i18n-pt.js"]
+SCRIPTS = ["data.js", "ui.js", "shell.js", "pages-projects.js", "pages-routes.js", "pages-traffic.js", "pages-cluster.js", "pages-access.js", "pages-visitors.js", "i18n-pt.js"]
 
 
 def read(*parts):

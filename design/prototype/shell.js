@@ -108,7 +108,7 @@ function renderNav(p) {
   const groups = [
     ['', [['layout-dashboard', 'Overview', '#/']]],
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
-    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects']]],
+    ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
     ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on']] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
     ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
@@ -229,7 +229,7 @@ $('[data-about]').addEventListener('click', () => {
 /* Search: a combobox over pages, projects, routes, certificates and users */
 const q = $('#q'), qList = $('#q-list');
 let qItems = [], qActive = -1;
-const SEARCH_PAGES = [['layout-dashboard', 'Overview', '/'], ['route', 'All routes', '/routes'], ['cable', 'Stream routes', '/streams'], ['shield-check', 'Certificates', '/certificates'], ['corner-up-right', 'Redirects', '/redirects'], ['hexagon', 'Replicas', '/replicas'], ['archive', 'Backups', '/backups', true], ['key-round', 'Root key', '/root-key', true], ['users', 'Users', '/users', true], ['door-open', 'Single sign-on', '/single-sign-on', true], ['bot', 'Connected agents', '/agents'], ['scroll-text', 'Audit log', '/audit'], ['user-round', 'Your account', '/account']];
+const SEARCH_PAGES = [['layout-dashboard', 'Overview', '/'], ['route', 'All routes', '/routes'], ['cable', 'Stream routes', '/streams'], ['shield-check', 'Certificates', '/certificates'], ['corner-up-right', 'Redirects', '/redirects'], ['panels-top-left', 'Visitor pages', '/visitor-pages'], ['hexagon', 'Replicas', '/replicas'], ['archive', 'Backups', '/backups', true], ['key-round', 'Root key', '/root-key', true], ['users', 'Users', '/users', true], ['door-open', 'Single sign-on', '/single-sign-on', true], ['bot', 'Connected agents', '/agents'], ['scroll-text', 'Audit log', '/audit'], ['user-round', 'Your account', '/account']];
 const shortDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 function searchIndex() {
   const admin = isAdmin();

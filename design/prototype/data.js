@@ -3,8 +3,13 @@ const NOW = Date.UTC(2026, 10, 2, 14, 40);
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const at = (days, hhmm) => { const [h, m] = hhmm.split(':').map(Number); return Date.UTC(2026, 10, 2 - days, h, m); };
 
+/* A simple logo for the sample brands: initials on a rounded square, as an SVG data URI. */
+const sampleLogo = (text, bg) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${bg}"/><text x="32" y="41" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">${text}</text></svg>`);
+
 function seedData() {
   return {
+    /* Idea being tried: visitor pages carry the operator's brand; a project can have its own. */
+    brand: { name: 'Example Cloud', logo: sampleLogo('EC', '#1D4ED8'), logoName: 'example-cloud.svg', accent: '#1D4ED8', contact: 'Questions? Write to help@example.com.', changed: [NOW - 9 * DAY, 'ana@example.com'] },
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
@@ -12,7 +17,7 @@ function seedData() {
       { id: 'payments', name: 'Payments API', icon: 'credit-card', desc: 'Card and SEPA payment endpoints.' },
       { id: 'internal', name: 'Internal tools', icon: 'wrench', desc: 'Grafana, MQTT and staff tools.' },
       { id: 'legacy', name: 'Legacy', icon: 'archive', desc: 'Old storefront, kept for redirects.' },
-      { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.' },
+      { id: 'marketing', name: 'Marketing site', icon: 'megaphone', desc: 'Public website and blog.', brand: { name: 'Example Lda.', logo: sampleLogo('EL', '#0F766E'), logoName: 'example-lda.svg', accent: '#0F766E', contact: 'Questions about the website? Write to hello@example.pt.', changed: [NOW - 2 * DAY, 'ana@example.com'] } },
     ],
     routes: [
       { id: 'r1', host: 'shop.example.com', path: '/', project: 'shop', targets: [{ host: 'shop-v1', port: 8080, weight: 90 }, { host: 'shop-v2', port: 8080, weight: 10 }], canary: 'X-Canary: true', sticky: true, protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1284, timeout: 30, allow: [], changed: [NOW - 12 * MIN, 'ana@example.com'] },
@@ -101,5 +106,5 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(4, 5), users: d.users.slice(0, 1) });
 }

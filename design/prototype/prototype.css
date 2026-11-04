@@ -14,3 +14,6 @@
 .ap .ap-gate-tag { display: inline-flex; align-items: center; gap: 4px; }
 .ap .ap-gate-tag .ap-icon { width: 12px; height: 12px; }
 .ap [data-gate-share] .ap-copy code { white-space: normal; overflow-wrap: anywhere; }
+
+/* Idea being tried: the brand dialog has the form and a live preview side by side. */
+.ap-dialog-xl { width: min(760px, 100%); }
