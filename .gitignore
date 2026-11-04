@@ -15,3 +15,4 @@ coverage/
 /keys/
 src/Datapoint.Apiary/wwwroot/
 design/ideas/
+.claude/worktrees/
