@@ -102,6 +102,22 @@ By default a route has a single target group, and none of the following applies.
 - It needs the real client address: with the host-mode ports in `deploy/stack.yaml`, Apiary sees it. Behind another proxy or load balancer, or Swarm's ingress network, every client shares that proxy's address and one budget, so leave limits off there.
 - Stream routes have no rate limit; they cap open connections per address instead.
 
+### Password-protected routes
+
+- A route can **ask visitors for a shared password** before they reach the site, for demos and previews that aren't ready to be public. It's **off by default**. Everyone shares the same password, so it doesn't tell people apart: it's not a replacement for the site's own sign-in.
+- Visitors type it on a page Apiary shows. Apiary then sets a cookie for the route (`__Host-apiary-pass-<route id>`, `Secure`, `HttpOnly`, `SameSite=Lax`) for 1, 7 or 30 days, signed with HMAC-SHA256 under a random key kept with the route in the replicated state, so every replica accepts it. A new password gets a new key, which signs everyone out.
+- A route can also have a **sign-in link** (`?apiary-key=<key>`). It opens a page with a Continue button rather than signing in at once, so link previews and mail scanners don't use it up or sign in; Continue sets the cookie and redirects to the same address without the key.
+- The state keeps only a PBKDF2 hash of the password and a SHA-256 hash of the link key, and the API never returns either; the admin UI generates them and shows them once. Each address gets 5 tries every 5 minutes on each replica.
+- The check runs after the allowlist, disabled, maintenance and rate-limit checks, and before the cache. Apiary strips its cookie from requests before they reach the site, and drops any cookie the site tries to set under that name. It needs HTTPS: over plain HTTP, visitors are redirected, or told to wait until the certificate is ready.
+- Stream routes can't have a password.
+
+### Visitor pages
+
+- When Apiary answers instead of a site (404 for an unknown address, 403, 429, 503 for a disabled route or a starting replica, maintenance, password and sign-in link), it shows a small page with no scripts and a strict `Content-Security-Policy`.
+- Pages can carry a **brand**: a logo (PNG, WebP or SVG, up to 100 KB), a name, an accent color for buttons and a contact line. The cluster has a default brand, and a project can have its own, for a project per client: a route's maintenance, password and sign-in link pages use its project's brand, and every other page uses the cluster's. Button text is white or near-black, whichever contrasts more with the accent.
+- Logos are kept in the replicated state and shown only through `<img>` as a `data:` URI, so a script inside an SVG never runs. The admin interface checks each logo's bytes match its type.
+- Every page ends with the Datapoint logo and "Powered by Apiary". Setting `Apiary__VisitorPages__ShowPoweredBy` to `false` hides them.
+
 ### TCP and UDP
 
 - A stream route forwards raw TCP or UDP from a port on the edge nodes to a target host and port, for traffic that isn't HTTP (e.g. databases, SMTP, MQTT, game servers). YARP doesn't do this, so it's Apiary's own code.
