@@ -36,8 +36,8 @@
   },
   "lastChange": {
     "by": "João Lopes",
-    "at": "2026-11-04T00:03:43Z",
+    "at": "2026-11-04T01:36:21Z",
     "via": "Claude Code",
-    "note": "Synced with the app: new CodeInput, Loading, PageHead, Panel and SaveBar cards, and the other cards, the brand book, the stylesheet and the Prototype brought up to date."
+    "note": "Attribution moved from the sidebar to a page footer (Shell card, stylesheet), and the Prototype gained password-protected routes, branded visitor pages and the page footer."
   }
 }
