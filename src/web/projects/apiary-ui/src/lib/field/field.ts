@@ -58,7 +58,11 @@ export class Field {
     }
     element.id = this.id;
     element.setAttribute('aria-describedby', `${this.id}-help ${this.id}-error`);
-    element.toggleAttribute('aria-invalid', this.error() !== '');
+    if (this.error() === '') {
+      element.removeAttribute('aria-invalid');
+      return;
+    }
+    element.setAttribute('aria-invalid', 'true');
   }
 
   protected readonly alertIcon = CircleAlert;
