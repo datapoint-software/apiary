@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormField, form } from '@angular/forms/signals';
@@ -20,7 +21,7 @@ import { CertificateSummary, ProjectView, RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
-import { RouteModel, emptyRoute, maintenanceWindow, routeModel } from './route-model';
+import { RouteModel, emptyRoute, routeModel } from './route-model';
 import { routeRules } from './route-rules';
 import { perMinute, routeStatus } from './route-status';
 import { AccessSection } from './access-section';
@@ -29,6 +30,9 @@ import { TargetsSection } from './targets-section';
 import { RouteDangerZone } from './route-danger-zone';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
+import { openDialog } from '../shell/open-dialog';
+import { passwordSecrets, routeAccess, routeRequest } from './route-request';
+import { RouteAccessData, RouteAccessDialog } from './route-access-dialog';
 
 @Component({
   selector: 'ap-route-editor',
@@ -44,6 +48,7 @@ export class RouteEditor implements HasUnsavedChanges {
   private readonly router = inject(Router);
   private readonly toaster = inject(Toaster);
   private readonly messages = inject(ErrorMessages);
+  private readonly dialog = inject(Dialog);
   private saved = false;
 
   protected readonly isNew = computed(() => !this.id());
@@ -98,9 +103,10 @@ export class RouteEditor implements HasUnsavedChanges {
   }
 
   protected async save(form: Form): Promise<void> {
+    let access: RouteAccessData | undefined;
     const saved = await form.submit(async () => {
       try {
-        await this.persist();
+        access = await this.persist();
         return undefined;
       } catch (problem) {
         return problemErrors(problem as ApiProblem, this.route);
@@ -108,7 +114,11 @@ export class RouteEditor implements HasUnsavedChanges {
     });
     if (saved) {
       this.saved = true;
-      this.toaster.show(`${routeLabel(this.model())} saved. It applies on every replica now.`);
+      if (access) {
+        await openDialog<void, RouteAccessData>(this.dialog, RouteAccessDialog, access);
+      } else {
+        this.toaster.show(`${routeLabel(this.model())} saved. It applies on every replica now.`);
+      }
       await this.router.navigate(['/routes']);
     }
   }
@@ -118,28 +128,12 @@ export class RouteEditor implements HasUnsavedChanges {
     await this.router.navigate(['/routes']);
   }
 
-  private async persist(): Promise<void> {
+  private async persist(): Promise<RouteAccessData | undefined> {
     const value = this.model();
-    const body = {
-      projectId: value.projectId,
-      host: value.host.trim(),
-      path: value.path.trim(),
-      targets: value.targets.map((t) => ({ host: t.host.trim(), port: t.port, weight: value.targets.length > 1 ? t.weight : 100 })),
-      timeoutSeconds: value.timeoutSeconds,
-      certificateId: value.certificate === 'uploaded' ? value.certificateId : null,
-      allowedAddresses: value.allowedAddresses.split('\n').map((line) => line.trim()).filter(Boolean),
-      rateLimit: value.rateLimited ? value.rateLimit : null,
-      maintenance: maintenanceWindow(value.maintenance),
-      canary: value.targets.length > 1 && value.canary.source !== 'none'
-        ? { source: value.canary.source, name: value.canary.name.trim(), value: value.canary.value.trim() }
-        : null,
-      sticky: value.targets.length > 1 && value.sticky,
-      compression: value.compression,
-      caching: value.caching,
-      strictTransport: value.strictTransport,
-      strictTransportSubdomains: value.strictTransportSubdomains,
-    };
+    const secrets = passwordSecrets(value.password, !!this.existing.value()?.password?.linkMadeAt);
+    const body = routeRequest(value, secrets);
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));
+    return routeAccess(body.host, body.path, secrets, value.password.enabled && value.password.link);
   }
 }

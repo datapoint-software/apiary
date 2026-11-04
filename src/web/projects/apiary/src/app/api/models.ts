@@ -25,9 +25,18 @@ export interface RouteView {
   readonly strictTransport: boolean;
   readonly strictTransportSubdomains: boolean;
   readonly cachePurgedAt?: string;
+  readonly password?: RoutePasswordView;
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;
   readonly targetsDown: number;
+}
+
+export interface RoutePasswordView {
+  readonly setAt: string;
+  readonly setBy?: string;
+  readonly days: number;
+  readonly message?: string;
+  readonly linkMadeAt?: string;
 }
 
 export interface RouteCanary {

@@ -21,6 +21,10 @@ export const appMessages: MessageCatalog = {
   'route.weightsTotal': (p) =>
     p['total'] === undefined ? 'Make the weights add up to 100%.' : `The weights add up to ${p['total']}%. Make them add up to 100%.`,
   'route.canaryName': () => 'Use letters, digits and hyphens, such as X-Canary.',
+  'route.passwordRequired': () => 'Enter a password, or generate one.',
+  'route.passwordShort': () => 'Use at least 12 characters. A generated one is easier to share and harder to guess.',
+  'route.linkKeyRequired': () => 'Something went wrong making the sign-in link. Save again.',
+  'route.linkKeyInvalid': () => 'Something went wrong making the sign-in link. Save again.',
   'route.redirectExists': () => 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
   'redirect.notFound': () => 'This redirect was already deleted. The list now shows the current redirects.',
   'redirect.duplicate': () => 'This hostname already redirects. Delete that redirect first to change it.',

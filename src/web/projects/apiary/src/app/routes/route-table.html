@@ -51,6 +51,9 @@
               <div class="ap-cell-main">
                 <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}</a>
                 <span class="ap-caption ap-data">{{ route.path }}</span>
+                @if (route.password) {
+                  <span class="ap-caption ap-gate-tag"><ap-icon [icon]="lockIcon" />Needs a password</span>
+                }
               </div>
             </td>
             <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>

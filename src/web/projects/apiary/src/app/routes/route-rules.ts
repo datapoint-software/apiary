@@ -61,6 +61,21 @@ export const routeRules = (id: () => string | undefined) => schema<RouteModel>((
     });
     validate(window.message, ({ value }) => (value().length > 200 ? { kind: 'tooLong', params: { max: 200 } } : undefined));
   });
+  for (const path of [route.password.days, route.password.message]) {
+    hidden(path, ({ valueOf }) => !valueOf(route.password.enabled));
+  }
+  hidden(route.password.newPassword, ({ valueOf }) => !valueOf(route.password.enabled) || !valueOf(route.password.replace));
+  validate(route.password.newPassword, ({ value }) => {
+    const password = value();
+    if (!password.trim()) {
+      return { kind: 'route.passwordRequired' };
+    }
+    if (password.length < 12) {
+      return { kind: 'route.passwordShort' };
+    }
+    return password.length > 128 ? { kind: 'tooLong', params: { max: 128 } } : undefined;
+  });
+  validate(route.password.message, ({ value }) => (value().length > 120 ? { kind: 'tooLong', params: { max: 120 } } : undefined));
   applyWhen(route, ({ value }) => value().certificate === 'uploaded', (uploaded) => {
     required(uploaded.certificateId, { error: { kind: 'certificate.choose' } });
   });

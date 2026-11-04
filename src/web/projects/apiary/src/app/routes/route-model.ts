@@ -1,5 +1,6 @@
 import { formatUtc, parseUtc } from '@datapoint/apiary-ui';
-import { MaintenanceWindow, RouteView } from '../api/models';
+import { MaintenanceWindow, RoutePasswordView, RouteView } from '../api/models';
+import { passphrase } from './passphrase';
 
 export interface RouteTargetModel {
   host: string;
@@ -20,6 +21,16 @@ export interface MaintenanceModel {
   message: string;
 }
 
+export interface PasswordModel {
+  enabled: boolean;
+  replace: boolean;
+  newPassword: string;
+  days: string;
+  message: string;
+  link: boolean;
+  newLink: boolean;
+}
+
 export interface RouteModel {
   projectId: string;
   host: string;
@@ -38,10 +49,18 @@ export interface RouteModel {
   caching: boolean;
   strictTransport: boolean;
   strictTransportSubdomains: boolean;
+  password: PasswordModel;
 }
 
 function noCanary(): CanaryModel {
   return { source: 'none', name: 'X-Canary', value: 'true' };
+}
+
+function passwordModel(current: RoutePasswordView | undefined): PasswordModel {
+  if (!current) {
+    return { enabled: false, replace: true, newPassword: passphrase(), days: '7', message: '', link: true, newLink: false };
+  }
+  return { enabled: true, replace: false, newPassword: '', days: String(current.days), message: current.message ?? '', link: !!current.linkMadeAt, newLink: false };
 }
 
 function noMaintenance(): MaintenanceModel {
@@ -49,7 +68,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false, password: passwordModel(undefined) };
 }
 
 export function routeModel(route: RouteView): RouteModel {
@@ -78,6 +97,7 @@ export function routeModel(route: RouteView): RouteModel {
     caching: route.caching,
     strictTransport: route.strictTransport,
     strictTransportSubdomains: route.strictTransportSubdomains,
+    password: passwordModel(route.password),
   };
 }
 

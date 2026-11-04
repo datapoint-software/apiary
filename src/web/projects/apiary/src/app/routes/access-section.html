@@ -28,5 +28,76 @@
         </ap-field>
       </div>
     }
+    <label class="ap-choice">
+      <input class="ap-switch" type="checkbox" [formField]="route().password.enabled" />
+      <span class="ap-choice-text">
+        <span>Ask visitors for a password</span>
+        <span class="ap-help">For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.</span>
+      </span>
+    </label>
+    @if (route().password.enabled().value()) {
+      <div class="ap-stack" style="margin-left: 40px">
+        @if (current() && !route().password.replace().value()) {
+          <div class="ap-list-row" style="padding: 0">
+            <div class="ap-list-text">
+              <strong>Password set {{ timeAgo(current()!.setAt) }}</strong>
+              <span class="ap-muted">@if (current()!.setBy) {By {{ current()!.setBy }}. }Apiary keeps only a hash, so it can’t show it again.</span>
+            </div>
+            <button apButton type="button" [disabled]="!canWrite()" (click)="setNewPassword()">Set a new password…</button>
+          </div>
+        } @else {
+          <ap-field
+            label="Password"
+            [field]="route().password.newPassword"
+            [help]="current() ? 'Shown once more after you save, to copy. Saving signs out everyone who used the old one.' : 'Shown once more after you save, to copy. Then Apiary keeps only a hash.'"
+          >
+            <div class="ap-row" style="gap: var(--space-2)">
+              <input class="ap-input ap-data" style="flex: 1; min-width: 12rem" autocomplete="off" spellcheck="false" autocapitalize="none" [formField]="route().password.newPassword" />
+              <button apButton="ghost" size="small" type="button" (click)="generate()">Generate another</button>
+            </div>
+          </ap-field>
+        }
+        <label class="ap-choice">
+          <input class="ap-check" type="checkbox" [formField]="route().password.link" />
+          <span class="ap-choice-text">
+            <span>Also make a sign-in link</span>
+            <span class="ap-help">Opens the site without typing the password. Visitors still click Continue, so link previews and email scanners don’t sign in. Anyone with the link gets in, so share it like the password.</span>
+          </span>
+        </label>
+        @if (current()?.linkMadeAt && route().password.link().value()) {
+          <div class="ap-list-row" style="padding: 0 0 0 30px">
+            @if (route().password.newLink().value()) {
+              <div class="ap-list-text">
+                <strong>A new link is made when you save</strong>
+                <span class="ap-muted">The current one stops working then.</span>
+              </div>
+            } @else {
+              <div class="ap-list-text">
+                <strong>Sign-in link made {{ timeAgo(current()!.linkMadeAt!) }}</strong>
+                <span class="ap-muted">Shown once, like the password.</span>
+              </div>
+            }
+            <button apButton type="button" [disabled]="!canWrite() || route().password.newLink().value()" (click)="makeNewLink()">Make a new link</button>
+          </div>
+        }
+        <ap-field
+          label="Message on the password page"
+          [field]="route().password.message"
+          [optional]="true"
+          help="Up to 120 characters. Anyone who opens the address sees it, so name nothing you’d rather keep private."
+        >
+          <input class="ap-input" placeholder="Preview of the new website for Example Lda." [formField]="route().password.message" />
+        </ap-field>
+        <div style="max-width: 280px">
+          <ap-field label="Keep visitors signed in for" [field]="route().password.days" help="A new password signs everyone out at once.">
+            <select class="ap-select" [formField]="route().password.days">
+              <option value="1">1 day</option>
+              <option value="7">7 days</option>
+              <option value="30">30 days</option>
+            </select>
+          </ap-field>
+        </div>
+      </div>
+    }
   </div>
 </section>

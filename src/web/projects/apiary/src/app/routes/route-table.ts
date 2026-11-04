@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Icon } from '@datapoint/apiary-ui';
+import { Lock } from 'lucide';
 import { RouteView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { Auth } from '../auth/auth';
@@ -11,7 +13,7 @@ import { RouteStatusLabel } from './route-status-label';
 
 @Component({
   selector: 'ap-route-table',
-  imports: [RouterLink, RouteStatusLabel, RouteRowActions],
+  imports: [Icon, RouterLink, RouteStatusLabel, RouteRowActions],
   templateUrl: './route-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,6 +26,7 @@ export class RouteTable {
   protected readonly targetLabel = targetLabel;
   protected readonly timeAgo = timeAgo;
   protected readonly perMinute = perMinute;
+  protected readonly lockIcon = Lock;
   private readonly routes = computed(() => this.groups().flatMap((g) => g.routes));
   protected readonly allSelected = computed(() => this.routes().length > 0 && this.routes().every((r) => this.selected().has(r.id)));
   protected readonly someSelected = computed(() => !this.allSelected() && this.routes().some((r) => this.selected().has(r.id)));

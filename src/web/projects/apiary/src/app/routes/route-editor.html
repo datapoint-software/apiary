@@ -168,7 +168,7 @@
       </div>
     </section>
 
-    <ap-access-section [route]="route" />
+    <ap-access-section [route]="route" [current]="existing.value()?.password" [canWrite]="auth.canOperate()" />
 
     <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
 
