@@ -1,18 +1,37 @@
-.DS_Store
-.claude/launch.json
-.claude/settings.local.json
+# Secrets: never commit them (see docs/risks.md). Root keys from `secrets init`, certificates, private keys and environment files.
+apiary_root_key*
+*.pem
+*.key
+*.pfx
+*.p12
+.env
+.env.*
+!.env.example
+
+# Local Apiary state from running it without Docker
+/data/
+/keys/
+
+# .NET build and test output
 bin/
 obj/
+TestResults/
+src/Datapoint.Apiary/wwwroot/
+
+# Node, for the rare install outside src/web (which has its own .gitignore)
+node_modules/
+
+# Ideas being tried on the prototype (see .claude/skills/prototype/SKILL.md)
+design/ideas/
+
+# Claude Code: personal settings and agent worktrees
+.claude/launch.json
+.claude/settings.local.json
+.claude/worktrees/
+
+# Editors and operating systems
 *.user
 .vs/
 .idea/
-TestResults/
-node_modules/
-dist/
-.angular/
-coverage/
-/data/
-/keys/
-src/Datapoint.Apiary/wwwroot/
-design/ideas/
-.claude/worktrees/
+.DS_Store
+Thumbs.db
