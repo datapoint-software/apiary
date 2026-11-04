@@ -23,7 +23,7 @@ function containsEmailName(password: string, email: string): boolean {
 
 export function passwordRules(password: string, email = ''): readonly PasswordRule[] {
   return [
-    { label: `At least ${minimumPasswordLength} characters`, met: password.length >= minimumPasswordLength },
+    { label: 'At least {min} characters', met: password.length >= minimumPasswordLength },
     { label: 'Not a common password or repeated characters', met: password.length > 0 && !isRepetition(password) },
     { label: 'Doesn’t contain your email name', met: password.length > 0 && !containsEmailName(password, email) },
   ];

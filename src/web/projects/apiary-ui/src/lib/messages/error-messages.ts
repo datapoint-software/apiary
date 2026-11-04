@@ -2,6 +2,7 @@ import { InjectionToken, Service, inject } from '@angular/core';
 import { Language, currentLanguage } from '../i18n/language';
 import { defaultMessages } from './default-messages';
 import { MessageCatalog, MessageParams } from './message-catalog';
+import { portugueseMessages } from './portuguese-messages';
 
 export interface LocalizedMessages {
   readonly language: Language;
@@ -14,7 +15,10 @@ export const ERROR_MESSAGES = new InjectionToken<readonly LocalizedMessages[]>('
 
 @Service()
 export class ErrorMessages {
-  private readonly catalogs = new Map<Language, MessageCatalog>([['en', defaultMessages]]);
+  private readonly catalogs = new Map<Language, MessageCatalog>([
+    ['en', defaultMessages],
+    ['pt-PT', portugueseMessages],
+  ]);
 
   constructor() {
     for (const { language, catalog } of inject(ERROR_MESSAGES)) {

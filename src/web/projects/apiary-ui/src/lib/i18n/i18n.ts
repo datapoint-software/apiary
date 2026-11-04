@@ -1,5 +1,6 @@
 import { DOCUMENT, Service, inject } from '@angular/core';
 import { Language, currentLanguage } from './language';
+import { portuguese } from './portuguese';
 import { TRANSLATIONS, TextCatalog } from './translations';
 
 export type TextParams = Readonly<Record<string, string | number>>;
@@ -8,7 +9,7 @@ export type TextParams = Readonly<Record<string, string | number>>;
 export class I18n {
   readonly language = currentLanguage.asReadonly();
   private readonly document = inject(DOCUMENT);
-  private readonly catalogs = new Map<Language, TextCatalog>();
+  private readonly catalogs = new Map<Language, TextCatalog>([['pt-PT', portuguese]]);
 
   constructor() {
     for (const { language, catalog } of inject(TRANSLATIONS)) {

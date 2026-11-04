@@ -7,10 +7,11 @@ import { isApiProblem } from '../field/api-problem';
 import { Icon } from '../icon/icon';
 import { ErrorMessages } from '../messages/error-messages';
 import { Confirmation } from './confirmation';
+import { TranslatePipe } from '../i18n/translate-pipe';
 
 @Component({
   selector: 'ap-confirm-dialog',
-  imports: [Icon, Button, Banner],
+  imports: [Icon, Button, Banner, TranslatePipe],
   templateUrl: './confirm-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

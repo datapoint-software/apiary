@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, viewChild } from '@angular/core';
 import { CircleAlert } from 'lucide';
+import { I18n } from '../i18n/i18n';
 import { Icon } from '../icon/icon';
 import { ErrorMessages } from '../messages/error-messages';
 import { Form } from './form';
@@ -22,6 +23,7 @@ export class ErrorSummary {
   readonly verb = input('continue');
   protected readonly form = inject(Form);
   private readonly messages = inject(ErrorMessages);
+  private readonly i18n = inject(I18n);
   private readonly banner = viewChild<ElementRef<HTMLElement>>('banner');
   protected readonly icon = CircleAlert;
 
@@ -49,8 +51,8 @@ export class ErrorSummary {
   protected readonly isShown = computed(() => this.items().length > 1 || this.items().some((item) => !item.hasField));
 
   protected readonly heading = computed(() => {
-    const count = this.items().length;
-    return `Fix ${count} ${count === 1 ? 'problem' : 'problems'} to ${this.verb()}`;
+    const verb = this.i18n.t(this.verb());
+    return this.i18n.plural(this.items().length, 'Fix {count} problem to {verb}', 'Fix {count} problems to {verb}', { verb });
   });
 
   constructor() {

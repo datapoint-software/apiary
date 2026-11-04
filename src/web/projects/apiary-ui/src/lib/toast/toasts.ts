@@ -4,10 +4,11 @@ import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
 import { Toast } from './toast';
 import { Toaster } from './toaster';
+import { TranslatePipe } from '../i18n/translate-pipe';
 
 @Component({
   selector: 'ap-toasts',
-  imports: [Icon, Button],
+  imports: [Icon, Button, TranslatePipe],
   templateUrl: './toasts.html',
   host: { class: 'ap-toasts', 'aria-live': 'polite' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -4,12 +4,13 @@ import { CircleAlert } from 'lucide';
 import { Icon } from '../icon/icon';
 import { ErrorMessages } from '../messages/error-messages';
 import { Form } from './form';
+import { TranslatePipe } from '../i18n/translate-pipe';
 
 let nextId = 0;
 
 @Component({
   selector: 'ap-field',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   templateUrl: './field.html',
   host: { class: 'ap-field', '[attr.data-invalid]': 'error() ? "" : null' },
   changeDetection: ChangeDetectionStrategy.OnPush,

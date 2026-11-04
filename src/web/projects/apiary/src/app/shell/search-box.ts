@@ -1,7 +1,7 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { Icon } from '@datapoint/apiary-ui';
+import { I18n, Icon, TextParams, TranslatePipe } from '@datapoint/apiary-ui';
 import {
   Archive,
   Bot,
@@ -48,16 +48,17 @@ const pages: readonly (readonly [IconNode, string, string, boolean?])[] = [
   [UserRound, 'Your account', '/account'],
 ];
 
-const shortDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
-
-function certificateItems(certificate: CertificateSummary): SearchItem[] {
-  const sub = certificate.notAfter ? `Certificate · expires ${shortDate.format(new Date(certificate.notAfter))}` : 'Certificate';
+function certificateItems(certificate: CertificateSummary, i18n: I18n): SearchItem[] {
+  const expires = certificate.notAfter
+    ? new Intl.DateTimeFormat(i18n.language(), { dateStyle: 'medium' }).format(new Date(certificate.notAfter))
+    : undefined;
+  const sub = expires ? i18n.t('Certificate · expires {date}', { date: expires }) : i18n.t('Certificate');
   return certificate.hosts.map((host) => ({ icon: ShieldCheck, title: host, sub, link: `/certificates/${certificate.id}` }));
 }
 
 @Component({
   selector: 'ap-search-box',
-  imports: [Icon],
+  imports: [Icon, TranslatePipe],
   host: { class: 'ap-search', role: 'search' },
   template: `
     <ap-icon [icon]="searchIcon" />
@@ -65,8 +66,8 @@ function certificateItems(certificate: CertificateSummary): SearchItem[] {
       #input
       class="ap-input"
       type="search"
-      placeholder="Search routes, certificates, users"
-      aria-label="Search"
+      [placeholder]="'Search routes, certificates, users' | t"
+      [attr.aria-label]="'Search' | t"
       role="combobox"
       aria-controls="search-results"
       aria-autocomplete="list"
@@ -82,14 +83,14 @@ function certificateItems(certificate: CertificateSummary): SearchItem[] {
     />
     <span class="ap-kbd" aria-hidden="true">{{ shortcut }}</span>
     @if (open()) {
-      <div class="ap-menu ap-search-pop" id="search-results" role="listbox" aria-label="Search results">
+      <div class="ap-menu ap-search-pop" id="search-results" role="listbox" [attr.aria-label]="'Search results' | t">
         @for (item of results(); track item.link + item.title; let i = $index) {
           <div class="ap-option" role="option" [id]="'search-' + i" [attr.aria-selected]="i === active()" (mousedown)="pick(item, $event)">
             <ap-icon [icon]="item.icon" />
             <span>{{ item.title }}<small>{{ item.sub }}</small></span>
           </div>
         } @empty {
-          <div class="ap-search-empty">Nothing matches “{{ query().trim() }}”.</div>
+          <div class="ap-search-empty">{{ 'Nothing matches “{query}”.' | t: { query: query().trim() } }}</div>
         }
       </div>
     }
@@ -100,6 +101,7 @@ export class SearchBox {
   private readonly api = inject(Api);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18n);
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
   protected readonly searchIcon = Search;
   protected readonly shortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
@@ -115,13 +117,14 @@ export class SearchBox {
 
   private readonly index = computed<SearchItem[]>(() => {
     const admin = this.auth.canAdminister();
+    const t = (text: string, params?: TextParams) => this.i18n.t(text, params);
     const projectNames = new Map(this.projects.value().map((p) => [p.id, p.name]));
     return [
-      ...pages.filter(([, , , adminOnly]) => admin || !adminOnly).map(([icon, title, link]) => ({ icon, title, sub: 'Page', link })),
-      ...this.projects.value().map((p) => ({ icon: projectIcon(p.icon), title: p.name, sub: `Project · ${p.routeCount} routes`, link: `/projects/${p.id}` })),
-      ...this.routes.value().map((r) => ({ icon: Route, title: routeLabel(r), sub: `Route · ${projectNames.get(r.projectId) ?? 'No project'}`, link: `/routes/${r.id}` })),
-      ...this.certificates.value().flatMap(certificateItems),
-      ...this.users.value().map((u) => ({ icon: UserRound, title: u.name, sub: `User · ${u.email}`, link: '/users' })),
+      ...pages.filter(([, , , adminOnly]) => admin || !adminOnly).map(([icon, title, link]) => ({ icon, title: t(title), sub: t('Page'), link })),
+      ...this.projects.value().map((p) => ({ icon: projectIcon(p.icon), title: p.name, sub: this.i18n.plural(p.routeCount, 'Project · {count} route', 'Project · {count} routes'), link: `/projects/${p.id}` })),
+      ...this.routes.value().map((r) => ({ icon: Route, title: routeLabel(r), sub: t('Route · {project}', { project: projectNames.get(r.projectId) ?? t('No project') }), link: `/routes/${r.id}` })),
+      ...this.certificates.value().flatMap((c) => certificateItems(c, this.i18n)),
+      ...this.users.value().map((u) => ({ icon: UserRound, title: u.name, sub: t('User · {email}', { email: u.email }), link: '/users' })),
     ];
   });
 

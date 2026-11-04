@@ -12,7 +12,9 @@ import {
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide';
 import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
+import { currentLanguage } from '../i18n/language';
 import { addMonths, dayMs, dayStart, formatUtc, hourMs, minuteMs, parseUtc } from './utc-date';
+import { TranslatePipe } from '../i18n/translate-pipe';
 
 interface CalendarDay {
   readonly ms: number;
@@ -24,14 +26,13 @@ interface CalendarDay {
   readonly isAllowed: boolean;
 }
 
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const monday = Date.UTC(2024, 0, 1);
 const hours = [...Array(24).keys()];
 const minutes = [...Array(12).keys()].map((i) => i * 5);
 
 @Component({
   selector: 'ap-calendar-button',
-  imports: [Button, Icon, CdkTrapFocus],
+  imports: [Button, Icon, CdkTrapFocus, TranslatePipe],
   templateUrl: './calendar-button.html',
   host: {
     style: 'display: contents',
@@ -47,7 +48,14 @@ export class CalendarButton {
   readonly max = input<number | null>(null);
 
   protected readonly icons = { calendar: Calendar, previous: ChevronLeft, next: ChevronRight };
-  protected readonly weekdays = weekdays;
+  protected readonly weekdays = computed(() => {
+    const long = new Intl.DateTimeFormat(currentLanguage(), { weekday: 'long', timeZone: 'UTC' });
+    const short = new Intl.DateTimeFormat(currentLanguage(), { weekday: 'short', timeZone: 'UTC' });
+    return [...Array(7).keys()].map((day) => {
+      const date = monday + day * dayMs;
+      return { long: long.format(date), short: short.format(date) };
+    });
+  });
   protected readonly hours = hours;
   protected readonly minutes = minutes;
   protected readonly isOpen = signal(false);
@@ -62,8 +70,7 @@ export class CalendarButton {
   private shouldFocusDay = false;
 
   protected readonly title = computed(() => {
-    const date = new Date(this.month());
-    return `${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+    return new Intl.DateTimeFormat(currentLanguage(), { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(this.month());
   });
 
   protected readonly weeks = computed<CalendarDay[][]>(() => {
@@ -71,6 +78,7 @@ export class CalendarButton {
     const lead = (first.getUTCDay() + 6) % 7;
     const start = this.month() - lead * dayMs;
     const today = dayStart(Date.now());
+    const label = new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'full', timeZone: 'UTC' });
     return [...Array(6).keys()].map((week) =>
       [...Array(7).keys()].map((day) => {
         const ms = start + (week * 7 + day) * dayMs;
@@ -78,7 +86,7 @@ export class CalendarButton {
         return {
           ms,
           date: date.getUTCDate(),
-          label: `${weekdays[day]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`,
+          label: label.format(ms),
           isOutside: date.getUTCMonth() !== first.getUTCMonth(),
           isToday: ms === today,
           isSelected: ms === this.selected(),

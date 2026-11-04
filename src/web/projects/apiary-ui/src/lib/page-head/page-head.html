@@ -1,5 +1,5 @@
 <div class="ap-stack" style="gap: 4px">
-  <nav class="ap-crumbs" aria-label="Breadcrumb">
+  <nav class="ap-crumbs" [attr.aria-label]="'Breadcrumb' | t">
     @for (crumb of crumbs(); track crumb.link) {
       <a [routerLink]="crumb.link">{{ crumb.label }}</a><span aria-hidden="true">/</span>
     }

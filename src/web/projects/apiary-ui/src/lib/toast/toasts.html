@@ -18,7 +18,7 @@
     @if (toast.action) {
       <button apButton size="small" type="button" (click)="act(toast)">{{ toast.action.label }}</button>
     }
-    <button apButton="ghost" size="small" [iconOnly]="true" class="ap-toast-close" type="button" aria-label="Dismiss" (click)="toaster.dismiss(toast.id)">
+    <button apButton="ghost" size="small" [iconOnly]="true" class="ap-toast-close" type="button" [attr.aria-label]="'Dismiss' | t" (click)="toaster.dismiss(toast.id)">
       <ap-icon [icon]="close" />
     </button>
   </div>

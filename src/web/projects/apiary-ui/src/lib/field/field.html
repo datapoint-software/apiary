@@ -1,14 +1,14 @@
 <label class="ap-label" [for]="id">
   {{ label() }}
   @if (optional()) {
-    <span class="ap-optional">(optional)</span>
+    <span class="ap-optional">{{ '(optional)' | t }}</span>
   }
 </label>
 <ng-content />
 @if (help()) {
   <span class="ap-help" [id]="id + '-help'">{{ help() }}</span>
 }
-<span class="ap-help" aria-live="polite">{{ checking() ? 'Checking…' : '' }}</span>
+<span class="ap-help" aria-live="polite">{{ checking() ? ('Checking…' | t) : '' }}</span>
 <span class="ap-error" [id]="id + '-error'" [hidden]="!error()">
   <ap-icon [icon]="alertIcon" />{{ error() }}
 </span>

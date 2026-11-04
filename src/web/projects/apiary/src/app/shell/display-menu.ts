@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, inject, signal, viewChild, Injector } from '@angular/core';
-import { Button, Icon } from '@datapoint/apiary-ui';
+import { Button, Icon, TranslatePipe } from '@datapoint/apiary-ui';
 import { Accessibility } from 'lucide';
 import { DisplaySettings, displayChoices } from './display-settings';
 
 @Component({
   selector: 'ap-display-menu',
-  imports: [Button, Icon],
+  imports: [Button, Icon, TranslatePipe],
   host: {
     style: 'position: relative',
     '(document:mousedown)': 'closeOutside($event)',
@@ -17,7 +17,7 @@ import { DisplaySettings, displayChoices } from './display-settings';
       apButton="ghost"
       [iconOnly]="true"
       type="button"
-      aria-label="Display and accessibility"
+      [attr.aria-label]="'Display and accessibility' | t"
       aria-haspopup="dialog"
       aria-controls="display"
       [attr.aria-expanded]="open()"
@@ -27,20 +27,20 @@ import { DisplaySettings, displayChoices } from './display-settings';
     </button>
     @if (open()) {
       <div #panel class="ap-popover" role="dialog" aria-modal="false" aria-labelledby="display-title" id="display" style="right: 0; top: calc(100% + 8px)">
-        <h2 class="ap-h ap-h-3" id="display-title">Display and accessibility</h2>
+        <h2 class="ap-h ap-h-3" id="display-title">{{ 'Display and accessibility' | t }}</h2>
         @for (choice of choices; track choice.setting) {
           <div class="ap-setting">
-            <span class="ap-label" [id]="'display-' + choice.setting">{{ choice.label }}</span>
+            <span class="ap-label" [id]="'display-' + choice.setting">{{ choice.label | t }}</span>
             <div class="ap-seg" role="group" [attr.aria-labelledby]="'display-' + choice.setting">
               @for (option of choice.options; track option[0]) {
                 <button type="button" [attr.aria-pressed]="settings.value(choice) === option[0]" (click)="settings.set(choice.setting, option[0])">
-                  {{ option[1] }}
+                  {{ option[1] | t }}
                 </button>
               }
             </div>
           </div>
         }
-        <p class="ap-caption" style="margin: 0">Automatic follows your device settings. Saved in this browser only.</p>
+        <p class="ap-caption" style="margin: 0">{{ 'Automatic follows your device settings. Saved in this browser only.' | t }}</p>
       </div>
     }
   `,

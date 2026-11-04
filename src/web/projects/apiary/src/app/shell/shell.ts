@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
-import { Banner, Button, Icon, Status } from '@datapoint/apiary-ui';
+import { Banner, Button, I18n, Icon, Status, TranslatePipe } from '@datapoint/apiary-ui';
 import {
   Archive,
   Bot,
@@ -65,6 +65,7 @@ import { sourceUrl, version } from '../version';
     CdkMenuTrigger,
     SearchBox,
     DisplayMenu,
+    TranslatePipe,
   ],
   templateUrl: './shell.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +73,7 @@ import { sourceUrl, version } from '../version';
 export class Shell {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18n);
   protected readonly auth = inject(Auth);
   protected readonly cluster = inject(ClusterStatus);
   protected readonly roleNames = roleNames;
@@ -102,7 +104,7 @@ export class Shell {
     const labels = this.isPhone()
       ? ['Open menu', 'Close menu']
       : ['Expand sidebar (Ctrl or ⌘ + B)', 'Collapse sidebar (Ctrl or ⌘ + B)'];
-    return labels[this.sidebarExpanded() ? 1 : 0];
+    return this.i18n.t(labels[this.sidebarExpanded() ? 1 : 0]);
   });
   protected readonly panelIcon = PanelLeft;
   private readonly search = viewChild.required(SearchBox);
@@ -116,12 +118,13 @@ export class Shell {
   );
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
+    const t = (text: string) => this.i18n.t(text);
     const projects = this.projects.value();
     const routes = projects.reduce((sum, p) => sum + p.routeCount, 0);
     return [
-      { title: '', items: [{ icon: LayoutDashboard, label: 'Overview', link: '/' }] },
+      { title: '', items: [{ icon: LayoutDashboard, label: t('Overview'), link: '/' }] },
       {
-        title: 'Projects',
+        title: t('Projects'),
         items: [
           ...projects.map((p) => ({
             icon: projectIcon(p.icon),
@@ -130,50 +133,50 @@ export class Shell {
             count: p.routeCount || undefined,
             warn: p.routesDown + p.routesDegraded > 0,
           })),
-          { icon: FolderOpen, label: 'All projects', link: '/projects' },
+          { icon: FolderOpen, label: t('All projects'), link: '/projects' },
         ],
       },
       {
-        title: 'Traffic',
+        title: t('Traffic'),
         items: [
-          { icon: Route, label: 'All routes', link: '/routes', count: routes || undefined },
-          { icon: Cable, label: 'Stream routes', link: '/streams' },
+          { icon: Route, label: t('All routes'), link: '/routes', count: routes || undefined },
+          { icon: Cable, label: t('Stream routes'), link: '/streams' },
           {
             icon: ShieldCheck,
-            label: 'Certificates',
+            label: t('Certificates'),
             link: '/certificates',
             warn: this.certificates.value().some(needsAttention),
           },
-          { icon: CornerUpRight, label: 'Redirects', link: '/redirects' },
-          { icon: PanelsTopLeft, label: 'Visitor pages', link: '/visitor-pages' },
+          { icon: CornerUpRight, label: t('Redirects'), link: '/redirects' },
+          { icon: PanelsTopLeft, label: t('Visitor pages'), link: '/visitor-pages' },
         ],
       },
       {
-        title: 'Access',
+        title: t('Access'),
         items: [
           ...(this.auth.canAdminister()
             ? [
-                { icon: Users, label: 'Users', link: '/users' },
-                { icon: DoorOpen, label: 'Single sign-on', link: '/single-sign-on' },
+                { icon: Users, label: t('Users'), link: '/users' },
+                { icon: DoorOpen, label: t('Single sign-on'), link: '/single-sign-on' },
               ]
             : []),
-          { icon: Bot, label: 'Connected agents', link: '/agents' },
-          { icon: ScrollText, label: 'Audit log', link: '/audit' },
+          { icon: Bot, label: t('Connected agents'), link: '/agents' },
+          { icon: ScrollText, label: t('Audit log'), link: '/audit' },
         ],
       },
       {
-        title: 'Cluster',
+        title: t('Cluster'),
         items: [
           {
             icon: Hexagon,
-            label: 'Replicas',
+            label: t('Replicas'),
             link: '/replicas',
             warn: this.cluster.reachable() < this.cluster.voters().length,
           },
           ...(this.auth.canAdminister()
             ? [
-                { icon: Archive, label: 'Backups', link: '/backups' },
-                { icon: KeyRound, label: 'Root key', link: '/root-key' },
+                { icon: Archive, label: t('Backups'), link: '/backups' },
+                { icon: KeyRound, label: t('Root key'), link: '/root-key' },
               ]
             : []),
         ],
