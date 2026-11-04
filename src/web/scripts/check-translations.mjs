@@ -43,7 +43,7 @@ function placeholders(text) {
   return new Set([...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]));
 }
 
-const all = sources.flatMap(files);
+const all = sources.flatMap(files).filter((f) => !f.endsWith('.spec.ts') && !f.includes('/testing/'));
 const catalogFiles = all.filter((f) => f.endsWith('.pt.ts') || f.endsWith('i18n/portuguese.ts'));
 const catalog = new Map();
 const owners = new Map();
