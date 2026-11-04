@@ -89,7 +89,8 @@ public sealed class TcpStreamListenerTests : IAsyncLifetime
         await _listener!.DisposeAsync();
         _listener = null;
 
-        Assert.Equal((true, 0), (await ClosedAsync(client), _connections.Count(route.Id)));
+        Assert.True(await ClosedAsync(client));
+        Assert.True(await Eventually.TrueAsync(() => _connections.Count(route.Id) == 0));
     }
 
     [Fact]

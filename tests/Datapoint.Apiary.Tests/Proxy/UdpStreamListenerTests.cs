@@ -19,8 +19,8 @@ public sealed class UdpStreamListenerTests : IAsyncLifetime
     private static readonly TimeSpan s_silence = TimeSpan.FromMilliseconds(500);
     private readonly int _port = UdpEchoServer.FreePort();
     private readonly FakeTimeProvider _time = TestClock.Fake();
-    private readonly UdpClient _client = new(new IPEndPoint(IPAddress.Loopback, 0));
-    private readonly UdpClient _otherClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+    private readonly UdpClient _client = new(new IPEndPoint(IPAddress.IPv6Loopback, 0));
+    private readonly UdpClient _otherClient = new(new IPEndPoint(IPAddress.IPv6Loopback, 0));
     private readonly StreamConnections _connections;
     private UdpEchoServer _echo = null!;
     private UdpStreamListener? _listener;
@@ -144,7 +144,7 @@ public sealed class UdpStreamListenerTests : IAsyncLifetime
         var route = UdpStreamTo(_echo);
         Listen(route);
         var clients = Enumerable.Range(0, UdpStreamListener.MaximumSessionsPerAddress)
-            .Select(_ => new UdpClient(new IPEndPoint(IPAddress.Loopback, 0)))
+            .Select(_ => new UdpClient(new IPEndPoint(IPAddress.IPv6Loopback, 0)))
             .ToList();
         await Task.WhenAll(clients.Select(c => RoundTripAsync(c, "ping", s_reply)));
 
@@ -256,7 +256,7 @@ public sealed class UdpStreamListenerTests : IAsyncLifetime
 
     private async Task<string?> RoundTripAsync(UdpClient client, string message, TimeSpan wait)
     {
-        await client.SendAsync(Encoding.ASCII.GetBytes(message), new IPEndPoint(IPAddress.Loopback, _port), TestContext.Current.CancellationToken);
+        await client.SendAsync(Encoding.ASCII.GetBytes(message), new IPEndPoint(IPAddress.IPv6Loopback, _port), TestContext.Current.CancellationToken);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(wait);
         try
