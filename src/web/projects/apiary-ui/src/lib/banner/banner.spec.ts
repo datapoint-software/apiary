@@ -16,13 +16,6 @@ class BannerHost {
   readonly role = signal<'alert' | 'status' | null>(null);
 }
 
-@Component({
-  selector: 'ap-alert-host',
-  imports: [Banner],
-  template: `<ap-banner tone="critical" role="alert">The upload failed.</ap-banner>`,
-})
-class AlertHost {}
-
 async function render(change: (host: BannerHost) => void = () => undefined): Promise<HTMLElement> {
   const fixture = TestBed.createComponent(BannerHost);
   change(fixture.componentInstance);
@@ -62,12 +55,15 @@ describe('Banner', () => {
   });
 
   it('is announced once when given a role as a plain attribute', async () => {
-    const fixture = TestBed.createComponent(AlertHost);
+    TestBed.overrideComponent(BannerHost, {
+      set: { template: `<ap-banner tone="critical" role="alert">The upload failed.</ap-banner>` },
+    });
+    const fixture = TestBed.createComponent(BannerHost);
     await fixture.whenStable();
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('[role="alert"]'),
-    ).toHaveLength(1);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('[role="alert"]')).toHaveLength(
+      1,
+    );
   });
 
   it('hides its icon from assistive technology', async () => {
