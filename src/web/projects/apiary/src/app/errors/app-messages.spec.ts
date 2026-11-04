@@ -52,4 +52,12 @@ describe('app messages', () => {
       [],
     );
   });
+
+  it.each(Object.keys(appMessages))('has a Portuguese message for %s', (code) => {
+    const catalog = messages();
+    const english = catalog.describe(code, { total: 90, retryAfter: 30, min: 1, max: 9 });
+    currentLanguage.set('pt-PT');
+
+    expect(catalog.describe(code, { total: 90, retryAfter: 30, min: 1, max: 9 })).not.toBe(english);
+  });
 });
