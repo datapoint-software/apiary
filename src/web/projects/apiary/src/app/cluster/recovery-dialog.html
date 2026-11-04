@@ -11,7 +11,7 @@
           <li class="ap-step">{{ 'Confirm' | t }}</li>
           <li class="ap-step">{{ 'Recover' | t }}</li>
         </ol>
-        @if (plan.value(); as current) {
+        @if (lastPlan(); as current) {
           @if (!current.needed) {
             <ap-banner tone="info" [heading]="'Recovery isn’t needed' | t">
               {{ 'A majority of voters can be reached, so the cluster still agrees on changes. Recovery is only for when a majority is lost for good.' | t }}
@@ -57,7 +57,7 @@
         @if (plan.error()) {
           <button apButton type="button" (click)="plan.reload()">{{ 'Try again' | t }}</button>
         }
-        @if (plan.value()?.needed && !ahead()) {
+        @if (lastPlan()?.needed && !ahead()) {
           <button apButton="primary" type="button" [disabled]="!checked()" (click)="step.set('confirm')">{{ 'Continue' | t }}</button>
         }
       </div>

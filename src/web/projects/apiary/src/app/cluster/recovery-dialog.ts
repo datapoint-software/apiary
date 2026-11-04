@@ -1,6 +1,6 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormField, form, required, validate } from '@angular/forms/signals';
 import { ApiProblem, Banner, Button, ErrorMessages, ErrorSummary, Field, Form, I18n, Icon, PasswordReveal, TranslatePipe, isApiProblem, problemErrors } from '@datapoint/apiary-ui';
 import { TriangleAlert } from 'lucide';
@@ -28,15 +28,19 @@ export class RecoveryDialog {
   private readonly messages = inject(ErrorMessages);
   private readonly i18n = inject(I18n);
   protected readonly plan = httpResource<RecoveryPlan>(() => ({ ...this.api.query('cluster.recovery-plan'), timeout: 30_000 }));
+  protected readonly lastPlan = linkedSignal<RecoveryPlan | undefined, RecoveryPlan | undefined>({
+    source: () => (this.plan.hasValue() ? this.plan.value() : undefined),
+    computation: (next, previous) => next ?? previous?.value,
+  });
   protected readonly step = signal<Step>('check');
   protected readonly checks = signal([false, false, false]);
   protected readonly checked = computed(() => this.checks().every(Boolean));
   protected readonly failure = signal('');
   protected readonly alert = TriangleAlert;
   protected readonly utcDateTime = utcDateTime;
-  protected readonly lost = computed(() => new Intl.ListFormat(this.i18n.language(), { type: 'conjunction' }).format(this.plan.value()?.unreachable ?? []));
+  protected readonly lost = computed(() => new Intl.ListFormat(this.i18n.language(), { type: 'conjunction' }).format(this.lastPlan()?.unreachable ?? []));
   protected readonly ahead = computed(() => {
-    const plan = this.plan.value();
+    const plan = this.lastPlan();
     return plan?.survivors.find((s) => s.index > plan.index);
   });
   private readonly model = signal<RecoveryModel>({ node: '', password: '', code: '' });
@@ -48,7 +52,7 @@ export class RecoveryDialog {
   });
 
   protected node(): string {
-    return this.plan.value()?.node ?? '';
+    return this.lastPlan()?.node ?? '';
   }
 
   protected toggle(index: number, event: Event): void {
