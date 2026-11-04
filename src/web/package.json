@@ -9,7 +9,8 @@
     "build:ui": "ng build apiary-ui",
     "lint": "ng lint",
     "check:translations": "node scripts/check-translations.mjs",
-    "test": "ng test"
+    "test": "ng test",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
@@ -30,7 +31,9 @@
     "@angular/build": "^22.2.0",
     "@angular/cli": "^22.2.5",
     "@angular/compiler-cli": "^22.2.0",
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/qrcode": "^1.5.5",
     "angular-eslint": "^22.6.0",
     "eslint": "^10.14.0",
