@@ -8,6 +8,7 @@ internal sealed class EchoServer : IAsyncDisposable
     private readonly TcpListener _listener;
     private readonly CancellationTokenSource _stopping = new();
     private readonly Task _accepting;
+    private int _accepted;
 
     private EchoServer(TcpListener listener)
     {
@@ -18,6 +19,8 @@ internal sealed class EchoServer : IAsyncDisposable
     public IPAddress Address => ((IPEndPoint)_listener.LocalEndpoint).Address;
 
     public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
+
+    public int Accepted => Volatile.Read(ref _accepted);
 
     public static EchoServer Start()
     {
@@ -41,6 +44,7 @@ internal sealed class EchoServer : IAsyncDisposable
         while (!_stopping.IsCancellationRequested)
         {
             var client = await _listener.AcceptTcpClientAsync(_stopping.Token);
+            Interlocked.Increment(ref _accepted);
             _ = EchoAsync(client);
         }
     }
