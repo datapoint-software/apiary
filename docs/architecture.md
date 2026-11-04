@@ -103,6 +103,13 @@ By default a route has a single target group, and none of the following applies.
 - It needs the real client address: with the host-mode ports in `deploy/stack.yaml`, Apiary sees it. Behind another proxy or load balancer, or Swarm's ingress network, every client shares that proxy's address and one budget, so leave limits off there.
 - Stream routes have no rate limit; they cap open connections per address instead.
 
+### Request size and timeouts
+
+- **Every route has a request size limit**, so a client can't stream an unbounded upload to a target that didn't expect one. A route uses the **cluster default** unless it sets its own size or **no limit**. The default is 30 MB, ASP.NET Core's own, and Administrators can change it on the All routes page; changing it changes every route that uses it. A route's own size goes from 1 MB to 100 GB, in decimal units, as Docker shows them.
+- Apiary sets the limit on each request after matching its route and before anything reads the body. A request whose `Content-Length` is too large gets a 413 at once; a chunked one gets it when it crosses the limit. The 413 has no body. The admin and cluster ports keep the 30 MB default.
+- Bodies are streamed to the target, not buffered, so a large or unlimited upload costs Apiary bandwidth, not memory. Rate limits count requests, not bytes, so they don't limit upload size; see [risks.md](risks.md).
+- **A route's timeout** (1 to 3600 seconds, 30 by default) is how long the request may go without any data moving in either direction (YARP's activity timeout), not how long it may take in total. A long upload that keeps sending isn't cut off; a target that takes longer than the timeout to answer after the last byte is.
+
 ### Password-protected routes
 
 - A route can **ask visitors for a shared password** before they reach the site, for demos and previews that aren't ready to be public. It's **off by default**. Everyone shares the same password, so it doesn't tell people apart: it's not a replacement for the site's own sign-in.

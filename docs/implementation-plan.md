@@ -166,6 +166,15 @@ What the review after milestone 12 found missing, agreed on 2026-11-03.
 - Tests of the failure modes in [failure-modes.md](failure-modes.md) on a real Swarm.
 - `1.0.0`.
 
+## 17. Request size limits
+
+Agreed on 2026-11-04, after large image pushes to a container registry failed. Not tied to 1.0: it can ship in any release.
+
+- A request size limit per route: the cluster default, its own size from 1 MB to 100 GB, or no limit. Administrators change the default on the All routes page, which also lists the routes with their own limit.
+- Route timeouts up to 3600 seconds, described as time without any data moving.
+
+**Try it:** set the default to 1 MB and `curl --data-binary @big.file` a route: it gets a 413. Give the route its own 10 MB limit and try again.
+
 ## What you'll need to try it
 
 - **Milestones 0 to 2:** Docker on your machine.
