@@ -9,7 +9,7 @@ public static class RecoverCommand
 {
     private const string Confirmation = "recover";
 
-    private static readonly JsonSerializerOptions PlanJson = new(ApiJson.Options) { RespectRequiredConstructorParameters = false };
+    private static readonly JsonSerializerOptions s_planJson = new(ApiJson.Options) { RespectRequiredConstructorParameters = false };
 
     public static async Task<int> RunAsync(IReadOnlyList<string> args)
     {
@@ -31,7 +31,7 @@ public static class RecoverCommand
             return 1;
         }
 
-        var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(PlanJson))!;
+        var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(s_planJson))!;
         Describe(plan);
         if (!plan.Needed)
         {

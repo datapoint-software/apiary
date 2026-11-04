@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using Datapoint.Apiary.Management.Transactions;
-using Datapoint.Mediator.Authorization;
 using Datapoint.Mediator;
+using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Apiary.Management.Invites;
 

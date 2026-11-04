@@ -18,11 +18,11 @@ public sealed class UploadCertificateHandler(StateTransaction transaction, TimeP
         var kind = existing is null ? CertificateEventKind.Uploaded : CertificateEventKind.Replaced;
         var certificate = (existing ?? new Certificate(Guid.CreateVersion7(now), CertificateSource.Uploaded, material.Hosts[0], command.ProjectId, null, [], null, 0, null, now, user))
             .WithEvent(new CertificateEvent(now, kind, null, $"{material.Issuer}, valid until {material.NotAfter:yyyy-MM-dd}", user)) with
-            {
-                Name = material.Hosts[0],
-                ProjectId = command.ProjectId,
-                Material = material,
-            };
+        {
+            Name = material.Hosts[0],
+            ProjectId = command.ProjectId,
+            Material = material,
+        };
         transaction.Record(new CertificateSaved(certificate));
         transaction.Affects(certificate.Id, certificate.ProjectId);
         return new(certificate.Id);
