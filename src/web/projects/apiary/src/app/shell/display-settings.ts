@@ -6,10 +6,11 @@ export interface DisplayChoice {
   readonly setting: DisplaySetting;
   readonly label: string;
   readonly options: readonly (readonly [value: string, label: string])[];
+  readonly initial?: string;
 }
 
 export const displayChoices: readonly DisplayChoice[] = [
-  { setting: 'theme', label: 'Appearance', options: [['system', 'Automatic'], ['light', 'Light'], ['dark', 'Dark']] },
+  { setting: 'theme', label: 'Appearance', options: [['system', 'Automatic'], ['light', 'Light'], ['dark', 'Dark']], initial: 'light' },
   { setting: 'text', label: 'Text size', options: [['default', 'Default'], ['large', 'Large'], ['larger', 'Larger']] },
   { setting: 'contrast', label: 'Contrast', options: [['system', 'Automatic'], ['standard', 'Standard'], ['more', 'More']] },
   { setting: 'motion', label: 'Motion', options: [['system', 'Automatic'], ['standard', 'Standard'], ['reduce', 'Reduced']] },
@@ -47,9 +48,9 @@ export class DisplaySettings {
 
   constructor() {
     effect(() => {
-      const preferences = this.preferences();
-      for (const { setting } of displayChoices) {
-        const value = preferences[setting];
+      for (const choice of displayChoices) {
+        const setting = choice.setting;
+        const value = this.value(choice);
         if (isDefault(value)) {
           this.root.removeAttribute(`data-${setting}`);
         } else {
@@ -60,7 +61,7 @@ export class DisplaySettings {
   }
 
   value(choice: DisplayChoice): string {
-    return this.preferences()[choice.setting] ?? choice.options[0][0];
+    return this.preferences()[choice.setting] ?? choice.initial ?? choice.options[0][0];
   }
 
   set(setting: DisplaySetting, value: string): void {
