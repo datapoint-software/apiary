@@ -42,12 +42,13 @@ public sealed class PublicPages(IClusterState cluster, IOptions<VisitorPageOptio
         "Too many requests",
         "This site got too many requests from your network. Wait a moment, then try again.");
 
-    public IResult Maintenance(Route route, MaintenanceWindow window) => Page(
-        StatusCodes.Status503ServiceUnavailable,
-        "Maintenance",
-        "Down for maintenance",
-        WebUtility.HtmlEncode(window.Message ?? string.Create(CultureInfo.InvariantCulture, $"This site is being worked on. Try again after {window.End:yyyy-MM-dd HH:mm} UTC.")),
-        BrandOf(route));
+    public IResult Maintenance(Route route, MaintenanceWindow window) => new VisitorPage(language =>
+    {
+        var text = window.Message is { } message
+            ? WebUtility.HtmlEncode(message)
+            : language.T("This site is being worked on. Try again after {0} UTC.", window.End.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
+        return Render(StatusCodes.Status503ServiceUnavailable, language, "Maintenance", $"<h1>{language.T("Down for maintenance")}</h1><p>{text}</p>", BrandOf(route));
+    });
 
     public IResult SecureOnly(Route route) => Page(
         StatusCodes.Status503ServiceUnavailable,
@@ -56,56 +57,68 @@ public sealed class PublicPages(IClusterState cluster, IOptions<VisitorPageOptio
         "It asks for a password, which is only sent over HTTPS, and HTTPS isn't ready for this address yet. Try again in a few minutes.",
         BrandOf(route));
 
-    public IResult Password(Route route, RoutePassword password, PasswordProblem problem)
+    public IResult Password(Route route, RoutePassword password, PasswordProblem problem) => new VisitorPage(language =>
     {
         var text = problem == PasswordProblem.LinkExpired
-            ? "This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link."
-            : password.Message is { } message ? WebUtility.HtmlEncode(message) : "Enter the password you were given.";
-        var error = problem switch
-        {
-            PasswordProblem.Empty => "Enter the password.",
-            PasswordProblem.Wrong => "That password isn't right. Check it, or ask whoever sent you the link.",
-            PasswordProblem.TooManyTries => "Too many tries from your network. Wait 5 minutes, then try again.",
-            _ => null,
-        };
+            ? language.T("This sign-in link no longer works. Enter the password, or ask whoever sent it for a new link.")
+            : password.Message is { } message ? WebUtility.HtmlEncode(message) : language.T("Enter the password you were given.");
+        var error = PasswordError(problem) is { } english ? language.T(english) : null;
         var locked = problem == PasswordProblem.TooManyTries ? " disabled" : "";
         var invalid = error is null ? "" : " aria-invalid=\"true\" aria-describedby=\"error\"";
         var alert = error is null ? "" : $"<p id=\"error\" class=\"error\" role=\"alert\">{error}</p>";
-        return PageLayout.Render(
+        return Render(
             problem == PasswordProblem.TooManyTries ? StatusCodes.Status429TooManyRequests : StatusCodes.Status401Unauthorized,
+            language,
             "Password",
             $"""
-            <h1>Restricted access</h1><p>{text}</p>
+            <h1>{language.T("Restricted access")}</h1><p>{text}</p>
             <form method="post" novalidate><input type="hidden" name="{PasswordGate.GateField}" value="1">
-            <label for="password">Password</label>
+            <label for="password">{language.T("Password")}</label>
             <input id="password" name="{PasswordGate.PasswordField}" type="password" autocomplete="current-password" required autofocus{invalid}{locked}>
-            {alert}<button type="submit"{locked}>Continue</button></form>
-            <p class="small">{StaySignedIn(password.Days)} No password? Ask whoever sent you the link.</p>
+            {alert}<button type="submit"{locked}>{language.T("Continue")}</button></form>
+            <p class="small">{StaySignedIn(language, password.Days)} {language.T("No password? Ask whoever sent you the link.")}</p>
+            """,
+            BrandOf(route),
+            PageLayout.SignInPolicy);
+    });
+
+    public IResult SignInLink(Route route, RoutePassword password) => new VisitorPage(language =>
+    {
+        var host = WebUtility.HtmlEncode(route.Host);
+        var text = password.Message is { } message ? WebUtility.HtmlEncode(message) : language.T("Someone shared this site with you.");
+        return PageLayout.Render(
+            StatusCodes.Status200OK,
+            language,
+            host,
+            $"""
+            <h1 class="data">{host}</h1><p>{text}</p>
+            <form method="post"><input type="hidden" name="{PasswordGate.GateField}" value="1"><button type="submit">{language.T("Continue")}</button></form>
+            <p class="small">{StaySignedIn(language, password.Days)}</p>
             """,
             BrandOf(route),
             options.Value.ShowPoweredBy,
             PageLayout.SignInPolicy);
-    }
+    });
 
-    public IResult SignInLink(Route route, RoutePassword password) => PageLayout.Render(
-        StatusCodes.Status200OK,
-        WebUtility.HtmlEncode(route.Host),
-        $"""
-        <h1 class="data">{WebUtility.HtmlEncode(route.Host)}</h1><p>{(password.Message is { } message ? WebUtility.HtmlEncode(message) : "Someone shared this site with you.")}</p>
-        <form method="post"><input type="hidden" name="{PasswordGate.GateField}" value="1"><button type="submit">Continue</button></form>
-        <p class="small">{StaySignedIn(password.Days)}</p>
-        """,
-        BrandOf(route),
-        options.Value.ShowPoweredBy,
-        PageLayout.SignInPolicy);
+    private static string? PasswordError(PasswordProblem problem) => problem switch
+    {
+        PasswordProblem.Empty => "Enter the password.",
+        PasswordProblem.Wrong => "That password isn't right. Check it, or ask whoever sent you the link.",
+        PasswordProblem.TooManyTries => "Too many tries from your network. Wait 5 minutes, then try again.",
+        _ => null,
+    };
 
-    private static string StaySignedIn(int days) =>
-        string.Create(CultureInfo.InvariantCulture, $"You stay signed in on this browser for {days} {(days == 1 ? "day" : "days")}.");
+    private static string StaySignedIn(VisitorLanguage language, int days) => days == 1
+        ? language.T("You stay signed in on this browser for 1 day.")
+        : language.T("You stay signed in on this browser for {0} days.", days);
 
-    private IResult Page(int status, string title, string heading, string text) => Page(status, title, heading, text, cluster.Current.Brand);
+    private VisitorPage Page(int status, string title, string heading, string text) => Page(status, title, heading, text, cluster.Current.Brand);
 
-    private IResult Page(int status, string title, string heading, string text, VisitorBrand? brand) =>
-        PageLayout.Render(status, title, $"<h1>{heading}</h1><p>{text}</p>", brand, options.Value.ShowPoweredBy);
+    private VisitorPage Page(int status, string title, string heading, string text, VisitorBrand? brand) => new VisitorPage(language =>
+        Render(status, language, title, $"<h1>{language.T(heading)}</h1><p>{language.T(text)}</p>", brand));
+
+    private IResult Render(int status, VisitorLanguage language, string title, string body, VisitorBrand? brand, string policy = PageLayout.Policy) =>
+        PageLayout.Render(status, language, language.T(title), body, brand, options.Value.ShowPoweredBy, policy);
 
     private VisitorBrand? BrandOf(Route route)
     {
