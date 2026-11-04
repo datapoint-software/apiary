@@ -8,3 +8,5 @@ A clickable prototype of Apiary's admin interface: every page in the sidebar, th
 - **Attribution:** the footer under every page and the About dialog show the Datapoint logo and "Based on Apiary by Datapoint - Sistemas de Informação, Lda.", as the license requires.
 
 Built from `design/prototype/` by `python3 design/tools/build.py`.
+
+New ideas are tried on top of it in `design/ideas/<slug>/`, which Git ignores, and built with `python3 design/prototype/build.py --idea <slug>`; an idea that is chosen moves into `design/prototype/`. See `.claude/skills/prototype/SKILL.md`.

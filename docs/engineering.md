@@ -26,6 +26,7 @@ tests/
   Datapoint.Apiary.Architecture.Tests/   Checks the dependency rules below
 deploy/                            Compose and stack files
 design/                            The published design system and the prototype (see design/prototype/README.md)
+  ideas/                           Feature ideas being tried on the prototype, ignored by Git (see .claude/skills/prototype/SKILL.md)
 tools/                             Repository scripts, such as the third-party notices generator
 docs/  branding/
 Datapoint.Apiary.slnx  Directory.Build.props  Directory.Packages.props  global.json  .editorconfig
