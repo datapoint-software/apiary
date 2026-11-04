@@ -83,7 +83,7 @@ public sealed partial class CertificateIssuer(
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             var failure = exception as AcmeException ?? new AcmeException(AcmeErrors.Rejected, exception.Message);
-            LogFailed(host, failure.Code, failure.Detail);
+            LogFailed(exception, host, failure.Code, failure.Detail);
             return await FailedAsync(certificate, failure, user, action, lockName, tokens, cancellationToken);
         }
     }
@@ -166,5 +166,5 @@ public sealed partial class CertificateIssuer(
     private partial void LogIssued(string host, DateTimeOffset notAfter);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't get a certificate for {Host}: {Code} {Detail}")]
-    private partial void LogFailed(string host, string code, string? detail);
+    private partial void LogFailed(Exception exception, string host, string code, string? detail);
 }

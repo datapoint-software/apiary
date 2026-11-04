@@ -88,12 +88,22 @@ public sealed class AcmeClient(HttpClient http, TimeProvider time) : IAcmeClient
         }
         catch (HttpRequestException exception)
         {
-            throw new AcmeException(AcmeErrors.Unreachable, exception.Message, exception);
+            throw new AcmeException(AcmeErrors.Unreachable, Describe(exception), exception);
         }
         catch (TaskCanceledException exception) when (exception.InnerException is TimeoutException)
         {
             throw new AcmeException(AcmeErrors.Unreachable, "The ACME server didn't answer in time.", exception);
         }
+    }
+
+    private static string Describe(Exception exception)
+    {
+        var messages = new List<string>();
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            messages.Add(current.Message.Replace(", see inner exception", string.Empty, StringComparison.Ordinal).TrimEnd('.'));
+        }
+        return string.Join(": ", messages.Distinct(StringComparer.Ordinal));
     }
 
     private async Task<AcmeSession> SessionAsync(AcmeAccount account, ECDsa key, CancellationToken cancellationToken) =>
