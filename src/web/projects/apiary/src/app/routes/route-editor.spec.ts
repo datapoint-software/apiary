@@ -8,7 +8,10 @@ import { Auth } from '../auth/auth';
 import { appMessages } from '../errors/app-messages';
 import { nextRequest } from '../testing/backend';
 import { aCluster, aProblem, aProject, aRoute, aSignedInUser } from '../testing/builders';
-import { byLabel, byRole, errorOf, settle, type } from '../testing/dom';
+import { byLabel, byRole, errorOf, settle, textOf, type } from '../testing/dom';
+import { ClosingDialog } from '../testing/closing-dialog';
+import { RouteAccessDialog } from './route-access-dialog';
+import { Dialog } from '@angular/cdk/dialog';
 import { noServerChecks } from '../testing/no-server-checks';
 import { RouteEditor } from './route-editor';
 
@@ -161,5 +164,89 @@ describe('RouteEditor', () => {
       host: 'shop.example.com',
       path: '/cart',
     });
+  });
+
+  it('shows the status, traffic and last change of an existing route', async () => {
+    const editor = await render(
+      [aProject()],
+      aRoute({
+        requestsPerMinute: 12,
+        changedBy: 'Ana Silva',
+        changedAt: new Date().toISOString(),
+      }),
+    );
+
+    expect(textOf(editor.fixture)).toContain('12 req/min');
+  });
+
+  it('says when a route doesn’t exist', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([noServerChecks])),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        provideErrorMessages(appMessages),
+      ],
+    });
+    const fixture = TestBed.createComponent(RouteEditor);
+    fixture.componentRef.setInput('id', 'route-9');
+    const backend = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    backend.expectOne('/api/projects/list').flush([aProject()]);
+    backend.expectOne('/api/certificates/list').flush([]);
+    backend
+      .expectOne('/api/routes/get')
+      .flush(aProblem(404, 'route.notFound'), { status: 404, statusText: 'Not Found' });
+    await settle(fixture);
+
+    expect(textOf(fixture)).toContain('This route doesn’t exist');
+  });
+
+  it('tells a viewer they can only look', async () => {
+    const editor = await render([aProject()], aRoute());
+    TestBed.inject(Auth).user.set(aSignedInUser({ role: 'viewer' }));
+    await settle(editor.fixture);
+
+    expect(textOf(editor.fixture)).toContain('You can view this route');
+  });
+
+  it('lists the uploaded certificates to choose from', async () => {
+    const editor = await render();
+
+    (editor.fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('input[type="radio"][value="uploaded"]')
+      ?.click();
+    await settle(editor.fixture);
+
+    expect(byLabel<HTMLSelectElement>(editor.fixture, 'Uploaded certificate').options[0].text).toBe(
+      'Choose a certificate',
+    );
+  });
+
+  it('shows the password once a route that asks for one is created', async () => {
+    const dialog = new ClosingDialog();
+    TestBed.overrideProvider(Dialog, { useValue: dialog });
+    const editor = await render();
+    await fillIn(editor, 'Hostname', 'shop.example.com');
+    await fillIn(editor, 'Service or host', 'shop-v1');
+    (
+      [...(editor.fixture.nativeElement as HTMLElement).querySelectorAll('label')]
+        .find((l) => l.textContent?.includes('Ask visitors for a password'))
+        ?.querySelector('input') as HTMLInputElement
+    ).click();
+    await settle(editor.fixture);
+
+    await submit(editor, 'Create route');
+    (await nextRequest(editor.backend, '/api/routes/create')).flush({});
+
+    await vi.waitFor(() => expect(dialog.opened[0]?.component).toBe(RouteAccessDialog));
+  });
+
+  it('has unsaved changes once a field is edited', async () => {
+    const editor = await render();
+
+    await fillIn(editor, 'Hostname', 'shop.example.com');
+
+    expect(editor.fixture.componentInstance.hasUnsavedChanges()).toBe(true);
   });
 });

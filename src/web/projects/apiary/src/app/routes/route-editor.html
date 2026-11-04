@@ -166,12 +166,12 @@
       </div>
     </section>
 
-    <ap-access-section [route]="route" [current]="existing.value()?.password" [canWrite]="auth.canOperate()" />
+    <ap-access-section [route]="route" [current]="current()?.password" [canWrite]="auth.canOperate()" />
 
     <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
 
-    @if (existing.value(); as current) {
-      <ap-route-danger-zone [route]="current" (deleted)="leave()" />
+    @if (current(); as loaded) {
+      <ap-route-danger-zone [route]="loaded" (deleted)="leave()" />
     }
 
     @if (auth.canOperate()) {

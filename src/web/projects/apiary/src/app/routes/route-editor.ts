@@ -64,9 +64,10 @@ export class RouteEditor implements HasUnsavedChanges {
     const id = this.id();
     return id ? this.api.query('routes.get', { id }) : undefined;
   });
-  protected readonly requests = computed(() => perMinute(this.existing.value()?.requestsPerMinute ?? 0));
+  protected readonly current = computed(() => (this.existing.hasValue() ? this.existing.value() : undefined));
+  protected readonly requests = computed(() => perMinute(this.current()?.requestsPerMinute ?? 0));
   protected readonly status = computed(() => {
-    const route = this.existing.value();
+    const route = this.current();
     return route ? routeStatus(route, this.i18n) : undefined;
   });
 
@@ -77,11 +78,11 @@ export class RouteEditor implements HasUnsavedChanges {
     return error ? this.messages.describe('route.notFound') : '';
   });
   protected readonly heading = computed(() => {
-    const route = this.existing.value();
+    const route = this.current();
     return this.isNew() || !route ? this.i18n.t('New route') : routeLabel(route);
   });
   protected readonly changed = computed(() => {
-    const route = this.existing.value();
+    const route = this.current();
     if (!route) {
       return '';
     }
@@ -98,7 +99,7 @@ export class RouteEditor implements HasUnsavedChanges {
 
   constructor() {
     effect(() => {
-      const route = this.existing.value();
+      const route = this.current();
       if (route && !untracked(() => this.route().dirty())) {
         this.model.set(routeModel(route));
       }
@@ -144,7 +145,7 @@ export class RouteEditor implements HasUnsavedChanges {
 
   private async persist(): Promise<RouteAccessData | undefined> {
     const value = this.model();
-    const secrets = passwordSecrets(value.password, !!this.existing.value()?.password?.linkMadeAt);
+    const secrets = passwordSecrets(value.password, !!this.current()?.password?.linkMadeAt);
     const body = routeRequest(value, secrets);
     const id = this.id();
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));
