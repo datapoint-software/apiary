@@ -18,6 +18,7 @@ using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.Health;
 using Yarp.ReverseProxy.LoadBalancing;
+using Yarp.ReverseProxy.Transforms;
 
 namespace Datapoint.Apiary.Proxy;
 
@@ -65,7 +66,9 @@ public static class ProxyServiceCollectionExtensions
         });
         services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
         services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
-        services.AddReverseProxy().AddTransforms(new ApiaryCookieFilter(adminCookies).Apply);
+        services.AddReverseProxy()
+            .AddTransforms(context => context.AddOriginalHost())
+            .AddTransforms(new ApiaryCookieFilter(adminCookies).Apply);
         return services;
     }
 }
