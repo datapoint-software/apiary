@@ -207,7 +207,7 @@ Security steps that admins have to remember get skipped, so Apiary rotates every
 
 Three steps, all at once, with nothing to remember in between:
 
-1. If the secret store doesn't have the current key yet, save it from a node running a replica: `docker exec <apiary container> cat /run/secrets/apiary_root_key`. Once every replica is on the new key, it can't be read back anymore.
+1. If the secret store doesn't have the current key yet, save it from a node running a replica: `docker cp <apiary container>:/run/secrets/apiary_root_key - | tar -xO`. Once every replica is on the new key, it can't be read back anymore.
 2. Create the new key as above (e.g. `apiary_root_key_2`), copy it into the secret store and delete the file.
 3. Change the secret's name in the compose file and run `docker stack deploy`.
 
