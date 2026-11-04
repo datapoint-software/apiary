@@ -222,6 +222,12 @@ Where the words come from:
 - Raft runs as several in-process replicas, so failures, elections and recovery are tested without Docker.
 - Test method names are sentences with underscores (`Rejects_a_loopback_target`). CA1707 is turned off for test projects only.
 - **Tests read as specifications:** one behavior per test, laid out as arrange, act, assert, with no `if` or loops. Data comes from small named builders (`ARoute().WithTarget("127.0.0.1")`), not unexplained literals. Checked in part by xUnit's analyzers.
+- One test project per source project, plus:
+  - `Datapoint.Apiary.Testing`, shared by all of them: the state builders, test certificates and a test certificate authority, `TemporaryDirectory` and `Eventually`.
+  - `Datapoint.Apiary.Architecture.Tests`, which checks the dependency rules above.
+- `Datapoint.Apiary.Management.Tests` runs the management actions through `ManagementHost` on a standalone replica, with hand-written fakes in `Fakes/`.
+- `Datapoint.Apiary.Tests` starts the real app in-process with `ApiaryApp`, on free ports and a temporary directory, and seeds state with `SeedAsync`. Proxy tests send real traffic to a `Backend` or an `EchoServer`. Since the proxy refuses loopback targets, these listen on the machine's first routable IPv4 address, so those tests need one (any private address does).
+- Run everything with `dotnet test --solution Datapoint.Apiary.slnx`, one project with `dotnet test --project <path>`, one class with `--filter-class "*Name"`.
 
 ## Angular
 
@@ -310,6 +316,6 @@ The interface is in English and European Portuguese (`pt-PT`). A signed-in user'
 
 - The `@angular/build` builder.
 - [angular-eslint](https://github.com/angular-eslint/angular-eslint) and typescript-eslint, with the rules under [Readability](#readability) as errors, and Prettier.
-- [Vitest](https://angular.dev/guide/testing) for unit tests, with component harnesses for library components.
-- Playwright with axe-core for end-to-end and accessibility tests, reusing the prototype's flows.
+- [Vitest](https://angular.dev/guide/testing) for unit tests, with component harnesses for library components where the CDK has them, otherwise by role and label. Specs sit next to their source (`route-model.spec.ts`), with shared builders in `src/app/testing/`. Run them with `npx ng test apiary-ui --watch=false` and `npx ng test apiary --watch=false`.
+- [Playwright](https://playwright.dev/) with [axe-core](https://github.com/dequelabs/axe-core-npm/tree/develop/packages/playwright) for end-to-end and accessibility tests, in `src/web/e2e`. `npm run build`, then `npm run e2e`: it starts the real server with `dotnet run` on throwaway data, with the admin port on 19443 (`E2E_ADMIN_PORT` changes it) and the next four ports, creates the first administrator through setup, and runs axe on every admin page in both themes. The first run needs `npx playwright install chromium`.
 - Avoid what the style guide replaced: NgModules, zone.js, `@Input`/`@Output`, `*ngIf`/`*ngFor`, `ngClass`/`ngStyle`, the webpack builders and Karma.
