@@ -5,6 +5,7 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,24 +22,33 @@ jobs:
     name: Publish
     needs: checks
     runs-on: ubuntu-24.04
-    environment: docker-hub
+    environment: ${{ github.event_name == 'push' && 'docker-hub' || '' }}
     env:
       IMAGE: docker.io/datapointsoftware/apiary
-      VERSION: ${{ github.ref_name }}
+      PUBLISH: ${{ github.event_name == 'push' }}
+      TAG: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Check the tag matches the version
+        id: version
         run: |
           props=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
           web=$(sed -n "s/^export const version = '\(.*\)';/\1/p" src/web/projects/apiary/src/app/version.ts)
-          if [ "$VERSION" != "$props" ] || [ "$VERSION" != "$web" ]; then
-            echo "::error::Tag $VERSION doesn't match Directory.Build.props ($props) and version.ts ($web)."
+          if [ "$props" != "$web" ]; then
+            echo "::error::Directory.Build.props ($props) and version.ts ($web) differ."
             exit 1
           fi
+          if [ "$PUBLISH" = true ] && [ "$TAG" != "$props" ]; then
+            echo "::error::Tag $TAG doesn't match the version in the code ($props)."
+            exit 1
+          fi
+          echo "version=$props" >> "$GITHUB_OUTPUT"
       - name: Choose the image tags
         id: tags
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           tags="$IMAGE:$VERSION"
           case "$VERSION" in
@@ -49,6 +59,7 @@ jobs:
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        if: env.PUBLISH == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -56,10 +67,10 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ env.PUBLISH == 'true' }}
           tags: ${{ steps.tags.outputs.tags }}
           labels: |
-            org.opencontainers.image.version=${{ github.ref_name }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=https://github.com/datapoint-software/apiary
           provenance: mode=max

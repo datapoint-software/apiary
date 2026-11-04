@@ -9,7 +9,7 @@ How a version gets from `main` to Docker Hub, and how to try a pre-release on a 
 | [`ci.yml`](../.github/workflows/ci.yml) | Every push to `main` and every pull request | Restores in locked mode, builds, checks formatting and third-party notices; checks translations, lints and builds the web app; builds the image for `linux/amd64` without pushing it |
 | [`release.yml`](../.github/workflows/release.yml) | A tag such as `1.0.0-alpha.1` or `1.0.0` | Runs the same checks, checks the tag matches the version in the code, then builds the image for `linux/amd64` and `linux/arm64` and pushes it to [`datapointsoftware/apiary`](https://hub.docker.com/r/datapointsoftware/apiary) |
 
-Only a tag publishes an image. A release tags the image with its version; a final release (no `-`) also moves `latest`, a pre-release never does. Each image carries a build provenance attestation and an SBOM, which `docker buildx imagetools inspect datapointsoftware/apiary:<version> --format '{{ json .SBOM }}'` shows.
+Only a tag publishes an image. To rehearse a release, run the Release workflow by hand from **Actions → Release → Run workflow**: it runs every step for both platforms, but doesn't sign in to Docker Hub or push, so it needs no secrets. A release tags the image with its version; a final release (no `-`) also moves `latest`, a pre-release never does. Each image carries a build provenance attestation and an SBOM, which `docker buildx imagetools inspect datapointsoftware/apiary:<version> --format '{{ json .SBOM }}'` shows.
 
 Actions are pinned by commit SHA, with the version in a comment, so a moved tag upstream can't change what runs. Update them on purpose, together with the comment.
 
