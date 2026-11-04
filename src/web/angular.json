@@ -28,7 +28,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "tsConfig": "projects/apiary-ui/tsconfig.spec.json"
+            "tsConfig": "projects/apiary-ui/tsconfig.spec.json",
+            "coverageThresholds": { "statements": 91, "branches": 96, "functions": 72, "lines": 88 }
           }
         },
         "lint": {
@@ -118,7 +119,10 @@
           }
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageThresholds": { "statements": 94, "branches": 90, "functions": 89, "lines": 93 }
+          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

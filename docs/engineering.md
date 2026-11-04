@@ -217,9 +217,10 @@ Where the words come from:
 ### Tests
 
 - [xUnit v3](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform) on Microsoft.Testing.Platform, with xUnit's own assertions. No FluentAssertions, which is now commercial.
-- Coverage with Microsoft.Testing.Extensions.CodeCoverage.
+- Coverage with Microsoft.Testing.Extensions.CodeCoverage, collected from the product's assemblies only, without generated code (`tests/coverage.config`). CI fails when a project falls below its threshold in `tools/coverage-thresholds.json`; `python3 tools/coverage.py --files` shows what each file misses. Raise a threshold when coverage grows, and never lower one without saying why in the commit.
 - `WebApplicationFactory` for the admin API and MCP.
-- Raft runs as several in-process replicas, so failures, elections and recovery are tested without Docker.
+- Raft runs as several in-process replicas, so failures, elections and recovery are tested without Docker. `SwarmReplicas` starts each replica in Swarm mode on its own loopback address (127.0.0.1 to 127.0.0.4), with the same ports, as Swarm tasks have, and a fake of Docker's DNS (`FakePeerNetwork`). macOS has only 127.0.0.1 until the aliases are added (`for n in 2 3 4; do sudo ifconfig lo0 alias 127.0.0.$n up; done`, until the next restart); without them, those tests are skipped. Linux answers on all of 127.0.0.0/8.
+- Single sign-on is tested against `FakeIdentityProvider`, which serves a discovery document, keys and a token endpoint, and signs real ID tokens, so the client is checked against OpenID Connect rather than against itself.
 - Test method names are sentences with underscores (`Rejects_a_loopback_target`). CA1707 is turned off for test projects only.
 - **Tests read as specifications:** one behavior per test, laid out as arrange, act, assert, with no `if` or loops. Data comes from small named builders (`ARoute().WithTarget("127.0.0.1")`), not unexplained literals. Checked in part by xUnit's analyzers.
 - One test project per source project, plus:
@@ -227,7 +228,7 @@ Where the words come from:
   - `Datapoint.Apiary.Architecture.Tests`, which checks the dependency rules above.
 - `Datapoint.Apiary.Management.Tests` runs the management actions through `ManagementHost` on a standalone replica, with hand-written fakes in `Fakes/`.
 - `Datapoint.Apiary.Tests` starts the real app in-process with `ApiaryApp`, on free ports and a temporary directory, and seeds state with `SeedAsync`. Proxy tests send real traffic to a `Backend` or an `EchoServer`. Since the proxy refuses loopback targets, these listen on the machine's first routable IPv4 address, so those tests need one (any private address does).
-- Run everything with `dotnet test --solution Datapoint.Apiary.slnx`, one project with `dotnet test --project <path>`, one class with `--filter-class "*Name"`.
+- Run everything with `dotnet test --solution Datapoint.Apiary.slnx` (CI adds `--max-parallel-test-modules 2 --coverage --coverage-output-format cobertura --coverage-settings tests/coverage.config`; the multi-replica tests time out when every project runs at once), one project with `dotnet test --project <path>`, one class with `--filter-class "*Name"`.
 
 ## Angular
 
@@ -316,6 +317,6 @@ The interface is in English and European Portuguese (`pt-PT`). A signed-in user'
 
 - The `@angular/build` builder.
 - [angular-eslint](https://github.com/angular-eslint/angular-eslint) and typescript-eslint, with the rules under [Readability](#readability) as errors, and Prettier.
-- [Vitest](https://angular.dev/guide/testing) for unit tests, with component harnesses for library components where the CDK has them, otherwise by role and label. Specs sit next to their source (`route-model.spec.ts`), with shared builders in `src/app/testing/`. Run them with `npx ng test apiary-ui --watch=false` and `npx ng test apiary --watch=false`.
+- [Vitest](https://angular.dev/guide/testing) for unit tests, with component harnesses for library components where the CDK has them, otherwise by role and label. Specs sit next to their source (`route-model.spec.ts`), with shared builders in `src/app/testing/`. Run them with `npx ng test apiary-ui --watch=false` and `npx ng test apiary --watch=false`. With `--coverage`, as CI runs them, they fail below the `coverageThresholds` in `angular.json`; raise those when coverage grows, as for the server.
 - [Playwright](https://playwright.dev/) with [axe-core](https://github.com/dequelabs/axe-core-npm/tree/develop/packages/playwright) for end-to-end and accessibility tests, in `src/web/e2e`. `npm run build`, then `npm run e2e`: it starts the real server with `dotnet run` on throwaway data, with the admin port on 19443 (`E2E_ADMIN_PORT` changes it) and the next four ports, creates the first administrator through setup, and runs axe on every admin page in both themes. The first run needs `npx playwright install chromium`.
 - Avoid what the style guide replaced: NgModules, zone.js, `@Input`/`@Output`, `*ngIf`/`*ngFor`, `ngClass`/`ngStyle`, the webpack builders and Karma.

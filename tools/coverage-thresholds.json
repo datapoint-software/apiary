@@ -1,0 +1,8 @@
+{
+  "Datapoint.Apiary": { "lines": 79, "branches": 65 },
+  "Datapoint.Apiary.Certificates": { "lines": 89, "branches": 79 },
+  "Datapoint.Apiary.Cluster": { "lines": 88, "branches": 77 },
+  "Datapoint.Apiary.Management": { "lines": 90, "branches": 78 },
+  "Datapoint.Apiary.Proxy": { "lines": 86, "branches": 70 },
+  "Datapoint.Apiary.Security": { "lines": 100, "branches": 99 }
+}

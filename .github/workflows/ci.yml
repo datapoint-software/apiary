@@ -28,7 +28,8 @@ jobs:
       - run: dotnet build Datapoint.Apiary.slnx -c Release --no-restore
       - run: dotnet format Datapoint.Apiary.slnx --verify-no-changes --no-restore
       - run: python3 tools/third-party-notices.py --check
-      - run: dotnet test --solution Datapoint.Apiary.slnx -c Release --no-build --coverage --coverage-output-format cobertura
+      - run: dotnet test --solution Datapoint.Apiary.slnx -c Release --no-build --max-parallel-test-modules 2 --coverage --coverage-output-format cobertura --coverage-settings tests/coverage.config
+      - run: python3 tools/coverage.py --check --files
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
