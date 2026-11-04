@@ -563,7 +563,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ap-shell[data-collapsed="true"] .ap-nav-label,
 .ap-shell[data-collapsed="true"] .ap-brand-name,
 .ap-shell[data-collapsed="true"] .ap-nav-item .ap-count,
-.ap-shell[data-collapsed="true"] .ap-side-foot .ap-attribution { opacity: 0; pointer-events: none; }
 .ap-shell[data-collapsed="true"] .ap-side .ap-overline { opacity: 0; }
 /* Center the icons in the collapsed rail: 48px items, 16px icons, 18px logo. */
 .ap-shell[data-collapsed="true"] .ap-nav-item { padding-inline: 16px; }
@@ -586,16 +585,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   pointer-events: none;
   z-index: 40;
 }
-/* The rule sits halfway between the About label's text and the logo: 8px below the item's box, whose text ends 8px above it, then 16px to the logo. */
 .ap-side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--space-2); padding: 0; }
-.ap-side-foot .ap-attribution { width: calc(var(--sidebar) - 2 * var(--space-3)); padding: 15px 10px 0; border-top: 1px solid var(--line); white-space: normal; gap: 4px; transition: opacity 200ms ease; }
-.ap-side-foot .ap-attribution svg { width: 92px; margin-bottom: 4px; }
-.ap-shell[data-collapsed="true"] .ap-side-foot .ap-attribution { border-top-color: transparent; }
 .ap-side-scrim { display: none; }
 
 /* Page footer: the Datapoint logo, the version, license and source links, and the credit, centered under the content
-   of every page. It replaces the sidebar attribution above, which a collapsed sidebar hid; that stays until the app's
-   shell moves to the footer. Required by the license in every version: never remove it. */
+   of every page, where a collapsed sidebar can't hide it. Required by the license in every version: never remove it. */
 .ap-shell-body { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
 .ap-shell-body > .ap-content { flex: 1 0 auto; }
 .ap-app-foot { max-width: calc(var(--content-max) + 64px); width: 100%; box-sizing: border-box; padding: 0 var(--space-6) var(--space-7); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-3); }
@@ -659,7 +653,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     transition: transform 300ms cubic-bezier(.2, .8, .2, 1), visibility 0s linear 300ms;
   }
   .ap-shell[data-drawer="open"] .ap-side { background: var(--surface); transform: none; visibility: visible; transition: transform 300ms cubic-bezier(.2, .8, .2, 1); }
-  .ap-shell .ap-nav-label, .ap-shell .ap-brand-name, .ap-shell .ap-nav-item .ap-count, .ap-shell .ap-side-foot .ap-attribution { opacity: 1 !important; pointer-events: auto !important; }
+  .ap-shell .ap-nav-label, .ap-shell .ap-brand-name, .ap-shell .ap-nav-item .ap-count { opacity: 1 !important; pointer-events: auto !important; }
   .ap-shell .ap-side .ap-overline { opacity: 1 !important; }
   .ap-side-scrim { display: block; position: fixed; inset: 0; z-index: 44; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 300ms ease; }
   .ap-shell[data-drawer="open"] .ap-side-scrim { opacity: 1; pointer-events: auto; }
