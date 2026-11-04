@@ -9,7 +9,7 @@ To report a vulnerability, don't open an issue: follow the [security policy](SEC
 - **Questions and ideas:** ask in [Discussions](https://github.com/datapoint-software/apiary/discussions), such as how to deploy Apiary or whether it fits your use. Issues are for bugs and agreed changes.
 - **Bugs and small fixes:** open a pull request directly, or an [issue](https://github.com/datapoint-software/apiary/issues/new/choose) first if you aren't sure it's a bug.
 - **New features and larger changes:** open an issue first and describe the problem you want to solve. Apiary's scope and design are written down in [README.md](README.md) and the documents it links to, and some changes affect how a production cluster keeps its state. Agreeing on the approach first saves you from rewriting a pull request.
-- **Sign the [Contributor License Agreement](CLA.md).** On your first pull request, add a comment with the sentence in its [How to sign](CLA.md#how-to-sign) section. You sign once, and it covers all your future contributions. A maintainer checks that every author of a pull request's commits has signed before merging it. [CLA.md](CLA.md) explains why Datapoint asks for it.
+- **Sign the [Contributor License Agreement](CLA.md).** On your first pull request, add a comment with the sentence in its [How to sign](CLA.md#how-to-sign) section. You sign once, and it covers all your future contributions. A maintainer records your agreement in a private record kept by Datapoint, not in this repository, and checks that every author of a pull request's commits has signed before merging it. [CLA.md](CLA.md) explains why Datapoint asks for it.
 
 ## Setting up
 
