@@ -71,7 +71,7 @@ internal sealed class SwarmReplicas : IAsyncDisposable
         Dns.Add(LoopbackAliases.Address(replica));
         var app = Create(replica, RootKey);
         app.UseKestrel();
-        app.StartServer();
+        StartLettingItStopItself(app);
         _running[replica] = app;
         return app;
     }
@@ -97,6 +97,17 @@ internal sealed class SwarmReplicas : IAsyncDisposable
     {
         await Task.WhenAll(_running.Keys.ToList().Select(StopReplicaAsync));
         _directory.Dispose();
+    }
+
+    private static void StartLettingItStopItself(ApiaryApp app)
+    {
+        try
+        {
+            app.StartServer();
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private string RootKeyFile(RootKey key) => Path.Combine(_directory.Path, $"root-key-{key.Id}");
