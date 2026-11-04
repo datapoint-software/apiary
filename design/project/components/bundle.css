@@ -16,6 +16,7 @@
 .ap :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ap a { color: var(--honey-text); text-decoration: none; }
 .ap a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.ap p a:not(.ap-btn), .ap .ap-banner-body a:not(.ap-btn) { text-decoration: underline; text-underline-offset: 2px; }
 .ap-h { font-family: var(--font-display); margin: 0; text-wrap: balance; color: var(--ink); }
 .ap-h-1 { font-size: 2rem; line-height: 2.375rem; font-weight: 700; letter-spacing: -0.022em; }
 .ap-h-2 { font-size: 1.3125rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.015em; }
@@ -327,7 +328,7 @@
 
 /* Copy field */
 .ap-copy { display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding: 4px 4px 4px 12px; border-radius: var(--radius-2); background: var(--sunken); }
-.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-x: auto; white-space: nowrap; padding: 6px 0; }
+.ap-copy code { flex: 1; min-width: 0; font: 400 0.8125rem/1.125rem var(--font-data); overflow-wrap: anywhere; padding: 6px 0; }
 .ap-copy .ap-btn { background: var(--surface); }
 
 /* Cluster map: one hexagon per replica */
@@ -426,7 +427,7 @@
 .ap .ap-crumbs a { color: var(--ink-2); }
 .ap-page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
 .ap-attribution { display: flex; flex-direction: column; gap: 6px; font-size: 0.6875rem; line-height: 0.9375rem; color: var(--ink-3); }
-.ap .ap-attribution a { color: var(--ink-2); }
+.ap .ap-attribution a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .ap-attribution svg { width: 92px; height: auto; color: var(--ink-2); }
 
 
@@ -735,7 +736,7 @@
 .ap-dialog-backdrop { background: var(--scrim); animation: ap-fade 200ms ease; }
 .ap-dialog-pane { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .ap-dialog-pane > * { display: contents; }
-.ap-dialog-pane .ap-dialog { width: 100%; max-height: inherit; overflow: auto; }
+.ap-dialog-pane .ap-dialog { width: 100%; max-height: calc(100vh - 32px); overflow: auto; }
 .ap-dialog-pane:has(.ap-dialog-xl) { width: min(760px, calc(100vw - 32px)); }
 
 /* Links styled as buttons keep the button's colors, not the link color. */
