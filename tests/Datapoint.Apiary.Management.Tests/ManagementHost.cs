@@ -38,6 +38,7 @@ public sealed class ManagementHost : IDisposable
         services.AddSingleton<IBreachedPasswords>(Breached);
         services.AddSingleton<ICommandForwarder>(Forwarder);
         services.AddSingleton<IRequestOrigin, TestOrigin>();
+        services.AddLogging();
         services.AddMetrics();
         services.AddSingleton<ClusterMetrics>();
         services.AddApiaryManagement();
