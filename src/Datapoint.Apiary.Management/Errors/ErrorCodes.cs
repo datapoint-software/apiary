@@ -155,6 +155,9 @@ public static class ErrorCodes
     public const string PipelineTokenNotFound = "pipelineToken.notFound";
     public const string PipelineTokenNameTaken = "pipelineToken.nameTaken";
     public const string PipelineTokenInvalid = "auth.invalidToken";
+    public const string TrustedProxyNotFound = "trustedProxy.notFound";
+    public const string TrustedProxyDuplicate = "trustedProxy.duplicate";
+    public const string TrustedProxyEverything = "trustedProxy.everything";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -182,5 +185,6 @@ public static class ErrorCodes
         RouteDeclaredInStack, RouteHostInUse, RedirectDeclaredInStack,
         StackNotFound, StackExists, StackNameInvalid, StackDuplicate, StackRemovesEverything, StackTooMany, StackCommitInvalid, StackPipelineUrlInvalid,
         PipelineTokenNotFound, PipelineTokenNameTaken, PipelineTokenInvalid,
+        TrustedProxyNotFound, TrustedProxyDuplicate, TrustedProxyEverything,
     ];
 }

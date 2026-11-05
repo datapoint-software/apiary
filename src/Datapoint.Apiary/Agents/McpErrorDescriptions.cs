@@ -162,6 +162,9 @@ public static partial class McpErrorDescriptions
         ["stack.pipelineUrlInvalid"] = "The pipeline link must be a full https:// address.",
         ["pipelineToken.notFound"] = "There's no pipeline token with that id. List them with pipeline-tokens.list.",
         ["pipelineToken.nameTaken"] = "Another pipeline token has this name. Choose another.",
+        ["trustedProxy.notFound"] = "There's no trusted proxy with that id. List them with trusted-proxies.list.",
+        ["trustedProxy.duplicate"] = "This range is already trusted. Update that entry instead.",
+        ["trustedProxy.everything"] = "0.0.0.0/0 and ::/0 would trust every address, so anyone could claim any address and get past every allowlist. Use only the proxies' own ranges.",
         ["auth.invalidToken"] = "The pipeline token isn't valid for this stack: it may have expired or been revoked.",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 

@@ -135,5 +135,8 @@ export const appMessages: MessageCatalog = {
   'stack.pipelineUrlInvalid': () => 'The pipeline link must start with https://.',
   'pipelineToken.notFound': () => 'This token was already revoked. The list now shows the current tokens.',
   'pipelineToken.nameTaken': () => 'Another token has this name. Choose another.',
+  'trustedProxy.notFound': () => 'This proxy was already removed. The list now shows the current proxies.',
+  'trustedProxy.duplicate': () => 'This range is already on the list.',
+  'trustedProxy.everything': () => 'This would trust every address, so anyone could claim to be anyone and every allowlist would let them in. Enter only your proxies’ ranges.',
   'auth.invalidToken': () => 'This pipeline token isn’t valid: it may have expired or been revoked. Ask an Administrator for a new one.',
 };

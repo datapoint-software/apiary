@@ -148,5 +148,8 @@ export const appMessagesPortuguese: MessageCatalog = {
   'stack.pipelineUrlInvalid': () => 'A ligação da pipeline tem de começar por https://.',
   'pipelineToken.notFound': () => 'Este token já foi revogado. A lista mostra agora os tokens atuais.',
   'pipelineToken.nameTaken': () => 'Outro token tem este nome. Escolha outro.',
+  'trustedProxy.notFound': () => 'Este proxy já foi removido. A lista mostra agora os proxies atuais.',
+  'trustedProxy.duplicate': () => 'Este intervalo já está na lista.',
+  'trustedProxy.everything': () => 'Isto confiaria em todos os endereços, por isso qualquer pessoa poderia fazer-se passar por qualquer outra e todas as listas de endereços permitidos a deixariam entrar. Introduza só os intervalos dos seus proxies.',
   'auth.invalidToken': () => 'Este token de pipeline não é válido: pode ter expirado ou sido revogado. Peça um novo a um Administrador.',
 };
