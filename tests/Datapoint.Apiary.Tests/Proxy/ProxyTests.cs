@@ -51,6 +51,36 @@ public sealed class ProxyTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_visitor_can_t_choose_the_address_in_X_Forwarded_For()
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
+
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", ("X-Forwarded-For", "10.0.0.1")))["headers"]!;
+
+        Assert.Equal("127.0.0.1", Text(headers, "x-forwarded-for"));
+    }
+
+    [Fact]
+    public async Task A_visitor_s_Forwarded_header_never_reaches_a_target()
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
+
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", ("Forwarded", "for=10.0.0.1;proto=https")))["headers"]!;
+
+        Assert.Null(headers["forwarded"]);
+    }
+
+    [Fact]
+    public async Task A_visitor_s_X_Real_IP_header_never_reaches_a_target()
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
+
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", ("X-Real-IP", "10.0.0.1")))["headers"]!;
+
+        Assert.Null(headers["x-real-ip"]);
+    }
+
+    [Fact]
     public async Task The_longest_matching_path_wins()
     {
         await using var blog = await Backend.StartAsync("blog");
