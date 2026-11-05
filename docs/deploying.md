@@ -126,7 +126,7 @@ In the admin UI:
    networks:
      apiary:
        external: true
-       name: apiary_apiary
+       name: apiary
    ```
 
 2. In the admin UI, add a route from the site's hostname (e.g. `shop.example.com`) to the service name and port (e.g. `shop_shop`, port 8080).
@@ -158,11 +158,34 @@ A backup can only be restored with the root key it was made with: keep each root
 
 ## Day to day
 
-- **Upgrade**: back up first, then change `APIARY_VERSION` and run the same `docker stack deploy`. Swarm replaces one replica at a time and rolls back if one fails to start. Each version reads the state of the one before it, but not always the other way round, so to go back a version after the upgrade finished, restore the backup.
+- **Upgrade**: back up first, then change `APIARY_VERSION` and run the same `docker stack deploy`. Swarm replaces one replica at a time and rolls back if one fails to start. Each version reads the state of the one before it, but not always the other way round, so to go back a version after the upgrade finished, restore the backup. From `1.0.0-beta.3` or earlier, follow [Moving to the `apiary` network](#moving-to-the-apiary-network) instead.
 - **Add an edge node**: label it, raise `replicas:` and deploy. It joins by itself.
 - **Rotate the root key**: follow the steps on the Root key page in the admin UI, after a suspected leak or as your policy requires. Connected AI agents have to connect again afterwards.
 - **Visitor pages**: set the brand on Traffic › Visitor pages. To hide the Datapoint logo and "Powered by Apiary" at the bottom of every visitor page, set `Apiary__VisitorPages__ShowPoweredBy: "false"`.
 - **Locked out**: on an edge node, `docker exec <apiary container> /app/apiary users create-admin --name <name> --email <email>` creates a new Administrator.
+
+### Moving to the `apiary` network
+
+Up to `1.0.0-beta.3`, the stack file let Swarm name Apiary's network `apiary_apiary`. It's now named `apiary`, so app stacks don't depend on the name of Apiary's stack. Deploying the new file over an older cluster moves Apiary to the new network and away from every app still on the old one, so their sites stop answering. Move in three deploys instead:
+
+1. In your copy of the new stack file, keep the old network for now, then deploy as usual. Each replica restarts once, on both networks.
+
+   ```yaml
+   services:
+     apiary:
+       networks: [apiary, previous]
+   networks:
+     apiary:
+       name: apiary
+       driver: overlay
+       attachable: true
+     previous:
+       name: apiary_apiary
+       external: true
+   ```
+
+2. In each app's stack file, change the external network's `name:` to `apiary` and deploy it. Each app moves when its own stack is deployed, and keeps answering throughout.
+3. Remove `previous` from Apiary's stack file, deploy again, and delete the old network with `docker network rm apiary_apiary`. Docker refuses while anything is still attached, so a refusal names a stack you missed in step 2: `docker network inspect apiary_apiary` lists what's attached.
 
 ## Checklist
 

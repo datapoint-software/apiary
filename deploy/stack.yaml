@@ -48,5 +48,6 @@ volumes:
 
 networks:
   apiary:
+    name: apiary
     driver: overlay
     attachable: true
