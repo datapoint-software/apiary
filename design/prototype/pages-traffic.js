@@ -540,7 +540,7 @@ function pipelineLog(title, ok, log, note) {
 function simulateApply(s, outcome) {
   const t = D.pipelineTokens.find(x => x.stack === s.name);
   const cmd = `$ apiary apply --server ${APIARY_URL} --stack ${s.name} /work/stack.yaml`;
-  if (!t) return pipelineLog('The apply was refused', false, `${cmd}\nerror: auth.invalidToken: APIARY_TOKEN isn't a valid pipeline token for stack ${s.name}.\n       It may have expired or been revoked. Ask an Administrator for a new one.\nNothing was changed.`, 'Apiary doesn’t record refused tokens on the stack page: anyone could send one. They’re in the audit log as failed sign-ins.');
+  if (!t) return pipelineLog('The apply was refused', false, `${cmd}\nerror: auth.invalidToken: APIARY_TOKEN isn't a valid pipeline token for stack ${s.name}.\n       It may have expired or been revoked. Ask an Administrator for a new one.\nNothing was changed.`, 'Apiary doesn’t record refused tokens on the stack page or in the audit log: anyone could send one. Its server log has a warning for each.');
   if (outcome === 'quorum' || Proto.state.cluster === 'quorum') {
     return pipelineLog('The apply failed', false, `${cmd}\nRead 3 services and 14 apiary labels from stack.yaml.\nerror: cluster.noQuorum: only 1 of 3 voting replicas can be reached, so Apiary can't save changes.\nNothing was changed. Every replica keeps serving the current routes. Run the job again when the cluster has quorum.`, 'Nothing appears on this page or in the audit log: without quorum, Apiary can’t save anything, its own records included. Only the pipeline log shows it, which is why the command exits with an error and fails the job.');
   }
