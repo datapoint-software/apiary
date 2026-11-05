@@ -328,6 +328,28 @@ public sealed class CreateRouteTests : IDisposable
         Assert.Contains("Host: route.redirectExists", await _host.ErrorsAsync(ACreateRoute(project.Id)));
     }
 
+    [Theory]
+    [InlineData("/old")]
+    [InlineData("/OLD/api")]
+    public async Task A_route_under_a_redirected_path_is_refused(string path)
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+        _host.Seed(new PathRedirectSaved(ARedirect(project.Id, from: "shop.example.com") with { Path = "/old" }));
+
+        Assert.Contains("Path: route.pathRedirected", await _host.ErrorsAsync(ACreateRoute(project.Id) with { Path = path }));
+    }
+
+    [Fact]
+    public async Task A_route_beside_a_redirected_path_is_allowed()
+    {
+        _host.SignedIn();
+        var project = _host.AProjectIn();
+        _host.Seed(new PathRedirectSaved(ARedirect(project.Id, from: "shop.example.com") with { Path = "/old" }));
+
+        Assert.Empty(await _host.ErrorsAsync(ACreateRoute(project.Id) with { Path = "/older" }));
+    }
+
     [Fact]
     public async Task An_unknown_certificate_is_refused()
     {

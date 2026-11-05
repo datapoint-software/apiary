@@ -187,6 +187,31 @@ public sealed class StackApplyTests : IDisposable
     }
 
     [Fact]
+    public async Task An_apply_redirects_a_path_beside_its_own_route()
+    {
+        await _host.SendAsync(AnApply(routes: [AWebRoute()], redirects: [AnOldPathRedirect()]));
+
+        var redirect = _host.State.Redirects.Values.Single();
+        Assert.Equal(("/old", "/new", true), (redirect.Path, redirect.To, redirect.Stack!.Fields.Contains("path")));
+    }
+
+    [Fact]
+    public async Task An_apply_can_t_redirect_a_path_that_hides_its_own_route() =>
+        Assert.Contains("Routes: stack.duplicate", await _host.ErrorsAsync(AnApply(routes: [AWebRoute() with { Path = "/old/api" }], redirects: [AnOldPathRedirect()])));
+
+    [Fact]
+    public async Task An_apply_names_a_path_redirect_by_its_hostname_and_path()
+    {
+        var plan = await _host.SendAsync(AnApply(redirects: [AnOldPathRedirect()]));
+
+        Assert.Equal("shop.example.com/old", Assert.Single(plan.Added).Name);
+    }
+
+    [Fact]
+    public async Task A_path_target_needs_a_redirected_path() =>
+        Assert.Contains("Redirects[0].To: redirect.relativeNeedsPath", await _host.ErrorsAsync(AnApply(redirects: [AnOldPathRedirect() with { Path = null }])));
+
+    [Fact]
     public async Task A_token_for_another_stack_can_t_apply_this_one()
     {
         _host.Seed(new StackSaved(AStack("blog")));
@@ -217,6 +242,8 @@ public sealed class StackApplyTests : IDisposable
         Assert.Contains("PipelineUrl: stack.pipelineUrlInvalid", await _host.ErrorsAsync(AnApply(routes: [AWebRoute()]) with { PipelineUrl = "javascript:alert(1)" }));
 
     private static DeclaredRoute AWebRoute() => new("web", "web", "shop.example.com", 8080);
+
+    private static DeclaredRedirect AnOldPathRedirect() => new("old", "web", "shop.example.com", "/new", Path: "/old");
 
     private static ApplyStackFile AnApply(
         IReadOnlyList<DeclaredRoute>? routes = null,

@@ -20,8 +20,11 @@ public sealed class CreateRedirectHandler(StateTransaction transaction, TimeProv
             command.StatusCode,
             command.KeepPath,
             now,
-            principals.Principal?.Identity?.Name);
-        transaction.Record(new RedirectSaved(redirect));
+            principals.Principal?.Identity?.Name)
+        {
+            Path = RedirectRules.Path(command.Path),
+        };
+        transaction.Record(RedirectChanges.Saved(redirect));
         transaction.Affects(redirect.Id, redirect.ProjectId);
         return new(redirect.Id);
     }

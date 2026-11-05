@@ -73,13 +73,17 @@ public sealed class StackFileReaderTests
                     apiary.redirect.old.to: https://shop.example.com
                     apiary.redirect.old.status: 301
                     apiary.redirect.old.keep-path: "true"
+                    apiary.redirect.sale.from: shop.example.com
+                    apiary.redirect.sale.path: /old-sale
+                    apiary.redirect.sale.to: /sale
             """);
 
         Assert.Empty(file.Errors);
         Assert.Equal(StreamProtocol.Tcp, Assert.Single(file.StreamRoutes, s => s.Name == "postgres").Protocol);
         Assert.Equal((StreamProtocol.Udp, 53, 5353), Assert.Single(file.StreamRoutes, s => s.Name == "dns") is var dns ? (dns.Protocol, dns.ListenPort, dns.Port) : default);
-        var redirect = Assert.Single(file.Redirects);
-        Assert.Equal(("web", "old.example.com", "https://shop.example.com", 301, true), (redirect.Service, redirect.From, redirect.To, redirect.StatusCode, redirect.KeepPath));
+        var redirect = Assert.Single(file.Redirects, r => r.Name == "old");
+        Assert.Equal(("web", "old.example.com", "https://shop.example.com", 301, true, (string?)null), (redirect.Service, redirect.From, redirect.To, redirect.StatusCode, redirect.KeepPath, redirect.Path));
+        Assert.Equal(("/old-sale", "/sale"), Assert.Single(file.Redirects, r => r.Name == "sale") is var sale ? (sale.Path, sale.To) : default);
     }
 
     [Fact]

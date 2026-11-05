@@ -32,7 +32,7 @@ public sealed class DeleteProjectHandler(StateTransaction transaction) : IComman
         {
             var moveTo = MoveTarget(command);
             routes.ForEach(r => transaction.Record(new RouteSaved(r with { ProjectId = moveTo })));
-            redirects.ForEach(r => transaction.Record(new RedirectSaved(r with { ProjectId = moveTo })));
+            redirects.ForEach(r => transaction.Record(RedirectChanges.Saved(r with { ProjectId = moveTo })));
             certificates.ForEach(c => transaction.Record(new CertificateSaved(c with { ProjectId = moveTo })));
             streams.ForEach(s => transaction.Record(new StreamRouteSaved(s with { ProjectId = moveTo })));
         }

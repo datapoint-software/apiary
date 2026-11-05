@@ -7,6 +7,7 @@ public sealed record RedirectView(
     Guid Id,
     Guid ProjectId,
     string From,
+    string Path,
     string To,
     int StatusCode,
     bool KeepPath,
@@ -15,5 +16,5 @@ public sealed record RedirectView(
     StackSource? Stack)
 {
     public static RedirectView Of(Redirect redirect) =>
-        new(redirect.Id, redirect.ProjectId, redirect.From, redirect.To, redirect.StatusCode, redirect.KeepPath, redirect.ChangedAt, redirect.ChangedBy, redirect.Stack);
+        new(redirect.Id, redirect.ProjectId, redirect.From, redirect.Path, redirect.To, redirect.StatusCode, redirect.KeepPath, redirect.ChangedAt, redirect.ChangedBy, redirect.Stack);
 }

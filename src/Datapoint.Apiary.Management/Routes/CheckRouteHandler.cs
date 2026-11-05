@@ -12,9 +12,14 @@ public sealed class CheckRouteHandler(IClusterState cluster) : IQueryHandler<Che
     {
         var state = cluster.Current;
         List<FieldCheck> checks = [];
-        if (CreateRedirectValidator.IsRedirect(state, query.Host))
+        if (RedirectRules.RedirectsWholeHost(state, query.Host))
         {
             checks.Add(new("host", ErrorCodes.RouteRedirectExists));
+        }
+
+        if (RedirectRules.RedirectsRoutePath(state, query.Host, query.Path))
+        {
+            checks.Add(new("path", ErrorCodes.RoutePathRedirected));
         }
 
         if (RouteRules.IsDuplicate(state, query.Host, query.Path, query.Id))

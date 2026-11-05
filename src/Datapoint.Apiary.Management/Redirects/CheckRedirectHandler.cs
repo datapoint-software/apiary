@@ -10,9 +10,27 @@ public sealed class CheckRedirectHandler(IClusterState cluster) : IQueryHandler<
     public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckRedirect query, CancellationToken ct = default)
     {
         var state = cluster.Current;
-        var code = CreateRedirectValidator.IsRoute(state, query.From) ? ErrorCodes.RedirectRouteExists
-            : CreateRedirectValidator.IsRedirect(state, query.From) ? ErrorCodes.RedirectDuplicate
-            : null;
-        return new(code is null ? [] : [new FieldCheck("from", code)]);
+        var check = RedirectRules.IsWholeHost(query.Path) ? WholeHost(state, query.From) : AtPath(state, query.From, query.Path);
+        return new(check is null ? [] : [check]);
+    }
+
+    private static FieldCheck? WholeHost(ApiaryState state, string from)
+    {
+        if (RedirectRules.IsRoute(state, from))
+        {
+            return new FieldCheck("from", ErrorCodes.RedirectRouteExists);
+        }
+
+        return RedirectRules.Exists(state, from, path: null) ? new FieldCheck("from", ErrorCodes.RedirectDuplicate) : null;
+    }
+
+    private static FieldCheck? AtPath(ApiaryState state, string from, string? path)
+    {
+        if (RedirectRules.HidesRoute(state, from, path))
+        {
+            return new FieldCheck("path", ErrorCodes.RedirectHidesRoute);
+        }
+
+        return RedirectRules.Exists(state, from, path) ? new FieldCheck("path", ErrorCodes.RedirectDuplicate) : null;
     }
 }

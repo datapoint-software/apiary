@@ -5,7 +5,7 @@ using Datapoint.Mediator;
 
 namespace Datapoint.Apiary.Management.Redirects;
 
-[Action("redirects.list", "Lists the redirects, sorted by hostname: each one's project, hostname, address, status code and whether it keeps the path.")]
+[Action("redirects.list", "Lists the redirects, sorted by hostname and path: each one's project, hostname, path (/ for the whole hostname), address, status code and whether it keeps the rest of the path.")]
 [Api]
 [ModelContextProtocol]
 [RequiresRole(Role.Viewer)]

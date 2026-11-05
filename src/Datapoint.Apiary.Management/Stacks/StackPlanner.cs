@@ -7,6 +7,7 @@ using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Management.Errors;
 using Datapoint.Apiary.Management.Projects;
+using Datapoint.Apiary.Management.Redirects;
 using Datapoint.Apiary.Management.Routes;
 using Datapoint.Apiary.Management.Streams;
 
@@ -221,6 +222,7 @@ public sealed class StackPlanner(ApiaryState state, StackRecord stack, ApplyStac
                 now,
                 by)
             {
+                Path = RedirectRules.Path(declared.Path),
                 Stack = RedirectSource(declared),
             };
             if (existing.Remove((declared.Service, declared.Name), out var current))
@@ -229,27 +231,28 @@ public sealed class StackPlanner(ApiaryState state, StackRecord stack, ApplyStac
                 continue;
             }
 
-            _saves.Add(new RedirectSaved(redirect));
-            _added.Add(new StackPlanItem(StackItemKind.Redirect, redirect.From));
+            _saves.Add(RedirectChanges.Saved(redirect));
+            _added.Add(new StackPlanItem(StackItemKind.Redirect, RedirectRules.Label(redirect)));
         }
 
         foreach (var redirect in existing.Values)
         {
             _removals.Add(new RedirectDeleted(redirect.Id));
-            _removed.Add(new StackPlanItem(StackItemKind.Redirect, redirect.From));
+            _removed.Add(new StackPlanItem(StackItemKind.Redirect, RedirectRules.Label(redirect)));
         }
     }
 
     private void UpdateRedirect(Redirect current, Redirect updated)
     {
-        var changes = new Comparison(StackItemKind.Redirect, updated.From, current.Stack!, current.ChangedAt, current.ChangedBy, edited: false)
+        var changes = new Comparison(StackItemKind.Redirect, RedirectRules.Label(updated), current.Stack!, current.ChangedAt, current.ChangedBy, edited: false)
             .Field(StackFields.From, current.From, updated.From)
+            .Field(StackFields.Path, current.Path, updated.Path)
             .Field(StackFields.To, current.To, updated.To)
             .Field(StackFields.StatusCode, Text(current.StatusCode), Text(updated.StatusCode))
             .Field(StackFields.KeepPath, current.KeepPath ? "true" : "false", updated.KeepPath ? "true" : "false")
             .Field(StackFields.Project, ProjectName(current.ProjectId), ProjectName(updated.ProjectId))
             .Items;
-        Save(changes, Differ(current.Stack, updated.Stack!), new RedirectSaved(updated));
+        Save(changes, Differ(current.Stack, updated.Stack!), RedirectChanges.Saved(updated));
     }
 
     private void Save(IReadOnlyList<StackPlanItem> changes, bool sourceChanged, IStateChange save)
@@ -282,6 +285,7 @@ public sealed class StackPlanner(ApiaryState state, StackRecord stack, ApplyStac
 
     private StackSource RedirectSource(DeclaredRedirect declared) => new(stack.Name, declared.Service, declared.Name, [
         StackFields.From, StackFields.To, StackFields.StatusCode, StackFields.KeepPath,
+        .. Set(declared.Path is not null, StackFields.Path),
         .. Set(declared.Project is not null, StackFields.Project)]);
 
     private static IEnumerable<string> Set(bool isSet, string field) => isSet ? [field] : [];

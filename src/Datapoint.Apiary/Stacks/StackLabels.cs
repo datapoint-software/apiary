@@ -9,7 +9,7 @@ public sealed class StackLabels
     public const string Prefix = "apiary.";
     private static readonly string[] s_routeSettings = ["host", "port", "path", "timeout", "rate-limit", "project"];
     private static readonly string[] s_streamSettings = ["protocol", "listen", "port", "project"];
-    private static readonly string[] s_redirectSettings = ["from", "to", "status", "keep-path", "project"];
+    private static readonly string[] s_redirectSettings = ["from", "path", "to", "status", "keep-path", "project"];
     private readonly List<DeclaredRoute> _routes = [];
     private readonly List<DeclaredStreamRoute> _streams = [];
     private readonly List<DeclaredRedirect> _redirects = [];
@@ -138,7 +138,7 @@ public sealed class StackLabels
             return;
         }
 
-        _redirects.Add(new DeclaredRedirect(name, service, from, to, project, settings.Number("status"), keepPath));
+        _redirects.Add(new DeclaredRedirect(name, service, from, to, project, settings.Number("status"), keepPath, settings.Optional("path")));
     }
 
     private sealed class Settings(string label, Dictionary<string, string> values, List<string> errors)

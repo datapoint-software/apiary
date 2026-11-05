@@ -12,7 +12,6 @@ public sealed class ApplyStackFileValidator : AbstractValidator<ApplyStackFile>
     public const int MaximumCommit = 64;
     public const int MaximumPipelineUrl = 2048;
     public const int MaximumProject = Projects.ProjectRules.MaximumNameLength;
-    private static readonly int[] s_statusCodes = [301, 302, 307, 308];
 
     public ApplyStackFileValidator(StreamPortPolicy ports)
     {
@@ -46,12 +45,9 @@ public sealed class ApplyStackFileValidator : AbstractValidator<ApplyStackFile>
             redirect.RuleFor(r => r.Name).Must(StackNames.IsLabel).WithErrorCode(ErrorCodes.Invalid);
             redirect.RuleFor(r => r.Service).Must(StackNames.IsLabel).WithErrorCode(ErrorCodes.Invalid);
             redirect.RuleFor(r => r.From).Hostname();
-            redirect.RuleFor(r => r.To).Cascade(CascadeMode.Stop)
-                .MaximumLength(CreateRedirectValidator.MaximumTargetLength).WithErrorCode(ErrorCodes.TooLong)
-                .Must(to => CreateRedirectValidator.Target(to) is not null).WithErrorCode(ErrorCodes.RedirectTargetInvalid)
-                .Must((r, to) => !string.Equals(CreateRedirectValidator.Target(to)!.Host, RouteNormalization.Host(r.From), StringComparison.OrdinalIgnoreCase))
-                .WithErrorCode(ErrorCodes.RedirectLoop);
-            redirect.RuleFor(r => r.StatusCode).Must(code => s_statusCodes.Contains(code!.Value)).WithErrorCode(ErrorCodes.RedirectStatusCode).When(r => r.StatusCode is not null);
+            redirect.RuleFor(r => r.Path!).RedirectPath().When(r => !RedirectRules.IsWholeHost(r.Path));
+            redirect.RuleFor(r => r.To).RedirectTarget(r => r.From, r => r.Path);
+            redirect.RuleFor(r => r.StatusCode).Must(code => RedirectRules.IsStatusCode(code!.Value)).WithErrorCode(ErrorCodes.RedirectStatusCode).When(r => r.StatusCode is not null);
             redirect.RuleFor(r => r.Project).Must(IsProject).WithErrorCode(ErrorCodes.TooLong);
         });
         RuleFor(a => a).Must(HasUniqueNames).WithErrorCode(ErrorCodes.StackDuplicate).OverridePropertyName(nameof(ApplyStackFile.Routes));
@@ -78,9 +74,13 @@ public sealed class ApplyStackFileValidator : AbstractValidator<ApplyStackFile>
 
     private static bool HasUniqueAddresses(ApplyStackFile apply) =>
         IsUnique(apply.Routes.Select(r => (RouteNormalization.Host(r.Host), RouteNormalization.Path(r.Path).ToLowerInvariant())))
-        && IsUnique(apply.Redirects.Select(r => RouteNormalization.Host(r.From)))
+        && IsUnique(apply.Redirects.Select(r => (RouteNormalization.Host(r.From), RedirectRules.Path(r.Path).ToLowerInvariant())))
         && IsUnique(apply.StreamRoutes.Select(s => (s.Protocol, s.ListenPort)))
-        && !apply.Redirects.Any(r => apply.Routes.Any(route => RouteNormalization.Host(route.Host) == RouteNormalization.Host(r.From)));
+        && !apply.Redirects.Any(r => apply.Routes.Any(route => Overlap(r, route)));
+
+    private static bool Overlap(DeclaredRedirect redirect, DeclaredRoute route) =>
+        RouteNormalization.Host(route.Host) == RouteNormalization.Host(redirect.From)
+        && (RedirectRules.IsWholeHost(redirect.Path) || RedirectRules.IsUnder(RouteNormalization.Path(route.Path), RedirectRules.Path(redirect.Path)));
 
     private static bool IsUnique<T>(IEnumerable<T> keys)
     {

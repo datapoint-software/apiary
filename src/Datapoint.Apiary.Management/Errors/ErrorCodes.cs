@@ -68,6 +68,10 @@ public static class ErrorCodes
     public const string RedirectTargetInvalid = "redirect.targetInvalid";
     public const string RedirectLoop = "redirect.loop";
     public const string RedirectStatusCode = "redirect.statusCode";
+    public const string RedirectHidesRoute = "redirect.hidesRoute";
+    public const string RedirectPathReserved = "redirect.pathReserved";
+    public const string RedirectRelativeNeedsPath = "redirect.relativeNeedsPath";
+    public const string RoutePathRedirected = "route.pathRedirected";
     public const string MaintenanceEndBeforeStart = "maintenance.endBeforeStart";
     public const string MaintenanceTooLong = "maintenance.tooLong";
     public const string MaintenanceEnded = "maintenance.ended";
@@ -171,6 +175,7 @@ public static class ErrorCodes
         RoutePasswordRequired, RoutePasswordShort, RouteLinkKeyRequired, RouteLinkKeyInvalid, RouteRequestSize,
         BrandAccentInvalid, BrandLogoType, BrandLogoTooLarge, BrandLogoInvalid, LanguageUnsupported,
         RedirectNotFound, RedirectDuplicate, RedirectRouteExists, RedirectWildcard, RedirectTargetInvalid, RedirectLoop, RedirectStatusCode,
+        RedirectHidesRoute, RedirectPathReserved, RedirectRelativeNeedsPath, RoutePathRedirected,
         CertificateNotFound, CertificateNotUploaded, CertificateNotAutomatic, CertificateDoesNotCover, CertificateRoutesNotCovered,
         CertificateInUse, CertificatePemInvalid, CertificateKeyInvalid, CertificateKeyEncrypted, CertificateKeyMismatch,
         CertificateChainIncomplete, CertificateExpired, CertificateNotYetValid, CertificateNoHostnames, CertificateTooLarge, CertificateRenewing, CertificateRenewTooSoon,

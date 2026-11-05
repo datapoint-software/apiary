@@ -25,8 +25,8 @@ public sealed class GetStackDetailsHandler(IClusterState cluster) : IQueryHandle
             .Select(s => new DeclaredItemView(StackItemKind.StreamRoute, s.Id, s.Name, s.Stack!.Service, s.Protocol, s.ListenPort));
         var redirects = state.Redirects.Values
             .Where(r => r.Stack?.Stack == stack.Name)
-            .OrderBy(r => r.From, StringComparer.Ordinal)
-            .Select(r => new DeclaredItemView(StackItemKind.Redirect, r.Id, r.From, r.Stack!.Service));
+            .OrderBy(r => r.From, StringComparer.Ordinal).ThenBy(r => r.Path, StringComparer.Ordinal)
+            .Select(r => new DeclaredItemView(StackItemKind.Redirect, r.Id, Redirects.RedirectRules.Label(r), r.Stack!.Service));
         var tokens = state.PipelineTokens.Values.Where(t => t.Stack == stack.Name).OrderBy(t => t.CreatedAt).Select(PipelineTokenView.Of);
         return new(new StackDetailsView(StackView.Of(state, stack), [.. routes.Concat(streams).Concat(redirects)], [.. tokens]));
     }
