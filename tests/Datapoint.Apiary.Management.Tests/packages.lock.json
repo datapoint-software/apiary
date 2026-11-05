@@ -285,23 +285,23 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.3, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.3, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.3, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
       "datapoint.apiary.management": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Certificates": "[1.0.0-beta.2, )",
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Certificates": "[1.0.0-beta.3, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.3, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.3, )",
           "Datapoint.Mediator.Abstractions": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization": "[4.0.0-beta.6, )",
           "FluentValidation": "[12.2.0, )",
@@ -314,7 +314,7 @@
       "datapoint.apiary.testing": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.3, )",
           "Microsoft.Extensions.TimeProvider.Testing": "[10.11.0, )"
         }
       },

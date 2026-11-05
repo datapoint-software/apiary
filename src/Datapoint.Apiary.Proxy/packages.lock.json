@@ -75,7 +75,7 @@
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.3, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
