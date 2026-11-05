@@ -211,6 +211,56 @@ public sealed class ProxyTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_path_redirect_keeps_what_follows_the_path()
+    {
+        await _app.SeedAsync(new PathRedirectSaved(ARedirect(from: "shop.example.com", to: "/new") with { Path = "/old" }));
+
+        using var response = await GetAsync("http://shop.example.com/Old/page?x=1");
+
+        Assert.Equal((HttpStatusCode.MovedPermanently, "/new/page?x=1"), (response.StatusCode, response.Headers.Location?.OriginalString));
+    }
+
+    [Fact]
+    public async Task A_path_redirect_of_the_path_itself_goes_to_the_target()
+    {
+        await _app.SeedAsync(new PathRedirectSaved(ARedirect(from: "shop.example.com", to: "https://help.example.com/guide/") with { Path = "/old" }));
+
+        using var response = await GetAsync("http://shop.example.com/old");
+
+        Assert.Equal("https://help.example.com/guide", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task A_path_redirect_lets_the_rest_of_the_hostname_reach_its_route()
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)), new PathRedirectSaved(ARedirect(from: "shop.example.com", to: "/new") with { Path = "/old" }));
+
+        Assert.Equal("web", Text(await BackendAnswerAsync("http://shop.example.com/older"), "backend"));
+    }
+
+    [Fact]
+    public async Task The_longest_redirected_path_wins()
+    {
+        await _app.SeedAsync(
+            new RedirectSaved(ARedirect(from: "old.example.com", to: "https://new.example.com")),
+            new PathRedirectSaved(ARedirect(from: "old.example.com", to: "https://docs.example.com") with { Path = "/docs" }));
+
+        using var response = await GetAsync("http://old.example.com/docs/start");
+
+        Assert.Equal("https://docs.example.com/start", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task A_path_redirect_that_drops_the_path_sends_the_target_alone()
+    {
+        await _app.SeedAsync(new PathRedirectSaved(ARedirect(from: "shop.example.com", to: "/sale") with { Path = "/old-sale", KeepPath = false }));
+
+        using var response = await GetAsync("http://shop.example.com/old-sale/2026?ref=mail");
+
+        Assert.Equal("/sale", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
     public async Task A_canary_header_reaches_the_last_target()
     {
         await using var next = await Backend.StartAsync("next");
