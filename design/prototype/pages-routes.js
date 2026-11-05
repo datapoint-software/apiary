@@ -229,6 +229,7 @@ const RM = {
   'project.notFound': 'Choose a project.',
   'route.duplicate': 'Another route already uses this hostname and path. Change one of them.',
   'route.redirectExists': 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
+  'route.pathRedirected': 'A redirect answers this path first, so the route would get no requests. Delete the redirect, or choose another path.',
   'route.canaryName': 'Use letters, digits and hyphens, such as X-Canary.',
   'certificate.choose': 'Choose an uploaded certificate.',
   'certificate.doesNotCover': 'This certificate doesn’t cover the hostname. Choose one that does, or use an automatic certificate.',
@@ -395,6 +396,7 @@ ${rtChoice('sticky', src.sticky, 'Sticky sessions', 'Keeps each visitor on the t
 </div>
 </div></section>
 
+${r ? pathRedirectsPanel(r) : ''}
 <section class="ap-panel" aria-labelledby="s3"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s3">Certificate</h2></div></div><div class="ap-panel-body ap-stack">
 <fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-sr">Certificate source</legend><div class="ap-stack" style="gap:10px">
 <label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="auto"${src.cert !== 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Automatic</span><span class="ap-help">From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.</span></span></label>
@@ -543,7 +545,8 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           if (msg) return msg;
           const h = String(val).trim().toLowerCase(), p = String(all.path || '/').trim();
           return api('read', 400).then(() => {
-            if (D.redirects.some(x => x.from === h)) return RM['route.redirectExists'];
+            if (D.redirects.some(x => x.host === h && x.path === '/')) return RM['route.redirectExists'];
+            if (D.redirects.some(x => x.host === h && pathUnder(p, x.path))) return RM['route.pathRedirected'];
             return D.routes.some(x => x !== r && x.host === h && x.path === p) ? RM['route.duplicate'] : null;
           }).catch(() => null);
         },
@@ -637,6 +640,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       },
     });
 
+    if (r) mountPathRedirects(el, r);
     if (r && r.stack) {
       lockFields(f, r.stack.fields.flatMap(k => ROUTE_FIELDS[k] || []), r.stack.name, rowsEl);
       if (r.stack.fields.includes('targets')) { $('[data-add-target]', el).remove(); $$('[data-remove]', rowsEl).forEach(b => b.remove()); }

@@ -322,65 +322,144 @@ ${drop('keyPem', '.pem or .key', '.pem,.key')}
   });
 }
 
-/* Redirects */
-route('/redirects', () => ({
-  title: 'Redirects',
-  html: `${pageHead({ title: 'Redirects', sub: 'Send one hostname to another address, such as www.example.com to example.com.', actions: D.redirects.length ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>` : '' })}
-<section class="ap-panel">${D.redirects.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Redirects</caption><thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Status code</th><th scope="col">Path</th><th scope="col">Project</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
-${D.redirects.map((x, i) => `<tr><td><div class="ap-cell-main"><span class="ap-data">${esc(x.from)}</span>${x.stack ? stackTag(x.stack.name) : ''}</div></td><td class="ap-data ap-muted">${esc(x.to)}</td><td><span class="ap-tag">${x.code}</span> <span class="ap-muted">${{ 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' }[x.code]}</span></td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions">${x.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(x.from)}" data-del="${i}" data-write>${icon('trash-2')}</button>`}</td></tr>`).join('')}
-</tbody></table></div>` : emptyState('No redirects yet', 'A redirect sends one hostname to another, such as <span class="ap-code">www.example.com</span> to <span class="ap-code">example.com</span>, with a 308 or 307.', `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>`)}</section>`,
-  mount(el) {
-    $$('[data-add]', el).forEach(b => b.addEventListener('click', redirectDialog));
-    $$('[data-del]', el).forEach(b => b.addEventListener('click', () => {
-      const x = D.redirects[+b.dataset.del];
-      confirmDialog({ title: `Delete the redirect from ${esc(x.from)}?`, text: 'Requests to it get a 404 at once. Browsers may remember a permanent redirect for a while.', confirm: 'Delete redirect', busy: 'Deleting…', onConfirm: async () => { await api(); D.redirects.splice(D.redirects.indexOf(x), 1); refresh(); toast(`The redirect from ${x.from} was deleted.`); } });
-    }));
-  },
-}));
-function redirectDialog() {
+/* Redirects: a hostname, or a path on it, sent to another address. A redirect at a path answers that path and everything
+   under it (/old and /old/page, not /older) before any route, so part of a site can move while the rest keeps reaching
+   its routes. With a path, the target can be a path on the same hostname, sent as a relative Location. */
+const redirectLabel = x => x.host + (x.path === '/' ? '' : x.path);
+const pathUnder = (t, p) => p === '/' || t === p || t.startsWith(p + '/');
+const normPath = s => { s = String(s || '').trim(); return !s || s === '/' ? '/' : s.replace(/\/+$/, ''); };
+const relativeTarget = to => /^\/(?![/\\])/.test(String(to).trim());
+const ACME_PATH = '/.well-known/acme-challenge';
+const REDIRECT_CODES = { 301: 'Permanent', 308: 'Permanent, keeps method', 302: 'Temporary', 307: 'Temporary, keeps method' };
+const redirectsSorted = () => [...D.redirects].sort((a, b) => a.host.localeCompare(b.host) || a.path.localeCompare(b.path));
+const redirectFrom = x => `<span class="ap-data">${esc(x.host)}${x.path === '/' ? '' : `<span class="ap-muted">${esc(x.path)}</span>`}</span>`;
+const redirectTo = x => `<span class="ap-data ap-muted">${esc(x.to)}</span>${relativeTarget(x.to) ? ' <span class="ap-caption">Same hostname</span>' : ''}`;
+const redirectCode = x => `<span class="ap-tag">${x.code}</span> <span class="ap-muted">${REDIRECT_CODES[x.code]}</span>`;
+
+function checkRedirectPath(v, all) {
+  const raw = String(v || '').trim();
+  const h = String(all.from || '').trim().toLowerCase();
+  if (raw && !raw.startsWith('/')) return 'Start the path with /, such as /docs.';
+  if (/[?#]/.test(raw)) return 'Enter the path only, without ? or #.';
+  if (/\s/.test(raw)) return "Paths can't have spaces. Use %20 if the address has one.";
+  const p = normPath(raw);
+  if (p !== '/' && (pathUnder(p, ACME_PATH) || pathUnder(ACME_PATH, p))) return "Apiary answers certificate checks under /.well-known/acme-challenge, so it can't redirect that path.";
+  const routes = D.routes.filter(r => r.host === h);
+  if (p === '/' && routes.length) return 'This hostname is a route. To redirect part of it, enter a path, such as /old.';
+  const hidden = routes.find(r => r.path !== '/' && pathUnder(r.path, p));
+  if (p !== '/' && hidden) return `This would hide the route ${routeLabel(hidden)}, as the redirect answers first. Choose a path no route uses.`;
+  if (D.redirects.some(x => x.host === h && x.path === p)) return p === '/' ? 'This hostname already redirects. Delete that redirect first to change it.' : `${h + p} already redirects. Delete that redirect first to change it.`;
+  return null;
+}
+function checkRedirectTo(v, all) {
+  const s = String(v || '').trim();
+  const h = String(all.from || '').trim().toLowerCase(), p = normPath(all.path);
+  const loop = 'That would send visitors back to the path they came from, in a loop. Choose a path outside it.';
+  if (!s) return p === '/' ? 'Enter a full address that starts with https://, such as https://example.com.' : 'Enter a full address, such as https://example.com, or a path on this hostname, such as /new.';
+  if (/^(\/\/|\\|\/\\)/.test(s)) return 'Start with one / for a path on this hostname, or with https:// for another site.';
+  if (s.startsWith('/')) {
+    if (p === '/') return 'A path alone works only when you redirect a path. Enter a full address, such as https://example.com.';
+    return pathUnder(normPath(s.split(/[?#]/)[0]), p) ? loop : null;
+  }
+  let u;
+  try { u = new URL(s); } catch (e) { u = null; }
+  if (!u || !/^https?:$/.test(u.protocol)) return p === '/' ? 'Enter a full address that starts with https://, such as https://example.com.' : 'Enter a full address that starts with https://, or a path that starts with /.';
+  if (u.hash) return "Remove the #: browsers don't send it, so Apiary can't keep it.";
+  if (u.hostname === h && (p === '/' || pathUnder(normPath(u.pathname), p))) return p === '/' ? 'That would send visitors back to the same hostname, in a loop.' : loop;
+  return null;
+}
+
+/* What one sample request becomes, so the effect of keeping the rest of the path shows before saving */
+function redirectExample(v) {
+  const h = String(v.from || '').trim().toLowerCase(), p = normPath(v.path), to = String(v.to || '').trim();
+  if (!h || !to || checkRedirectTo(to, v)) return '';
+  const sample = p === '/' ? '/shoes' : p + '/2026';
+  const dest = v.keepPath ? `${to.replace(/\/+$/, '')}${sample.slice(p === '/' ? 0 : p.length)}?ref=mail` : to;
+  return `<span class="ap-data">${esc(h + sample)}${v.keepPath ? '?ref=mail' : ''}</span> goes to <span class="ap-data">${esc(relativeTarget(to) ? h + dest : dest)}</span>${relativeTarget(to) ? ', on the same scheme the visitor used' : ''}.`;
+}
+
+function deleteRedirect(x) {
+  confirmDialog({
+    title: `Delete the redirect from ${esc(redirectLabel(x))}?`,
+    text: x.path === '/' ? 'Requests to it get a 404 at once. Browsers may remember a permanent redirect for a while.' : `Requests to this path go to the routes of ${esc(x.host)} again, or get a 404 if there are none. Browsers may remember a permanent redirect for a while.`,
+    confirm: 'Delete redirect', busy: 'Deleting…',
+    onConfirm: async () => { await api(); D.redirects.splice(D.redirects.indexOf(x), 1); refresh(); toast(`The redirect from ${redirectLabel(x)} was deleted.`); },
+  });
+}
+
+route('/redirects', () => {
+  const list = redirectsSorted();
+  const add = `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add redirect</button>`;
+  return {
+    title: 'Redirects',
+    html: `${pageHead({ title: 'Redirects', sub: 'Send a hostname, or a path on it, to another address.', actions: list.length ? add : '' })}
+<section class="ap-panel">${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Redirects</caption><thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Status code</th><th scope="col">Rest of the path</th><th scope="col">Project</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map((x, i) => `<tr><td><div class="ap-cell-main">${redirectFrom(x)}${x.stack ? stackTag(x.stack.name) : ''}</div></td><td>${redirectTo(x)}</td><td>${redirectCode(x)}</td><td class="ap-muted">${x.keepPath ? 'Kept' : 'Dropped'}</td><td class="ap-muted">${esc(trafficProject(x.project))}</td><td class="ap-col-actions">${x.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(redirectLabel(x))}" data-del="${i}" data-write>${icon('trash-2')}</button>`}</td></tr>`).join('')}
+</tbody></table></div>` : emptyState('No redirects yet', 'A redirect sends a hostname, such as <span class="ap-code">www.example.com</span>, or a path on it, such as <span class="ap-code">example.com/old</span>, to another address, with a 308 or 307.', add)}</section>`,
+    mount(el) {
+      $$('[data-add]', el).forEach(b => b.addEventListener('click', () => redirectDialog()));
+      $$('[data-del]', el).forEach(b => b.addEventListener('click', () => deleteRedirect(list[+b.dataset.del])));
+    },
+  };
+});
+
+/* From a route's page (`fixed`), the hostname is set and a path is required. */
+function redirectDialog(fixed) {
   const d = dialog({
-    title: 'Add redirect', backdrop: false,
+    title: fixed ? 'Add path redirect' : 'Add redirect', backdrop: false,
     body: `<form class="ap-form" id="rd-form" novalidate style="gap:16px"><div data-summary></div>
-${field({ name: 'from', label: 'From hostname', data: true, placeholder: 'www.example.com', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'Gets an automatic certificate, so HTTPS visitors are redirected too.' })}
-${field({ name: 'to', label: 'To', data: true, placeholder: 'https://example.com', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none" inputmode="url"' })}
+${field({ name: 'from', label: 'From hostname', data: true, value: fixed ? fixed.host : '', placeholder: 'www.example.com', attrs: `autocomplete="off" spellcheck="false" autocapitalize="none"${fixed ? ' readonly' : ''}`, help: fixed ? '' : 'Gets an automatic certificate, so HTTPS visitors are redirected too.' })}
+${field({ name: 'path', label: 'Path', optional: !fixed, data: true, placeholder: '/old', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: fixed ? 'This path and everything under it, such as /old and /old/page, but not /older.' : 'Leave empty to redirect the whole hostname. With a path, only that path and everything under it redirect, and the hostname can still have routes.' })}
+${field({ name: 'to', label: 'To', data: true, placeholder: fixed ? '/new or https://example.com' : 'https://example.com', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none" inputmode="url"', help: 'A full address, or, when you redirect a path, a path on the same hostname, such as /new.' })}
 <fieldset class="ap-field" data-field="code" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:8px">Type</legend><div class="ap-stack" style="gap:10px">
-${[[308, 'Permanent', 'Search engines move to the new address. Keeps POST requests as POST.'], [307, 'Temporary', 'Search engines keep the old address.']].map(([c, t, h], i) => `<label class="ap-choice"><input class="ap-radio" type="radio" name="code" value="${c}"${i === 0 ? ' checked' : ''}><span class="ap-choice-text"><span>${t} <span class="ap-caption">${c}</span></span><span class="ap-help">${h}</span></span></label>`).join('')}</div><span class="ap-error" id="e-code" hidden></span></fieldset>
-<label class="ap-choice"><input class="ap-switch" type="checkbox" name="keepPath" checked><span class="ap-choice-text"><span>Keep the path</span><span class="ap-help">www.example.com/shoes goes to example.com/shoes.</span></span></label>
-${field({ name: 'project', label: 'Project', help: 'Only for grouping.', control: select('project', D.projects.map(p => [p.id, p.name]), (D.projects[0] || {}).id) })}
+${[[308, 'Permanent', 'Search engines move to the new address, and browsers remember it. Keeps POST requests as POST.'], [307, 'Temporary', 'Search engines keep the old address. Use it until you are sure.']].map(([c, t, h], i) => `<label class="ap-choice"><input class="ap-radio" type="radio" name="code" value="${c}"${i === 0 ? ' checked' : ''}><span class="ap-choice-text"><span>${t} <span class="ap-caption">${c}</span></span><span class="ap-help">${h}</span></span></label>`).join('')}</div><span class="ap-error" id="e-code" hidden></span></fieldset>
+<label class="ap-choice"><input class="ap-switch" type="checkbox" name="keepPath" checked><span class="ap-choice-text"><span>Keep the rest of the path</span><span class="ap-help">Adds what follows the redirected path, and the query, to the address.</span></span></label>
+<p class="ap-help" data-example aria-live="polite" style="margin:0"></p>
+${field({ name: 'project', label: 'Project', help: 'Only for grouping.', control: select('project', D.projects.map(p => [p.id, p.name]), fixed ? fixed.project : (D.projects[0] || {}).id) })}
 </form>`,
     foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="rd-form" data-busy="Adding…" data-write>Add redirect</button>`,
   });
   applyWriteLock(d.el);
-  form($('#rd-form', d.el), {
-    from: v => {
-      const m = V.hostname(v, { wildcard: false });
-      if (m) return m === "Wildcards aren't allowed here." ? 'Redirect a single hostname, without *.' : m;
-      const h = String(v).trim().toLowerCase();
-      if (D.routes.some(r => r.host === h)) return 'This hostname is already a route. A hostname can be a route or a redirect, not both.';
-      if (D.redirects.some(r => r.from === h)) return 'This hostname already redirects. Delete that redirect first to change it.';
-      return null;
+  const f = $('#rd-form', d.el);
+  const v = form(f, {
+    from: val => {
+      const m = V.hostname(val, { wildcard: false });
+      return m === "Wildcards aren't allowed here." ? 'Redirect a single hostname, without *.' : m;
     },
-    to: (v, all) => {
-      const s = String(v).trim();
-      if (!s) return 'Enter a full address that starts with https://, such as https://example.com.';
-      let u;
-      try { u = new URL(s); } catch (e) { return 'Enter a full address that starts with https://, such as https://example.com.'; }
-      if (!/^https?:$/.test(u.protocol)) return 'Enter a full address that starts with https://, such as https://example.com.';
-      if (u.hostname === String(all.from).trim().toLowerCase()) return 'That would send visitors back to the same hostname, in a loop.';
-      return null;
-    },
-    project: v => (!v ? 'Choose a project.' : null),
+    path: (val, all) => (fixed && normPath(val) === '/' ? 'Enter the path to redirect, such as /old.' : checkRedirectPath(val, all)),
+    to: checkRedirectTo,
+    project: val => (!val ? 'Choose a project.' : null),
   }, {
     verb: 'add it',
-    links: { from: ['to'] },
-    submit: async v => {
+    links: { from: ['path', 'to'], path: ['to'] },
+    submit: async val => {
       await api();
-      D.redirects.push({ from: v.from.trim().toLowerCase(), to: v.to.trim(), code: +v.code, keepPath: v.keepPath, project: v.project });
+      const x = { host: val.from.trim().toLowerCase(), path: normPath(val.path), to: val.to.trim(), code: +val.code, keepPath: val.keepPath, project: val.project };
+      D.redirects.push(x);
       d.close();
       refresh();
-      toast(`${v.from.trim().toLowerCase()} now redirects to ${v.to.trim()}.`, { title: 'Redirect added' });
+      toast(`${redirectLabel(x)} now redirects to ${x.to}.`, { title: 'Redirect added' });
     },
   });
+  const ex = $('[data-example]', f);
+  const show = () => { ex.innerHTML = redirectExample(v.values()); };
+  f.addEventListener('input', show);
+  f.addEventListener('change', show);
+  show();
+}
+
+/* On a route's page, between Targets and Certificate: the paths on its hostname that never reach it */
+function pathRedirectsPanel(r) {
+  const list = redirectsSorted().filter(x => x.host === r.host && x.path !== '/');
+  return `<section class="ap-panel" aria-labelledby="s-pr"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s-pr">Path redirects</h2><p class="ap-panel-desc">Paths on <span class="ap-data">${esc(r.host)}</span> that send visitors elsewhere before they reach any route.</p></div><button class="ap-btn ap-btn-sm" type="button" data-add-pr data-write>${icon('plus')}Add path redirect</button></div>
+${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Path redirects on ${esc(r.host)}</caption><thead><tr><th scope="col">Path</th><th scope="col">To</th><th scope="col">Status code</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map((x, i) => `<tr><td><div class="ap-cell-main"><span class="ap-data">${esc(x.path)}</span>${x.stack ? stackTag(x.stack.name) : ''}</div></td><td>${redirectTo(x)}</td><td>${redirectCode(x)}</td><td class="ap-col-actions">${x.stack ? '' : `<button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete redirect from ${esc(redirectLabel(x))}" data-del-pr="${i}" data-write>${icon('trash-2')}</button>`}</td></tr>`).join('')}
+</tbody></table></div>` : `<div class="ap-panel-body"><p class="ap-muted" style="margin:0">No path redirects. Every path on this hostname reaches its routes.</p></div>`}</section>`;
+}
+function mountPathRedirects(el, r) {
+  const list = redirectsSorted().filter(x => x.host === r.host && x.path !== '/');
+  $$('[data-add-pr]', el).forEach(b => b.addEventListener('click', () => redirectDialog({ host: r.host, project: r.project })));
+  $$('[data-del-pr]', el).forEach(b => b.addEventListener('click', () => deleteRedirect(list[+b.dataset.delPr])));
 }
 
 /* Stacks: Swarm stacks whose routes come from apiary.* labels in their stack file. Apiary never reads Docker: the
@@ -603,7 +682,7 @@ route('/stacks/:name', name => {
   const s = stackOf(name);
   if (!s) return notFound();
   const d = declaredIn(s.name), tokens = D.pipelineTokens.filter(t => t.stack === s.name), admin = isAdmin();
-  const items = [...d.routes.map(r => [`<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`, 'Route', r.stack.service]), ...d.streams.map(x => [`<span class="ap-data">${esc(x.name)}</span>`, `Stream route, ${x.proto} ${x.listen}`, x.stack.service]), ...d.redirects.map(x => [`<span class="ap-data">${esc(x.from)}</span>`, 'Redirect', x.stack.service])];
+  const items = [...d.routes.map(r => [`<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`, 'Route', r.stack.service]), ...d.streams.map(x => [`<span class="ap-data">${esc(x.name)}</span>`, `Stream route, ${x.proto} ${x.listen}`, x.stack.service]), ...d.redirects.map(x => [`<span class="ap-data">${esc(redirectLabel(x))}</span>`, 'Redirect', x.stack.service])];
   const sub = waiting(s) ? `${status('info', 'Waiting for the first apply')} &nbsp;·&nbsp; Added ${ago(s.created)} by ${esc(s.createdBy)}`
     : `Last applied ${ago(s.applied)} by pipeline <span class="ap-data">${esc(s.token)}</span> &nbsp;·&nbsp; commit <a class="ap-data" href="${esc(s.pipeline)}" target="_blank" rel="noopener">${esc(s.commit)}</a>`;
   const lastApply = waiting(s)

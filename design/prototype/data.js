@@ -68,7 +68,10 @@ function seedData() {
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
     ],
     redirects: [
-      { from: 'www.shop.example.com', to: 'https://shop.example.com', code: 308, keepPath: true, project: 'shop', stack: { name: 'shop', service: 'shop_web', fields: ['from', 'to', 'code', 'keepPath'] } },
+      { host: 'www.shop.example.com', path: '/', to: 'https://shop.example.com', code: 308, keepPath: true, project: 'shop', stack: { name: 'shop', service: 'shop_web', fields: ['from', 'to', 'code', 'keepPath'] } },
+      /* Path redirects: a path on a hostname that also has routes, sent elsewhere before it reaches them */
+      { host: 'shop.example.com', path: '/old-sale', to: '/sale', code: 308, keepPath: true, project: 'shop' },
+      { host: 'static.example.com', path: '/docs', to: 'https://docs.example.com/guide', code: 307, keepPath: true, project: 'shop' },
     ],
     /* Stacks whose routes come from labels in their stack file, applied by a pipeline. A plan's change can end with who set the old value. */
     stacks: [
