@@ -60,6 +60,11 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(RouteDefaultsSaved), "route-defaults.saved")]
 [JsonDerivedType(typeof(AgentPolicySaved), "agent-policy.saved")]
 [JsonDerivedType(typeof(BrandSaved), "brand.saved")]
+[JsonDerivedType(typeof(Stacks.StackSaved), "stack.saved")]
+[JsonDerivedType(typeof(Stacks.StackRemoved), "stack.removed")]
+[JsonDerivedType(typeof(Stacks.PipelineTokenSaved), "pipeline-token.saved")]
+[JsonDerivedType(typeof(Stacks.PipelineTokenRevoked), "pipeline-token.revoked")]
+[JsonDerivedType(typeof(Stacks.PipelineTokenUsed), "pipeline-token.used")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

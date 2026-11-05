@@ -14,6 +14,11 @@ public sealed class DeleteRouteHandler(StateTransaction transaction) : ICommandH
             throw ActionFailedException.NotFound(ErrorCodes.RouteNotFound);
         }
 
+        if (route.Stack is not null)
+        {
+            throw ActionFailedException.Conflict(ErrorCodes.RouteDeclaredInStack);
+        }
+
         transaction.Record(new RouteDeleted(route.Id));
         transaction.Affects(route.Id, route.ProjectId);
         return ValueTask.CompletedTask;

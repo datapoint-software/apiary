@@ -8,4 +8,7 @@ public sealed record Redirect(
     int StatusCode,
     bool KeepPath,
     DateTimeOffset ChangedAt,
-    string? ChangedBy);
+    string? ChangedBy)
+{
+    public Stacks.StackSource? Stack { get; init; }
+}

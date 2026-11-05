@@ -35,7 +35,7 @@ public sealed class StateTransactionBehavior(
         using var write = await cluster.LockAsync(ct);
         EnsureWritable();
         await next(ct);
-        await CommitAsync(command, null, ct);
+        await CommitAsync(command, null, AuditOutcome.Succeeded, ct);
     }
 
     public async ValueTask<TResult> HandleAsync<TResult>(
@@ -54,8 +54,18 @@ public sealed class StateTransactionBehavior(
 
         using var write = await cluster.LockAsync(ct);
         EnsureWritable();
-        var result = await next(ct);
-        await CommitAsync(command, forwarded.RequestId is null || command is IConfidentialResult ? null : Remembered(forwarder.Serialize(result)), ct);
+        TResult result;
+        try
+        {
+            result = await next(ct);
+        }
+        catch (ActionFailedException failed) when (failed.KeepsChanges)
+        {
+            await CommitAsync(command, null, AuditOutcome.Failed, ct);
+            throw;
+        }
+
+        await CommitAsync(command, forwarded.RequestId is null || command is IConfidentialResult ? null : Remembered(forwarder.Serialize(result)), AuditOutcome.Succeeded, ct);
         return result;
     }
 
@@ -75,7 +85,7 @@ public sealed class StateTransactionBehavior(
         throw new ActionFailedException(ErrorCodes.NoQuorum, FailureKind.Unavailable);
     }
 
-    private async ValueTask CommitAsync(object command, string? result, CancellationToken ct)
+    private async ValueTask CommitAsync(object command, string? result, AuditOutcome outcome, CancellationToken ct)
     {
         if (transaction.Changes.Count == 0)
         {
@@ -83,7 +93,7 @@ public sealed class StateTransactionBehavior(
         }
 
         var now = time.GetUtcNow();
-        var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, .. Audit(command, now)], result);
+        var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, .. Audit(command, outcome, now)], result);
         try
         {
             await cluster.AppendAsync(entry, ct);
@@ -105,7 +115,7 @@ public sealed class StateTransactionBehavior(
         return user is null ? null : UserLookup.ByEmail(cluster.Current, user)?.Id;
     }
 
-    private IEnumerable<IStateChange> Audit(object command, DateTimeOffset now)
+    private IEnumerable<IStateChange> Audit(object command, AuditOutcome outcome, DateTimeOffset now)
     {
         if (transaction.Unaudited)
         {
@@ -122,7 +132,8 @@ public sealed class StateTransactionBehavior(
             ActionName(command.GetType()),
             transaction.Affected,
             transaction.ProjectId,
-            AuditOutcome.Succeeded,
-            UserIdOf(user)));
+            outcome,
+            UserIdOf(user),
+            principals.Principal?.FindFirstValue(ApiaryClaims.Pipeline)));
     }
 }

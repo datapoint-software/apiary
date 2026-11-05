@@ -132,4 +132,21 @@ export const appMessagesPortuguese: MessageCatalog = {
   'stream.serverNamesTooMany': () => 'Uma rota TCP ou UDP aceita até 20 nomes de servidor.',
   'backup.unreadable': () =>
     'Este ficheiro não é uma cópia de segurança que este cluster consiga abrir. Escolha um ficheiro exportado pelo Apiary, de um cluster com a mesma chave raiz.',
+  'route.declaredInStack': () => 'Isto é definido pelo ficheiro da stack. Mude a etiqueta, e a próxima aplicação atualiza-o.',
+  'stream.declaredInStack': () => 'Isto é definido pelo ficheiro da stack. Mude a etiqueta, e a próxima aplicação atualiza-o.',
+  'redirect.declaredInStack': () => 'Este redirecionamento vem de um ficheiro de stack. Em vez disso, remova as suas etiquetas, e a próxima aplicação elimina-o.',
+  'route.hostInUse': (p) =>
+    `${p['host'] ?? 'Um nome de anfitrião'} já é usado por uma rota ou redirecionamento fora desta stack, e o Apiary não fica com ele. Remova a etiqueta, ou elimine ou mova primeiro o outro.`,
+  'stack.notFound': () => 'Esta stack foi removida. A lista mostra agora as stacks atuais.',
+  'stack.exists': () => 'Esta stack já existe. Abra-a para criar outro token.',
+  'stack.nameInvalid': () => 'Use o nome como o Docker o escreve: letras minúsculas, algarismos, hífenes e sublinhados, até 63.',
+  'stack.duplicate': () => 'O ficheiro da stack declara o mesmo nome duas vezes, ou o mesmo nome de anfitrião e caminho. Dê a cada um o seu.',
+  'stack.removesEverything': (p) =>
+    `A aplicação removeria todos os ${p['count'] ?? ''} itens que a stack declara, o que normalmente significa o ficheiro errado ou etiquetas que desapareceram. Se é isso que pretende, execute-a com --allow-removing-all.`,
+  'stack.tooMany': () => 'Um ficheiro de stack pode declarar no máximo 200 rotas, rotas TCP ou UDP e redirecionamentos.',
+  'stack.commitInvalid': () => 'O commit aceita até 64 letras, algarismos, pontos, hífenes e sublinhados.',
+  'stack.pipelineUrlInvalid': () => 'A ligação da pipeline tem de começar por https://.',
+  'pipelineToken.notFound': () => 'Este token já foi revogado. A lista mostra agora os tokens atuais.',
+  'pipelineToken.nameTaken': () => 'Outro token tem este nome. Escolha outro.',
+  'auth.invalidToken': () => 'Este token de pipeline não é válido: pode ter expirado ou sido revogado. Peça um novo a um Administrador.',
 };

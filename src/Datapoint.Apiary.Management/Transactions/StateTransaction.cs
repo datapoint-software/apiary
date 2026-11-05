@@ -31,4 +31,6 @@ public sealed class StateTransaction(IClusterState cluster)
         _affected.Add(id.ToString());
         ProjectId ??= projectId;
     }
+
+    public void AffectsName(string name) => _affected.Add(name);
 }

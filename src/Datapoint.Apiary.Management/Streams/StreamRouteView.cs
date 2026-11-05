@@ -1,3 +1,4 @@
+using Datapoint.Apiary.Cluster.Stacks;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Management.Routes;
 
@@ -18,7 +19,8 @@ public sealed record StreamRouteView(
     long Connections,
     DateTimeOffset? LastConnectionAt,
     DateTimeOffset ChangedAt,
-    string? ChangedBy)
+    string? ChangedBy,
+    StackSource? Stack)
 {
     public static StreamRouteView Of(StreamRoute stream, RouteTelemetry? telemetry) => new(
         stream.Id,
@@ -35,5 +37,6 @@ public sealed record StreamRouteView(
         telemetry?.Connections ?? 0,
         telemetry?.LastConnectionAt,
         stream.ChangedAt,
-        stream.ChangedBy);
+        stream.ChangedBy,
+        stream.Stack);
 }

@@ -6,4 +6,5 @@ public static class AuthenticationSchemes
     public const string Session = "session";
     public const string LocalOperator = "local";
     public const string Agent = "agent";
+    public const string Pipeline = "pipeline";
 }

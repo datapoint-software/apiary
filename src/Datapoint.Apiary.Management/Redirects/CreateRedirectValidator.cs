@@ -46,7 +46,7 @@ public sealed class CreateRedirectValidator : AbstractValidator<CreateRedirect>
 
     private static bool IsWildcard(string from) => from.TrimStart().StartsWith("*.", StringComparison.Ordinal);
 
-    private static Uri? Target(string to) =>
+    public static Uri? Target(string to) =>
         Uri.TryCreate(to.Trim(), UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" && uri.Host.Length > 0 && uri.Fragment.Length == 0
             ? uri
             : null;

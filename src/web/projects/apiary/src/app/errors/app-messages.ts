@@ -119,4 +119,21 @@ export const appMessages: MessageCatalog = {
   'stream.serverNamesUdp': () => 'Only TCP routes can choose by TLS server name.',
   'stream.serverNamesTooMany': () => 'A stream route takes up to 20 server names.',
   'backup.unreadable': () => 'This file isn’t a backup this cluster can open. Choose a file Apiary exported, from a cluster with the same root key.',
+  'route.declaredInStack': () => 'Its stack file sets this. Change the label, and the next apply updates it.',
+  'stream.declaredInStack': () => 'Its stack file sets this. Change the label, and the next apply updates it.',
+  'redirect.declaredInStack': () => 'This redirect comes from a stack file. Remove its labels instead, and the next apply deletes it.',
+  'route.hostInUse': (p) =>
+    `${p['host'] ?? 'A hostname'} is already used by a route or redirect outside this stack, and Apiary won’t take it over. Remove the label, or delete or move the other one first.`,
+  'stack.notFound': () => 'This stack was removed. The list now shows the current stacks.',
+  'stack.exists': () => 'This stack is already here. Open it to create another token.',
+  'stack.nameInvalid': () => 'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores, up to 63.',
+  'stack.duplicate': () => 'The stack file declares the same name twice, or the same hostname and path. Give each its own.',
+  'stack.removesEverything': (p) =>
+    `The apply would remove all ${p['count'] ?? ''} items the stack declares, which usually means the wrong file or labels that went missing. If you mean it, run it with --allow-removing-all.`,
+  'stack.tooMany': () => 'A stack file can declare at most 200 routes, stream routes and redirects.',
+  'stack.commitInvalid': () => 'The commit takes up to 64 letters, digits, dots, hyphens and underscores.',
+  'stack.pipelineUrlInvalid': () => 'The pipeline link must start with https://.',
+  'pipelineToken.notFound': () => 'This token was already revoked. The list now shows the current tokens.',
+  'pipelineToken.nameTaken': () => 'Another token has this name. Choose another.',
+  'auth.invalidToken': () => 'This pipeline token isn’t valid: it may have expired or been revoked. Ask an Administrator for a new one.',
 };

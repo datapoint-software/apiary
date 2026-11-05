@@ -1,5 +1,6 @@
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Management.Errors;
+using Datapoint.Apiary.Management.Stacks;
 using Datapoint.Apiary.Management.Transactions;
 using Datapoint.Mediator;
 
@@ -14,6 +15,11 @@ public sealed class MoveRoutesHandler(StateTransaction transaction) : ICommandHa
             if (!transaction.State.Routes.TryGetValue(id, out var route))
             {
                 throw ActionFailedException.NotFound(ErrorCodes.RouteNotFound);
+            }
+
+            if (route.Stack?.Sets(StackFields.Project) == true && route.ProjectId != command.ProjectId)
+            {
+                throw ActionFailedException.Conflict(ErrorCodes.RouteDeclaredInStack);
             }
 
             if (route.ProjectId != command.ProjectId)

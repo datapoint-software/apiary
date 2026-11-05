@@ -23,6 +23,8 @@ public sealed record ApiaryState
     private readonly ImmutableList<Keys.RegisteredRootKey>? _rootKeys;
     private readonly ImmutableDictionary<Guid, Agent>? _agents;
     private readonly ImmutableDictionary<Guid, Streams.StreamRoute>? _streamRoutes;
+    private readonly ImmutableDictionary<string, Stacks.StackRecord>? _stacks;
+    private readonly ImmutableDictionary<Guid, Stacks.PipelineToken>? _pipelineTokens;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -42,6 +44,18 @@ public sealed record ApiaryState
     {
         get => _streamRoutes ?? ImmutableDictionary<Guid, Streams.StreamRoute>.Empty;
         init => _streamRoutes = value;
+    }
+
+    public ImmutableDictionary<string, Stacks.StackRecord> Stacks
+    {
+        get => _stacks ?? ImmutableDictionary<string, Stacks.StackRecord>.Empty;
+        init => _stacks = value;
+    }
+
+    public ImmutableDictionary<Guid, Stacks.PipelineToken> PipelineTokens
+    {
+        get => _pipelineTokens ?? ImmutableDictionary<Guid, Stacks.PipelineToken>.Empty;
+        init => _pipelineTokens = value;
     }
 
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;

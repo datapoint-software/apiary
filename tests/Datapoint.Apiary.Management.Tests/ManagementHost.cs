@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Stacks;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Telemetry;
 using Datapoint.Apiary.Cluster.Users;
@@ -106,6 +107,15 @@ public sealed class ManagementHost : IDisposable
             "Test"));
 
     public void SignOut() => Principal.Principal = null;
+
+    public void SignedInAsPipeline(PipelineToken token) =>
+        Principal.Principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ApiaryClaims.Pipeline, token.Name),
+                new Claim(ApiaryClaims.PipelineTokenId, token.Id.ToString()),
+                new Claim(ApiaryClaims.Stack, token.Stack),
+            ],
+            "Test"));
 
     public async Task<TResult> SendAsync<TResult>(ICommand<TResult> command)
     {

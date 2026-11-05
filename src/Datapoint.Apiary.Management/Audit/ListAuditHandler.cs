@@ -38,12 +38,13 @@ public sealed class ListAuditHandler(IClusterState cluster) : IQueryHandler<List
 
     private static AuditVia Via(AuditEntry entry) => entry switch
     {
+        { Pipeline: not null } => AuditVia.Pipelines,
         { User: null } => AuditVia.System,
         { Client: not null } => AuditVia.Agents,
         _ => AuditVia.People,
     };
 
     private static bool Contains(AuditEntry entry, string text) =>
-        new[] { entry.Action, entry.User, entry.Client, entry.Address }.Concat(entry.Affected)
+        new[] { entry.Action, entry.User, entry.Client, entry.Pipeline, entry.Address }.Concat(entry.Affected)
             .Any(value => value?.Contains(text, StringComparison.OrdinalIgnoreCase) is true);
 }

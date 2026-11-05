@@ -148,6 +148,21 @@ public static partial class McpErrorDescriptions
         ["stream.portTaken"] = "Another stream route already uses this port and protocol. Choose another port, or give both TCP routes different TLS server names.",
         ["stream.serverNamesUdp"] = "Only TCP stream routes can choose by TLS server name.",
         ["stream.serverNamesTooMany"] = "A stream route takes up to 20 server names.",
+        ["stream.declaredInStack"] = "This stream route comes from a stack file's labels. Change it in the stack file; only disabling and the allowlist can change here.",
+        ["route.declaredInStack"] = "This route comes from a stack file's labels, which set this field. Change it in the stack file, or leave the field as it is.",
+        ["route.hostInUse"] = "The hostname {host} is already used by a route or redirect that isn't in this stack. Apiary won't take it over.",
+        ["redirect.declaredInStack"] = "This redirect comes from a stack file's labels. Remove it from the stack file instead.",
+        ["stack.notFound"] = "There's no stack with that name. List them with stacks.list.",
+        ["stack.exists"] = "A stack with this name is already here.",
+        ["stack.nameInvalid"] = "Use the stack's name as Docker writes it: lowercase letters, digits, hyphens and underscores, starting with a letter or digit.",
+        ["stack.duplicate"] = "The stack file declares the same name, hostname and path, or listen port twice.",
+        ["stack.removesEverything"] = "The apply would remove all {count} items the stack declares, which usually means the wrong file or missing labels.",
+        ["stack.tooMany"] = "A stack can declare at most 200 routes, stream routes and redirects.",
+        ["stack.commitInvalid"] = "A commit uses letters, digits, dots, hyphens and underscores, at most 64.",
+        ["stack.pipelineUrlInvalid"] = "The pipeline link must be a full https:// address.",
+        ["pipelineToken.notFound"] = "There's no pipeline token with that id. List them with pipeline-tokens.list.",
+        ["pipelineToken.nameTaken"] = "Another pipeline token has this name. Choose another.",
+        ["auth.invalidToken"] = "The pipeline token isn't valid for this stack: it may have expired or been revoked.",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     public static IReadOnlyCollection<string> Codes => s_descriptions.Keys;

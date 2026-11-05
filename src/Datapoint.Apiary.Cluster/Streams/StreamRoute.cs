@@ -16,4 +16,6 @@ public sealed record StreamRoute(
     public bool Disabled { get; init; }
 
     public IReadOnlyList<string>? AllowedAddresses { get; init; }
+
+    public Stacks.StackSource? Stack { get; init; }
 }

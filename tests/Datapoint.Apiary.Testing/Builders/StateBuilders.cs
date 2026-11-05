@@ -10,6 +10,7 @@ using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.SingleSignOn;
+using Datapoint.Apiary.Cluster.Stacks;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Cluster.Users;
@@ -35,6 +36,11 @@ public static class StateBuilders
 
     public static StreamRoute AStream(Guid? projectId = null, int listenPort = 5432) =>
         new(AnId(), projectId ?? AnId(), "Database", StreamProtocol.Tcp, listenPort, "shop_db", 5432, [], 300, s_now, "ana@example.com");
+
+    public static StackRecord AStack(string name = "shop") => new(name, null, s_now, "ana@example.com");
+
+    public static PipelineToken APipelineToken(string stack = "shop", string name = "shop-deploy") =>
+        new(AnId(), name, stack, "token-hash", s_now, "ana@example.com", s_now.AddDays(90));
 
     public static User AUser(string email = "ana@example.com", Role role = Role.Administrator) =>
         new(AnId(), "Ana", email, role, UserStatus.Active, "password-hash", null, null, s_now, null);

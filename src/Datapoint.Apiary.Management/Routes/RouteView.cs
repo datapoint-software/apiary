@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Cluster.Routes;
+using Datapoint.Apiary.Cluster.Stacks;
 
 namespace Datapoint.Apiary.Management.Routes;
 
@@ -28,11 +29,12 @@ public sealed record RouteView(
     RoutePasswordView? Password,
     long RequestsPerMinute,
     RouteHealth Health,
-    int TargetsDown)
+    int TargetsDown,
+    StackSource? Stack)
 {
     public static RouteView From(Route route, RouteTelemetry telemetry) =>
         new(route.Id, route.ProjectId, route.Host, route.Path, route.Targets, route.TimeoutSeconds, route.CertificateId, route.ChangedAt, route.ChangedBy,
             route.Disabled, route.AllowedAddresses ?? [], route.RateLimit, route.RequestSize, route.RequestMegabytes, route.Maintenance,
             route.Canary, route.Sticky, route.Compression, route.Caching, route.StrictTransport, route.StrictTransportSubdomains, route.CachePurgedAt,
-            RoutePasswordView.From(route.Password), telemetry.RequestsPerMinute, telemetry.Health, telemetry.TargetsDown);
+            RoutePasswordView.From(route.Password), telemetry.RequestsPerMinute, telemetry.Health, telemetry.TargetsDown, route.Stack);
 }

@@ -13,6 +13,7 @@ using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Sessions;
 using Datapoint.Apiary.Cluster.SingleSignOn;
+using Datapoint.Apiary.Cluster.Stacks;
 using Datapoint.Apiary.Cluster.State;
 using Datapoint.Apiary.Cluster.Streams;
 using Datapoint.Apiary.Cluster.Trust;
@@ -46,14 +47,23 @@ public static class EveryChange
             Canary = new RouteCanary(CanarySource.Header, "X-Canary", "yes"),
             Sticky = true,
             Password = new RoutePassword("hash", "cookie-key", TestClock.Now, "ana@example.com", 7, "Ask Ana", new RouteLink("link-hash", TestClock.Now.AddDays(7))),
+            Stack = new StackSource("shop", "web", "site", ["host", "targets"]),
         };
+        var changed = new StackPlanItem(StackItemKind.Route, "shop.example.com") { Field = "host", From = "old.example.com", To = "shop.example.com", ReplacedBy = "ana@example.com", ReplacedAt = TestClock.Now };
+        var stack = AStack() with
+        {
+            ProjectId = project.Id,
+            LastApply = new StackApply(TestClock.Now, "shop-deploy", "4f2a9c1", "https://gitlab.example.com/shop/-/pipelines/7", new StackPlan([new StackPlanItem(StackItemKind.Redirect, "old.example.com")], [changed], [new StackPlanItem(StackItemKind.StreamRoute, "postgres")])),
+            Failure = new StackFailure(TestClock.Now, "route.hostInUse", "shop-deploy"),
+        };
+        var token = APipelineToken() with { LastUsedAt = TestClock.Now };
         var agent = AnAgent(user.Id) with
         {
             Code = new AgentCode("code-hash", "challenge", TestClock.Now.AddMinutes(1)),
             Tokens = new AgentTokens("access", TestClock.Now.AddHours(1), "refresh", TestClock.Now.AddDays(30), null),
         };
         var certificate = ACertificate() with { Material = SomeMaterial("shop.example.com"), History = [AnEvent()] };
-        var restored = ApiaryState.Empty.With(new ProjectSaved(project), new RouteSaved(route), new UserSaved(user));
+        var restored = ApiaryState.Empty.With(new ProjectSaved(project), new RouteSaved(route), new UserSaved(user), new StackSaved(stack), new PipelineTokenSaved(token));
 
         return
         [
@@ -101,6 +111,11 @@ public static class EveryChange
             new RouteDefaultsSaved(new RouteDefaults(100)),
             new AgentPolicySaved(new AgentPolicy(["https://claude.ai"])),
             new BrandSaved(project.Id, ABrand()),
+            new StackSaved(stack),
+            new PipelineTokenSaved(token),
+            new PipelineTokenUsed(token.Id, TestClock.Now),
+            new PipelineTokenRevoked(token.Id),
+            new StackRemoved("shop"),
         ];
     }
 }

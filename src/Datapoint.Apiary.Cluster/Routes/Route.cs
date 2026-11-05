@@ -38,4 +38,6 @@ public sealed record Route(
     public DateTimeOffset? CachePurgedAt { get; init; }
 
     public RoutePassword? Password { get; init; }
+
+    public Stacks.StackSource? Stack { get; init; }
 }

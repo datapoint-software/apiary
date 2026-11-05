@@ -14,6 +14,11 @@ public sealed class DeleteRedirectHandler(StateTransaction transaction) : IComma
             throw ActionFailedException.NotFound(ErrorCodes.RedirectNotFound);
         }
 
+        if (redirect.Stack is not null)
+        {
+            throw ActionFailedException.Conflict(ErrorCodes.RedirectDeclaredInStack);
+        }
+
         transaction.Record(new RedirectDeleted(redirect.Id));
         transaction.Affects(redirect.Id, redirect.ProjectId);
         return ValueTask.CompletedTask;

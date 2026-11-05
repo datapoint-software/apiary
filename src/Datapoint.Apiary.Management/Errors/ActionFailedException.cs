@@ -31,6 +31,8 @@ public sealed class ActionFailedException : Exception
 
     public IReadOnlyDictionary<string, object?>? Params { get; init; }
 
+    public bool KeepsChanges { get; init; }
+
     public static ActionFailedException NotFound(string code) => new(code, FailureKind.NotFound);
 
     public static ActionFailedException Conflict(string code) => new(code, FailureKind.Conflict);

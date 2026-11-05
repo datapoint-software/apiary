@@ -140,6 +140,21 @@ public static class ErrorCodes
     public const string StreamPortTaken = "stream.portTaken";
     public const string StreamServerNamesUdp = "stream.serverNamesUdp";
     public const string StreamServerNamesTooMany = "stream.serverNamesTooMany";
+    public const string StreamDeclaredInStack = "stream.declaredInStack";
+    public const string RouteDeclaredInStack = "route.declaredInStack";
+    public const string RouteHostInUse = "route.hostInUse";
+    public const string RedirectDeclaredInStack = "redirect.declaredInStack";
+    public const string StackNotFound = "stack.notFound";
+    public const string StackExists = "stack.exists";
+    public const string StackNameInvalid = "stack.nameInvalid";
+    public const string StackDuplicate = "stack.duplicate";
+    public const string StackRemovesEverything = "stack.removesEverything";
+    public const string StackTooMany = "stack.tooMany";
+    public const string StackCommitInvalid = "stack.commitInvalid";
+    public const string StackPipelineUrlInvalid = "stack.pipelineUrlInvalid";
+    public const string PipelineTokenNotFound = "pipelineToken.notFound";
+    public const string PipelineTokenNameTaken = "pipelineToken.nameTaken";
+    public const string PipelineTokenInvalid = "auth.invalidToken";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -163,6 +178,9 @@ public static class ErrorCodes
         AgentNotFound, AgentClientUnknown, AgentRedirectUnknown, AgentRedirectInvalid, AgentChallengeInvalid, AgentResponseTypeInvalid, AgentResourceInvalid, AgentTooMany, AgentOriginInvalid, AgentOriginsTooMany,
         SsoIssuerInvalid, SsoGroupsRequired, SsoGroupsTooMany, SsoOff, SsoFailed, SsoNoRole, SsoNoEmail, SsoEmailTaken, SsoDisabled,
         UserManagedBySso,
-        StreamNotFound, StreamPortReserved, StreamPortTaken, StreamServerNamesUdp, StreamServerNamesTooMany,
+        StreamNotFound, StreamPortReserved, StreamPortTaken, StreamServerNamesUdp, StreamServerNamesTooMany, StreamDeclaredInStack,
+        RouteDeclaredInStack, RouteHostInUse, RedirectDeclaredInStack,
+        StackNotFound, StackExists, StackNameInvalid, StackDuplicate, StackRemovesEverything, StackTooMany, StackCommitInvalid, StackPipelineUrlInvalid,
+        PipelineTokenNotFound, PipelineTokenNameTaken, PipelineTokenInvalid,
     ];
 }

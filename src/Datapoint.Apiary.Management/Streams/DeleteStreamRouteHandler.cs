@@ -14,6 +14,11 @@ public sealed class DeleteStreamRouteHandler(StateTransaction transaction) : ICo
             throw ActionFailedException.NotFound(ErrorCodes.StreamNotFound);
         }
 
+        if (stream.Stack is not null)
+        {
+            throw ActionFailedException.Conflict(ErrorCodes.StreamDeclaredInStack);
+        }
+
         transaction.Record(new StreamRouteDeleted(stream.Id));
         transaction.Affects(stream.Id, stream.ProjectId);
         return ValueTask.CompletedTask;
