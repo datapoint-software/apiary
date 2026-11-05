@@ -65,6 +65,8 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(Stacks.PipelineTokenSaved), "pipeline-token.saved")]
 [JsonDerivedType(typeof(Stacks.PipelineTokenRevoked), "pipeline-token.revoked")]
 [JsonDerivedType(typeof(Stacks.PipelineTokenUsed), "pipeline-token.used")]
+[JsonDerivedType(typeof(Proxies.TrustedProxySaved), "trusted-proxy.saved")]
+[JsonDerivedType(typeof(Proxies.TrustedProxyRemoved), "trusted-proxy.removed")]
 public interface IStateChange
 {
     ApiaryState Apply(ApiaryState state);

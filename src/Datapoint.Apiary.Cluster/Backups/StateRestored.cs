@@ -18,6 +18,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
         StreamRoutes = Restored.StreamRoutes,
         Stacks = Restored.Stacks,
         PipelineTokens = Restored.PipelineTokens,
+        TrustedProxies = Restored.TrustedProxies,
         Users = Restored.Users,
         Certificates = Restored.Certificates,
         AcmeAccounts = Restored.AcmeAccounts,

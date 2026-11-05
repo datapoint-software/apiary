@@ -5,7 +5,7 @@ namespace Datapoint.Apiary.Cluster.State;
 
 public static class StateSchema
 {
-    public const int Current = 2;
+    public const int Current = 3;
     private static readonly ConcurrentDictionary<Type, int> s_required = new();
 
     public static int Required(StateEntry entry) => entry.Changes.Select(c => Required(c.GetType())).DefaultIfEmpty(1).Max();

@@ -6,6 +6,7 @@ using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Proxies;
 using Datapoint.Apiary.Cluster.Redirects;
 using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
@@ -81,6 +82,16 @@ public sealed class StateRestoredTests
         var restored = ApiaryState.Empty.With(new BrandSaved(null, ABrand("Other")), new StateRestored(ApiaryState.Empty.With(new BrandSaved(null, brand))));
 
         Assert.Same(brand, restored.Brand);
+    }
+
+    [Fact]
+    public void Restoring_replaces_the_trusted_proxies()
+    {
+        var kept = new TrustedProxy(AnId(), "10.20.30.0/24", null);
+
+        var restored = ApiaryState.Empty.With(new TrustedProxySaved(new TrustedProxy(AnId(), "192.0.2.0/24", null)), new StateRestored(ApiaryState.Empty.With(new TrustedProxySaved(kept))));
+
+        Assert.Equal(kept, Assert.Single(restored.TrustedProxies).Value);
     }
 
     [Fact]

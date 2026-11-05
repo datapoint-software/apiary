@@ -8,6 +8,7 @@ using Datapoint.Apiary.Cluster.Join;
 using Datapoint.Apiary.Cluster.Keys;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
+using Datapoint.Apiary.Cluster.Proxies;
 using Datapoint.Apiary.Cluster.Redirects;
 using Datapoint.Apiary.Cluster.Replicas;
 using Datapoint.Apiary.Cluster.Routes;
@@ -116,6 +117,8 @@ public static class EveryChange
             new PipelineTokenUsed(token.Id, TestClock.Now),
             new PipelineTokenRevoked(token.Id),
             new StackRemoved("shop"),
+            new TrustedProxySaved(new TrustedProxy(AnId(), "10.20.30.0/24", "Load balancer")),
+            new TrustedProxyRemoved(AnId()),
         ];
     }
 }

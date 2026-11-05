@@ -25,6 +25,7 @@ public sealed record ApiaryState
     private readonly ImmutableDictionary<Guid, Streams.StreamRoute>? _streamRoutes;
     private readonly ImmutableDictionary<string, Stacks.StackRecord>? _stacks;
     private readonly ImmutableDictionary<Guid, Stacks.PipelineToken>? _pipelineTokens;
+    private readonly ImmutableDictionary<Guid, Proxies.TrustedProxy>? _trustedProxies;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -56,6 +57,12 @@ public sealed record ApiaryState
     {
         get => _pipelineTokens ?? ImmutableDictionary<Guid, Stacks.PipelineToken>.Empty;
         init => _pipelineTokens = value;
+    }
+
+    public ImmutableDictionary<Guid, Proxies.TrustedProxy> TrustedProxies
+    {
+        get => _trustedProxies ?? ImmutableDictionary<Guid, Proxies.TrustedProxy>.Empty;
+        init => _trustedProxies = value;
     }
 
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;
