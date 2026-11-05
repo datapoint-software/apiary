@@ -1,0 +1,80 @@
+<ap-page-head [heading]="'Stacks' | t">
+  <span pageSub>{{
+    'Swarm stacks whose routes come from labels in their stack file. Their pipeline applies the file after each deploy.'
+      | t
+  }}</span>
+  @if (auth.canAdminister() && stacks.value().length > 0) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="add()">
+      <ap-icon [icon]="addIcon" />{{ 'Add stack' | t }}
+    </button>
+  }
+</ap-page-head>
+
+<section class="ap-panel">
+  @if (isLoading()) {
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t">
+      <span class="ap-skel" style="width: 60%; height: 14px"></span>
+    </div>
+  } @else if (stacks.value().length === 0) {
+    <ap-empty-state [heading]="'No stacks yet' | t">
+      {{
+        'Add the stacks you deploy from CI. Apiary gives each one a pipeline token, and its pipeline applies the routes in the stack file’s labels.'
+          | t
+      }}
+      @if (auth.canAdminister()) {
+        <button apWrite emptyActions apButton="primary" type="button" (click)="add()">
+          <ap-icon [icon]="addIcon" />{{ 'Add stack' | t }}
+        </button>
+      } @else {
+        {{ 'Only Administrators can add stacks.' | t }}
+      }
+    </ap-empty-state>
+  } @else {
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <caption class="ap-sr">
+          {{
+            'Stacks' | t
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ 'Stack' | t }}</th>
+            <th scope="col">{{ 'Project' | t }}</th>
+            <th scope="col">{{ 'Declares' | t }}</th>
+            <th scope="col">{{ 'Last applied' | t }}</th>
+            <th scope="col">{{ 'Changes' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (stack of stacks.value(); track stack.name) {
+            <tr>
+              <td>
+                <a class="ap-data" [routerLink]="['/stacks', stack.name]">{{ stack.name }}</a>
+              </td>
+              <td class="ap-muted">
+                {{
+                  (stack.projectId && projectNames().get(stack.projectId)) || ('From labels' | t)
+                }}
+              </td>
+              <td class="ap-muted">{{ stack.lastApply ? declares(stack) : '–' }}</td>
+              <td>
+                @if (stack.failure) {
+                  <ap-status tone="warn">{{ 'Last apply failed' | t }}</ap-status>
+                } @else if (stack.lastApply; as apply) {
+                  <span class="ap-muted"
+                    >{{ 'Applied {time} by' | t: { time: ago(apply.at) } }}
+                    <span class="ap-data">{{ apply.token }}</span></span
+                  >
+                } @else {
+                  <ap-status tone="info">{{ 'Waiting for the first apply' | t }}</ap-status>
+                }
+              </td>
+              <td class="ap-muted">{{ stack.lastApply ? changes(stack) : '–' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

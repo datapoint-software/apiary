@@ -1,10 +1,18 @@
-import { applyEach, applyWhen, hidden, required, schema, validate } from '@angular/forms/signals';
+import { applyEach, applyWhen, disabled, hidden, required, schema, validate } from '@angular/forms/signals';
 import { dayMs, hostname, ipRanges, parseUtc, port, target, utcDateTime, wholeNumber } from '@datapoint/apiary-ui';
 import { serverCheck } from '../api/server-check';
 import { RouteModel } from './route-model';
 import { requestSize } from './request-size';
 
-export const routeRules = (id: () => string | undefined) => schema<RouteModel>((route) => {
+export const routeRules = (id: () => string | undefined, stackFields: () => readonly string[] = () => []) => schema<RouteModel>((route) => {
+  const setByStack = (field: string) => () => stackFields().includes(field);
+  disabled(route.host, setByStack('host'));
+  disabled(route.path, setByStack('path'));
+  disabled(route.projectId, setByStack('project'));
+  disabled(route.targets, setByStack('targets'));
+  disabled(route.timeoutSeconds, setByStack('timeout'));
+  disabled(route.rateLimited, setByStack('rateLimit'));
+  disabled(route.rateLimit, setByStack('rateLimit'));
   required(route.projectId, { error: { kind: 'project.notFound' } });
   hostname(route.host);
   serverCheck(route.host, 'routes.check', ['host', 'path'], ({ value, valueOf }) => ({ host: value(), path: valueOf(route.path), id: id() || null }));

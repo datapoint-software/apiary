@@ -45,7 +45,7 @@
                 @if (byAgent(entry)) {
                   {{ 'Agent “{name}” for' | t: { name: entry.client ?? '' } }}
                 }
-                <strong>{{ entry.user ?? ('System' | t) }}</strong> {{ actionLabel(entry.action) | t }}
+                <strong>{{ actor(entry) }}</strong> {{ actionLabel(entry.action) | t }}
                 @if (entry.outcome === 'denied') {
                   <span class="ap-tag">{{ 'Denied' | t }}</span>
                 } @else if (entry.outcome === 'failed') {

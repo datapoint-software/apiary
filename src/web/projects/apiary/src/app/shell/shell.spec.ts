@@ -6,7 +6,14 @@ import { ClusterView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
 import { Answers, answerAll } from '../testing/answer-all';
 import { nextRequest } from '../testing/backend';
-import { aCertificate, aCluster, aMember, aProject, aSignedInUser } from '../testing/builders';
+import {
+  aCertificate,
+  aCluster,
+  aMember,
+  aProject,
+  aSignedInUser,
+  aStack,
+} from '../testing/builders';
 import { byLabel, byRole, menuItem, menuItemNames, settle, textOf } from '../testing/dom';
 import { Shell } from './shell';
 
@@ -32,6 +39,7 @@ class FakeMediaQuery {
 const quiet: Answers = {
   '/api/projects/list': [aProject({ id: 'project-1', name: 'Shop', routeCount: 2 })],
   '/api/certificates/list': [],
+  '/api/stacks/list': [],
   '/api/cluster/status': aCluster(),
 };
 
@@ -106,12 +114,14 @@ describe('Shell', () => {
       'Shop',
       'All projects',
       'All routes',
+      'Stacks',
       'Stream routes',
       'Certificates',
       'Redirects',
       'Visitor pages',
       'Users',
       'Single sign-on',
+      'Pipeline tokens',
       'Connected agents',
       'Audit log',
       'Replicas',
@@ -124,6 +134,7 @@ describe('Shell', () => {
     const { fixture } = await render({ role: 'operator' });
 
     expect(navLinks(fixture)).not.toContain('Users');
+    expect(navLinks(fixture)).not.toContain('Pipeline tokens');
   });
 
   it('counts the routes of each project and in all', async () => {
@@ -157,6 +168,20 @@ describe('Shell', () => {
     });
 
     expect(textOf(fixture)).toContain('Certificates, needs attention');
+  });
+
+  it('flags a stack whose last apply failed', async () => {
+    const { fixture } = await render({
+      answers: {
+        '/api/stacks/list': [
+          aStack({
+            failure: { at: '2026-11-04T09:00:00Z', code: 'route.hostInUse', token: 'shop-deploy' },
+          }),
+        ],
+      },
+    });
+
+    expect(textOf(fixture)).toContain('Stacks, needs attention');
   });
 
   it.each([

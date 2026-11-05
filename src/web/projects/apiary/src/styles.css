@@ -17,3 +17,14 @@ body {
   gap: var(--space-6);
   min-width: 0;
 }
+
+.ap .ap-stack-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ap .ap-stack-tag .ap-icon {
+  width: 12px;
+  height: 12px;
+}

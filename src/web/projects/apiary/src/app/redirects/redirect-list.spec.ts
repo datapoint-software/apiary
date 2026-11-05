@@ -2,6 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Confirmer, Toaster } from '@datapoint/apiary-ui';
 import { RedirectView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
@@ -43,6 +44,7 @@ async function render(
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideRouter([]),
       { provide: Dialog, useValue: dialog },
       { provide: Confirmer, useValue: confirmer },
     ],
@@ -137,5 +139,14 @@ describe('RedirectList', () => {
         'The redirect from www.example.com was deleted.',
       ),
     );
+  });
+
+  it('tags a redirect from a stack and leaves out its delete', async () => {
+    const { fixture } = await render([
+      aRedirect({ stack: { stack: 'shop', service: 'web', name: 'www', fields: ['from', 'to'] } }),
+    ]);
+
+    expect(cellsOfRow(fixture, 'www.example.com')[0]).toBe('www.example.comDeclared in stack shop');
+    expect(queryByRole(fixture, 'button', 'Delete redirect from www.example.com')).toBeUndefined();
   });
 });

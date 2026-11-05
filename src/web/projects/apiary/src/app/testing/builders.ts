@@ -5,9 +5,11 @@ import {
   CertificateSummary,
   ClusterView,
   MemberView,
+  PipelineTokenView,
   ProjectView,
   RouteView,
   SignedInUser,
+  StackView,
   StreamRouteView,
   UserView,
 } from '../api/models';
@@ -185,4 +187,28 @@ export function aProblem(
   errors: ApiProblem['errors'] = undefined,
 ): ApiProblem {
   return errors ? { status, code, errors } : { status, code };
+}
+
+export function aStack(overrides: Partial<StackView> = {}): StackView {
+  return {
+    name: 'shop',
+    createdAt: '2026-11-01T10:00:00Z',
+    createdBy: 'ana@example.com',
+    routes: 0,
+    streamRoutes: 0,
+    redirects: 0,
+    ...overrides,
+  };
+}
+
+export function aPipelineToken(overrides: Partial<PipelineTokenView> = {}): PipelineTokenView {
+  return {
+    id: 'token-1',
+    name: 'shop-deploy',
+    stack: 'shop',
+    createdAt: '2026-11-01T10:00:00Z',
+    createdBy: 'ana@example.com',
+    expiresAt: '2027-01-30T10:00:00Z',
+    ...overrides,
+  };
 }

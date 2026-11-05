@@ -37,7 +37,7 @@ interface Rendered {
   readonly cleared: number[];
 }
 
-async function render(outcome = true): Promise<Rendered> {
+async function render(outcome = true, selected: readonly RouteView[] = routes): Promise<Rendered> {
   const actions = new ChosenRouteActions(outcome);
   const dialog = new ClosingDialog(outcome);
   TestBed.configureTestingModule({
@@ -49,7 +49,7 @@ async function render(outcome = true): Promise<Rendered> {
     ],
   });
   const fixture = TestBed.createComponent(RouteSelectionBar);
-  fixture.componentRef.setInput('routes', routes);
+  fixture.componentRef.setInput('routes', selected);
   const cleared: number[] = [];
   fixture.componentInstance.cleared.subscribe(() => cleared.push(1));
   fixture.detectChanges();
@@ -127,5 +127,14 @@ describe('RouteSelectionBar', () => {
     await press(bar, 'Clear selection');
 
     expect(bar.cleared).toEqual([1]);
+  });
+
+  it('won’t delete or move routes that come from a stack file', async () => {
+    const stack = { stack: 'shop', service: 'web', name: 'site', fields: ['host', 'project'] };
+    const { fixture } = await render(true, [routes[0], { ...routes[1], stack }]);
+
+    expect(byRole<HTMLButtonElement>(fixture, 'button', 'Delete…').disabled).toBe(true);
+    expect(byRole<HTMLButtonElement>(fixture, 'button', 'Move to project…').disabled).toBe(true);
+    expect(textOf(fixture)).toContain('1 of them come from a stack file.');
   });
 });

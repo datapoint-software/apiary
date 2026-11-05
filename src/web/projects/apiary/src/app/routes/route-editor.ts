@@ -37,10 +37,12 @@ import { WriteLock } from '../cluster/write-lock';
 import { openDialog } from '../shell/open-dialog';
 import { passwordSecrets, routeAccess, routeRequest } from './route-request';
 import { RouteAccessData, RouteAccessDialog } from './route-access-dialog';
+import { StackBanner } from '../stacks/stack-banner';
+import { StackTag } from '../stacks/stack-tag';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, RouterLink, TranslatePipe],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, StackBanner, StackTag, RouterLink, TranslatePipe],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -69,6 +71,8 @@ export class RouteEditor implements HasUnsavedChanges {
   private readonly defaults = httpResource<RouteDefaultsView>(() => this.api.query('routes.defaults'));
   protected readonly defaultMegabytes = computed(() => (this.defaults.hasValue() ? this.defaults.value().requestMegabytes : 30));
   protected readonly current = computed(() => (this.existing.hasValue() ? this.existing.value() : undefined));
+  protected readonly stack = computed(() => this.current()?.stack);
+  protected readonly lockedBy = (field: string) => (this.stack()?.fields.includes(field) ? this.stack()?.stack : undefined);
   protected readonly requests = computed(() => perMinute(this.current()?.requestsPerMinute ?? 0));
   protected readonly status = computed(() => {
     const route = this.current();
@@ -76,7 +80,7 @@ export class RouteEditor implements HasUnsavedChanges {
   });
 
   protected readonly model = signal<RouteModel>(emptyRoute(''));
-  protected readonly route = form(this.model, routeRules(() => this.id()));
+  protected readonly route = form(this.model, routeRules(() => this.id(), () => this.current()?.stack?.fields ?? []));
   protected readonly loadError = computed(() => {
     const error = this.existing.error();
     return error ? this.messages.describe('route.notFound') : '';

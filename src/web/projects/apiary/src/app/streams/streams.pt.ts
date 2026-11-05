@@ -71,4 +71,6 @@ export const streamsPortuguese: TextCatalog = {
   'Saving…': 'A guardar…',
   'Adding…': 'A adicionar…',
   Save: 'Guardar',
+  'Its name, ports and target come from the labels of {service}: change them in the stack file. You can still disable it from the list.':
+    'O nome, as portas e o destino vêm das etiquetas de {service}: mude-os no ficheiro da stack. Ainda a pode desativar a partir da lista.',
 };

@@ -2,6 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { provideErrorMessages } from '@datapoint/apiary-ui';
 import { StreamRouteView } from '../api/models';
 import { appMessages } from '../errors/app-messages';
@@ -24,6 +25,7 @@ async function render(existing: StreamRouteView | null = null): Promise<Rendered
     providers: [
       provideHttpClient(withInterceptors([noServerChecks])),
       provideHttpClientTesting(),
+      provideRouter([]),
       provideErrorMessages(appMessages),
       { provide: DIALOG_DATA, useValue: existing },
       { provide: DialogRef, useValue: ref },
@@ -227,5 +229,19 @@ describe('StreamDialog', () => {
     await press(dialog, 'Cancel');
 
     expect(dialog.ref.results).toEqual([undefined]);
+  });
+
+  it('locks the name, ports and target of a stream route from a stack', async () => {
+    const dialog = await render(
+      aStreamRoute({
+        stack: { stack: 'shop', service: 'db', name: 'postgres', fields: ['listen', 'port'] },
+      }),
+    );
+
+    expect(textOf(dialog.fixture)).toContain('Declared in stack shop');
+    expect([
+      byLabel(dialog.fixture, 'Name').disabled,
+      byLabel(dialog.fixture, 'Allowed addresses (optional)').disabled,
+    ]).toEqual([true, false]);
   });
 });

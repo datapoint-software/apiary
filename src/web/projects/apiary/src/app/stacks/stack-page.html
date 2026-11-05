@@ -1,0 +1,163 @@
+<ap-page-head [heading]="name()" [crumbs]="crumbs()">
+  <span pageSub>
+    @if (current(); as details) {
+      @if (details.stack.lastApply; as apply) {
+        {{ 'Last applied {time} by pipeline' | t: { time: ago(apply.at) } }}
+        <span class="ap-data">{{ apply.token }}</span>
+        @if (apply.commit) {
+          &nbsp;·&nbsp; {{ 'commit' | t }}
+          @if (apply.pipelineUrl) {
+            <a
+              class="ap-data"
+              [href]="apply.pipelineUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ apply.commit.slice(0, 12) }}</a
+            >
+          } @else {
+            <span class="ap-data">{{ apply.commit.slice(0, 12) }}</span>
+          }
+        } @else if (apply.pipelineUrl) {
+          &nbsp;·&nbsp;
+          <a [href]="apply.pipelineUrl" target="_blank" rel="noopener noreferrer">{{
+            'pipeline run' | t
+          }}</a>
+        }
+      } @else {
+        <ap-status tone="info">{{ 'Waiting for the first apply' | t }}</ap-status>
+        &nbsp;·&nbsp; {{ 'Added {time}' | t: { time: ago(details.stack.createdAt) } }}
+      }
+    }
+  </span>
+</ap-page-head>
+
+@if (details.error()) {
+  <ap-banner tone="critical" [heading]="'This stack doesn’t exist' | t">
+    {{ notFound }}
+    <a bannerActions apButton size="small" routerLink="/stacks">{{ 'All stacks' | t }}</a>
+  </ap-banner>
+} @else if (current(); as details) {
+  @if (details.stack.failure; as failed) {
+    <ap-banner
+      tone="critical"
+      [heading]="'The last apply failed {time}' | t: { time: ago(failed.at) }"
+    >
+      {{ failure() }} {{ 'Pipeline' | t }} <span class="ap-data">{{ failed.token }}</span
+      >, {{ 'error' | t }} <span class="ap-data">{{ failed.code }}</span
+      >.
+      {{ 'Nothing changed. This clears when an apply succeeds.' | t }}
+    </ap-banner>
+  }
+
+  @if (details.stack.lastApply; as apply) {
+    <section class="ap-panel" style="max-width: 800px" aria-labelledby="last-apply-title">
+      <div class="ap-panel-head">
+        <div>
+          <h2 class="ap-h ap-h-3" id="last-apply-title">{{ 'Last apply' | t }}</h2>
+          <p class="ap-panel-desc">
+            {{
+              '{date} UTC. Every apply is in the audit log.'
+                | t: { date: apply.at.slice(0, 16).replace('T', ' ') }
+            }}
+          </p>
+        </div>
+      </div>
+      <div class="ap-panel-body"><ap-plan-list [plan]="apply.plan" /></div>
+    </section>
+    <ap-stack-declares [stack]="name()" [items]="details.items" />
+  } @else {
+    <section class="ap-panel" style="max-width: 800px" aria-labelledby="first-apply-title">
+      <div class="ap-panel-head">
+        <div>
+          <h2 class="ap-h ap-h-3" id="first-apply-title">{{ 'First apply' | t }}</h2>
+        </div>
+      </div>
+      <div class="ap-panel-body">
+        <ap-banner tone="info" [heading]="'Nothing has applied {stack} yet' | t: { stack: name() }">
+          {{
+            'Add the commands under Apply from your pipeline, below, to the pipeline that deploys {stack}, with its token as APIARY_TOKEN. After its first run, the routes in its labels appear here.'
+              | t: { stack: name() }
+          }}
+        </ap-banner>
+      </div>
+    </section>
+  }
+
+  <ap-stack-tokens [stack]="name()" [tokens]="details.tokens" />
+
+  <section class="ap-panel" style="max-width: 800px" aria-labelledby="setup-title">
+    <div class="ap-panel-head">
+      <div>
+        <h2 class="ap-h ap-h-3" id="setup-title">{{ 'Apply from your pipeline' | t }}</h2>
+        <p class="ap-panel-desc">
+          {{
+            'Apiary never connects to Docker. Your pipeline reads the labels from the stack file and sends them here, so routes change in the same commit as the services. It calls the admin port, so it must run inside your network, like the people who use this interface.'
+              | t
+          }}
+        </p>
+      </div>
+    </div>
+    <div class="ap-panel-body ap-stack">
+      <ol class="ap-stack" style="gap: 12px; margin: 0; padding-left: 20px">
+        <li class="ap-stack" style="gap: 8px">
+          <span>{{ 'Add apiary.* labels under deploy.labels of each service:' | t }}</span>
+          <ap-copy-text [text]="sampleLabels" [multiline]="true" />
+          <span class="ap-muted">{{
+            'Passwords, sign-in links, certificates and allowed addresses can’t be set by labels: anyone who can inspect the service could read them.'
+              | t
+          }}</span>
+        </li>
+        <li class="ap-stack" style="gap: 8px">
+          <span>{{
+            'In merge requests, show what an apply would change, without changing it:' | t
+          }}</span>
+          <ap-copy-text [text]="dryRun()" [multiline]="true" />
+        </li>
+        <li class="ap-stack" style="gap: 8px">
+          <span>{{
+            'After the deploy, apply it. Routes of {stack} missing from the file are removed.'
+              | t: { stack: name() }
+          }}</span>
+          <ap-copy-text [text]="apply()" [multiline]="true" />
+          <span class="ap-muted">{{
+            'If the admin certificate is self-signed, add --certificate-sha256 with its fingerprint, from the Certificates page.'
+              | t
+          }}</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="ap-panel ap-panel-danger" style="max-width: 800px" aria-labelledby="danger-title">
+    <div class="ap-panel-head">
+      <div>
+        <h2 class="ap-h ap-h-3" id="danger-title">{{ 'Danger zone' | t }}</h2>
+      </div>
+    </div>
+    <div class="ap-panel-body ap-list">
+      <div class="ap-list-row">
+        <div class="ap-list-text">
+          <strong>{{ 'Remove this stack' | t }}</strong>
+          <span class="ap-muted">
+            {{
+              'After docker stack rm. Deletes everything it declared and revokes its tokens.' | t
+            }}
+            @if (!auth.canAdminister()) {
+              {{ 'Needs the Administrator role.' | t }}
+            }
+          </span>
+        </div>
+        <button
+          apWrite
+          apButton
+          type="button"
+          style="color: var(--critical)"
+          [disabled]="!auth.canAdminister()"
+          (click)="remove()"
+        >
+          {{ 'Remove stack…' | t }}
+        </button>
+      </div>
+    </div>
+  </section>
+}

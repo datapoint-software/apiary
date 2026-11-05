@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Hexagon,
   KeyRound,
+  Layers,
   LayoutDashboard,
   LogOut,
   MonitorSmartphone,
@@ -34,7 +35,7 @@ import {
 import { needsAttention } from '../certificates/certificate-status';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView } from '../api/models';
+import { CertificateSummary, ProjectView, StackView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { ClusterStatus } from '../cluster/cluster-status';
 import { roleNames } from '../auth/roles';
@@ -116,6 +117,7 @@ export class Shell {
     () => this.api.query('certificates.list'),
     { defaultValue: [] },
   );
+  private readonly stacks = httpResource<StackView[]>(() => this.api.query('stacks.list'), { defaultValue: [] });
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
     const t = (text: string) => this.i18n.t(text);
@@ -140,6 +142,7 @@ export class Shell {
         title: t('Traffic'),
         items: [
           { icon: Route, label: t('All routes'), link: '/routes', count: routes || undefined },
+          { icon: Layers, label: t('Stacks'), link: '/stacks', count: this.stacks.value().length || undefined, warn: this.stacks.value().some((s) => !!s.failure) },
           { icon: Cable, label: t('Stream routes'), link: '/streams' },
           {
             icon: ShieldCheck,
@@ -158,6 +161,7 @@ export class Shell {
             ? [
                 { icon: Users, label: t('Users'), link: '/users' },
                 { icon: DoorOpen, label: t('Single sign-on'), link: '/single-sign-on' },
+                { icon: KeyRound, label: t('Pipeline tokens'), link: '/pipeline-tokens' },
               ]
             : []),
           { icon: Bot, label: t('Connected agents'), link: '/agents' },

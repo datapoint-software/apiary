@@ -2,6 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Confirmer, Toaster, provideErrorMessages } from '@datapoint/apiary-ui';
 import { Role, StreamRouteView } from '../api/models';
 import { Auth } from '../auth/auth';
@@ -36,6 +37,7 @@ async function render(
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideRouter([]),
       provideErrorMessages(appMessages),
       { provide: Dialog, useValue: dialog },
       { provide: Confirmer, useValue: confirmer },
@@ -221,5 +223,17 @@ describe('StreamList', () => {
     await vi.waitFor(() =>
       expect(TestBed.inject(Toaster).toasts()[0].text).toBe('MQTT was deleted.'),
     );
+  });
+
+  it('tags a stream route from a stack and leaves out its delete', async () => {
+    const list = await render([
+      aStreamRoute({
+        name: 'MQTT',
+        stack: { stack: 'iot', service: 'broker', name: 'mqtt', fields: [] },
+      }),
+    ]);
+
+    expect(textOf(list.fixture)).toContain('Declared in stack iot');
+    expect(queryByRole(list.fixture, 'button', 'Delete MQTT')).toBeUndefined();
   });
 });

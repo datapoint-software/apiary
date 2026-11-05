@@ -31,6 +31,7 @@ export interface RouteView {
   readonly requestsPerMinute: number;
   readonly health: RouteHealth;
   readonly targetsDown: number;
+  readonly stack?: StackSource;
 }
 
 export interface RouteDefaultsView {
@@ -68,6 +69,7 @@ export interface RedirectView {
   readonly keepPath: boolean;
   readonly changedAt: string;
   readonly changedBy?: string;
+  readonly stack?: StackSource;
 }
 
 export type StreamProtocol = 'tcp' | 'udp';
@@ -88,6 +90,7 @@ export interface StreamRouteView {
   readonly lastConnectionAt?: string;
   readonly changedAt: string;
   readonly changedBy?: string;
+  readonly stack?: StackSource;
 }
 
 export interface ProjectView {
@@ -212,6 +215,7 @@ export interface AuditEntry {
   readonly projectId?: string;
   readonly outcome: 'succeeded' | 'failed' | 'denied';
   readonly userId?: string;
+  readonly pipeline?: string;
 }
 
 export type CertificateStatus = 'ok' | 'pending' | 'failing' | 'expiring' | 'expired';
@@ -404,4 +408,89 @@ export interface ProjectBrandView {
 export interface BrandsView {
   readonly cluster?: BrandView;
   readonly projects: readonly ProjectBrandView[];
+}
+
+export interface StackSource {
+  readonly stack: string;
+  readonly service: string;
+  readonly name: string;
+  readonly fields: readonly string[];
+}
+
+export type StackItemKind = 'route' | 'streamRoute' | 'redirect';
+
+export interface StackPlanItem {
+  readonly kind: StackItemKind;
+  readonly name: string;
+  readonly field?: string;
+  readonly from?: string;
+  readonly to?: string;
+  readonly replacedBy?: string;
+  readonly replacedAt?: string;
+}
+
+export interface StackPlan {
+  readonly added: readonly StackPlanItem[];
+  readonly changed: readonly StackPlanItem[];
+  readonly removed: readonly StackPlanItem[];
+}
+
+export interface StackApply {
+  readonly at: string;
+  readonly token: string;
+  readonly commit?: string;
+  readonly pipelineUrl?: string;
+  readonly plan: StackPlan;
+}
+
+export interface StackFailure {
+  readonly at: string;
+  readonly code: string;
+  readonly token: string;
+  readonly detail?: string;
+}
+
+export interface StackView {
+  readonly name: string;
+  readonly projectId?: string;
+  readonly createdAt: string;
+  readonly createdBy?: string;
+  readonly lastApply?: StackApply;
+  readonly failure?: StackFailure;
+  readonly routes: number;
+  readonly streamRoutes: number;
+  readonly redirects: number;
+}
+
+export interface DeclaredItemView {
+  readonly kind: StackItemKind;
+  readonly id: string;
+  readonly name: string;
+  readonly service: string;
+  readonly protocol?: StreamProtocol;
+  readonly listenPort?: number;
+}
+
+export interface PipelineTokenView {
+  readonly id: string;
+  readonly name: string;
+  readonly stack: string;
+  readonly createdAt: string;
+  readonly createdBy?: string;
+  readonly expiresAt: string;
+  readonly lastUsedAt?: string;
+}
+
+export interface StackDetailsView {
+  readonly stack: StackView;
+  readonly items: readonly DeclaredItemView[];
+  readonly tokens: readonly PipelineTokenView[];
+}
+
+export interface NewPipelineToken {
+  readonly id: string;
+  readonly name: string;
+  readonly stack: string;
+  readonly token: string;
+  readonly expiresAt: string;
 }

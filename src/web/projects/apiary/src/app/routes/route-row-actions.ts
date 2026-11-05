@@ -25,9 +25,11 @@ import { routeLabel } from './route-label';
         <ap-icon [icon]="icons.purge" />
       </button>
     }
-    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {route}' | t: { route: label }" (click)="actions.delete(route())">
-      <ap-icon [icon]="icons.delete" />
-    </button>
+    @if (!route().stack) {
+      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {route}' | t: { route: label }" (click)="actions.delete(route())">
+        <ap-icon [icon]="icons.delete" />
+      </button>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

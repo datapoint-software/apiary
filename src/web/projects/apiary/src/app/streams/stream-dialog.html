@@ -21,6 +21,7 @@
     </div>
     <div class="ap-dialog-body ap-form" style="gap: 16px">
       <ap-error-summary [verb]="existing ? 'save it' : 'add it'" />
+      <ap-stack-banner [source]="stack" text="Its name, ports and target come from the labels of {service}: change them in the stack file. You can still disable it from the list." />
       <ap-field [label]="'Name' | t" [field]="stream.name">
         <input class="ap-input" [formField]="stream.name" placeholder="MQTT" autocomplete="off" cdkFocusInitial />
       </ap-field>

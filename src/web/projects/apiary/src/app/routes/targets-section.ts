@@ -3,22 +3,24 @@ import { FieldTree, FormField } from '@angular/forms/signals';
 import { Button, Field, I18n, Icon, TranslatePipe } from '@datapoint/apiary-ui';
 import { Plus, X } from 'lucide';
 import { RouteModel } from './route-model';
+import { StackTag } from '../stacks/stack-tag';
 
 const maximumTargets = 10;
 
 @Component({
   selector: 'ap-targets-section',
-  imports: [Field, FormField, Button, Icon, TranslatePipe],
+  imports: [Field, FormField, Button, Icon, StackTag, TranslatePipe],
   templateUrl: './targets-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TargetsSection {
   readonly route = input.required<FieldTree<RouteModel>>();
+  readonly stack = input<string>();
   private readonly i18n = inject(I18n);
   protected readonly icons = { add: Plus, remove: X };
   private readonly model = computed(() => this.route()().value());
   protected readonly many = computed(() => this.model().targets.length > 1);
-  protected readonly canAdd = computed(() => this.model().targets.length < maximumTargets);
+  protected readonly canAdd = computed(() => !this.stack() && this.model().targets.length < maximumTargets);
   protected readonly canary = computed(() => this.many() && this.model().canary.source !== 'none');
   protected readonly lastTarget = computed(() => this.model().targets.at(-1)?.host || this.i18n.t('the last target'));
   protected readonly split = computed(() =>

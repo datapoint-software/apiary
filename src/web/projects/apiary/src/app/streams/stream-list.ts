@@ -8,13 +8,14 @@ import { reloadEvery } from '../api/reload-every';
 import { ProjectView, StreamRouteView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
+import { StackTag } from '../stacks/stack-tag';
 import { openDialog } from '../shell/open-dialog';
 import { StreamActivity, streamActivity } from './stream-activity';
 import { SavedStream, StreamDialog } from './stream-dialog';
 
 @Component({
   selector: 'ap-stream-list',
-  imports: [WriteLock, PageHead, Banner, EmptyState, Icon, Button, Status, TranslatePipe],
+  imports: [WriteLock, PageHead, Banner, EmptyState, Icon, Button, Status, StackTag, TranslatePipe],
   templateUrl: './stream-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

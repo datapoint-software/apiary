@@ -253,4 +253,33 @@ describe('RouteEditor', () => {
 
     expect(editor.fixture.componentInstance.hasUnsavedChanges()).toBe(true);
   });
+
+  it('locks what the stack file sets, and still saves the rest', async () => {
+    const editor = await render(
+      [aProject()],
+      aRoute({
+        id: 'route-1',
+        host: 'shop.example.com',
+        stack: { stack: 'shop', service: 'web', name: 'site', fields: ['host', 'path', 'targets'] },
+      }),
+    );
+
+    expect(textOf(editor.fixture)).toContain('Declared in stack shop');
+    expect([
+      byLabel(editor.fixture, 'Hostname').disabled,
+      byLabel(editor.fixture, 'Service or host').disabled,
+      byLabel(editor.fixture, 'Timeout').disabled,
+    ]).toEqual([true, true, false]);
+    expect(byRole(editor.fixture, 'link', 'shop').getAttribute('href')).toBe('/stacks/shop');
+
+    await fillIn(editor, 'Timeout', '90');
+    await submit(editor, 'Save route');
+    const request = await nextRequest(editor.backend, '/api/routes/update');
+
+    expect(request.request.body).toMatchObject({
+      id: 'route-1',
+      host: 'shop.example.com',
+      timeoutSeconds: 90,
+    });
+  });
 });

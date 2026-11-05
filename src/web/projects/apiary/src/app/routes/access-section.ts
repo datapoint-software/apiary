@@ -5,10 +5,11 @@ import { RoutePasswordView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { passphrase } from './passphrase';
 import { RouteModel } from './route-model';
+import { StackTag } from '../stacks/stack-tag';
 
 @Component({
   selector: 'ap-access-section',
-  imports: [Button, Field, FormField, TranslatePipe],
+  imports: [Button, Field, FormField, StackTag, TranslatePipe],
   templateUrl: './access-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -16,6 +17,7 @@ export class AccessSection {
   readonly route = input.required<FieldTree<RouteModel>>();
   readonly current = input<RoutePasswordView>();
   readonly canWrite = input(true);
+  readonly rateLimitStack = input<string>();
   protected readonly timeAgo = timeAgo;
   private readonly i18n = inject(I18n);
   protected readonly passwordNote = computed(() => {

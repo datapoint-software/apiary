@@ -43,6 +43,9 @@
                   @if (stream.serverNames.length) {
                     <span class="ap-caption ap-data">{{ stream.serverNames.join(', ') }}</span>
                   }
+                  @if (stream.stack; as source) {
+                    <ap-stack-tag [stack]="source.stack" />
+                  }
                 </div>
               </td>
               <td><span class="ap-data">{{ stream.listenPort }}</span> <span class="ap-tag">{{ stream.protocol.toUpperCase() }}</span></td>
@@ -71,9 +74,11 @@
                         <ap-icon [icon]="icons.disable" />
                       </button>
                     }
-                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {name}' | t: { name: stream.name }" (click)="delete(stream)">
-                      <ap-icon [icon]="icons.delete" />
-                    </button>
+                    @if (!stream.stack) {
+                      <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {name}' | t: { name: stream.name }" (click)="delete(stream)">
+                        <ap-icon [icon]="icons.delete" />
+                      </button>
+                    }
                   </div>
                 }
               </td>

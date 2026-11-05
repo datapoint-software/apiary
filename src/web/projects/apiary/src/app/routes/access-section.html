@@ -16,6 +16,7 @@
       <span class="ap-choice-text">
         <span>{{ 'Limit requests per visitor' | t }}</span>
         <span class="ap-help">{{ 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.' | t }}</span>
+        <ap-stack-tag [stack]="rateLimitStack()" [locked]="true" />
       </span>
     </label>
     @if (route().rateLimited().value()) {

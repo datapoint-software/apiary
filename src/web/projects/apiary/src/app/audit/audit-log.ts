@@ -8,7 +8,7 @@ import { actionLabel } from './action-labels';
 import { AuditRange, CustomRange } from './custom-range';
 
 type Range = '24h' | '7d' | '30d' | '365d' | 'custom';
-type Via = '' | 'people' | 'agents' | 'system';
+type Via = '' | 'people' | 'agents' | 'pipelines' | 'system';
 
 const hours: Record<Exclude<Range, 'custom'>, number> = { '24h': 24, '7d': 24 * 7, '30d': 24 * 30, '365d': 24 * 365 };
 
@@ -37,6 +37,7 @@ export class AuditLog {
     ['', 'All'],
     ['people', 'People'],
     ['agents', 'Agents'],
+    ['pipelines', 'Pipelines'],
     ['system', 'System'],
   ];
   protected readonly searchIcon = Search;
@@ -49,6 +50,12 @@ export class AuditLog {
   protected readonly failedOnly = signal(false);
   protected readonly actionLabel = actionLabel;
   protected readonly byAgent = (entry: AuditEntry) => !!entry.user && !!entry.client;
+  protected readonly actor = (entry: AuditEntry) => {
+    if (entry.pipeline) {
+      return this.i18n.t('Pipeline {name}', { name: entry.pipeline });
+    }
+    return entry.user ?? this.i18n.t('System');
+  };
 
   protected readonly entries = httpResource<AuditEntry[]>(
     () =>

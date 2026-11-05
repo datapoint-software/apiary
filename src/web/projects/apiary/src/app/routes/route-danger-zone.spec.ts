@@ -5,7 +5,7 @@ import { RouteView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
 import { answerClusterStatus } from '../testing/backend';
 import { aRoute, aSignedInUser } from '../testing/builders';
-import { byRole, settle } from '../testing/dom';
+import { byRole, settle, textOf } from '../testing/dom';
 import { RouteActions } from './route-actions';
 import { RouteDangerZone } from './route-danger-zone';
 
@@ -105,5 +105,16 @@ describe('RouteDangerZone', () => {
       byRole<HTMLButtonElement>(fixture, 'button', 'Disable route…').disabled,
       byRole<HTMLButtonElement>(fixture, 'button', 'Delete route…').disabled,
     ]).toEqual([true, true]);
+  });
+
+  it('sends a route from a stack back to its stack file instead of deleting it', async () => {
+    const zone = await render(
+      aRoute({ stack: { stack: 'shop', service: 'web', name: 'site', fields: ['host'] } }),
+    );
+
+    expect(byRole<HTMLButtonElement>(zone.fixture, 'button', 'Delete route…').disabled).toBe(true);
+    expect(textOf(zone.fixture)).toContain(
+      'Remove it from the stack file instead. The next apply of shop deletes it.',
+    );
   });
 });

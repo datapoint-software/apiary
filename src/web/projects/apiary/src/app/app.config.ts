@@ -23,6 +23,7 @@ import { projectsPortuguese } from './projects/projects.pt';
 import { redirectsPortuguese } from './redirects/redirects.pt';
 import { routesPortuguese } from './routes/routes.pt';
 import { ssoPortuguese } from './sso/sso.pt';
+import { stacksPortuguese } from './stacks/stacks.pt';
 import { streamsPortuguese } from './streams/streams.pt';
 import { usersPortuguese } from './users/users.pt';
 import { visitorPagesPortuguese } from './visitor-pages/visitor-pages.pt';
@@ -48,6 +49,7 @@ export const appConfig: ApplicationConfig = {
     provideTranslations('pt-PT', redirectsPortuguese),
     provideTranslations('pt-PT', routesPortuguese),
     provideTranslations('pt-PT', ssoPortuguese),
+    provideTranslations('pt-PT', stacksPortuguese),
     provideTranslations('pt-PT', streamsPortuguese),
     provideTranslations('pt-PT', usersPortuguese),
     provideTranslations('pt-PT', visitorPagesPortuguese),

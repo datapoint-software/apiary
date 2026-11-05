@@ -32,13 +32,20 @@
         <tbody>
           @for (redirect of redirects.value(); track redirect.id) {
             <tr>
-              <td class="ap-data">{{ redirect.from }}</td>
+              <td>
+                <div class="ap-cell-main">
+                  <span class="ap-data">{{ redirect.from }}</span>
+                  @if (redirect.stack; as source) {
+                    <ap-stack-tag [stack]="source.stack" />
+                  }
+                </div>
+              </td>
               <td class="ap-data ap-muted">{{ redirect.to }}</td>
               <td><span class="ap-tag">{{ redirect.statusCode }}</span> <span class="ap-muted">{{ statusLabels[redirect.statusCode] | t }}</span></td>
               <td class="ap-muted">{{ (redirect.keepPath ? 'Kept' : 'Dropped') | t }}</td>
               <td class="ap-muted">{{ projectNames().get(redirect.projectId) }}</td>
               <td class="ap-col-actions">
-                @if (auth.canOperate()) {
+                @if (auth.canOperate() && !redirect.stack) {
                   <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete redirect from {hostname}' | t: { hostname: redirect.from }" (click)="delete(redirect)">
                     <ap-icon [icon]="icons.delete" />
                   </button>

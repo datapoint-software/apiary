@@ -20,6 +20,7 @@
   @if (!auth.canOperate()) {
     <ap-banner tone="info" [heading]="'You can view this route' | t">{{ 'Changing it needs the Operator role. Ask an Administrator if you need it.' | t }}</ap-banner>
   }
+  <ap-stack-banner [source]="stack()" text="Locked fields come from the labels of {service}: change them in the stack file, and the next apply updates this route. You can still disable the route or schedule maintenance here." />
   <form
     class="ap-form"
     [apForm]="route"
@@ -51,6 +52,7 @@
               spellcheck="false"
               autocapitalize="none"
             />
+            <ap-stack-tag [stack]="lockedBy('host')" [locked]="true" />
           </ap-field>
           <ap-field [label]="'Path' | t" [field]="route.path" [help]="'Most routes use /.' | t">
             <input
@@ -59,6 +61,7 @@
               autocomplete="off"
               spellcheck="false"
             />
+            <ap-stack-tag [stack]="lockedBy('path')" [locked]="true" />
           </ap-field>
         </div>
         <ap-field
@@ -72,11 +75,12 @@
               <option [value]="project.id">{{ project.name }}</option>
             }
           </select>
+          <ap-stack-tag [stack]="lockedBy('project')" [locked]="true" />
         </ap-field>
       </div>
     </section>
 
-    <ap-targets-section [route]="route" />
+    <ap-targets-section [route]="route" [stack]="lockedBy('targets')" />
 
     <section class="ap-panel" aria-labelledby="certificate-title">
       <div class="ap-panel-head">
@@ -131,6 +135,7 @@
               />
               <span class="ap-affix-text">{{ 'seconds' | t }}</span>
             </div>
+            <ap-stack-tag [stack]="lockedBy('timeout')" [locked]="true" />
           </ap-field>
         </div>
         <ap-request-size-section [route]="route" [defaultMegabytes]="defaultMegabytes()" />
@@ -167,7 +172,7 @@
       </div>
     </section>
 
-    <ap-access-section [route]="route" [current]="current()?.password" [canWrite]="auth.canOperate()" />
+    <ap-access-section [route]="route" [current]="current()?.password" [canWrite]="auth.canOperate()" [rateLimitStack]="lockedBy('rateLimit')" />
 
     <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
 

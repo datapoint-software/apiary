@@ -1,12 +1,13 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { FormField, applyWhen, form, hidden, required, validate } from '@angular/forms/signals';
+import { FormField, applyWhen, disabled, form, hidden, required, validate } from '@angular/forms/signals';
 import { ApiProblem, Button, ErrorSummary, Field, Form, TranslatePipe, ipRanges, port, problemErrors, target, wholeNumber } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { serverCheck } from '../api/server-check';
 import { ProjectView, StreamProtocol, StreamRouteView } from '../api/models';
 import { CopyText } from '../auth/copy-text';
+import { StackBanner } from '../stacks/stack-banner';
 
 export interface SavedStream {
   readonly name: string;
@@ -63,7 +64,7 @@ function streamModel(stream: StreamRouteView | null): StreamModel {
 
 @Component({
   selector: 'ap-stream-dialog',
-  imports: [Form, Field, FormField, ErrorSummary, Button, CopyText, TranslatePipe],
+  imports: [Form, Field, FormField, ErrorSummary, Button, StackBanner, CopyText, TranslatePipe],
   templateUrl: './stream-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -73,7 +74,16 @@ export class StreamDialog {
   private readonly api = inject(Api);
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   protected readonly model = signal<StreamModel>(streamModel(this.existing));
+  protected readonly stack = this.existing?.stack;
+  protected readonly projectFromStack = this.stack?.fields.includes('project') ?? false;
   protected readonly stream = form(this.model, (s) => {
+    const fromStack = () => !!this.stack;
+    disabled(s.name, fromStack);
+    disabled(s.protocol, fromStack);
+    disabled(s.listenPort, fromStack);
+    disabled(s.targetHost, fromStack);
+    disabled(s.targetPort, fromStack);
+    disabled(s.projectId, () => this.projectFromStack);
     required(s.projectId, { error: { kind: 'project.notFound' } });
     required(s.name);
     validate(s.name, ({ value }) => (value().trim().length > 40 ? { kind: 'tooLong', params: { max: 40 } } : undefined));

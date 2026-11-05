@@ -54,6 +54,9 @@
                 @if (route.password) {
                   <span class="ap-caption ap-gate-tag"><ap-icon [icon]="lockIcon" />{{ 'Needs a password' | t }}</span>
                 }
+                @if (route.stack; as source) {
+                  <ap-stack-tag [stack]="source.stack" />
+                }
               </div>
             </td>
             <td class="ap-data ap-muted">{{ targetLabel(route) }}</td>

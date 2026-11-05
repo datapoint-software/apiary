@@ -26,9 +26,13 @@ import { RouteActions } from './route-actions';
         <div class="ap-list-row">
           <div class="ap-list-text">
             <strong>{{ 'Delete this route' | t }}</strong>
-            <span class="ap-muted">{{ 'Requests to it get a 404 on every replica.' | t }}</span>
+            @if (route().stack; as source) {
+              <span class="ap-muted">{{ 'Remove it from the stack file instead. The next apply of {stack} deletes it.' | t: { stack: source.stack } }}</span>
+            } @else {
+              <span class="ap-muted">{{ 'Requests to it get a 404 on every replica.' | t }}</span>
+            }
           </div>
-          <button apWrite apButton type="button" style="color: var(--critical)" [disabled]="!auth.canOperate()" (click)="delete()">
+          <button apWrite apButton type="button" style="color: var(--critical)" [disabled]="!auth.canOperate() || !!route().stack" (click)="delete()">
             {{ 'Delete route…' | t }}
           </button>
         </div>

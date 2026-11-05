@@ -9,6 +9,8 @@ const pages = [
   '/certificates',
   '/streams',
   '/redirects',
+  '/stacks',
+  '/pipeline-tokens',
   '/visitor-pages',
   '/users',
   '/single-sign-on',

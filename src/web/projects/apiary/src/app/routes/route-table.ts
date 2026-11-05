@@ -8,12 +8,13 @@ import { Auth } from '../auth/auth';
 import { RouteGroup } from './route-group';
 import { routeLabel, targetLabel } from './route-label';
 import { RouteRowActions } from './route-row-actions';
+import { StackTag } from '../stacks/stack-tag';
 import { perMinute } from './route-status';
 import { RouteStatusLabel } from './route-status-label';
 
 @Component({
   selector: 'ap-route-table',
-  imports: [Icon, RouterLink, RouteStatusLabel, RouteRowActions, TranslatePipe],
+  imports: [Icon, RouterLink, RouteStatusLabel, RouteRowActions, StackTag, TranslatePipe],
   templateUrl: './route-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

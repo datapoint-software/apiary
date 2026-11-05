@@ -44,6 +44,12 @@ export const routes: Routes = [
         loadComponent: () => import('./routes/route-editor').then((m) => m.RouteEditor),
         canDeactivate: [unsavedChanges],
       },
+      { path: 'stacks', title: 'Stacks · Apiary', loadComponent: () => import('./stacks/stack-list').then((m) => m.StackList) },
+      {
+        path: 'stacks/:name',
+        title: 'Stack · Apiary',
+        loadComponent: () => import('./stacks/stack-page').then((m) => m.StackPage),
+      },
       {
         path: 'certificates',
         title: 'Certificates · Apiary',
@@ -74,6 +80,12 @@ export const routes: Routes = [
         title: 'Users · Apiary',
         canActivate: [requiresRole('administrator')],
         loadComponent: () => import('./users/user-list').then((m) => m.UserList),
+      },
+      {
+        path: 'pipeline-tokens',
+        title: 'Pipeline tokens · Apiary',
+        canActivate: [requiresRole('administrator')],
+        loadComponent: () => import('./stacks/pipeline-token-list').then((m) => m.PipelineTokenList),
       },
       {
         path: 'single-sign-on',

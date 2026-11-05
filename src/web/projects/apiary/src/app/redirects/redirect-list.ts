@@ -7,6 +7,7 @@ import { Api } from '../api/api';
 import { ProjectView, RedirectView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { WriteLock } from '../cluster/write-lock';
+import { StackTag } from '../stacks/stack-tag';
 import { openDialog } from '../shell/open-dialog';
 import { AddedRedirect, RedirectDialog } from './redirect-dialog';
 
@@ -19,7 +20,7 @@ const statusLabels: Record<number, string> = {
 
 @Component({
   selector: 'ap-redirect-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, TranslatePipe],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, StackTag, TranslatePipe],
   templateUrl: './redirect-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

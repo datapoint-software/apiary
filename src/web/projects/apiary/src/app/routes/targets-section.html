@@ -8,6 +8,7 @@
     </div>
   </div>
   <div class="ap-panel-body ap-stack">
+    <ap-stack-tag [stack]="stack()" [locked]="true" />
     @for (target of route().targets; track $index) {
       <div class="ap-row" style="gap: 12px; align-items: flex-start; flex-wrap: wrap">
         <div style="flex: 2 1 220px">
@@ -29,7 +30,7 @@
               </div>
             </ap-field>
           </div>
-          <button apButton="ghost" size="small" [iconOnly]="true" type="button" style="margin-top: 26px" [attr.aria-label]="'Remove target {number}' | t: { number: $index + 1 }" (click)="remove($index)">
+          <button apButton="ghost" size="small" [iconOnly]="true" type="button" style="margin-top: 26px" [disabled]="!!stack()" [attr.aria-label]="'Remove target {number}' | t: { number: $index + 1 }" (click)="remove($index)">
             <ap-icon [icon]="icons.remove" />
           </button>
         }

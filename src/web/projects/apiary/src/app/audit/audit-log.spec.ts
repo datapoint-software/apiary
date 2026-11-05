@@ -226,4 +226,16 @@ describe('AuditLog', () => {
 
     expect(request.request.body.via).toBeNull();
   });
+
+  it('asks for what pipelines did, and names the pipeline', async () => {
+    const rendered = await render([
+      anEntry({ user: undefined, pipeline: 'shop-deploy', action: 'stacks.apply' }),
+    ]);
+
+    expect(textOf(rendered.fixture)).toContain('Pipeline shop-deploy applied a stack file');
+    byRole(rendered.fixture, 'button', 'Pipelines').click();
+    const request = await nextFilter(rendered);
+
+    expect(request.request.body.via).toBe('pipelines');
+  });
 });

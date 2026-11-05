@@ -293,4 +293,10 @@ export const routesPortuguese: TextCatalog = {
   '{count} route now accepts requests up to {size}, on every replica.': '{count} rota passa a aceitar pedidos até {size}, em todas as réplicas.',
   '{count} routes now accept requests up to {size}, on every replica.': '{count} rotas passam a aceitar pedidos até {size}, em todas as réplicas.',
   'Default saved': 'Predefinição guardada',
+  'Remove it from the stack file instead. The next apply of {stack} deletes it.': 'Em vez disso, remova-a do ficheiro da stack. A próxima aplicação de {stack} elimina-a.',
+  'Locked fields come from the labels of {service}: change them in the stack file, and the next apply updates this route. You can still disable the route or schedule maintenance here.':
+    'Os campos bloqueados vêm das etiquetas de {service}: mude-os no ficheiro da stack, e a próxima aplicação atualiza esta rota. Ainda pode desativar a rota ou agendar manutenção aqui.',
+  'Open the stack': 'Abrir a stack',
+  '{count} of them come from a stack file. Change them there, or select only routes not from a stack.':
+    '{count} delas vêm de um ficheiro de stack. Mude-as lá, ou selecione só rotas que não vêm de uma stack.',
 };
