@@ -177,6 +177,16 @@ describe('Field', () => {
   });
 });
 
+describe('Field without help', () => {
+  it('describes its control with no help', async () => {
+    await render();
+
+    const path = input('Path');
+
+    expect(path.getAttribute('aria-describedby')).toBe(`${path.id}-error`);
+  });
+});
+
 describe('ErrorSummary', () => {
   it('stays hidden before the form is submitted', async () => {
     await render();

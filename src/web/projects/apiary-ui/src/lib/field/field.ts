@@ -3,6 +3,7 @@ import { FieldTree, FormField } from '@angular/forms/signals';
 import { CircleAlert } from 'lucide';
 import { Icon } from '../icon/icon';
 import { ErrorMessages } from '../messages/error-messages';
+import { FieldHelp } from './field-help';
 import { Form } from './form';
 import { TranslatePipe } from '../i18n/translate-pipe';
 
@@ -25,6 +26,9 @@ export class Field {
   private readonly messages = inject(ErrorMessages);
   private readonly form = inject(Form, { optional: true });
   private readonly control = contentChild(FormField, { read: ElementRef });
+  private readonly projectedHelp = contentChild(FieldHelp);
+  protected readonly hasHelp = computed(() => this.help() !== '' || this.projectedHelp() !== undefined);
+  protected readonly helpSeparator = computed(() => (this.help() !== '' && this.projectedHelp() !== undefined ? ' ' : ''));
 
   protected readonly checking = computed(() => {
     const state = this.field()();
@@ -57,7 +61,7 @@ export class Field {
       return;
     }
     element.id = this.id;
-    element.setAttribute('aria-describedby', `${this.id}-help ${this.id}-error`);
+    element.setAttribute('aria-describedby', this.hasHelp() ? `${this.id}-help ${this.id}-error` : `${this.id}-error`);
     if (this.error() === '') {
       element.removeAttribute('aria-invalid');
       return;

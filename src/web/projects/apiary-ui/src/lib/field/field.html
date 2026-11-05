@@ -5,9 +5,7 @@
   }
 </label>
 <ng-content />
-@if (help()) {
-  <span class="ap-help" [id]="id + '-help'">{{ help() }}</span>
-}
+<span class="ap-help" [id]="id + '-help'" [hidden]="!hasHelp()">{{ help() }}{{ helpSeparator() }}<ng-content select="[apFieldHelp]" /></span>
 <span class="ap-help" aria-live="polite">{{ checking() ? ('Checking…' | t) : '' }}</span>
 <span class="ap-error" [id]="id + '-error'" [hidden]="!error()">
   <ap-icon [icon]="alertIcon" />{{ error() }}

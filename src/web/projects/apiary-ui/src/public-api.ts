@@ -8,6 +8,7 @@ export * from './lib/empty-state/empty-state';
 export * from './lib/field/api-problem';
 export * from './lib/field/error-summary';
 export * from './lib/field/field';
+export * from './lib/field/field-help';
 export * from './lib/field/form';
 export * from './lib/field/problem-errors';
 export * from './lib/i18n/i18n';
