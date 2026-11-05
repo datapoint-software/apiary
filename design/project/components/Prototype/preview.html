@@ -3864,6 +3864,9 @@ function parseRange(line) {
 const inRange = (ip, r) => ip.len === r.len && ip.bits >> BigInt(r.len - r.prefix) === r.bits >> BigInt(r.len - r.prefix);
 const PRIVATE_RANGES = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '100.64.0.0/10', '169.254.0.0/16', 'fc00::/7', '::1/128', 'fe80::/10'].map(parseRange);
 const isPublicRange = line => { const r = parseRange(line); return !!r && !PRIVATE_RANGES.some(p => p.len === r.len && r.prefix >= p.prefix && inRange(r, p)); };
+// An X-Forwarded-For entry may carry the client's port, as some load balancers add: 203.0.113.9:51234 or [2001:db8::1]:51234.
+const hopAddress = s => { const m = /^\[(.+)\](?::\d+)?$/.exec(s) || /^(\d+\.\d+\.\d+\.\d+):\d+$/.exec(s); return m ? m[1] : s; };
+const parseHop = s => parseIp(hopAddress(s));
 const trustsAddress = ip => D.trustedProxies.some(p => { const r = parseRange(p.range); return r && inRange(ip, r); });
 const MAX_PROXIES = 100, MAX_HOPS = 20;
 function checkProxyRange(line, others) {
@@ -3877,7 +3880,8 @@ function checkProxyRange(line, others) {
 
 /* What Apiary does with one request: the client address and scheme routes use, and the headers it sends on.
    It reads X-Forwarded-For from the right, skips trusted addresses and stops at the first one it doesn't trust.
-   The scheme is the X-Forwarded-Proto value of the same hop, or the only value when the proxies replace it. */
+   The scheme is the X-Forwarded-Proto value of the same hop, or the only value when the proxies replace it; anything but
+   http or https keeps the connection's own (http here). */
 function resolveRequest(conn, forwardedFor, forwardedProto) {
   const c = parseIp(conn);
   if (!c) return null;
@@ -3885,16 +3889,17 @@ function resolveRequest(conn, forwardedFor, forwardedProto) {
   const chain = String(forwardedFor || '').split(',').map(s => s.trim()).filter(Boolean);
   const protos = String(forwardedProto || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   if (!trustsAddress(c)) return { ...own, why: chain.length || protos.length ? 'The connection isn’t from a trusted proxy, so Apiary ignores the headers it received and sends new ones.' : 'The connection isn’t from a trusted proxy, so its own address is the client’s.' };
-  if (chain.length > MAX_HOPS || chain.some(s => !parseIp(s))) return { ...own, warn: true, why: chain.length > MAX_HOPS ? `X-Forwarded-For has more than ${MAX_HOPS} addresses, so Apiary ignores the headers and uses the proxy’s own address.` : 'X-Forwarded-For has something that isn’t an address, so Apiary ignores the headers and uses the proxy’s own address.' };
-  if (!chain.length) return { ...own, why: 'The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address.' };
+  if (chain.length > MAX_HOPS || chain.some(s => !parseHop(s))) return { ...own, warn: true, why: chain.length > MAX_HOPS ? `X-Forwarded-For has more than ${MAX_HOPS} addresses, so Apiary ignores the headers and uses the proxy’s own address.` : 'X-Forwarded-For has something that isn’t an address, so Apiary ignores the headers and uses the proxy’s own address.' };
   let i = chain.length - 1;
-  while (i > 0 && trustsAddress(parseIp(chain[i]))) i--;
-  const hop = chain.length - 1 - i;
+  while (i > 0 && trustsAddress(parseHop(chain[i]))) i--;
+  const hop = chain.length ? chain.length - 1 - i : 0;
   const proto = protos.length === 1 ? protos[0] : protos[protos.length - 1 - hop];
   const scheme = proto === 'http' || proto === 'https' ? proto : 'http';
+  const odd = proto && proto !== scheme ? ' X-Forwarded-Proto isn’t http or https, so Apiary keeps the connection’s own scheme.' : '';
+  if (!chain.length) return { ...own, scheme, why: `The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address.${odd}` };
   return {
-    client: chain[i], scheme, sentFor: [...chain, conn.trim()].join(', '),
-    why: `The connection is from a trusted proxy. Reading X-Forwarded-For from the right, Apiary ${hop ? `skips ${plural(hop, 'more trusted address', 'more trusted addresses')} and ` : ''}takes the first address it doesn’t trust.${proto && proto !== scheme ? ' X-Forwarded-Proto isn’t http or https, so it counts as http.' : ''}`,
+    client: hopAddress(chain[i]), scheme, sentFor: [...chain, conn.trim()].join(', '),
+    why: `The connection is from a trusted proxy. Reading X-Forwarded-For from the right, Apiary ${hop ? `skips ${plural(hop, 'more trusted address', 'more trusted addresses')} and ` : ''}takes the first address it doesn’t trust.${odd}`,
   };
 }
 
@@ -5707,7 +5712,8 @@ const PT_PATTERNS = [
   [/^Requests from (\S+) now keep their X-Forwarded-For, on every replica\.$/, 'Os pedidos de $1 passam a manter o X-Forwarded-For, em todas as réplicas.'],
   [/^Requests from it will count as coming from the proxy itself: route allowlists see the proxy’s address, everyone behind it shares one rate limit, and Apiary replaces the X-Forwarded-For it sends on\.(?: It sent a request (.+)\.)?$/, (m, a) => `Os pedidos que vêm dele passam a contar como vindos do próprio proxy: as listas de endereços permitidos das rotas veem o endereço do proxy, todos os que estão atrás dele partilham um limite de pedidos, e o Apiary substitui o X-Forwarded-For que envia.${a ? ` Enviou um pedido ${tr(a)}.` : ''}`],
   [/^X-Forwarded-For has more than (\d+) addresses, so Apiary ignores the headers and uses the proxy’s own address\.$/, 'O X-Forwarded-For tem mais de $1 endereços, por isso o Apiary ignora os cabeçalhos e usa o endereço do próprio proxy.'],
-  [/^The connection is from a trusted proxy\. Reading X-Forwarded-For from the right, Apiary (?:skips (\d+) more trusted address(?:es)? and )?takes the first address it doesn’t trust\.( X-Forwarded-Proto isn’t http or https, so it counts as http\.)?$/, (m, n, p) => `A ligação vem de um proxy de confiança. Lendo o X-Forwarded-For da direita para a esquerda, o Apiary ${n ? `salta ${n === '1' ? 'mais 1 endereço de confiança' : `mais ${n} endereços de confiança`} e ` : ''}fica com o primeiro endereço em que não confia.${p ? ' O X-Forwarded-Proto não é http nem https, por isso conta como http.' : ''}`],
+  [/^The connection is from a trusted proxy\. Reading X-Forwarded-For from the right, Apiary (?:skips (\d+) more trusted address(?:es)? and )?takes the first address it doesn’t trust\.( X-Forwarded-Proto isn’t http or https, so Apiary keeps the connection’s own scheme\.)?$/, (m, n, p) => `A ligação vem de um proxy de confiança. Lendo o X-Forwarded-For da direita para a esquerda, o Apiary ${n ? `salta ${n === '1' ? 'mais 1 endereço de confiança' : `mais ${n} endereços de confiança`} e ` : ''}fica com o primeiro endereço em que não confia.${p ? ' O X-Forwarded-Proto não é http nem https, por isso o Apiary mantém o esquema da própria ligação.' : ''}`],
+  [/^The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address\. X-Forwarded-Proto isn’t http or https, so Apiary keeps the connection’s own scheme\.$/, 'O proxy não enviou X-Forwarded-For, por isso o Apiary usa o endereço do próprio proxy. O X-Forwarded-Proto não é http nem https, por isso o Apiary mantém o esquema da própria ligação.'],
 ];
 
 const PT_VERBS = {
