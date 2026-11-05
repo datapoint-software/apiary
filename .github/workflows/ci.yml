@@ -36,6 +36,13 @@ jobs:
         with:
           name: server-coverage
           path: TestResults/*.cobertura.xml
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: ${{ !cancelled() }}
+        with:
+          files: TestResults/*.cobertura.xml
+          disable_search: true
+          flags: server
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   web:
     name: Web
@@ -59,6 +66,13 @@ jobs:
       - run: npx ng test apiary-ui --watch=false --coverage
       - run: npx ng test apiary --watch=false --coverage
       - run: npm run build
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: ${{ !cancelled() }}
+        with:
+          files: src/web/coverage/apiary-ui/clover.xml,src/web/coverage/apiary/clover.xml
+          disable_search: true
+          flags: web
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   e2e:
     name: End to end

@@ -1,6 +1,7 @@
 # Apiary
 
 [![CI](https://github.com/datapoint-software/apiary/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/datapoint-software/apiary/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/datapoint-software/apiary/graph/badge.svg)](https://codecov.io/gh/datapoint-software/apiary)
 [![Docker Hub](https://img.shields.io/docker/v/datapointsoftware/apiary?sort=semver&label=docker)](https://hub.docker.com/r/datapointsoftware/apiary)
 [![Pulls](https://img.shields.io/docker/pulls/datapointsoftware/apiary)](https://hub.docker.com/r/datapointsoftware/apiary)
 [![License: AGPL-3.0](https://img.shields.io/github/license/datapoint-software/apiary)](LICENSE)

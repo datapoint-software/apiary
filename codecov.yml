@@ -1,0 +1,14 @@
+# Codecov shows coverage; CI enforces it (tools/coverage-thresholds.json and
+# angular.json), so Codecov's statuses inform without failing pull requests.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+comment:
+  layout: "condensed_header, diff, flags"
+  require_changes: true

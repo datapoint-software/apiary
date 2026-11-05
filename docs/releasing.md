@@ -6,7 +6,7 @@ How a version gets from `main` to Docker Hub, and how to try a pre-release on a 
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| [`ci.yml`](../.github/workflows/ci.yml) | Every push to `main` and every pull request | Restores in locked mode, builds, checks formatting and third-party notices, and runs the server tests with coverage; checks translations, lints, unit-tests and builds the web app; runs the end-to-end and accessibility tests against a real server; builds the image for `linux/amd64` without pushing it |
+| [`ci.yml`](../.github/workflows/ci.yml) | Every push to `main` and every pull request | Restores in locked mode, builds, checks formatting and third-party notices, and runs the server tests with coverage; checks translations, lints, unit-tests and builds the web app; uploads both coverage reports to [Codecov](https://app.codecov.io/gh/datapoint-software/apiary); runs the end-to-end and accessibility tests against a real server; builds the image for `linux/amd64` without pushing it |
 | [`release.yml`](../.github/workflows/release.yml) | A tag such as `1.0.0-alpha.1` or `1.0.0` | Runs the same checks, checks the tag matches the version in the code, then builds the image for `linux/amd64` and `linux/arm64` and pushes it to [`datapointsoftware/apiary`](https://hub.docker.com/r/datapointsoftware/apiary) |
 
 Only a tag publishes an image. To rehearse a release, run the Release workflow by hand from **Actions → Release → Run workflow**: it runs every step for both platforms, but doesn't sign in to Docker Hub or push, so it needs no secrets. A release tags the image with its version; a final release (no `-`) also moves `latest`, a pre-release never does. Each image carries a build provenance attestation and an SBOM, which `docker buildx imagetools inspect datapointsoftware/apiary:<version> --format '{{ json .SBOM }}'` shows.
@@ -18,6 +18,16 @@ Actions are pinned by commit SHA, with the version in a comment, so a moved tag 
 1. On Docker Hub, create a [personal access token](https://docs.docker.com/security/access-tokens/) for an account that can push to `datapointsoftware/apiary`, with **Read & Write** scope. Name it after its use, e.g. "GitHub Actions apiary release".
 2. On GitHub, in the repository's **Settings → Environments**, create an environment named `docker-hub` and add two secrets to it: `DOCKERHUB_USERNAME` (the account's name) and `DOCKERHUB_TOKEN` (the token). Restrict its deployment tags to the version pattern, and add required reviewers if a release should need a second person's approval.
 3. Keep the token only there. If it leaks, revoke it on Docker Hub and create another.
+
+## Set up Codecov (once)
+
+CI uploads the server's and the web app's coverage to [Codecov](https://about.codecov.io/), flagged `server` and `web`, for the badge in the README and the coverage comments on pull requests. CI still enforces the thresholds itself, so [`codecov.yml`](../codecov.yml) makes Codecov's statuses informational, and a failed upload doesn't fail CI.
+
+1. Sign in to [Codecov](https://app.codecov.io/) with GitHub and add `datapoint-software/apiary`. Codecov asks to install its GitHub app on the organization, which needs an organization owner.
+2. Copy the repository's upload token from Codecov's **Configuration → General** page.
+3. On GitHub, in the repository's **Settings → Secrets and variables → Actions**, add it as the repository secret `CODECOV_TOKEN`. Keep it only there; if it leaks, regenerate it on Codecov and replace the secret.
+
+Pull requests from forks get no secrets, so Codecov takes their uploads without a token, as it does for public repositories. Release runs don't pass the secret to the checks either, and need no upload: the tagged commit was uploaded when it reached `main`.
 
 ## Release a version
 
