@@ -1,5 +1,11 @@
 # Apiary
 
+[![CI](https://github.com/datapoint-software/apiary/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/datapoint-software/apiary/actions/workflows/ci.yml)
+[![Docker Hub](https://img.shields.io/docker/v/datapointsoftware/apiary?sort=semver&label=docker)](https://hub.docker.com/r/datapointsoftware/apiary)
+[![Pulls](https://img.shields.io/docker/pulls/datapointsoftware/apiary)](https://hub.docker.com/r/datapointsoftware/apiary)
+[![License: AGPL-3.0](https://img.shields.io/github/license/datapoint-software/apiary)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
+
 Apiary is a reverse proxy built for [Docker Swarm](https://docs.docker.com/engine/swarm/) clusters that must stay available. It routes incoming HTTP and HTTPS requests to Swarm services and manages TLS certificates automatically through [Let's Encrypt](https://letsencrypt.org/).
 
 ![Apiary's admin interface: a project's routes, with their health, targets including a canary, certificates and requests per minute, and the cluster's 4 of 4 replicas at the top](docs/images/admin-interface.png)
