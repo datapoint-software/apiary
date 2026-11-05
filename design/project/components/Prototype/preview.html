@@ -977,6 +977,12 @@ function seedData() {
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
     /* The largest request a route accepts unless it sets its own, in MB. A route's own `size` is MB or 'none'. */
     sizeDefault: 30,
+    /* Proxies in front of Apiary whose X-Forwarded-For and X-Forwarded-Proto public routes believe. `last` is the latest request on any replica. */
+    trustedProxies: [
+      { range: '10.20.30.0/24', note: 'Load balancer in front of the edge nodes', last: NOW - 1 * MIN },
+      { range: '173.245.48.0/20', note: 'Cloudflare', last: NOW - 4 * MIN },
+      { range: '2400:cb00::/32', note: 'Cloudflare', last: NOW - 3 * DAY },
+    ],
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
       { id: 'shop', name: 'Shop', icon: 'shopping-bag', desc: 'Storefront, checkout and their APIs.' },
@@ -1093,7 +1099,7 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], trustedProxies: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
 }
 
 /* Shared behavior: formatting, toasts, dialogs, menus, busy buttons, form validation and the date and time picker. */
@@ -1749,7 +1755,7 @@ function navGroups(voters) {
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
     ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['layers', 'Stacks', '#/stacks', D.stacks.length || null, D.stacks.some(s => s.failed)], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
     ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on'], ['key-round', 'Pipeline tokens', '#/pipeline-tokens', D.pipelineTokens.length || null]] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
-    ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
+    ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ['shield-half', 'Trusted proxies', '#/trusted-proxies', D.trustedProxies.length || null, D.trustedProxies.some(proxyIsQuiet)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
 }
 function renderNav(p) {
@@ -2723,7 +2729,7 @@ ${rtChoice('hsts', src.hsts, 'HTTPS only (HSTS)', 'Off by default. Browsers that
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s5"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s5">Access</h2></div></div><div class="ap-panel-body ap-stack">
-${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8" spellcheck="false"'), help: 'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' })}
+${field({ name: 'allow', label: 'Allowed addresses', optional: true, control: textarea('allow', (src.allow || []).join('\n'), 'rows="3" placeholder="10.0.0.0/8" spellcheck="false"'), help: `One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.${D.trustedProxies.length ? ' Behind a <a href="#/trusted-proxies">trusted proxy</a>, Apiary checks the client’s address from X-Forwarded-For.' : ''}` })}
 ${rtChoice('rateLimited', src.rateLimit != null, 'Limit requests per visitor', 'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.')}
 <div style="max-width:280px;margin-left:40px" data-rate${src.rateLimit != null ? '' : ' hidden'}>${field({ name: 'rateLimit', label: 'Rate limit', type: 'number', value: src.rateLimit ?? 600, data: true, after: 'a&nbsp;minute', attrs: 'inputmode="numeric"', help: 'From 1 to 100,000.' })}</div>
 ${rtChoice('gated', !!src.gate, 'Ask visitors for a password', 'For demos and previews that aren’t ready to be public. Visitors enter it once, on a page Apiary shows, and stay signed in on that browser. Everyone shares the same password, so it doesn’t tell people apart.')}
@@ -3834,6 +3840,155 @@ ${D.replicas.slice().sort((a, b) => a.name.localeCompare(b.name)).map(r => `<tr>
     },
   };
 });
+
+/* Trusted proxies: load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client's
+   address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and public routes use them. The admin port never does. */
+function parseIp(s) {
+  s = String(s || '').trim().replace(/^\[|\]$/g, '');
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
+  if (v4) return v4.slice(1).every(n => +n <= 255) ? { len: 32, bits: v4.slice(1).reduce((a, n) => (a << 8n) + BigInt(n), 0n) } : null;
+  if (!/^[0-9a-f:]+$/i.test(s) || !s.includes(':') || (s.match(/::/g) || []).length > 1) return null;
+  const [head, tail] = s.includes('::') ? s.split('::') : [s, null];
+  const h = head ? head.split(':') : [], t = tail ? tail.split(':') : [];
+  const groups = tail === null ? h : [...h, ...Array(8 - h.length - t.length).fill('0'), ...t];
+  if (groups.length !== 8 || groups.some(g => !/^[0-9a-f]{1,4}$/i.test(g))) return null;
+  return { len: 128, bits: groups.reduce((a, g) => (a << 16n) + BigInt('0x' + g), 0n) };
+}
+function parseRange(line) {
+  const [addr, pre] = String(line).trim().split('/');
+  const ip = parseIp(addr);
+  if (!ip) return null;
+  const prefix = pre === undefined ? ip.len : /^\d{1,3}$/.test(pre) ? +pre : -1;
+  return prefix < 0 || prefix > ip.len ? null : { ...ip, prefix };
+}
+const inRange = (ip, r) => ip.len === r.len && ip.bits >> BigInt(r.len - r.prefix) === r.bits >> BigInt(r.len - r.prefix);
+const PRIVATE_RANGES = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '100.64.0.0/10', '169.254.0.0/16', 'fc00::/7', '::1/128', 'fe80::/10'].map(parseRange);
+const isPublicRange = line => { const r = parseRange(line); return !!r && !PRIVATE_RANGES.some(p => p.len === r.len && r.prefix >= p.prefix && inRange(r, p)); };
+const trustsAddress = ip => D.trustedProxies.some(p => { const r = parseRange(p.range); return r && inRange(ip, r); });
+const MAX_PROXIES = 100, MAX_HOPS = 20;
+function checkProxyRange(line, others) {
+  const s = String(line || '').trim();
+  if (!s) return 'Enter an address or range, such as 10.20.30.0/24.';
+  const r = parseRange(s);
+  if (!r) return 'Enter an IPv4 or IPv6 address or range, such as 10.20.30.0/24.';
+  if (r.prefix === 0) return 'This would trust every address, so anyone could claim to be anyone and every allowlist would let them in. Enter only your proxies’ ranges.';
+  return others.includes(s) ? 'This range is already on the list.' : null;
+}
+
+/* What Apiary does with one request: the client address and scheme routes use, and the headers it sends on.
+   It reads X-Forwarded-For from the right, skips trusted addresses and stops at the first one it doesn't trust.
+   The scheme is the X-Forwarded-Proto value of the same hop, or the only value when the proxies replace it. */
+function resolveRequest(conn, forwardedFor, forwardedProto) {
+  const c = parseIp(conn);
+  if (!c) return null;
+  const own = { client: conn.trim(), scheme: 'http', sentFor: conn.trim() };
+  const chain = String(forwardedFor || '').split(',').map(s => s.trim()).filter(Boolean);
+  const protos = String(forwardedProto || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (!trustsAddress(c)) return { ...own, why: chain.length || protos.length ? 'The connection isn’t from a trusted proxy, so Apiary ignores the headers it received and sends new ones.' : 'The connection isn’t from a trusted proxy, so its own address is the client’s.' };
+  if (chain.length > MAX_HOPS || chain.some(s => !parseIp(s))) return { ...own, warn: true, why: chain.length > MAX_HOPS ? `X-Forwarded-For has more than ${MAX_HOPS} addresses, so Apiary ignores the headers and uses the proxy’s own address.` : 'X-Forwarded-For has something that isn’t an address, so Apiary ignores the headers and uses the proxy’s own address.' };
+  if (!chain.length) return { ...own, why: 'The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address.' };
+  let i = chain.length - 1;
+  while (i > 0 && trustsAddress(parseIp(chain[i]))) i--;
+  const hop = chain.length - 1 - i;
+  const proto = protos.length === 1 ? protos[0] : protos[protos.length - 1 - hop];
+  const scheme = proto === 'http' || proto === 'https' ? proto : 'http';
+  return {
+    client: chain[i], scheme, sentFor: [...chain, conn.trim()].join(', '),
+    why: `The connection is from a trusted proxy. Reading X-Forwarded-For from the right, Apiary ${hop ? `skips ${plural(hop, 'more trusted address', 'more trusted addresses')} and ` : ''}takes the first address it doesn’t trust.${proto && proto !== scheme ? ' X-Forwarded-Proto isn’t http or https, so it counts as http.' : ''}`,
+  };
+}
+
+const proxyIsQuiet = p => !p.last || NOW - p.last > DAY;
+const proxyLastSeen = p => (!p.last ? status('warn', 'No requests yet') : proxyIsQuiet(p) ? status('warn', `Last ${ago(p.last)}`) : `<span class="ap-muted">${ago(p.last)}</span>`);
+route('/trusted-proxies', () => {
+  const list = D.trustedProxies, admin = isAdmin(), quiet = list.filter(proxyIsQuiet);
+  const add = admin ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add proxy</button>` : '';
+  return {
+    title: 'Trusted proxies',
+    html: `${pageHead({ title: 'Trusted proxies', sub: 'Load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client’s address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and routes use them for allowlists, rate limits, password tries, HTTPS and the access log.', actions: add })}
+${banner('info', '', 'Only public routes use this. The admin interface always checks the connection’s own address, so its allowlist can’t be fooled by a header.')}
+${quiet.length ? banner('warn', `${plural(quiet.length, 'range hasn’t', 'ranges haven’t')} sent a request for a day`, `${quiet.map(p => `<span class="ap-data">${esc(p.range)}</span>`).join(', ')}. If the provider changed its ranges, requests from the new ones are treated as coming from the proxy itself. Remove ranges that are no longer in use.`) : ''}
+<section class="ap-panel" aria-labelledby="tp-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tp-t">Proxies</h2><p class="ap-panel-desc">${admin ? 'Changes reach every replica within seconds.' : 'Only Administrators can change them.'} Last request is the latest on any replica since it started.</p></div></div>
+${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Trusted proxies</caption><thead><tr><th scope="col">Address or range</th><th scope="col">What it is</th><th scope="col">Last request</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map((p, i) => `<tr><td><span class="ap-data">${esc(p.range)}</span>${isPublicRange(p.range) ? ' <span class="ap-tag">Public</span>' : ''}</td><td>${p.note ? esc(p.note) : '<span class="ap-muted">No note</span>'}</td><td>${proxyLastSeen(p)}</td><td class="ap-col-actions">${admin ? `<div class="ap-row" style="gap:4px;justify-content:flex-end;flex-wrap:nowrap"><button class="ap-btn ap-btn-sm" type="button" data-edit="${i}" data-write>Edit…</button><button class="ap-btn ap-btn-sm" type="button" data-remove="${i}" data-write>Remove…</button></div>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('No trusted proxies', 'Apiary uses the address of each connection, and replaces any X-Forwarded-For it receives. Add your load balancer or CDN if one sits in front of Apiary.', add)}</section>
+<section class="ap-panel" aria-labelledby="tr-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tr-t">Try a request</h2><p class="ap-panel-desc">See which address and scheme routes would use for a request, with the list above. Nothing is sent or saved.</p></div></div>
+<div class="ap-panel-body ap-stack"><div class="ap-row" style="gap:12px;align-items:flex-start;flex-wrap:wrap">
+<div style="flex:1 1 180px">${field({ name: 'tryConn', label: 'Connection from', value: '173.245.48.10', data: true, attrs: 'autocomplete="off" spellcheck="false"', help: 'The address Apiary sees the request come from.' })}</div>
+<div style="flex:2 1 260px">${field({ name: 'tryFor', label: 'X-Forwarded-For received', value: '198.51.100.23, 10.20.30.4', data: true, optional: true, attrs: 'autocomplete="off" spellcheck="false"', help: 'Addresses separated by commas, as the proxy sent them.' })}</div>
+<div style="flex:1 1 140px">${field({ name: 'tryProto', label: 'X-Forwarded-Proto received', value: 'https', data: true, optional: true, attrs: 'autocomplete="off" spellcheck="false"' })}</div></div>
+<div data-try aria-live="polite"></div></div></section>`,
+    mount(el) {
+      const btn = $('[data-add]', el);
+      if (btn) btn.addEventListener('click', () => proxyDialog(null));
+      el.addEventListener('click', e => {
+        const ed = e.target.closest('[data-edit]'), rm = e.target.closest('[data-remove]');
+        if (ed) proxyDialog(D.trustedProxies[+ed.dataset.edit]);
+        if (rm) removeProxy(D.trustedProxies[+rm.dataset.remove]);
+      });
+      const out = $('[data-try]', el);
+      const draw = () => {
+        const conn = $('#f-tryConn', el).value, r = resolveRequest(conn, $('#f-tryFor', el).value, $('#f-tryProto', el).value);
+        out.innerHTML = !r ? `<p class="ap-muted" style="margin:0">${conn.trim() ? 'Enter an IPv4 or IPv6 address, such as 173.245.48.10.' : 'Enter the address the connection comes from.'}</p>`
+          : `<dl class="ap-kv"><dt>Client address</dt><dd><span class="ap-data">${esc(r.client)}</span></dd><dt>Scheme</dt><dd><span class="ap-data">${r.scheme}</span></dd><dt>X-Forwarded-For sent on</dt><dd><span class="ap-data">${esc(r.sentFor)}</span></dd><dt>Why</dt><dd>${r.warn ? status('warn', r.why) : esc(r.why)}</dd></dl>`;
+        paint();
+      };
+      el.addEventListener('input', e => { if (/^try/.test(e.target.name)) draw(); });
+      draw();
+    },
+  };
+});
+function proxyDialog(p) {
+  const others = D.trustedProxies.filter(x => x !== p).map(x => x.range);
+  const d = dialog({
+    title: p ? `Edit ${esc(p.range)}` : 'Add a trusted proxy', backdrop: false,
+    body: `<form id="tpx-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'range', label: 'Address or range', value: p ? p.range : '', data: true, placeholder: '10.20.30.0/24', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'The address your proxy connects to Apiary from, or the range its provider publishes. IPv4 or IPv6.' })}
+${field({ name: 'note', label: 'What it is', value: p ? p.note : '', optional: true, placeholder: 'Load balancer in front of the edge nodes', attrs: 'maxlength="100"', help: 'So whoever reads this later knows why it’s trusted.' })}
+<div data-public></div>
+<p class="ap-caption" style="margin:0">Only add proxies that replace X-Forwarded-For or add to the end of it, and that reach Apiary over HTTPS or a private network: Apiary believes the scheme they report.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="tpx-form" data-busy="Saving…" data-write>${p ? 'Save' : 'Add proxy'}</button>`,
+  });
+  const f = $('#tpx-form', d.el);
+  const sync = () => {
+    const v = f.elements.range.value.trim();
+    $('[data-public]', d.el).innerHTML = !checkProxyRange(v, others) && isPublicRange(v) ? banner('warn', `${esc(v)} is a public range`, 'Anyone who can send requests from it can claim any client address and get past route allowlists. For a CDN or WAF, add only the ranges it publishes for its proxies, and keep them up to date when it changes them.') : '';
+    paint();
+  };
+  f.elements.range.addEventListener('input', sync);
+  sync();
+  form(f, { range: v => checkProxyRange(v, others) || (!p && D.trustedProxies.length >= MAX_PROXIES ? `Use ${MAX_PROXIES} ranges at most. Combine neighbors into a wider range.` : null) }, {
+    verb: p ? 'save it' : 'add it',
+    submit: async v => {
+      await api();
+      const range = v.range.trim(), note = v.note.trim();
+      if (p) {
+        D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `changed trusted proxy <code>${esc(p.range)}</code>`, meta: `${p.range === range ? '' : `${p.range} → ${range} · `}from 10.0.4.21` });
+        Object.assign(p, { range, note }, p.range === range ? {} : { last: null });
+      } else {
+        D.trustedProxies.push({ range, note, last: null });
+        D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `added trusted proxy <code>${esc(range)}</code>`, meta: `${note ? note + ' · ' : ''}from 10.0.4.21` });
+      }
+      d.close();
+      toast(`Requests from ${range} now keep their X-Forwarded-For, on every replica.`, { title: p ? 'Saved' : 'Proxy added' });
+      refresh();
+    },
+  });
+}
+function removeProxy(p) {
+  confirmDialog({
+    title: `Stop trusting ${esc(p.range)}?`,
+    text: `Requests from it will count as coming from the proxy itself: route allowlists see the proxy’s address, everyone behind it shares one rate limit, and Apiary replaces the X-Forwarded-For it sends on.${p.last && NOW - p.last < HOUR ? ` It sent a request ${ago(p.last)}.` : ''}`,
+    confirm: 'Remove proxy', busy: 'Removing…',
+    onConfirm: async () => {
+      await api();
+      D.trustedProxies.splice(D.trustedProxies.indexOf(p), 1);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `stopped trusting proxy <code>${esc(p.range)}</code>`, meta: 'From 10.0.4.21' });
+      refresh();
+      toast(`${p.range} is no longer trusted.`);
+    },
+  });
+}
 
 /* Users, single sign-on, connected agents, the audit log, your account, sign-in, invites and first run. */
 const ROLES = [
@@ -5281,6 +5436,38 @@ const PT_TEXT = new Map(Object.entries({
   'tried to apply stack': 'tentou aplicar a stack', 'applied stack': 'aplicou a stack', 'removed stack': 'removeu a stack', 'and pipeline token': 'e o token de pipeline',
   'added stack': 'adicionou a stack', 'created pipeline token': 'criou o token de pipeline', 'for stack': 'para a stack', 'revoked pipeline token': 'revogou o token de pipeline',
 
+  // Trusted proxies
+  'Trusted proxies': 'Proxies de confiança', 'Proxies': 'Proxies', 'Address or range': 'Endereço ou intervalo', 'What it is': 'O que é',
+  'Last request': 'Último pedido', 'Public': 'Público', 'No note': 'Sem nota', 'No requests yet': 'Ainda sem pedidos', 'Edit…': 'Editar…', 'Remove…': 'Remover…',
+  'Add proxy': 'Adicionar proxy', 'Add a trusted proxy': 'Adicionar um proxy de confiança', 'Proxy added': 'Proxy adicionado', 'Remove proxy': 'Remover proxy',
+  'Load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client’s address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and routes use them for allowlists, rate limits, password tries, HTTPS and the access log.': 'Balanceadores de carga, CDN e outros proxies à frente do Apiary. Os pedidos que vêm deles mantêm o endereço do cliente em X-Forwarded-For e o esquema em X-Forwarded-Proto, e as rotas usam-nos nas listas de endereços permitidos, nos limites de pedidos, nas tentativas de palavra-passe, no HTTPS e no registo de acessos.',
+  'Only public routes use this. The admin interface always checks the connection’s own address, so its allowlist can’t be fooled by a header.': 'Só as rotas públicas usam isto. A interface de administração verifica sempre o endereço da própria ligação, por isso a sua lista de endereços permitidos não pode ser enganada por um cabeçalho.',
+  '. If the provider changed its ranges, requests from the new ones are treated as coming from the proxy itself. Remove ranges that are no longer in use.': '. Se o fornecedor mudou os seus intervalos, os pedidos dos novos são tratados como vindos do próprio proxy. Remova os intervalos que já não estão em uso.',
+  'Changes reach every replica within seconds. Last request is the latest on any replica since it started.': 'As alterações chegam a todas as réplicas em segundos. O último pedido é o mais recente em qualquer réplica desde que arrancou.',
+  'Only Administrators can change them. Last request is the latest on any replica since it started.': 'Só os Administradores os podem mudar. O último pedido é o mais recente em qualquer réplica desde que arrancou.',
+  'No trusted proxies': 'Sem proxies de confiança',
+  'Apiary uses the address of each connection, and replaces any X-Forwarded-For it receives. Add your load balancer or CDN if one sits in front of Apiary.': 'O Apiary usa o endereço de cada ligação, e substitui qualquer X-Forwarded-For que receba. Adicione o seu balanceador de carga ou CDN, se houver um à frente do Apiary.',
+  'Try a request': 'Experimentar um pedido', 'See which address and scheme routes would use for a request, with the list above. Nothing is sent or saved.': 'Veja que endereço e esquema as rotas usariam num pedido, com a lista acima. Nada é enviado nem guardado.',
+  'Connection from': 'Ligação a partir de', 'The address Apiary sees the request come from.': 'O endereço de onde o Apiary vê chegar o pedido.',
+  'X-Forwarded-For received': 'X-Forwarded-For recebido', 'X-Forwarded-Proto received': 'X-Forwarded-Proto recebido', 'Addresses separated by commas, as the proxy sent them.': 'Endereços separados por vírgulas, tal como o proxy os enviou.',
+  'Client address': 'Endereço do cliente', 'Scheme': 'Esquema', 'X-Forwarded-For sent on': 'X-Forwarded-For enviado', 'Why': 'Porquê',
+  'Enter an IPv4 or IPv6 address, such as 173.245.48.10.': 'Introduza um endereço IPv4 ou IPv6, como 173.245.48.10.', 'Enter the address the connection comes from.': 'Introduza o endereço de onde vem a ligação.',
+  'The connection isn’t from a trusted proxy, so Apiary ignores the headers it received and sends new ones.': 'A ligação não vem de um proxy de confiança, por isso o Apiary ignora os cabeçalhos que recebeu e envia novos.',
+  'The connection isn’t from a trusted proxy, so its own address is the client’s.': 'A ligação não vem de um proxy de confiança, por isso o seu próprio endereço é o do cliente.',
+  'The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address.': 'O proxy não enviou X-Forwarded-For, por isso o Apiary usa o endereço do próprio proxy.',
+  'X-Forwarded-For has something that isn’t an address, so Apiary ignores the headers and uses the proxy’s own address.': 'O X-Forwarded-For tem algo que não é um endereço, por isso o Apiary ignora os cabeçalhos e usa o endereço do próprio proxy.',
+  'The address your proxy connects to Apiary from, or the range its provider publishes. IPv4 or IPv6.': 'O endereço a partir do qual o seu proxy se liga ao Apiary, ou o intervalo que o fornecedor publica. IPv4 ou IPv6.',
+  'So whoever reads this later knows why it’s trusted.': 'Para quem ler isto mais tarde saber porque é de confiança.',
+  'Only add proxies that replace X-Forwarded-For or add to the end of it, and that reach Apiary over HTTPS or a private network: Apiary believes the scheme they report.': 'Só adicione proxies que substituem o X-Forwarded-For ou acrescentam ao fim dele, e que chegam ao Apiary por HTTPS ou por uma rede privada: o Apiary acredita no esquema que eles indicam.',
+  'Anyone who can send requests from it can claim any client address and get past route allowlists. For a CDN or WAF, add only the ranges it publishes for its proxies, and keep them up to date when it changes them.': 'Quem conseguir enviar pedidos a partir dele pode alegar qualquer endereço de cliente e passar as listas de endereços permitidos das rotas. Para uma CDN ou WAF, adicione só os intervalos que publica para os seus proxies, e mantenha-os atualizados quando os mudar.',
+  'Enter an address or range, such as 10.20.30.0/24.': 'Introduza um endereço ou intervalo, como 10.20.30.0/24.',
+  'Enter an IPv4 or IPv6 address or range, such as 10.20.30.0/24.': 'Introduza um endereço ou intervalo IPv4 ou IPv6, como 10.20.30.0/24.',
+  'This would trust every address, so anyone could claim to be anyone and every allowlist would let them in. Enter only your proxies’ ranges.': 'Isto confiaria em todos os endereços, por isso qualquer pessoa poderia fazer-se passar por qualquer outra e todas as listas de endereços permitidos a deixariam entrar. Introduza só os intervalos dos seus proxies.',
+  'This range is already on the list.': 'Este intervalo já está na lista.', 'Use 100 ranges at most. Combine neighbors into a wider range.': 'Use no máximo 100 intervalos. Junte os vizinhos num intervalo mais largo.',
+  'changed trusted proxy': 'mudou o proxy de confiança', 'added trusted proxy': 'adicionou o proxy de confiança', 'stopped trusting proxy': 'deixou de confiar no proxy',
+  'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403. Behind a': 'Um endereço ou intervalo por linha, IPv4 ou IPv6. Deixe vazio para permitir todos; os restantes recebem um 403. Atrás de um',
+  'trusted proxy': 'proxy de confiança', ', Apiary checks the client’s address from X-Forwarded-For.': ', o Apiary verifica o endereço do cliente a partir do X-Forwarded-For.',
+
   // Calendar
   'January': 'janeiro', 'February': 'fevereiro', 'March': 'março', 'April': 'abril', 'May': 'maio', 'June': 'junho', 'July': 'julho', 'August': 'agosto',
   'September': 'setembro', 'October': 'outubro', 'November': 'novembro', 'December': 'dezembro', 'Monday': 'segunda-feira', 'Tuesday': 'terça-feira',
@@ -5512,6 +5699,15 @@ const PT_PATTERNS = [
   [/^You stay signed in on this browser for (\d+) days?\.( No password\? Ask whoever sent you the link\.)?$/, (m, n, x) => `Mantém a sessão neste navegador durante ${n} ${n === '1' ? 'dia' : 'dias'}.${x ? ' Não tem a palavra-passe? Peça-a a quem lhe enviou a ligação.' : ''}`],
   [/^Prototype: Apiary sets a cookie for this hostname and sends the visitor back to the page they asked for(, without the key in the address)?, now served by the site itself\. The site never sees the password, the key or the cookie\.$/, (m, k) => `Protótipo: o Apiary define um cookie para este nome de anfitrião e devolve o visitante à página que pediu${k ? ', sem a chave no endereço' : ''}, agora servida pelo próprio site. O site nunca vê a palavra-passe, a chave nem o cookie.`],
   [/^([^:]{2,40}): (.+)$/, (m, l, msg) => { const a = tr(l), b = tr(msg); return a === l && b === msg ? m : `${a}: ${b}`; }],
+  // Trusted proxies
+  [/^Last (.+ ago)$/, (m, a) => `Último ${tr(a)}`],
+  [/^(\d+) ranges? (?:hasn’t|haven’t) sent a request for a day$/, (m, n) => (n === '1' ? '1 intervalo não envia pedidos há um dia' : `${n} intervalos não enviam pedidos há um dia`)],
+  [/^Edit (\S+)$/, 'Editar $1'], [/^Stop trusting (\S+)\?$/, 'Deixar de confiar em $1?'], [/^(\S+) is a public range$/, '$1 é um intervalo público'],
+  [/^(\S+) is no longer trusted\.$/, '$1 deixou de ser de confiança.'],
+  [/^Requests from (\S+) now keep their X-Forwarded-For, on every replica\.$/, 'Os pedidos de $1 passam a manter o X-Forwarded-For, em todas as réplicas.'],
+  [/^Requests from it will count as coming from the proxy itself: route allowlists see the proxy’s address, everyone behind it shares one rate limit, and Apiary replaces the X-Forwarded-For it sends on\.(?: It sent a request (.+)\.)?$/, (m, a) => `Os pedidos que vêm dele passam a contar como vindos do próprio proxy: as listas de endereços permitidos das rotas veem o endereço do proxy, todos os que estão atrás dele partilham um limite de pedidos, e o Apiary substitui o X-Forwarded-For que envia.${a ? ` Enviou um pedido ${tr(a)}.` : ''}`],
+  [/^X-Forwarded-For has more than (\d+) addresses, so Apiary ignores the headers and uses the proxy’s own address\.$/, 'O X-Forwarded-For tem mais de $1 endereços, por isso o Apiary ignora os cabeçalhos e usa o endereço do próprio proxy.'],
+  [/^The connection is from a trusted proxy\. Reading X-Forwarded-For from the right, Apiary (?:skips (\d+) more trusted address(?:es)? and )?takes the first address it doesn’t trust\.( X-Forwarded-Proto isn’t http or https, so it counts as http\.)?$/, (m, n, p) => `A ligação vem de um proxy de confiança. Lendo o X-Forwarded-For da direita para a esquerda, o Apiary ${n ? `salta ${n === '1' ? 'mais 1 endereço de confiança' : `mais ${n} endereços de confiança`} e ` : ''}fica com o primeiro endereço em que não confia.${p ? ' O X-Forwarded-Proto não é http nem https, por isso conta como http.' : ''}`],
 ];
 
 const PT_VERBS = {

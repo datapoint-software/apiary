@@ -13,6 +13,12 @@ function seedData() {
     cluster: { name: 'prod-eu-west', version: '0.4.0', removalMinutes: 15 },
     /* The largest request a route accepts unless it sets its own, in MB. A route's own `size` is MB or 'none'. */
     sizeDefault: 30,
+    /* Proxies in front of Apiary whose X-Forwarded-For and X-Forwarded-Proto public routes believe. `last` is the latest request on any replica. */
+    trustedProxies: [
+      { range: '10.20.30.0/24', note: 'Load balancer in front of the edge nodes', last: NOW - 1 * MIN },
+      { range: '173.245.48.0/20', note: 'Cloudflare', last: NOW - 4 * MIN },
+      { range: '2400:cb00::/32', note: 'Cloudflare', last: NOW - 3 * DAY },
+    ],
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
       { id: 'shop', name: 'Shop', icon: 'shopping-bag', desc: 'Storefront, checkout and their APIs.' },
@@ -129,5 +135,5 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], trustedProxies: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
 }

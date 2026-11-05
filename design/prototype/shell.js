@@ -111,7 +111,7 @@ function navGroups(voters) {
     ['Projects', [...D.projects.map(pr => [pr.icon, pr.name, '#/projects/' + pr.id, routesOf(pr.id).length || null, !['ok', 'off'].includes(projectHealth(pr.id)[0])]), ['folder-open', 'All projects', '#/projects']]],
     ['Traffic', [['route', 'All routes', '#/routes', D.routes.length || null], ['layers', 'Stacks', '#/stacks', D.stacks.length || null, D.stacks.some(s => s.failed)], ['cable', 'Stream routes', '#/streams'], ['shield-check', 'Certificates', '#/certificates', null, D.certs.some(certNeedsAttention)], ['corner-up-right', 'Redirects', '#/redirects'], ['panels-top-left', 'Visitor pages', '#/visitor-pages']]],
     ['Access', [...(isAdmin() ? [['users', 'Users', '#/users'], ['door-open', 'Single sign-on', '#/single-sign-on'], ['key-round', 'Pipeline tokens', '#/pipeline-tokens', D.pipelineTokens.length || null]] : []), ['bot', 'Connected agents', '#/agents'], ['scroll-text', 'Audit log', '#/audit']]],
-    ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
+    ['Cluster', [['hexagon', 'Replicas', '#/replicas', null, voters.some(v => !v.reachable)], ['shield-half', 'Trusted proxies', '#/trusted-proxies', D.trustedProxies.length || null, D.trustedProxies.some(proxyIsQuiet)], ...(isAdmin() ? [['archive', 'Backups', '#/backups'], ['key-round', 'Root key', '#/root-key']] : [])]],
   ];
 }
 function renderNav(p) {

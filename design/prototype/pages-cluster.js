@@ -232,3 +232,152 @@ ${D.replicas.slice().sort((a, b) => a.name.localeCompare(b.name)).map(r => `<tr>
     },
   };
 });
+
+/* Trusted proxies: load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client's
+   address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and public routes use them. The admin port never does. */
+function parseIp(s) {
+  s = String(s || '').trim().replace(/^\[|\]$/g, '');
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
+  if (v4) return v4.slice(1).every(n => +n <= 255) ? { len: 32, bits: v4.slice(1).reduce((a, n) => (a << 8n) + BigInt(n), 0n) } : null;
+  if (!/^[0-9a-f:]+$/i.test(s) || !s.includes(':') || (s.match(/::/g) || []).length > 1) return null;
+  const [head, tail] = s.includes('::') ? s.split('::') : [s, null];
+  const h = head ? head.split(':') : [], t = tail ? tail.split(':') : [];
+  const groups = tail === null ? h : [...h, ...Array(8 - h.length - t.length).fill('0'), ...t];
+  if (groups.length !== 8 || groups.some(g => !/^[0-9a-f]{1,4}$/i.test(g))) return null;
+  return { len: 128, bits: groups.reduce((a, g) => (a << 16n) + BigInt('0x' + g), 0n) };
+}
+function parseRange(line) {
+  const [addr, pre] = String(line).trim().split('/');
+  const ip = parseIp(addr);
+  if (!ip) return null;
+  const prefix = pre === undefined ? ip.len : /^\d{1,3}$/.test(pre) ? +pre : -1;
+  return prefix < 0 || prefix > ip.len ? null : { ...ip, prefix };
+}
+const inRange = (ip, r) => ip.len === r.len && ip.bits >> BigInt(r.len - r.prefix) === r.bits >> BigInt(r.len - r.prefix);
+const PRIVATE_RANGES = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '100.64.0.0/10', '169.254.0.0/16', 'fc00::/7', '::1/128', 'fe80::/10'].map(parseRange);
+const isPublicRange = line => { const r = parseRange(line); return !!r && !PRIVATE_RANGES.some(p => p.len === r.len && r.prefix >= p.prefix && inRange(r, p)); };
+const trustsAddress = ip => D.trustedProxies.some(p => { const r = parseRange(p.range); return r && inRange(ip, r); });
+const MAX_PROXIES = 100, MAX_HOPS = 20;
+function checkProxyRange(line, others) {
+  const s = String(line || '').trim();
+  if (!s) return 'Enter an address or range, such as 10.20.30.0/24.';
+  const r = parseRange(s);
+  if (!r) return 'Enter an IPv4 or IPv6 address or range, such as 10.20.30.0/24.';
+  if (r.prefix === 0) return 'This would trust every address, so anyone could claim to be anyone and every allowlist would let them in. Enter only your proxies’ ranges.';
+  return others.includes(s) ? 'This range is already on the list.' : null;
+}
+
+/* What Apiary does with one request: the client address and scheme routes use, and the headers it sends on.
+   It reads X-Forwarded-For from the right, skips trusted addresses and stops at the first one it doesn't trust.
+   The scheme is the X-Forwarded-Proto value of the same hop, or the only value when the proxies replace it. */
+function resolveRequest(conn, forwardedFor, forwardedProto) {
+  const c = parseIp(conn);
+  if (!c) return null;
+  const own = { client: conn.trim(), scheme: 'http', sentFor: conn.trim() };
+  const chain = String(forwardedFor || '').split(',').map(s => s.trim()).filter(Boolean);
+  const protos = String(forwardedProto || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (!trustsAddress(c)) return { ...own, why: chain.length || protos.length ? 'The connection isn’t from a trusted proxy, so Apiary ignores the headers it received and sends new ones.' : 'The connection isn’t from a trusted proxy, so its own address is the client’s.' };
+  if (chain.length > MAX_HOPS || chain.some(s => !parseIp(s))) return { ...own, warn: true, why: chain.length > MAX_HOPS ? `X-Forwarded-For has more than ${MAX_HOPS} addresses, so Apiary ignores the headers and uses the proxy’s own address.` : 'X-Forwarded-For has something that isn’t an address, so Apiary ignores the headers and uses the proxy’s own address.' };
+  if (!chain.length) return { ...own, why: 'The proxy sent no X-Forwarded-For, so Apiary uses the proxy’s own address.' };
+  let i = chain.length - 1;
+  while (i > 0 && trustsAddress(parseIp(chain[i]))) i--;
+  const hop = chain.length - 1 - i;
+  const proto = protos.length === 1 ? protos[0] : protos[protos.length - 1 - hop];
+  const scheme = proto === 'http' || proto === 'https' ? proto : 'http';
+  return {
+    client: chain[i], scheme, sentFor: [...chain, conn.trim()].join(', '),
+    why: `The connection is from a trusted proxy. Reading X-Forwarded-For from the right, Apiary ${hop ? `skips ${plural(hop, 'more trusted address', 'more trusted addresses')} and ` : ''}takes the first address it doesn’t trust.${proto && proto !== scheme ? ' X-Forwarded-Proto isn’t http or https, so it counts as http.' : ''}`,
+  };
+}
+
+const proxyIsQuiet = p => !p.last || NOW - p.last > DAY;
+const proxyLastSeen = p => (!p.last ? status('warn', 'No requests yet') : proxyIsQuiet(p) ? status('warn', `Last ${ago(p.last)}`) : `<span class="ap-muted">${ago(p.last)}</span>`);
+route('/trusted-proxies', () => {
+  const list = D.trustedProxies, admin = isAdmin(), quiet = list.filter(proxyIsQuiet);
+  const add = admin ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add proxy</button>` : '';
+  return {
+    title: 'Trusted proxies',
+    html: `${pageHead({ title: 'Trusted proxies', sub: 'Load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client’s address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and routes use them for allowlists, rate limits, password tries, HTTPS and the access log.', actions: add })}
+${banner('info', '', 'Only public routes use this. The admin interface always checks the connection’s own address, so its allowlist can’t be fooled by a header.')}
+${quiet.length ? banner('warn', `${plural(quiet.length, 'range hasn’t', 'ranges haven’t')} sent a request for a day`, `${quiet.map(p => `<span class="ap-data">${esc(p.range)}</span>`).join(', ')}. If the provider changed its ranges, requests from the new ones are treated as coming from the proxy itself. Remove ranges that are no longer in use.`) : ''}
+<section class="ap-panel" aria-labelledby="tp-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tp-t">Proxies</h2><p class="ap-panel-desc">${admin ? 'Changes reach every replica within seconds.' : 'Only Administrators can change them.'} Last request is the latest on any replica since it started.</p></div></div>
+${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Trusted proxies</caption><thead><tr><th scope="col">Address or range</th><th scope="col">What it is</th><th scope="col">Last request</th><th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th></tr></thead><tbody>
+${list.map((p, i) => `<tr><td><span class="ap-data">${esc(p.range)}</span>${isPublicRange(p.range) ? ' <span class="ap-tag">Public</span>' : ''}</td><td>${p.note ? esc(p.note) : '<span class="ap-muted">No note</span>'}</td><td>${proxyLastSeen(p)}</td><td class="ap-col-actions">${admin ? `<div class="ap-row" style="gap:4px;justify-content:flex-end;flex-wrap:nowrap"><button class="ap-btn ap-btn-sm" type="button" data-edit="${i}" data-write>Edit…</button><button class="ap-btn ap-btn-sm" type="button" data-remove="${i}" data-write>Remove…</button></div>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('No trusted proxies', 'Apiary uses the address of each connection, and replaces any X-Forwarded-For it receives. Add your load balancer or CDN if one sits in front of Apiary.', add)}</section>
+<section class="ap-panel" aria-labelledby="tr-t"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="tr-t">Try a request</h2><p class="ap-panel-desc">See which address and scheme routes would use for a request, with the list above. Nothing is sent or saved.</p></div></div>
+<div class="ap-panel-body ap-stack"><div class="ap-row" style="gap:12px;align-items:flex-start;flex-wrap:wrap">
+<div style="flex:1 1 180px">${field({ name: 'tryConn', label: 'Connection from', value: '173.245.48.10', data: true, attrs: 'autocomplete="off" spellcheck="false"', help: 'The address Apiary sees the request come from.' })}</div>
+<div style="flex:2 1 260px">${field({ name: 'tryFor', label: 'X-Forwarded-For received', value: '198.51.100.23, 10.20.30.4', data: true, optional: true, attrs: 'autocomplete="off" spellcheck="false"', help: 'Addresses separated by commas, as the proxy sent them.' })}</div>
+<div style="flex:1 1 140px">${field({ name: 'tryProto', label: 'X-Forwarded-Proto received', value: 'https', data: true, optional: true, attrs: 'autocomplete="off" spellcheck="false"' })}</div></div>
+<div data-try aria-live="polite"></div></div></section>`,
+    mount(el) {
+      const btn = $('[data-add]', el);
+      if (btn) btn.addEventListener('click', () => proxyDialog(null));
+      el.addEventListener('click', e => {
+        const ed = e.target.closest('[data-edit]'), rm = e.target.closest('[data-remove]');
+        if (ed) proxyDialog(D.trustedProxies[+ed.dataset.edit]);
+        if (rm) removeProxy(D.trustedProxies[+rm.dataset.remove]);
+      });
+      const out = $('[data-try]', el);
+      const draw = () => {
+        const conn = $('#f-tryConn', el).value, r = resolveRequest(conn, $('#f-tryFor', el).value, $('#f-tryProto', el).value);
+        out.innerHTML = !r ? `<p class="ap-muted" style="margin:0">${conn.trim() ? 'Enter an IPv4 or IPv6 address, such as 173.245.48.10.' : 'Enter the address the connection comes from.'}</p>`
+          : `<dl class="ap-kv"><dt>Client address</dt><dd><span class="ap-data">${esc(r.client)}</span></dd><dt>Scheme</dt><dd><span class="ap-data">${r.scheme}</span></dd><dt>X-Forwarded-For sent on</dt><dd><span class="ap-data">${esc(r.sentFor)}</span></dd><dt>Why</dt><dd>${r.warn ? status('warn', r.why) : esc(r.why)}</dd></dl>`;
+        paint();
+      };
+      el.addEventListener('input', e => { if (/^try/.test(e.target.name)) draw(); });
+      draw();
+    },
+  };
+});
+function proxyDialog(p) {
+  const others = D.trustedProxies.filter(x => x !== p).map(x => x.range);
+  const d = dialog({
+    title: p ? `Edit ${esc(p.range)}` : 'Add a trusted proxy', backdrop: false,
+    body: `<form id="tpx-form" class="ap-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'range', label: 'Address or range', value: p ? p.range : '', data: true, placeholder: '10.20.30.0/24', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'The address your proxy connects to Apiary from, or the range its provider publishes. IPv4 or IPv6.' })}
+${field({ name: 'note', label: 'What it is', value: p ? p.note : '', optional: true, placeholder: 'Load balancer in front of the edge nodes', attrs: 'maxlength="100"', help: 'So whoever reads this later knows why it’s trusted.' })}
+<div data-public></div>
+<p class="ap-caption" style="margin:0">Only add proxies that replace X-Forwarded-For or add to the end of it, and that reach Apiary over HTTPS or a private network: Apiary believes the scheme they report.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="tpx-form" data-busy="Saving…" data-write>${p ? 'Save' : 'Add proxy'}</button>`,
+  });
+  const f = $('#tpx-form', d.el);
+  const sync = () => {
+    const v = f.elements.range.value.trim();
+    $('[data-public]', d.el).innerHTML = !checkProxyRange(v, others) && isPublicRange(v) ? banner('warn', `${esc(v)} is a public range`, 'Anyone who can send requests from it can claim any client address and get past route allowlists. For a CDN or WAF, add only the ranges it publishes for its proxies, and keep them up to date when it changes them.') : '';
+    paint();
+  };
+  f.elements.range.addEventListener('input', sync);
+  sync();
+  form(f, { range: v => checkProxyRange(v, others) || (!p && D.trustedProxies.length >= MAX_PROXIES ? `Use ${MAX_PROXIES} ranges at most. Combine neighbors into a wider range.` : null) }, {
+    verb: p ? 'save it' : 'add it',
+    submit: async v => {
+      await api();
+      const range = v.range.trim(), note = v.note.trim();
+      if (p) {
+        D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `changed trusted proxy <code>${esc(p.range)}</code>`, meta: `${p.range === range ? '' : `${p.range} → ${range} · `}from 10.0.4.21` });
+        Object.assign(p, { range, note }, p.range === range ? {} : { last: null });
+      } else {
+        D.trustedProxies.push({ range, note, last: null });
+        D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `added trusted proxy <code>${esc(range)}</code>`, meta: `${note ? note + ' · ' : ''}from 10.0.4.21` });
+      }
+      d.close();
+      toast(`Requests from ${range} now keep their X-Forwarded-For, on every replica.`, { title: p ? 'Saved' : 'Proxy added' });
+      refresh();
+    },
+  });
+}
+function removeProxy(p) {
+  confirmDialog({
+    title: `Stop trusting ${esc(p.range)}?`,
+    text: `Requests from it will count as coming from the proxy itself: route allowlists see the proxy’s address, everyone behind it shares one rate limit, and Apiary replaces the X-Forwarded-For it sends on.${p.last && NOW - p.last < HOUR ? ` It sent a request ${ago(p.last)}.` : ''}`,
+    confirm: 'Remove proxy', busy: 'Removing…',
+    onConfirm: async () => {
+      await api();
+      D.trustedProxies.splice(D.trustedProxies.indexOf(p), 1);
+      D.audit.unshift({ at: NOW, actor: D.me.email, via: 'UI', text: `stopped trusting proxy <code>${esc(p.range)}</code>`, meta: 'From 10.0.4.21' });
+      refresh();
+      toast(`${p.range} is no longer trusted.`);
+    },
+  });
+}
