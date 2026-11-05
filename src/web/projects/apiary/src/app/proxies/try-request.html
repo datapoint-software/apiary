@@ -1,0 +1,54 @@
+<section class="ap-panel" aria-labelledby="try-request-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="try-request-title">{{ 'Try a request' | t }}</h2>
+      <p class="ap-panel-desc">{{ 'See which address and scheme routes would use for a request, with the list above. Nothing is sent or saved.' | t }}</p>
+    </div>
+  </div>
+  <div class="ap-panel-body ap-stack">
+    <div class="ap-row" style="gap: 12px; align-items: flex-start; flex-wrap: wrap">
+      <div style="flex: 1 1 180px">
+        <ap-field [label]="'Connection from' | t" [field]="headers.connection" [help]="'The address Apiary sees the request come from.' | t">
+          <input class="ap-input ap-data" [formField]="headers.connection" autocomplete="off" spellcheck="false" autocapitalize="none" />
+        </ap-field>
+      </div>
+      <div style="flex: 2 1 260px">
+        <ap-field
+          [label]="'X-Forwarded-For received' | t"
+          [field]="headers.forwardedFor"
+          [optional]="true"
+          [help]="'Addresses separated by commas, as the proxy sent them.' | t"
+        >
+          <input class="ap-input ap-data" [formField]="headers.forwardedFor" autocomplete="off" spellcheck="false" autocapitalize="none" />
+        </ap-field>
+      </div>
+      <div style="flex: 1 1 140px">
+        <ap-field [label]="'X-Forwarded-Proto received' | t" [field]="headers.forwardedProto" [optional]="true">
+          <input class="ap-input ap-data" [formField]="headers.forwardedProto" autocomplete="off" spellcheck="false" autocapitalize="none" />
+        </ap-field>
+      </div>
+    </div>
+    <div aria-live="polite">
+      @if (result(); as request) {
+        <dl class="ap-kv">
+          <dt>{{ 'Client address' | t }}</dt>
+          <dd><span class="ap-data">{{ request.client }}</span></dd>
+          <dt>{{ 'Scheme' | t }}</dt>
+          <dd><span class="ap-data">{{ request.scheme }}</span></dd>
+          <dt>{{ 'X-Forwarded-For sent on' | t }}</dt>
+          <dd><span class="ap-data">{{ request.sentFor }}</span></dd>
+          <dt>{{ 'Why' | t }}</dt>
+          <dd>
+            @if (isIgnored()) {
+              <ap-status tone="warn">{{ why() }}</ap-status>
+            } @else {
+              {{ why() }}
+            }
+          </dd>
+        </dl>
+      } @else {
+        <p class="ap-muted" style="margin: 0">{{ hint() }}</p>
+      }
+    </div>
+  </div>
+</section>

@@ -20,6 +20,7 @@ import { clusterPortuguese } from './cluster/cluster.pt';
 import { keysPortuguese } from './keys/keys.pt';
 import { overviewPortuguese } from './overview/overview.pt';
 import { projectsPortuguese } from './projects/projects.pt';
+import { proxiesPortuguese } from './proxies/proxies.pt';
 import { redirectsPortuguese } from './redirects/redirects.pt';
 import { routesPortuguese } from './routes/routes.pt';
 import { ssoPortuguese } from './sso/sso.pt';
@@ -46,6 +47,7 @@ export const appConfig: ApplicationConfig = {
     provideTranslations('pt-PT', keysPortuguese),
     provideTranslations('pt-PT', overviewPortuguese),
     provideTranslations('pt-PT', projectsPortuguese),
+    provideTranslations('pt-PT', proxiesPortuguese),
     provideTranslations('pt-PT', redirectsPortuguese),
     provideTranslations('pt-PT', routesPortuguese),
     provideTranslations('pt-PT', ssoPortuguese),

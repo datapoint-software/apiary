@@ -1,0 +1,48 @@
+<ap-page-head [heading]="'Trusted proxies' | t">
+  <span pageSub>{{
+    'Load balancers, CDNs and other proxies in front of Apiary. Requests from them keep the client’s address in X-Forwarded-For and the scheme in X-Forwarded-Proto, and routes use them for allowlists, rate limits, password tries, HTTPS and the access log.'
+      | t
+  }}</span>
+  @if (auth.canAdminister()) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="addIcon" />{{ 'Add proxy' | t }}</button>
+  }
+</ap-page-head>
+
+<ap-banner tone="info">
+  {{ 'Only public routes use this. The admin interface always checks the connection’s own address, so its allowlist can’t be fooled by a header.' | t }}
+</ap-banner>
+
+@if (quietRanges().length) {
+  <ap-banner tone="warn" [heading]="quietHeading()">
+    @for (range of quietRanges(); track range; let last = $last) {<span class="ap-data">{{ range }}</span>{{ last ? '' : ', ' }}}{{ '. If the provider changed its ranges, requests from the new ones are treated as coming from the proxy itself. Remove ranges that are no longer in use.' | t }}
+  </ap-banner>
+}
+
+<section class="ap-panel" aria-labelledby="proxies-title">
+  <div class="ap-panel-head">
+    <div>
+      <h2 class="ap-h ap-h-3" id="proxies-title">{{ 'Proxies' | t }}</h2>
+      <p class="ap-panel-desc">
+        @if (auth.canAdminister()) {
+          {{ 'Changes reach every replica within seconds. Last request is the latest on any replica since it started.' | t }}
+        } @else {
+          {{ 'Only Administrators can change them. Last request is the latest on any replica since it started.' | t }}
+        }
+      </p>
+    </div>
+  </div>
+  @if (isLoading()) {
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  } @else if (rows().length === 0) {
+    <ap-empty-state [heading]="'No trusted proxies' | t">
+      {{ 'Apiary uses the address of each connection, and replaces any X-Forwarded-For it receives. Add your load balancer or CDN if one sits in front of Apiary.' | t }}
+      @if (auth.canAdminister()) {
+        <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="addIcon" />{{ 'Add proxy' | t }}</button>
+      }
+    </ap-empty-state>
+  } @else {
+    <ap-trusted-proxy-table [rows]="rows()" [canChange]="auth.canAdminister()" (edit)="edit($event)" (remove)="remove($event)" />
+  }
+</section>
+
+<ap-try-request [ranges]="ranges()" />

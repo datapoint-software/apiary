@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FieldTree, SchemaPath, form } from '@angular/forms/signals';
 import {
   hostname,
+  ipRange,
   ipRanges,
   newPassword,
   port,
@@ -84,6 +85,20 @@ describe('wholeNumber', () => {
 
   it.each([[1], [10]])('passes the bound %d', (value) => {
     expect(kindsOf(aNumberField(value, oneToTen))).toEqual([]);
+  });
+});
+
+describe('ipRange', () => {
+  it('passes an address or a range, ignoring spaces', () => {
+    expect(kindsOf(aField(' 2001:db8::/32 ', ipRange))).toEqual([]);
+  });
+
+  it('leaves an empty value to required', () => {
+    expect(kindsOf(aField('', ipRange))).toEqual([]);
+  });
+
+  it('refuses something that is not a range', () => {
+    expect(kindsOf(aField('office', ipRange))).toEqual(['ipRange.invalid']);
   });
 });
 

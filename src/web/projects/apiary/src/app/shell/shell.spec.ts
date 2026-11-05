@@ -13,6 +13,7 @@ import {
   aProject,
   aSignedInUser,
   aStack,
+  aTrustedProxy,
 } from '../testing/builders';
 import { byLabel, byRole, menuItem, menuItemNames, settle, textOf } from '../testing/dom';
 import { Shell } from './shell';
@@ -40,6 +41,7 @@ const quiet: Answers = {
   '/api/projects/list': [aProject({ id: 'project-1', name: 'Shop', routeCount: 2 })],
   '/api/certificates/list': [],
   '/api/stacks/list': [],
+  '/api/trusted-proxies/list': [],
   '/api/cluster/status': aCluster(),
 };
 
@@ -125,6 +127,7 @@ describe('Shell', () => {
       'Connected agents',
       'Audit log',
       'Replicas',
+      'Trusted proxies',
       'Backups',
       'Root key',
     ]);
@@ -182,6 +185,22 @@ describe('Shell', () => {
     });
 
     expect(textOf(fixture)).toContain('Stacks, needs attention');
+  });
+
+  it('counts the trusted proxies', async () => {
+    const { fixture } = await render({
+      answers: { '/api/trusted-proxies/list': [aTrustedProxy({ lastRequestAt: new Date().toISOString() })] },
+    });
+
+    expect(textOf(fixture)).toContain('Trusted proxies, 1');
+  });
+
+  it('flags a trusted proxy with no request for a day', async () => {
+    const { fixture } = await render({
+      answers: { '/api/trusted-proxies/list': [aTrustedProxy({ lastRequestAt: null })] },
+    });
+
+    expect(textOf(fixture)).toContain('Trusted proxies, needs attention');
   });
 
   it.each([

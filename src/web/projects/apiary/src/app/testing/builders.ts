@@ -11,6 +11,7 @@ import {
   SignedInUser,
   StackView,
   StreamRouteView,
+  TrustedProxyView,
   UserView,
 } from '../api/models';
 import { PasswordModel, RouteModel, emptyRoute } from '../routes/route-model';
@@ -209,6 +210,17 @@ export function aPipelineToken(overrides: Partial<PipelineTokenView> = {}): Pipe
     createdAt: '2026-11-01T10:00:00Z',
     createdBy: 'ana@example.com',
     expiresAt: '2027-01-30T10:00:00Z',
+    ...overrides,
+  };
+}
+
+export function aTrustedProxy(overrides: Partial<TrustedProxyView> = {}): TrustedProxyView {
+  return {
+    id: 'proxy-1',
+    range: '10.20.30.0/24',
+    note: 'Load balancer',
+    public: false,
+    lastRequestAt: '2026-11-04T11:59:00Z',
     ...overrides,
   };
 }

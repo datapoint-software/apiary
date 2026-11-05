@@ -1,0 +1,56 @@
+<form class="ap-dialog" role="dialog" aria-labelledby="proxy-title" [apForm]="proxy" #proxyForm="apForm" (submit)="save(proxyForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="proxy-title">
+      @if (existing) {
+        {{ 'Edit {range}' | t: { range: existing.range } }}
+      } @else {
+        {{ 'Add a trusted proxy' | t }}
+      }
+    </h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary [verb]="existing ? 'save it' : 'add it'" />
+    <ap-field
+      [label]="'Address or range' | t"
+      [field]="proxy.range"
+      [help]="'The address your proxy connects to Apiary from, or the range its provider publishes. IPv4 or IPv6.' | t"
+    >
+      <input
+        class="ap-input ap-data"
+        [formField]="proxy.range"
+        placeholder="10.20.30.0/24"
+        autocomplete="off"
+        spellcheck="false"
+        autocapitalize="none"
+        cdkFocusInitial
+      />
+    </ap-field>
+    <ap-field [label]="'What it is' | t" [field]="proxy.note" [optional]="true" [help]="'So whoever reads this later knows why it’s trusted.' | t">
+      <input class="ap-input" [formField]="proxy.note" placeholder="Load balancer in front of the edge nodes" />
+    </ap-field>
+    @if (publicRange(); as range) {
+      <ap-banner tone="warn" [heading]="'{range} is a public range' | t: { range }">
+        {{
+          'Anyone who can send requests from it can claim any client address and get past route allowlists. For a CDN or WAF, add only the ranges it publishes for its proxies, and keep them up to date when it changes them.'
+            | t
+        }}
+      </ap-banner>
+    }
+    <p class="ap-caption" style="margin: 0">
+      {{
+        'Only add proxies that replace X-Forwarded-For or add to the end of it, and that reach Apiary over HTTPS or a private network: Apiary believes the scheme they report.'
+          | t
+      }}
+    </p>
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="proxy().submitting()">
+      @if (proxy().submitting()) {
+        {{ 'Saving…' | t }}
+      } @else {
+        {{ (existing ? 'Save' : 'Add proxy') | t }}
+      }
+    </button>
+  </div>
+</form>

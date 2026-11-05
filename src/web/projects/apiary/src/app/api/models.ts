@@ -494,3 +494,11 @@ export interface NewPipelineToken {
   readonly token: string;
   readonly expiresAt: string;
 }
+
+export interface TrustedProxyView {
+  readonly id: string;
+  readonly range: string;
+  readonly note: string | null;
+  readonly public: boolean;
+  readonly lastRequestAt: string | null;
+}

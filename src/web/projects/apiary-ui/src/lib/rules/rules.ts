@@ -35,6 +35,10 @@ export function wholeNumber(path: SchemaPath<number | null>, min: number, max: n
   });
 }
 
+export function ipRange(path: SchemaPath<string>): void {
+  validate(path, ({ value }) => (value().trim() ? asError(checkIpRange(value())) : undefined));
+}
+
 export function ipRanges(path: SchemaPath<string>): void {
   validate(path, ({ value }) => {
     const lines = value().split('\n').map((line) => line.trim()).filter(Boolean);

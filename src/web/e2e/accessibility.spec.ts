@@ -17,6 +17,7 @@ const pages = [
   '/backups',
   '/root-key',
   '/replicas',
+  '/trusted-proxies',
   '/agents',
   '/audit',
   '/account',

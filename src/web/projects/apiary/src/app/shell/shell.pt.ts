@@ -23,6 +23,7 @@ export const shellPortuguese: TextCatalog = {
   Replicas: 'Réplicas',
   Backups: 'Cópias de segurança',
   'Root key': 'Chave raiz',
+  'Trusted proxies': 'Proxies de confiança',
   ', needs attention': ', precisa de atenção',
   'Open menu': 'Abrir o menu',
   'Close menu': 'Fechar o menu',

@@ -29,15 +29,17 @@ import {
   Route,
   ScrollText,
   ShieldCheck,
+  ShieldHalf,
   UserRound,
   Users,
 } from 'lucide';
 import { needsAttention } from '../certificates/certificate-status';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, StackView } from '../api/models';
+import { CertificateSummary, ProjectView, StackView, TrustedProxyView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { ClusterStatus } from '../cluster/cluster-status';
+import { isQuiet } from '../proxies/proxy-activity';
 import { roleNames } from '../auth/roles';
 import { DatapointLogo } from './datapoint-logo';
 import { LanguageMenu } from './language-menu';
@@ -118,6 +120,7 @@ export class Shell {
     { defaultValue: [] },
   );
   private readonly stacks = httpResource<StackView[]>(() => this.api.query('stacks.list'), { defaultValue: [] });
+  private readonly proxies = httpResource<TrustedProxyView[]>(() => this.api.query('trusted-proxies.list'), { defaultValue: [] });
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
     const t = (text: string) => this.i18n.t(text);
@@ -176,6 +179,13 @@ export class Shell {
             label: t('Replicas'),
             link: '/replicas',
             warn: this.cluster.reachable() < this.cluster.voters().length,
+          },
+          {
+            icon: ShieldHalf,
+            label: t('Trusted proxies'),
+            link: '/trusted-proxies',
+            count: this.proxies.value().length || undefined,
+            warn: this.proxies.value().some((p) => isQuiet(p)),
           },
           ...(this.auth.canAdminister()
             ? [

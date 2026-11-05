@@ -111,6 +111,11 @@ export const routes: Routes = [
         loadComponent: () => import('./cluster/replica-list').then((m) => m.ReplicaList),
       },
       {
+        path: 'trusted-proxies',
+        title: 'Trusted proxies · Apiary',
+        loadComponent: () => import('./proxies/trusted-proxy-list').then((m) => m.TrustedProxyList),
+      },
+      {
         path: 'agents',
         title: 'Connected agents · Apiary',
         loadComponent: () => import('./agents/agent-list').then((m) => m.AgentList),

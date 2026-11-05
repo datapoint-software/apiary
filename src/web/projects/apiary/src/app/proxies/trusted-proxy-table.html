@@ -1,0 +1,53 @@
+<div class="ap-table-wrap">
+  <table class="ap-table">
+    <caption class="ap-sr">{{ 'Trusted proxies' | t }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{{ 'Address or range' | t }}</th>
+        <th scope="col">{{ 'What it is' | t }}</th>
+        <th scope="col">{{ 'Last request' | t }}</th>
+        <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.proxy.id) {
+        <tr>
+          <td>
+            <span class="ap-data">{{ row.proxy.range }}</span>
+            @if (row.proxy.public) {
+              <span class="ap-tag" style="margin-left: 6px">{{ 'Public' | t }}</span>
+            }
+          </td>
+          <td>
+            @if (row.proxy.note) {
+              {{ row.proxy.note }}
+            } @else {
+              <span class="ap-muted">{{ 'No note' | t }}</span>
+            }
+          </td>
+          <td>
+            @if (!row.proxy.lastRequestAt) {
+              <ap-status tone="warn">{{ 'No requests yet' | t }}</ap-status>
+            } @else if (row.isQuiet) {
+              <ap-status tone="warn">{{ 'Last {ago}' | t: { ago: row.lastRequest } }}</ap-status>
+            } @else {
+              <span class="ap-muted">{{ row.lastRequest }}</span>
+            }
+          </td>
+          <td class="ap-col-actions">
+            @if (canChange()) {
+              <div class="ap-row" style="gap: 4px; justify-content: flex-end; flex-wrap: nowrap">
+                <button apWrite apButton size="small" type="button" [attr.aria-label]="'Edit {name}' | t: { name: row.proxy.range }" (click)="edit.emit(row.proxy)">
+                  {{ 'Edit…' | t }}
+                </button>
+                <button apWrite apButton size="small" type="button" [attr.aria-label]="'Remove {name}' | t: { name: row.proxy.range }" (click)="remove.emit(row.proxy)">
+                  {{ 'Remove…' | t }}
+                </button>
+              </div>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
