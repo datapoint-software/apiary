@@ -30,9 +30,9 @@ public sealed class StackPlanner(ApiaryState state, StackRecord stack, ApplyStac
 
     private StackPlanResult Plan()
     {
-        if (HostInUse() is { } host)
+        if (InUse() is { } taken)
         {
-            return StackPlanResult.Refused(ErrorCodes.RouteHostInUse, "host", host);
+            return StackPlanResult.Refused(ErrorCodes.RouteHostInUse, "host", taken);
         }
 
         if (PortInUse() is { } port)
@@ -66,13 +66,21 @@ public sealed class StackPlanner(ApiaryState state, StackRecord stack, ApplyStac
 
     private bool IsOther(StackSource? source) => source?.Stack != stack.Name;
 
-    private string? HostInUse()
+    private string? InUse()
     {
-        var hosts = apply.Routes.Select(r => r.Host).Concat(apply.Redirects.Select(r => r.From)).Select(RouteNormalization.Host);
-        return hosts.FirstOrDefault(host =>
-            state.Routes.Values.Any(r => r.Host == host && IsOther(r.Stack))
-            || state.Redirects.Values.Any(r => r.From == host && IsOther(r.Stack)));
+        var routes = apply.Routes.Select(r => (Host: RouteNormalization.Host(r.Host), Path: RouteNormalization.Path(r.Path)));
+        var redirects = apply.Redirects.Select(r => (Host: RouteNormalization.Host(r.From), Path: RedirectRules.Path(r.Path)));
+        var taken = routes.Where(r => RouteInUse(r.Host, r.Path)).Concat(redirects.Where(r => RedirectInUse(r.Host, r.Path)));
+        return taken.Select(r => RouteName(r.Host, r.Path)).FirstOrDefault();
     }
+
+    private bool RouteInUse(string host, string path) =>
+        state.Routes.Values.Any(r => IsOther(r.Stack) && r.Host == host && string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase))
+        || state.Redirects.Values.Any(r => IsOther(r.Stack) && r.From == host && RedirectRules.IsUnder(path, r.Path));
+
+    private bool RedirectInUse(string host, string path) =>
+        state.Redirects.Values.Any(r => IsOther(r.Stack) && r.From == host && string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase))
+        || state.Routes.Values.Any(r => IsOther(r.Stack) && r.Host == host && RedirectRules.IsUnder(r.Path, path));
 
     private int? PortInUse() =>
         apply.StreamRoutes

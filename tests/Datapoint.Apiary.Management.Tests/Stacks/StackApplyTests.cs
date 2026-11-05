@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Cluster.Audit;
+using Datapoint.Apiary.Cluster.Redirects;
 using Datapoint.Apiary.Cluster.Routes;
 using Datapoint.Apiary.Cluster.Stacks;
 using Datapoint.Apiary.Cluster.Streams;
@@ -103,12 +104,65 @@ public sealed class StackApplyTests : IDisposable
     }
 
     [Fact]
-    public async Task An_apply_won_t_take_over_a_hostname_outside_the_stack()
+    public async Task A_stack_shares_a_hostname_with_routes_outside_it_on_other_paths()
     {
-        var project = _host.State.Projects.Values.Single();
-        _host.Seed(new RouteSaved(ARoute(project.Id, host: "shop.example.com", path: "/legacy")));
+        _host.Seed(new RouteSaved(ARoute(_host.State.Projects.Values.Single().Id, host: "shop.example.com", path: "/legacy")));
 
-        Assert.Equal(ErrorCodes.RouteHostInUse, await _host.FailureAsync(AnApply(routes: [AWebRoute()])));
+        await _host.SendAsync(AnApply(routes: [AWebRoute()]));
+
+        Assert.Equal(["/", "/legacy"], _host.State.Routes.Values.Where(r => r.Host == "shop.example.com").Select(r => r.Path).Order());
+    }
+
+    [Fact]
+    public async Task An_apply_won_t_take_over_a_route_outside_the_stack()
+    {
+        _host.Seed(new RouteSaved(ARoute(_host.State.Projects.Values.Single().Id, host: "shop.example.com", path: "/Legacy")));
+
+        Assert.Equal(ErrorCodes.RouteHostInUse, await _host.FailureAsync(AnApply(routes: [AWebRoute() with { Path = "/legacy/" }])));
+    }
+
+    [Fact]
+    public async Task An_apply_won_t_add_a_route_that_a_redirect_outside_the_stack_answers_first()
+    {
+        _host.Seed(new RedirectSaved(ARedirect(_host.State.Projects.Values.Single().Id, from: "shop.example.com")));
+
+        Assert.Equal(ErrorCodes.RouteHostInUse, await _host.FailureAsync(AnApply(routes: [AWebRoute() with { Path = "/api" }])));
+    }
+
+    [Fact]
+    public async Task An_apply_won_t_add_a_route_under_a_path_redirected_outside_the_stack()
+    {
+        _host.Seed(new PathRedirectSaved(ARedirect(_host.State.Projects.Values.Single().Id, from: "shop.example.com", to: "/new") with { Path = "/old" }));
+
+        Assert.Equal(ErrorCodes.RouteHostInUse, await _host.FailureAsync(AnApply(routes: [AWebRoute() with { Path = "/old/api" }])));
+    }
+
+    [Fact]
+    public async Task An_apply_won_t_add_a_redirect_that_hides_a_route_outside_the_stack()
+    {
+        _host.Seed(new RouteSaved(ARoute(_host.State.Projects.Values.Single().Id, host: "shop.example.com", path: "/old/api")));
+
+        Assert.Equal(ErrorCodes.RouteHostInUse, await _host.FailureAsync(AnApply(redirects: [AnOldPathRedirect()])));
+    }
+
+    [Fact]
+    public async Task An_apply_redirects_a_path_beside_a_route_outside_the_stack()
+    {
+        _host.Seed(new RouteSaved(ARoute(_host.State.Projects.Values.Single().Id, host: "shop.example.com", path: "/")));
+
+        await _host.SendAsync(AnApply(redirects: [AnOldPathRedirect()]));
+
+        Assert.Equal("/old", _host.State.Redirects.Values.Single().Path);
+    }
+
+    [Fact]
+    public async Task A_refused_apply_names_the_hostname_and_path_in_use()
+    {
+        _host.Seed(new RouteSaved(ARoute(_host.State.Projects.Values.Single().Id, host: "shop.example.com", path: "/api")));
+
+        await _host.FailureAsync(AnApply(routes: [AWebRoute() with { Path = "/api" }]));
+
+        Assert.Equal("shop.example.com/api", _host.State.Stacks["shop"].Failure?.Detail);
     }
 
     [Fact]

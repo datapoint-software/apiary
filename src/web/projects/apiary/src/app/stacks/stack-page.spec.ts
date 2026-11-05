@@ -154,13 +154,13 @@ describe('StackPage', () => {
           at: '2026-11-04T10:00:00Z',
           code: 'route.hostInUse',
           token: 'shop-deploy',
-          detail: 'grafana.example.com',
+          detail: 'grafana.example.com/api',
         },
       },
     });
 
     expect(textOf(fixture)).toContain(
-      'grafana.example.com is already used by a route or redirect outside this stack',
+      'grafana.example.com/api is already taken outside this stack',
     );
     expect(textOf(fixture)).toContain('error route.hostInUse');
   });

@@ -154,7 +154,7 @@ public static partial class McpErrorDescriptions
         ["stream.serverNamesTooMany"] = "A stream route takes up to 20 server names.",
         ["stream.declaredInStack"] = "This stream route comes from a stack file's labels. Change it in the stack file; only disabling and the allowlist can change here.",
         ["route.declaredInStack"] = "This route comes from a stack file's labels, which set this field. Change it in the stack file, or leave the field as it is.",
-        ["route.hostInUse"] = "The hostname {host} is already used by a route or redirect that isn't in this stack. Apiary won't take it over.",
+        ["route.hostInUse"] = "{host} is already taken outside this stack, by a route at the same hostname and path, or by a redirect that would answer before a route on it. Apiary won't take it over. Stacks can share a hostname on different paths.",
         ["redirect.declaredInStack"] = "This redirect comes from a stack file's labels. Remove it from the stack file instead.",
         ["stack.notFound"] = "There's no stack with that name. List them with stacks.list.",
         ["stack.exists"] = "A stack with this name is already here.",

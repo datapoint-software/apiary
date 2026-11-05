@@ -127,7 +127,7 @@ export const appMessages: MessageCatalog = {
   'stream.declaredInStack': () => 'Its stack file sets this. Change the label, and the next apply updates it.',
   'redirect.declaredInStack': () => 'This redirect comes from a stack file. Remove its labels instead, and the next apply deletes it.',
   'route.hostInUse': (p) =>
-    `${p['host'] ?? 'A hostname'} is already used by a route or redirect outside this stack, and Apiary won’t take it over. Remove the label, or delete or move the other one first.`,
+    `${p['host'] ?? 'This hostname and path'} is already taken outside this stack, by a route at the same path or by a redirect that would answer before a route, and Apiary won’t take it over. Use another path, or delete or move the other one first.`,
   'stack.notFound': () => 'This stack was removed. The list now shows the current stacks.',
   'stack.exists': () => 'This stack is already here. Open it to create another token.',
   'stack.nameInvalid': () => 'Use the name as Docker writes it: lowercase letters, digits, hyphens and underscores, up to 63.',

@@ -140,7 +140,7 @@ export const appMessagesPortuguese: MessageCatalog = {
   'stream.declaredInStack': () => 'Isto é definido pelo ficheiro da stack. Mude a etiqueta, e a próxima aplicação atualiza-o.',
   'redirect.declaredInStack': () => 'Este redirecionamento vem de um ficheiro de stack. Em vez disso, remova as suas etiquetas, e a próxima aplicação elimina-o.',
   'route.hostInUse': (p) =>
-    `${p['host'] ?? 'Um nome de anfitrião'} já é usado por uma rota ou redirecionamento fora desta stack, e o Apiary não fica com ele. Remova a etiqueta, ou elimine ou mova primeiro o outro.`,
+    `${p['host'] ?? 'Este nome de anfitrião e caminho'} já está ocupado fora desta stack, por uma rota no mesmo caminho ou por um redirecionamento que responderia antes de uma rota, e o Apiary não fica com ele. Use outro caminho, ou elimine ou mova primeiro o outro.`,
   'stack.notFound': () => 'Esta stack foi removida. A lista mostra agora as stacks atuais.',
   'stack.exists': () => 'Esta stack já existe. Abra-a para criar outro token.',
   'stack.nameInvalid': () => 'Use o nome como o Docker o escreve: letras minúsculas, algarismos, hífenes e sublinhados, até 63.',
