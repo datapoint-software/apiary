@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
-import { Button, Field, I18n, TranslatePipe } from '@datapoint/apiary-ui';
+import { RouterLink } from '@angular/router';
+import { Button, Field, FieldHelp, I18n, TranslatePipe } from '@datapoint/apiary-ui';
 import { RoutePasswordView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { passphrase } from './passphrase';
@@ -9,7 +10,7 @@ import { StackTag } from '../stacks/stack-tag';
 
 @Component({
   selector: 'ap-access-section',
-  imports: [Button, Field, FormField, StackTag, TranslatePipe],
+  imports: [Button, Field, FieldHelp, FormField, RouterLink, StackTag, TranslatePipe],
   templateUrl: './access-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -18,6 +19,7 @@ export class AccessSection {
   readonly current = input<RoutePasswordView>();
   readonly canWrite = input(true);
   readonly rateLimitStack = input<string>();
+  readonly behindTrustedProxies = input(false);
   protected readonly timeAgo = timeAgo;
   private readonly i18n = inject(I18n);
   protected readonly passwordNote = computed(() => {

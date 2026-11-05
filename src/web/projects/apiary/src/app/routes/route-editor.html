@@ -172,7 +172,7 @@
       </div>
     </section>
 
-    <ap-access-section [route]="route" [current]="current()?.password" [canWrite]="auth.canOperate()" [rateLimitStack]="lockedBy('rateLimit')" />
+    <ap-access-section [route]="route" [current]="current()?.password" [canWrite]="auth.canOperate()" [rateLimitStack]="lockedBy('rateLimit')" [behindTrustedProxies]="behindTrustedProxies()" />
 
     <ap-maintenance-section [maintenance]="route.maintenance" [scheduled]="model().maintenance.scheduled" />
 

@@ -3,11 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Toaster, provideErrorMessages } from '@datapoint/apiary-ui';
-import { ProjectView, RouteView } from '../api/models';
+import { ProjectView, RouteView, TrustedProxyView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { appMessages } from '../errors/app-messages';
 import { nextRequest } from '../testing/backend';
-import { aCluster, aProblem, aProject, aRoute, aSignedInUser } from '../testing/builders';
+import { aCluster, aProblem, aProject, aRoute, aSignedInUser, aTrustedProxy } from '../testing/builders';
 import { byLabel, byRole, errorOf, settle, textOf, type } from '../testing/dom';
 import { ClosingDialog } from '../testing/closing-dialog';
 import { RouteAccessDialog } from './route-access-dialog';
@@ -23,6 +23,7 @@ interface Rendered {
 async function render(
   projects: ProjectView[] = [aProject()],
   existing?: RouteView,
+  trustedProxies: TrustedProxyView[] = [],
 ): Promise<Rendered> {
   TestBed.configureTestingModule({
     providers: [
@@ -44,6 +45,7 @@ async function render(
   backend.expectOne('/api/routes/defaults').flush({ requestMegabytes: 30 });
   backend.match('/api/routes/get').forEach((request) => request.flush(existing ?? null));
   backend.match('/api/cluster/status').forEach((request) => request.flush(aCluster()));
+  backend.match('/api/trusted-proxies/list').forEach((request) => request.flush(trustedProxies));
   await settle(fixture);
   return { fixture, backend };
 }
@@ -59,6 +61,18 @@ async function submit({ fixture }: Rendered, button: string): Promise<void> {
 }
 
 describe('RouteEditor', () => {
+  it('links the allowed addresses to the trusted proxies when there are some', async () => {
+    const { fixture } = await render([aProject()], undefined, [aTrustedProxy()]);
+
+    expect(byRole(fixture, 'link', 'trusted proxy').getAttribute('href')).toBe('/trusted-proxies');
+  });
+
+  it('doesn’t mention trusted proxies when there are none', async () => {
+    const { fixture } = await render();
+
+    expect(textOf(fixture)).not.toContain('X-Forwarded-For');
+  });
+
   it('doesn’t create a route without a hostname', async () => {
     const editor = await render();
 
@@ -201,6 +215,7 @@ describe('RouteEditor', () => {
     backend
       .expectOne('/api/routes/get')
       .flush(aProblem(404, 'route.notFound'), { status: 404, statusText: 'Not Found' });
+    backend.expectOne('/api/trusted-proxies/list').flush([]);
     await settle(fixture);
 
     expect(textOf(fixture)).toContain('This route doesn’t exist');

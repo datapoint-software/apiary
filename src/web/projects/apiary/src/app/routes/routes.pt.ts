@@ -187,6 +187,9 @@ export const routesPortuguese: TextCatalog = {
   'Allowed addresses': 'Endereços permitidos',
   'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.':
     'Um endereço ou intervalo por linha, IPv4 ou IPv6. Deixe vazio para permitir todos; os restantes recebem um 403.',
+  'Behind a': 'Atrás de um',
+  'trusted proxy': 'proxy de confiança',
+  ', Apiary checks the client’s address from X-Forwarded-For.': ', o Apiary verifica o endereço do cliente a partir do X-Forwarded-For.',
   'Limit requests per visitor': 'Limitar pedidos por visitante',
   'Counts requests from each address, or each /64 network for IPv6, on each replica. Beyond the limit, visitors get a 429 page until they slow down.':
     'Conta os pedidos de cada endereço, ou de cada rede /64 em IPv6, em cada réplica. Acima do limite, os visitantes recebem uma página 429 até abrandarem.',

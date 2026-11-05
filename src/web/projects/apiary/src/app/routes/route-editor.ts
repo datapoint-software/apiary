@@ -19,7 +19,7 @@ import {
   problemErrors,
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, RouteDefaultsView, RouteView } from '../api/models';
+import { CertificateSummary, ProjectView, RouteDefaultsView, RouteView, TrustedProxyView } from '../api/models';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
@@ -69,6 +69,8 @@ export class RouteEditor implements HasUnsavedChanges {
     return id ? this.api.query('routes.get', { id }) : undefined;
   });
   private readonly defaults = httpResource<RouteDefaultsView>(() => this.api.query('routes.defaults'));
+  private readonly trustedProxies = httpResource<TrustedProxyView[]>(() => this.api.query('trusted-proxies.list'), { defaultValue: [] });
+  protected readonly behindTrustedProxies = computed(() => this.trustedProxies.hasValue() && this.trustedProxies.value().length > 0);
   protected readonly defaultMegabytes = computed(() => (this.defaults.hasValue() ? this.defaults.value().requestMegabytes : 30));
   protected readonly current = computed(() => (this.existing.hasValue() ? this.existing.value() : undefined));
   protected readonly stack = computed(() => this.current()?.stack);

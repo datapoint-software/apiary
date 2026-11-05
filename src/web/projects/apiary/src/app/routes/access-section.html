@@ -10,6 +10,9 @@
       [help]="'One address or range per line, IPv4 or IPv6. Leave empty to allow everyone; anyone else gets a 403.' | t"
     >
       <textarea class="ap-textarea ap-data" rows="3" placeholder="10.0.0.0/8" spellcheck="false" [formField]="route().allowedAddresses"></textarea>
+      @if (behindTrustedProxies()) {
+        <span apFieldHelp>{{ 'Behind a' | t }} <a routerLink="/trusted-proxies">{{ 'trusted proxy' | t }}</a>{{ ', Apiary checks the client’s address from X-Forwarded-For.' | t }}</span>
+      }
     </ap-field>
     <label class="ap-choice">
       <input class="ap-switch" type="checkbox" [formField]="route().rateLimited" />
