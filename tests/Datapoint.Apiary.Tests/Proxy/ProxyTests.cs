@@ -70,14 +70,50 @@ public sealed class ProxyTests : IAsyncLifetime
         Assert.Null(headers["forwarded"]);
     }
 
-    [Fact]
-    public async Task A_visitor_s_X_Real_IP_header_never_reaches_a_target()
+    [Theory]
+    [InlineData("X-Real-IP")]
+    [InlineData("X-Client-IP")]
+    [InlineData("Client-IP")]
+    [InlineData("X-Cluster-Client-IP")]
+    [InlineData("True-Client-IP")]
+    [InlineData("CF-Connecting-IP")]
+    [InlineData("Fastly-Client-IP")]
+    [InlineData("X-Original-Forwarded-For")]
+    [InlineData("X-ProxyUser-Ip")]
+    public async Task A_visitor_s_claim_to_another_address_never_reaches_a_target(string header)
     {
         await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
 
-        var headers = (await BackendAnswerAsync("http://shop.example.com/", ("X-Real-IP", "10.0.0.1")))["headers"]!;
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", (header, "10.0.0.1")))["headers"]!;
 
-        Assert.Null(headers["x-real-ip"]);
+        Assert.Null(headers[header.ToLowerInvariant()]);
+    }
+
+    [Theory]
+    [InlineData("X-Original-URL")]
+    [InlineData("X-Rewrite-URL")]
+    public async Task A_visitor_can_t_override_the_path_a_target_routes_on(string header)
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
+
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", (header, "/admin")))["headers"]!;
+
+        Assert.Null(headers[header.ToLowerInvariant()]);
+    }
+
+    [Theory]
+    [InlineData("X-Forwarded-Port", "1337")]
+    [InlineData("X-Forwarded-Server", "evil.example")]
+    [InlineData("X-Forwarded-Ssl", "on")]
+    [InlineData("X-Forwarded-Scheme", "https")]
+    [InlineData("X-Host", "evil.example")]
+    public async Task A_visitor_can_t_change_what_a_target_builds_links_from(string header, string value)
+    {
+        await _app.SeedAsync(new RouteSaved(RouteTo(_web)));
+
+        var headers = (await BackendAnswerAsync("http://shop.example.com/", (header, value)))["headers"]!;
+
+        Assert.Null(headers[header.ToLowerInvariant()]);
     }
 
     [Fact]

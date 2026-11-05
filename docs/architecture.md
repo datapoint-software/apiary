@@ -71,7 +71,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
 - First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects, plus raw TCP and UDP (see [TCP and UDP](#tcp-and-udp)).
-- **Routed services get the original `Host`** and `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, as most reverse proxies send them. Apiary replaces any `X-Forwarded-*` headers the client sent, and drops `Forwarded` and `X-Real-IP`, so a service can trust them when the request comes from Apiary; it must still be told to, e.g. ASP.NET Core's forwarded headers middleware with Apiary's network in `KnownIPNetworks`.
+- **Routed services get the original `Host`** and `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, as most reverse proxies send them. Apiary replaces any `X-Forwarded-*` headers the client sent, and drops `Forwarded` and other headers services read as the client's address, scheme, port or path (`X-Real-IP`, `True-Client-IP`, `CF-Connecting-IP`, `X-Forwarded-Port`, `X-Original-URL` and others, listed in `ClientHeaders`), so a service can trust them when the request comes from Apiary; it must still be told to, e.g. ASP.NET Core's forwarded headers middleware with Apiary's network in `KnownIPNetworks`.
 
 ### Projects
 

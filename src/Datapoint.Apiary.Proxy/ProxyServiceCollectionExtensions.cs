@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using Datapoint.Apiary.Proxy.AccessLogs;
 using Datapoint.Apiary.Proxy.Caching;
+using Datapoint.Apiary.Proxy.Forwarding;
 using Datapoint.Apiary.Proxy.Health;
 using Datapoint.Apiary.Proxy.Network;
 using Datapoint.Apiary.Proxy.Pages;
@@ -68,9 +69,7 @@ public static class ProxyServiceCollectionExtensions
         services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
         services.AddReverseProxy()
             .AddTransforms(context => context.AddOriginalHost())
-            // YARP replaces X-Forwarded-* and drops Forwarded, but passes X-Real-IP on. Services that read it
-            // would take a visitor's word for their address, so it never reaches a target.
-            .AddTransforms(context => context.AddRequestHeaderRemove("X-Real-IP"))
+            .AddTransforms(ClientHeaders.Apply)
             .AddTransforms(new ApiaryCookieFilter(adminCookies).Apply);
         return services;
     }
