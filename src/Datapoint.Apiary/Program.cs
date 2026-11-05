@@ -22,6 +22,11 @@ if (args is ["recover", .. var recoverOptions])
     return await RecoverCommand.RunAsync(recoverOptions);
 }
 
+if (args is ["apply", .. var applyOptions])
+{
+    return await ApplyCommand.RunAsync(applyOptions);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 builder.AddApiaryListeners();
 builder.Services.AddApiary(builder.Configuration);

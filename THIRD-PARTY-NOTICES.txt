@@ -221,6 +221,11 @@ System.IO.Hashing 10.0.13
   Copyright: © Microsoft Corporation. All rights reserved.
   Source: https://github.com/dotnet/dotnet
 
+YamlDotNet 18.1.0
+  License: MIT
+  Copyright: Copyright (c) Antoine Aubry and contributors
+  Source: https://github.com/aaubry/YamlDotNet
+
 Yarp.ReverseProxy 2.3.0
   License: MIT
   Copyright: © Microsoft Corporation. All rights reserved.
@@ -411,7 +416,7 @@ Applies to: FluentValidation, FluentValidation.DependencyInjectionExtensions, Mo
 
 MIT license
 -----------
-Applies to: Datapoint.Mediator, Datapoint.Mediator.Abstractions, Datapoint.Mediator.AspNetCore, Datapoint.Mediator.Authorization, Datapoint.Mediator.Authorization.AspNetCore, Datapoint.Mediator.Authorization.DependencyInjection, Datapoint.Mediator.DependencyInjection, Datapoint.Mediator.FluentValidation, Datapoint.Mediator.FluentValidation.DependencyInjection, Datapoint.Mediator.ModelContextProtocol, DotNext, DotNext.IO, DotNext.Net.Cluster, DotNext.Threading, DotNext.Unsafe, Microsoft.AspNetCore.Connections.Abstractions, Microsoft.AspNetCore.OpenApi, Microsoft.Bcl.Cryptography, Microsoft.Extensions.AI.Abstractions, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Features, Microsoft.Extensions.Logging.Abstractions, Microsoft.IdentityModel.Abstractions, Microsoft.IdentityModel.JsonWebTokens, Microsoft.IdentityModel.Logging, Microsoft.IdentityModel.Protocols, Microsoft.IdentityModel.Protocols.OpenIdConnect, Microsoft.IdentityModel.Tokens, Microsoft.OpenApi, System.IdentityModel.Tokens.Jwt, System.IO.Hashing, Yarp.ReverseProxy.
+Applies to: Datapoint.Mediator, Datapoint.Mediator.Abstractions, Datapoint.Mediator.AspNetCore, Datapoint.Mediator.Authorization, Datapoint.Mediator.Authorization.AspNetCore, Datapoint.Mediator.Authorization.DependencyInjection, Datapoint.Mediator.DependencyInjection, Datapoint.Mediator.FluentValidation, Datapoint.Mediator.FluentValidation.DependencyInjection, Datapoint.Mediator.ModelContextProtocol, DotNext, DotNext.IO, DotNext.Net.Cluster, DotNext.Threading, DotNext.Unsafe, Microsoft.AspNetCore.Connections.Abstractions, Microsoft.AspNetCore.OpenApi, Microsoft.Bcl.Cryptography, Microsoft.Extensions.AI.Abstractions, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Features, Microsoft.Extensions.Logging.Abstractions, Microsoft.IdentityModel.Abstractions, Microsoft.IdentityModel.JsonWebTokens, Microsoft.IdentityModel.Logging, Microsoft.IdentityModel.Protocols, Microsoft.IdentityModel.Protocols.OpenIdConnect, Microsoft.IdentityModel.Tokens, Microsoft.OpenApi, System.IdentityModel.Tokens.Jwt, System.IO.Hashing, YamlDotNet, Yarp.ReverseProxy.
 
 MIT License
 

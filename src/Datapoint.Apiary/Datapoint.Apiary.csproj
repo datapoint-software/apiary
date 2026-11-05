@@ -18,6 +18,7 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Datapoint.Apiary.Management\Datapoint.Apiary.Management.csproj" />
     <ProjectReference Include="..\Datapoint.Apiary.Proxy\Datapoint.Apiary.Proxy.csproj" />
     <InternalsVisibleTo Include="Datapoint.Apiary.Tests" />

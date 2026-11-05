@@ -147,6 +147,12 @@
         "resolved": "5.0.1",
         "contentHash": "sCZ0Di4B937wKa9pwKbdsE6Njr8A/FdCLw28+yDKyMaDZ/f8JWxcFn6NOCukzKhCG/eA6M2DbXlKkrPi0g0lIA=="
       },
+      "YamlDotNet": {
+        "type": "Direct",
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
+      },
       "DotNext": {
         "type": "Transitive",
         "resolved": "6.11.1",
@@ -286,23 +292,23 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
       "datapoint.apiary.management": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Certificates": "[0.1.0, )",
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Certificates": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
           "Datapoint.Mediator.Abstractions": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization": "[4.0.0-beta.6, )",
           "FluentValidation": "[12.2.0, )",
@@ -312,8 +318,8 @@
       "datapoint.apiary.proxy": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[0.1.0, )",
-          "Datapoint.Apiary.Security": "[0.1.0, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
           "Yarp.ReverseProxy": "[2.3.0, )"
         }
       },
