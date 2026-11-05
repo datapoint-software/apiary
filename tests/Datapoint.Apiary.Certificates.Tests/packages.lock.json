@@ -246,14 +246,14 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
-          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
@@ -263,7 +263,7 @@
       "datapoint.apiary.testing": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-alpha.6, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
           "Microsoft.Extensions.TimeProvider.Testing": "[10.11.0, )"
         }
       },

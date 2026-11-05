@@ -484,8 +484,8 @@
       "apiary": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Management": "[1.0.0-beta.1, )",
-          "Datapoint.Apiary.Proxy": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Management": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Proxy": "[1.0.0-beta.2, )",
           "Datapoint.Mediator.AspNetCore": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization.AspNetCore": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization.DependencyInjection": "[4.0.0-beta.6, )",
@@ -505,23 +505,23 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },
       "datapoint.apiary.management": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Certificates": "[1.0.0-beta.1, )",
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Certificates": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
           "Datapoint.Mediator.Abstractions": "[4.0.0-beta.6, )",
           "Datapoint.Mediator.Authorization": "[4.0.0-beta.6, )",
           "FluentValidation": "[12.2.0, )",
@@ -531,8 +531,8 @@
       "datapoint.apiary.proxy": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.2, )",
           "Yarp.ReverseProxy": "[2.3.0, )"
         }
       },
@@ -542,7 +542,7 @@
       "datapoint.apiary.testing": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.1, )",
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.2, )",
           "Microsoft.Extensions.TimeProvider.Testing": "[10.11.0, )"
         }
       },
