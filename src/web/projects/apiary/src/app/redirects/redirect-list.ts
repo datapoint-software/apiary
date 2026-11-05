@@ -10,17 +10,13 @@ import { WriteLock } from '../cluster/write-lock';
 import { StackTag } from '../stacks/stack-tag';
 import { openDialog } from '../shell/open-dialog';
 import { AddedRedirect, RedirectDialog } from './redirect-dialog';
-
-const statusLabels: Record<number, string> = {
-  301: 'Permanent',
-  302: 'Temporary',
-  307: 'Temporary, keeps method',
-  308: 'Permanent, keeps method',
-};
+import { deleteRedirect } from './delete-redirect';
+import { redirectLabel } from './redirect-rules';
+import { RedirectTarget, statusLabels } from './redirect-target';
 
 @Component({
   selector: 'ap-redirect-list',
-  imports: [WriteLock, PageHead, EmptyState, Icon, Button, StackTag, TranslatePipe],
+  imports: [WriteLock, PageHead, EmptyState, Icon, Button, StackTag, RedirectTarget, TranslatePipe],
   templateUrl: './redirect-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,6 +33,7 @@ export class RedirectList {
   private readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
   protected readonly isLoading = computed(() => this.redirects.isLoading() && this.redirects.value().length === 0);
   protected readonly projectNames = computed(() => new Map(this.projects.value().map((p) => [p.id, p.name])));
+  protected readonly label = redirectLabel;
 
   protected async add(): Promise<void> {
     const added = await openDialog<AddedRedirect, null>(this.dialog, RedirectDialog, null);
@@ -46,15 +43,6 @@ export class RedirectList {
   }
 
   protected async delete(redirect: RedirectView): Promise<void> {
-    const deleted = await this.confirmer.confirm({
-      heading: this.i18n.t('Delete the redirect from {hostname}?', { hostname: redirect.from }),
-      text: this.i18n.t('Requests to it get a 404 at once. Browsers may remember a permanent redirect for a while.'),
-      confirm: this.i18n.t('Delete redirect'),
-      busy: this.i18n.t('Deleting…'),
-      action: () => this.api.send('redirects.delete', { id: redirect.id }),
-    });
-    if (deleted) {
-      this.toaster.show(this.i18n.t('The redirect from {hostname} was deleted.', { hostname: redirect.from }));
-    }
+    await deleteRedirect(redirect, { api: this.api, confirmer: this.confirmer, toaster: this.toaster, i18n: this.i18n });
   }
 }

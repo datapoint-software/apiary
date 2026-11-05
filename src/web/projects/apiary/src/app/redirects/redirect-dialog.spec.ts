@@ -1,4 +1,4 @@
-import { DialogRef } from '@angular/cdk/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -6,10 +6,10 @@ import { provideErrorMessages } from '@datapoint/apiary-ui';
 import { appMessages } from '../errors/app-messages';
 import { nextRequest } from '../testing/backend';
 import { aProblem, aProject } from '../testing/builders';
-import { byLabel, byRole, choose, errorOf, settle, type } from '../testing/dom';
+import { byLabel, byRole, choose, errorOf, settle, textOf, type } from '../testing/dom';
 import { noServerChecks } from '../testing/no-server-checks';
 import { RecordingDialogRef } from '../testing/recording-dialog-ref';
-import { RedirectDialog } from './redirect-dialog';
+import { RedirectDialog, RedirectHost } from './redirect-dialog';
 
 interface Rendered {
   readonly fixture: ComponentFixture<RedirectDialog>;
@@ -17,7 +17,7 @@ interface Rendered {
   readonly ref: RecordingDialogRef;
 }
 
-async function render(): Promise<Rendered> {
+async function render(fixed: RedirectHost | null = null): Promise<Rendered> {
   const ref = new RecordingDialogRef();
   TestBed.configureTestingModule({
     providers: [
@@ -25,6 +25,7 @@ async function render(): Promise<Rendered> {
       provideHttpClientTesting(),
       provideErrorMessages(appMessages),
       { provide: DialogRef, useValue: ref },
+      { provide: DIALOG_DATA, useValue: fixed },
     ],
   });
   const fixture = TestBed.createComponent(RedirectDialog);
@@ -38,6 +39,14 @@ async function render(): Promise<Rendered> {
     ]);
   await settle(fixture);
   return { fixture, backend, ref };
+}
+
+async function addPath({ fixture }: Rendered, path: string, to: string): Promise<void> {
+  type(byLabel(fixture, 'Path'), path);
+  type(byLabel(fixture, 'To'), to);
+  await settle(fixture);
+  byRole(fixture, 'button', 'Add redirect').click();
+  await settle(fixture);
 }
 
 async function add({ fixture }: Rendered, from: string, to: string): Promise<void> {
@@ -60,7 +69,7 @@ describe('RedirectDialog', () => {
 
     expect([errorOf(dialog.fixture, 'From hostname'), errorOf(dialog.fixture, 'To')]).toEqual([
       'Enter a hostname, such as shop.example.com.',
-      'Enter a full address that starts with https://, such as https://example.com.',
+      'Enter a full address that starts with https://, such as https://example.com, or a path that starts with one /, such as /new.',
     ]);
   });
 
@@ -70,7 +79,7 @@ describe('RedirectDialog', () => {
     await add(dialog, 'www.example.com', to);
 
     expect(errorOf(dialog.fixture, 'To')).toBe(
-      'Enter a full address that starts with https://, such as https://example.com.',
+      'Enter a full address that starts with https://, such as https://example.com, or a path that starts with one /, such as /new.',
     );
   });
 
@@ -80,7 +89,7 @@ describe('RedirectDialog', () => {
     await add(dialog, 'WWW.example.com', 'https://www.example.com/home');
 
     expect(errorOf(dialog.fixture, 'To')).toBe(
-      'That would send visitors back to the same hostname, in a loop.',
+      'That would send visitors back to where they came from, in a loop. Choose another address.',
     );
     dialog.backend.expectNone('/api/redirects/create');
   });
@@ -139,8 +148,106 @@ describe('RedirectDialog', () => {
     await settle(dialog.fixture);
 
     expect(errorOf(dialog.fixture, 'From hostname')).toBe(
-      'This hostname is already a route. A hostname can be a route or a redirect, not both.',
+      'This hostname is a route. To redirect part of it, enter a path, such as /old.',
     );
+  });
+
+  it('adds a redirect of a path on the hostname', async () => {
+    const dialog = await render();
+
+    type(byLabel(dialog.fixture, 'Path (optional)'), '/old/');
+    await add(dialog, 'www.example.com', 'https://example.com/new');
+    const request = await nextRequest(dialog.backend, '/api/redirects/create');
+
+    expect(request.request.body).toMatchObject({
+      from: 'www.example.com',
+      path: '/old',
+      to: 'https://example.com/new',
+    });
+  });
+
+  it('refuses a path on the same hostname when the whole hostname is redirected', async () => {
+    const dialog = await render();
+
+    await add(dialog, 'www.example.com', '/new');
+
+    expect(errorOf(dialog.fixture, 'To')).toBe(
+      'A path alone works only when you redirect a path. Enter a full address, such as https://example.com.',
+    );
+  });
+
+  describe('on a route', () => {
+    const route: RedirectHost = { host: 'shop.example.com', projectId: 'project-2' };
+
+    it('names the hostname and leaves it fixed', async () => {
+      const dialog = await render(route);
+
+      expect([
+        byLabel(dialog.fixture, 'From hostname').value,
+        byLabel(dialog.fixture, 'From hostname').readOnly,
+      ]).toEqual(['shop.example.com', true]);
+    });
+
+    it('asks for a path', async () => {
+      const dialog = await render(route);
+
+      await addPath(dialog, '', '/new');
+
+      expect(errorOf(dialog.fixture, 'Path')).toBe(
+        'Enter a path that starts with /, such as /api, without ? or #.',
+      );
+    });
+
+    it('refuses a path where Apiary answers certificate challenges', async () => {
+      const dialog = await render(route);
+
+      await addPath(dialog, '/.well-known', '/new');
+
+      expect(errorOf(dialog.fixture, 'Path')).toBe(
+        'Apiary answers certificate checks under /.well-known/acme-challenge, so it can’t redirect that path.',
+      );
+    });
+
+    it('refuses a target under the path it redirects', async () => {
+      const dialog = await render(route);
+
+      await addPath(dialog, '/old', '/old/new');
+
+      expect(errorOf(dialog.fixture, 'To')).toBe(
+        'That would send visitors back to where they came from, in a loop. Choose another address.',
+      );
+    });
+
+    it('shows where a request would go', async () => {
+      const dialog = await render(route);
+
+      type(byLabel(dialog.fixture, 'Path'), '/old');
+      type(byLabel(dialog.fixture, 'To'), '/new');
+      await settle(dialog.fixture);
+
+      expect(textOf(dialog.fixture)).toContain('shop.example.com/old/2026?ref=mail');
+      expect(textOf(dialog.fixture)).toContain('shop.example.com/new/2026?ref=mail');
+    });
+
+    it('adds a redirect to a path on the same hostname in the route’s project', async () => {
+      const dialog = await render(route);
+
+      await addPath(dialog, '/old', '/new');
+      const request = await nextRequest(dialog.backend, '/api/redirects/create');
+      request.flush('redirect-9');
+
+      expect(request.request.body).toEqual({
+        projectId: 'project-2',
+        from: 'shop.example.com',
+        path: '/old',
+        to: '/new',
+        statusCode: 308,
+        keepPath: true,
+      });
+      await vi.waitFor(() =>
+        expect(dialog.ref.results).toEqual([{ from: 'shop.example.com/old', to: '/new' }]),
+      );
+    });
   });
 
   it('closes without adding when cancelled', async () => {

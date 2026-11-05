@@ -1,14 +1,31 @@
 <form class="ap-dialog" role="dialog" aria-labelledby="redirect-title" [apForm]="redirect" #redirectForm="apForm" (submit)="add(redirectForm)">
   <div class="ap-dialog-head">
-    <h2 class="ap-h ap-h-2" id="redirect-title">{{ 'Add redirect' | t }}</h2>
+    <h2 class="ap-h ap-h-2" id="redirect-title">{{ (fixed ? 'Add path redirect' : 'Add redirect') | t }}</h2>
   </div>
   <div class="ap-dialog-body ap-form" style="gap: 16px">
     <ap-error-summary verb="add it" />
-    <ap-field [label]="'From hostname' | t" [field]="redirect.from" [help]="'Gets an automatic certificate, so HTTPS visitors are redirected too.' | t">
-      <input class="ap-input ap-data" [formField]="redirect.from" placeholder="www.example.com" autocomplete="off" spellcheck="false" autocapitalize="none" cdkFocusInitial />
-    </ap-field>
-    <ap-field [label]="'To' | t" [field]="redirect.to">
-      <input class="ap-input ap-data" [formField]="redirect.to" placeholder="https://example.com" inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    @if (fixed) {
+      <ap-field [label]="'From hostname' | t" [field]="redirect.from">
+        <input class="ap-input ap-data" [formField]="redirect.from" />
+      </ap-field>
+      <ap-field [label]="'Path' | t" [field]="redirect.path" [help]="'This path and everything under it, such as /old and /old/page, but not /older.' | t">
+        <input class="ap-input ap-data" [formField]="redirect.path" placeholder="/old" autocomplete="off" spellcheck="false" autocapitalize="none" cdkFocusInitial />
+      </ap-field>
+    } @else {
+      <ap-field [label]="'From hostname' | t" [field]="redirect.from" [help]="'Gets an automatic certificate, so HTTPS visitors are redirected too.' | t">
+        <input class="ap-input ap-data" [formField]="redirect.from" placeholder="www.example.com" autocomplete="off" spellcheck="false" autocapitalize="none" cdkFocusInitial />
+      </ap-field>
+      <ap-field
+        [label]="'Path' | t"
+        [optional]="true"
+        [field]="redirect.path"
+        [help]="'Leave empty to redirect the whole hostname. With a path, only that path and everything under it redirect, and the hostname can still have routes.' | t"
+      >
+        <input class="ap-input ap-data" [formField]="redirect.path" placeholder="/old" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+    }
+    <ap-field [label]="'To' | t" [field]="redirect.to" [help]="'A full address, or, when you redirect a path, a path on the same hostname, such as /new.' | t">
+      <input class="ap-input ap-data" [formField]="redirect.to" [placeholder]="fixed ? ('/new or https://example.com' | t) : 'https://example.com'" inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="none" />
     </ap-field>
     <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
       <legend class="ap-label" style="margin-bottom: 8px">{{ 'Type' | t }}</legend>
@@ -27,10 +44,15 @@
     <label class="ap-choice">
       <input class="ap-switch" type="checkbox" [formField]="redirect.keepPath" />
       <span class="ap-choice-text">
-        <span>{{ 'Keep the path' | t }}</span>
-        <span class="ap-help">{{ 'www.example.com/shoes goes to example.com/shoes.' | t }}</span>
+        <span>{{ 'Keep the rest of the path' | t }}</span>
+        <span class="ap-help">{{ 'Adds what follows the redirected path, and the query, to the address.' | t }}</span>
       </span>
     </label>
+    <p class="ap-help" aria-live="polite" style="margin: 0">
+      @if (example(); as sample) {
+        <span class="ap-data">{{ sample.from }}</span> {{ 'goes to' | t }} <span class="ap-data">{{ sample.to }}</span>.
+      }
+    </p>
     <ap-field [label]="'Project' | t" [field]="redirect.projectId" [help]="'Only for grouping.' | t">
       <select class="ap-select" [formField]="redirect.projectId">
         @for (project of projects.value(); track project.id) {

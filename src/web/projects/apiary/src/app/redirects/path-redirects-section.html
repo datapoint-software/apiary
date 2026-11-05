@@ -1,0 +1,55 @@
+@if (route(); as loaded) {
+  <section class="ap-panel" aria-labelledby="path-redirects-title">
+    <div class="ap-panel-head">
+      <div>
+        <h2 class="ap-h ap-h-3" id="path-redirects-title">{{ 'Path redirects' | t }}</h2>
+        <p class="ap-panel-desc">{{ 'Paths on' | t }} <span class="ap-data">{{ loaded.host }}</span> {{ 'that send visitors elsewhere before they reach any route.' | t }}</p>
+      </div>
+      @if (auth.canOperate()) {
+        <button apWrite apButton size="small" type="button" (click)="add(loaded)"><ap-icon [icon]="icons.add" />{{ 'Add path redirect' | t }}</button>
+      }
+    </div>
+    @if (onHost().length === 0) {
+      <div class="ap-panel-body">
+        <p class="ap-muted" style="margin: 0">{{ 'No path redirects. Every path on this hostname reaches its routes.' | t }}</p>
+      </div>
+    } @else {
+      <div class="ap-table-wrap">
+        <table class="ap-table">
+          <caption class="ap-sr">{{ 'Path redirects on {hostname}' | t: { hostname: loaded.host } }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'Path' | t }}</th>
+              <th scope="col">{{ 'To' | t }}</th>
+              <th scope="col">{{ 'Status code' | t }}</th>
+              <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (redirect of onHost(); track redirect.id) {
+              <tr>
+                <td>
+                  <div class="ap-cell-main">
+                    <span class="ap-data">{{ redirect.path }}</span>
+                    @if (redirect.stack; as source) {
+                      <ap-stack-tag [stack]="source.stack" />
+                    }
+                  </div>
+                </td>
+                <td><ap-redirect-target [to]="redirect.to" /></td>
+                <td><span class="ap-tag">{{ redirect.statusCode }}</span> <span class="ap-muted">{{ statusLabels[redirect.statusCode] | t }}</span></td>
+                <td class="ap-col-actions">
+                  @if (auth.canOperate() && !redirect.stack) {
+                    <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete redirect from {hostname}' | t: { hostname: label(redirect) }" (click)="delete(redirect)">
+                      <ap-icon [icon]="icons.delete" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

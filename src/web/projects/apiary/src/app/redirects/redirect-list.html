@@ -1,5 +1,5 @@
 <ap-page-head [heading]="'Redirects' | t">
-  <span pageSub>{{ 'Send one hostname to another address, such as www.example.com to example.com.' | t }}</span>
+  <span pageSub>{{ 'Send a hostname, or a path on it, to another address.' | t }}</span>
   @if (auth.canOperate() && redirects.value().length > 0) {
     <button apWrite pageActions apButton="primary" type="button" (click)="add()"><ap-icon [icon]="icons.add" />{{ 'Add redirect' | t }}</button>
   }
@@ -10,7 +10,7 @@
     <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
   } @else if (redirects.value().length === 0) {
     <ap-empty-state [heading]="'No redirects yet' | t">
-      {{ 'A redirect sends one hostname to another, such as' | t }} <span class="ap-code">www.example.com</span> {{ 'to' | t }} <span class="ap-code">example.com</span>{{ ', with a 308 or 307.' | t }}
+      {{ 'A redirect sends a hostname, such as' | t }} <span class="ap-code">www.example.com</span>{{ ', or a path on it, such as' | t }} <span class="ap-code">example.com/old</span>{{ ', to another address, with a 308 or 307.' | t }}
       @if (auth.canOperate()) {
         <button apWrite emptyActions apButton="primary" type="button" (click)="add()"><ap-icon [icon]="icons.add" />{{ 'Add redirect' | t }}</button>
       }
@@ -24,7 +24,7 @@
             <th scope="col">{{ 'From' | t }}</th>
             <th scope="col">{{ 'To' | t }}</th>
             <th scope="col">{{ 'Status code' | t }}</th>
-            <th scope="col">{{ 'Path' | t }}</th>
+            <th scope="col">{{ 'Rest of the path' | t }}</th>
             <th scope="col">{{ 'Project' | t }}</th>
             <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
           </tr>
@@ -34,19 +34,21 @@
             <tr>
               <td>
                 <div class="ap-cell-main">
-                  <span class="ap-data">{{ redirect.from }}</span>
+                  <span class="ap-data"
+                    >{{ redirect.from }}@if (redirect.path !== '/') {<span class="ap-muted">{{ redirect.path }}</span>}</span
+                  >
                   @if (redirect.stack; as source) {
                     <ap-stack-tag [stack]="source.stack" />
                   }
                 </div>
               </td>
-              <td class="ap-data ap-muted">{{ redirect.to }}</td>
+              <td><ap-redirect-target [to]="redirect.to" /></td>
               <td><span class="ap-tag">{{ redirect.statusCode }}</span> <span class="ap-muted">{{ statusLabels[redirect.statusCode] | t }}</span></td>
               <td class="ap-muted">{{ (redirect.keepPath ? 'Kept' : 'Dropped') | t }}</td>
               <td class="ap-muted">{{ projectNames().get(redirect.projectId) }}</td>
               <td class="ap-col-actions">
                 @if (auth.canOperate() && !redirect.stack) {
-                  <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete redirect from {hostname}' | t: { hostname: redirect.from }" (click)="delete(redirect)">
+                  <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete redirect from {hostname}' | t: { hostname: label(redirect) }" (click)="delete(redirect)">
                     <ap-icon [icon]="icons.delete" />
                   </button>
                 }

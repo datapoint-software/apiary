@@ -46,6 +46,9 @@ async function render(
   backend.match('/api/routes/get').forEach((request) => request.flush(existing ?? null));
   backend.match('/api/cluster/status').forEach((request) => request.flush(aCluster()));
   backend.match('/api/trusted-proxies/list').forEach((request) => request.flush(trustedProxies));
+  if (existing) {
+    (await nextRequest(backend, '/api/redirects/list')).flush([]);
+  }
   await settle(fixture);
   return { fixture, backend };
 }

@@ -20,6 +20,7 @@ import {
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
 import { CertificateSummary, ProjectView, RouteDefaultsView, RouteView, TrustedProxyView } from '../api/models';
+import { PathRedirectsSection } from '../redirects/path-redirects-section';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
 import { routeLabel } from './route-label';
@@ -42,7 +43,7 @@ import { StackTag } from '../stacks/stack-tag';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, StackBanner, StackTag, RouterLink, TranslatePipe],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, PathRedirectsSection, StackBanner, StackTag, RouterLink, TranslatePipe],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

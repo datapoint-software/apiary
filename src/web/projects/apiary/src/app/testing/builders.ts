@@ -7,6 +7,7 @@ import {
   MemberView,
   PipelineTokenView,
   ProjectView,
+  RedirectView,
   RouteView,
   SignedInUser,
   StackView,
@@ -54,6 +55,20 @@ export function aStreamRoute(overrides: Partial<StreamRouteView> = {}): StreamRo
     disabled: false,
     allowedAddresses: [],
     connections: 0,
+    changedAt: '2026-11-01T10:00:00Z',
+    ...overrides,
+  };
+}
+
+export function aRedirect(overrides: Partial<RedirectView> = {}): RedirectView {
+  return {
+    id: 'redirect-1',
+    projectId: 'project-1',
+    from: 'www.example.com',
+    path: '/',
+    to: 'https://example.com',
+    statusCode: 308,
+    keepPath: true,
     changedAt: '2026-11-01T10:00:00Z',
     ...overrides,
   };

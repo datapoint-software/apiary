@@ -82,6 +82,8 @@
 
     <ap-targets-section [route]="route" [stack]="lockedBy('targets')" />
 
+    <ap-path-redirects-section [route]="current()" />
+
     <section class="ap-panel" aria-labelledby="certificate-title">
       <div class="ap-panel-head">
         <div><h2 class="ap-h ap-h-3" id="certificate-title">{{ 'Certificate' | t }}</h2></div>

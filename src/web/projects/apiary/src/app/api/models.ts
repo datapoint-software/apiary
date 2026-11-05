@@ -64,6 +64,7 @@ export interface RedirectView {
   readonly id: string;
   readonly projectId: string;
   readonly from: string;
+  readonly path: string;
   readonly to: string;
   readonly statusCode: number;
   readonly keepPath: boolean;

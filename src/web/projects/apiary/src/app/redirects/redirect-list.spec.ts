@@ -8,24 +8,11 @@ import { RedirectView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
 import { AcceptingConfirmer } from '../testing/accepting-confirmer';
 import { answerClusterStatus, nextRequest } from '../testing/backend';
-import { aProject, aSignedInUser } from '../testing/builders';
+import { aProject, aRedirect, aSignedInUser } from '../testing/builders';
 import { ClosingDialog } from '../testing/closing-dialog';
 import { byRole, cellsOfRow, queryByRole, settle } from '../testing/dom';
 import { RedirectDialog } from './redirect-dialog';
 import { RedirectList } from './redirect-list';
-
-function aRedirect(overrides: Partial<RedirectView> = {}): RedirectView {
-  return {
-    id: 'redirect-1',
-    projectId: 'project-1',
-    from: 'www.example.com',
-    to: 'https://example.com',
-    statusCode: 308,
-    keepPath: true,
-    changedAt: '2026-11-01T10:00:00Z',
-    ...overrides,
-  };
-}
 
 interface Rendered {
   readonly fixture: ComponentFixture<RedirectList>;
@@ -139,6 +126,31 @@ describe('RedirectList', () => {
         'The redirect from www.example.com was deleted.',
       ),
     );
+  });
+
+  it('shows a path redirect by its hostname and path, and a target on the same hostname', async () => {
+    const { fixture } = await render([
+      aRedirect({ from: 'shop.example.com', path: '/old-sale', to: '/sale' }),
+    ]);
+
+    expect(cellsOfRow(fixture, 'shop.example.com/old-sale').slice(0, 2)).toEqual([
+      'shop.example.com/old-sale',
+      '/sale Same hostname',
+    ]);
+  });
+
+  it('says a deleted path redirect gives the path back to the routes', async () => {
+    const list = await render([
+      aRedirect({ from: 'shop.example.com', path: '/old-sale', to: '/sale' }),
+    ]);
+
+    byRole(list.fixture, 'button', 'Delete redirect from shop.example.com/old-sale').click();
+    (await nextRequest(list.backend, '/api/redirects/delete')).flush(null);
+
+    expect([list.confirmer.asked[0].heading, list.confirmer.asked[0].text]).toEqual([
+      'Delete the redirect from shop.example.com/old-sale?',
+      'Requests to this path go to the routes of shop.example.com again, or get a 404 if there are none. Browsers may remember a permanent redirect for a while.',
+    ]);
   });
 
   it('tags a redirect from a stack and leaves out its delete', async () => {
