@@ -198,6 +198,17 @@ Agreed on 2026-11-05, for deployments behind a load balancer or CDN. Not tied to
 
 **Try it:** with the local stack, add `127.0.0.1` as a trusted proxy, then `curl -H 'X-Forwarded-For: 203.0.113.9' http://whoami.localhost`: the access log shows `203.0.113.9`, and whoami gets `X-Forwarded-For: 203.0.113.9, 127.0.0.1`. Remove it and try again: both show the connection's address.
 
+## 20. Path redirects
+
+Agreed on 2026-11-05, for moving part of a site without changing its service. Not tied to 1.0. See [architecture.md](architecture.md#redirects).
+
+- An optional path on redirects, in the replicated state, the API, MCP and the `apiary.redirect.<name>.path` label. An older replica would ignore it and redirect the whole hostname, so it needs `[StateSchema(n)]`.
+- Matching by hostname, then the longest path prefix, before routes, with the rest of the path kept after the prefix, and relative targets sent as a relative `Location`.
+- The checks in architecture.md on redirects and routes, with their codes, and in `redirects.check`.
+- The Redirects page and dialog, and the Path redirects panel on each route's page, as the prototype shows them.
+
+**Try it:** with the local stack and the `whoami.localhost` route, add a redirect from `whoami.localhost` at `/old` to `/new`. `curl -i http://whoami.localhost/old/page?a=1` answers 308 with `Location: /new/page?a=1`, and `curl -i http://whoami.localhost/older` still reaches whoami. Try adding a route at `/old/api`: it's refused.
+
 ## What you'll need to try it
 
 - **Milestones 0 to 2:** Docker on your machine.
