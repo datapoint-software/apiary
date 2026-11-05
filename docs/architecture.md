@@ -71,7 +71,7 @@ The rest of this document describes the Swarm mode, and notes where the other mo
 - In Swarm, Apiary and the routed services share one attachable overlay network (e.g. `apiary`). Services join it in their own stack files, and Apiary reaches them by their Swarm service name. With Docker Compose, the shared network is a bridge network instead.
 - Apiary doesn't need access to the Docker API. Keep it that way: that access is equivalent to root on the host, or control of the whole cluster for a manager node.
 - First-version protocols: HTTP/1.1, HTTP/2, HTTP/3 (QUIC, which needs `libmsquic` in the image) and WebSockets, with HTTP to HTTPS redirects, plus raw TCP and UDP (see [TCP and UDP](#tcp-and-udp)).
-- **Routed services get the original `Host`** and `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, as most reverse proxies send them. Apiary replaces any `X-Forwarded-*` headers the client sent, and drops `Forwarded` and other headers services read as the client's address, scheme, port or path (`X-Real-IP`, `True-Client-IP`, `CF-Connecting-IP`, `X-Forwarded-Port`, `X-Original-URL` and others, listed in `ClientHeaders`), so a service can trust them when the request comes from Apiary; it must still be told to, e.g. ASP.NET Core's forwarded headers middleware with Apiary's network in `KnownIPNetworks`.
+- **Routed services get the original `Host`** and `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host`, as most reverse proxies send them. Apiary replaces any `X-Forwarded-*` headers the client sent, and drops `Forwarded` and other headers services read as the client's address, scheme, port or path (`X-Real-IP`, `True-Client-IP`, `CF-Connecting-IP`, `X-Forwarded-Port`, `X-Original-URL` and others, listed in `ClientHeaders`), so a service can trust them when the request comes from Apiary; from a [trusted proxy](#trusted-proxies), it keeps the chain instead. A service must still be told to trust Apiary, e.g. ASP.NET Core's forwarded headers middleware with Apiary's network in `KnownIPNetworks`.
 
 ### Projects
 
@@ -100,7 +100,7 @@ By default a route has a single target group, and none of the following applies.
 - **A rate limit** is set per route and **off by default**: the most requests a minute from each client address, from 1 to 100,000. IPv6 clients are counted per /64 network, since one host usually owns a whole /64 and could otherwise rotate addresses.
 - It's a token bucket: a client can spend the whole minute's budget at once, then it refills evenly. Beyond it, clients get a 429 page with `Retry-After`, after the allowlist, disabled and maintenance checks.
 - **Each replica counts on its own**, in memory, so a client spread over 3 replicas can make up to 3 times the limit. Sharing the counters would cost a write to the replicated state per request. Counters start over when a replica restarts or the limit changes.
-- It needs the real client address: with the host-mode ports in `deploy/stack.yaml`, Apiary sees it. Behind another proxy or load balancer, or Swarm's ingress network, every client shares that proxy's address and one budget, so leave limits off there.
+- It needs the real client address: with the host-mode ports in `deploy/stack.yaml`, Apiary sees it. Behind a load balancer or CDN, add it as a [trusted proxy](#trusted-proxies). Behind Swarm's ingress network, or a proxy that isn't trusted, every client shares that proxy's address and one budget, so leave limits off there.
 - Stream routes have no rate limit; they cap open connections per address instead.
 
 ### Request size and timeouts
@@ -109,6 +109,18 @@ By default a route has a single target group, and none of the following applies.
 - Apiary sets the limit on each request after matching its route and before anything reads the body. A request whose `Content-Length` is too large gets a 413 at once; a chunked one gets it when it crosses the limit. The 413 has no body. The admin and cluster ports keep the 30 MB default.
 - Bodies are streamed to the target, not buffered, so a large or unlimited upload costs Apiary bandwidth, not memory. Rate limits count requests, not bytes, so they don't limit upload size; see [risks.md](risks.md).
 - **A route's timeout** (1 to 3600 seconds, 30 by default) is how long the request may go without any data moving in either direction (YARP's activity timeout), not how long it may take in total. A long upload that keeps sending isn't cut off; a target that takes longer than the timeout to answer after the last byte is.
+
+### Trusted proxies
+
+Some deployments put a load balancer, a CDN or WAF, or another reverse proxy in front of Apiary. Without more, every visitor would arrive with that proxy's address, and Apiary would replace the `X-Forwarded-For` it sent.
+
+- **Administrators list trusted proxies** on the Trusted proxies page under Cluster: up to 100 addresses or ranges, IPv4 or IPv6, each with an optional note of up to 100 characters. The list is replicated state, empty by default, and each change is in the audit log. Other roles see it read-only. `0.0.0.0/0` and `::/0` are refused, since trusting every address turns every allowlist off; public ranges are allowed with a warning.
+- **For a connection from a trusted proxy**, Apiary reads `X-Forwarded-For` from the right, skips addresses that are trusted too, and takes the first one that isn't as the client's address. If the header is missing, has more than 20 addresses or anything that isn't an address, Apiary uses the proxy's own address instead.
+- **The scheme comes from `X-Forwarded-Proto`**: the value for the same hop when the proxies add one each, or the only value when they replace it. Only `http` and `https` count; anything else is ignored. So HTTPS redirects, HSTS, password-protected routes and the `Secure` flag on cookies work behind a proxy that ends TLS.
+- Routes then use that address and scheme everywhere: allowlists, rate limits, password tries, HTTPS and the access log. **The admin port never does**: its allowlist and rate limit keep checking the connection's own address.
+- **Headers sent on:** the target gets the chain the proxy sent with the proxy's address added to the end, and the headers in `ClientHeaders` (such as `X-Real-IP` and `CF-Connecting-IP`) and `Forwarded` as the proxy sent them. `X-Forwarded-Host` is always Apiary's own, since `Host` chooses the route and certificate. Connections from anywhere else are handled as before: their forwarded headers are replaced or dropped.
+- **Last request** for each entry is the latest on any replica, kept in memory: a range quiet for a day gets a warning, since a provider that changes its ranges would otherwise leave its new ones untrusted.
+- Swarm's ingress routing mesh sends no header, so there's nothing to trust: use host-mode ports there. TCP and UDP stream routes don't use trusted proxies; the [PROXY protocol](https://www.haproxy.org/download/2.9/doc/proxy-protocol.txt) would be their equivalent.
 
 ### Password-protected routes
 

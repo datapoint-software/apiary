@@ -187,6 +187,17 @@ Agreed on 2026-11-04, for teams that deploy their Swarm from CI. Not tied to 1.0
 
 **Try it:** add a stack, put its token in a GitLab CI variable on a runner inside the network, and add `apiary apply` after `docker stack deploy`. Push a label change: the route changes, and its locked field says "Set in stack". Delete the labels of one route and push again: the route is gone. Run with an empty file: the apply fails with `stack.removesEverything`.
 
+## 19. Trusted proxies
+
+Agreed on 2026-11-05, for deployments behind a load balancer or CDN. Not tied to 1.0. See [architecture.md](architecture.md#trusted-proxies).
+
+- The trusted proxies list in the replicated state, with actions to read and change it, for Administrators, over the API and MCP.
+- The client address and scheme from `X-Forwarded-For` and `X-Forwarded-Proto` for connections from a trusted proxy, used by every public route, and the forwarded headers kept for the target.
+- When each entry last saw a request, across replicas.
+- The Trusted proxies page, with Try a request, as the prototype shows it.
+
+**Try it:** with the local stack, add `127.0.0.1` as a trusted proxy, then `curl -H 'X-Forwarded-For: 203.0.113.9' http://whoami.localhost`: the access log shows `203.0.113.9`, and whoami gets `X-Forwarded-For: 203.0.113.9, 127.0.0.1`. Remove it and try again: both show the connection's address.
+
 ## What you'll need to try it
 
 - **Milestones 0 to 2:** Docker on your machine.
