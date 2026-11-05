@@ -4,14 +4,17 @@ using Yarp.ReverseProxy.Transforms.Builder;
 namespace Datapoint.Apiary.Proxy.Forwarding;
 
 /// <summary>
-/// Headers that services read as the client's address, or as the scheme, port, host or path the client asked for.
-/// YARP replaces X-Forwarded-For, -Proto, -Host and -Prefix and drops Forwarded, but passes these on, so a visitor
-/// could set them to anything and a service that reads them would believe it.
+/// The forwarded headers a target gets. Apiary writes X-Forwarded-For, -Proto, -Host and -Prefix itself. From a trusted
+/// proxy, X-Forwarded-For keeps the proxy's chain with the proxy added, and the headers below pass on as it sent them.
+/// From anyone else they're dropped: services read them as the client's address, or as the scheme, port, host or path
+/// the client asked for, so a visitor could set them to anything and a service that reads them would believe it.
 /// </summary>
 public static class ClientHeaders
 {
     public static readonly IReadOnlyList<string> Spoofable =
     [
+        "Forwarded",
+
         // The client's address
         "X-Real-IP",
         "X-Client-IP",
@@ -37,9 +40,27 @@ public static class ClientHeaders
 
     public static void Apply(TransformBuilderContext context)
     {
-        foreach (var name in Spoofable)
+        // Set, not appended: X-Forwarded-For is the client's address, which a trusted proxy's chain may have replaced.
+        context.UseDefaultForwarders = false;
+        context.AddXForwardedFor(action: ForwardedTransformActions.Set);
+        context.AddXForwardedProto(action: ForwardedTransformActions.Set);
+        context.AddXForwardedHost(action: ForwardedTransformActions.Set);
+        context.AddXForwardedPrefix(action: ForwardedTransformActions.Set);
+        context.AddRequestTransform(transform =>
         {
-            context.AddRequestHeaderRemove(name);
-        }
+            if (transform.HttpContext.Features.Get<ProxiedRequest>() is { } proxied)
+            {
+                RequestTransform.RemoveHeader(transform, ForwardedChain.ForHeader);
+                RequestTransform.AddHeader(transform, ForwardedChain.ForHeader, string.Join(", ", [.. proxied.ForwardedFor, proxied.Proxy.ToString()]));
+                return ValueTask.CompletedTask;
+            }
+
+            foreach (var name in Spoofable)
+            {
+                RequestTransform.RemoveHeader(transform, name);
+            }
+
+            return ValueTask.CompletedTask;
+        });
     }
 }

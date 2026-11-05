@@ -38,6 +38,7 @@ public static class ProxyServiceCollectionExtensions
         services.AddSingleton<IForwarderHttpClientFactory, GuardedForwarderHttpClientFactory>();
         services.AddSingleton<IProxyConfigProvider, StateProxyConfigProvider>();
         services.AddSingleton<AddressAllowlists>();
+        services.AddSingleton<TrustedProxies>();
         services.AddSingleton<ClientRateLimiter>();
         services.AddSingleton<PasswordGate>();
         services.AddSingleton<AccessLogWriter>();

@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Cluster.State;
+using Datapoint.Apiary.Proxy.Forwarding;
 using Datapoint.Apiary.Proxy.Routing;
 using Datapoint.Apiary.Proxy.Streams;
 using Yarp.ReverseProxy;
@@ -6,7 +7,7 @@ using Yarp.ReverseProxy.Model;
 
 namespace Datapoint.Apiary.Proxy.Telemetry;
 
-public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLookup proxy, ProxyMetrics metrics, StreamConnections streams)
+public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLookup proxy, ProxyMetrics metrics, StreamConnections streams, TrustedProxies trustedProxies)
 {
     public IReadOnlyList<RouteSnapshot> Snapshot()
     {
@@ -21,6 +22,10 @@ public sealed class RouteTelemetrySource(IClusterState cluster, IProxyStateLooku
         }
 
         snapshots.AddRange(cluster.Current.StreamRoutes.Keys.Select(id => new RouteSnapshot(id, 0, []) { Connections = streams.Count(id), LastConnectionAt = streams.LastOpened(id) }));
+        // Trusted proxies travel with the routes, under their own ids, so the admin interface learns each one's latest request on any replica.
+        var proxies = cluster.Current.TrustedProxies.Keys.ToHashSet();
+        snapshots.AddRange(proxies.Select(id => new RouteSnapshot(id, 0, []) { LastConnectionAt = trustedProxies.LastRequest(id) }));
+        trustedProxies.Forget(proxies);
         metrics.Forget(keep);
         return snapshots;
     }

@@ -4,6 +4,7 @@ using Datapoint.Apiary.Auth;
 using Datapoint.Apiary.Cluster.Raft;
 using Datapoint.Apiary.Health;
 using Datapoint.Apiary.Proxy.AccessLogs;
+using Datapoint.Apiary.Proxy.Forwarding;
 using Datapoint.Apiary.Proxy.Pages;
 using Datapoint.Apiary.Proxy.RateLimits;
 using Datapoint.Apiary.Proxy.Redirects;
@@ -25,7 +26,7 @@ public static class ApiaryPipeline
         app.UseWhen(c => !Listener.IsCluster(c), serving => serving.UseReadinessGate(app.Services.GetRequiredService<RaftClusterState>()));
         app.UseWhen(Listener.IsAdmin, admin => admin.UseAdminSecurityHeaders().UseDefaultFiles().UseStaticFiles().UseFetchSiteGuard().UseAuthentication()
             .UseAnonymousRateLimit(app.Services.GetRequiredService<ClientRateLimiter>(), app.Services.ApiaryOptions()));
-        app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
+        app.UseWhen(Listener.IsPublic, proxy => proxy.UseMiddleware<TrustedProxyMiddleware>().UseMiddleware<AccessLogMiddleware>().UseMiddleware<PublicHttpsMiddleware>().UseMiddleware<RedirectMiddleware>());
         app.UseRouting();
         app.UseAuthorization();
         var admin = app.MapGroup("").WithMetadata(ListenerMetadata.Admin);
