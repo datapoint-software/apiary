@@ -132,6 +132,16 @@ In the admin UI:
 2. In the admin UI, add a route from the site's hostname (e.g. `shop.example.com`) to the service name and port (e.g. `shop_shop`, port 8080).
 3. Point the hostname's DNS at the edge nodes. Apiary gets a certificate from Let's Encrypt within a minute or two; see it under Certificates.
 
+### Behind a load balancer or CDN
+
+If a load balancer, a CDN or WAF, or another reverse proxy sits in front of the edge nodes, Apiary sees its address instead of the visitors'. Add it under Cluster → Trusted proxies, so routes take the visitor's address from `X-Forwarded-For` and the scheme from `X-Forwarded-Proto`:
+
+- Add only the addresses your proxy connects from. For a CDN, use the ranges it publishes for that (e.g. [Cloudflare's](https://www.cloudflare.com/ips/)), and update them when it changes them: the page warns about ranges that haven't sent a request for a day.
+- Have the proxy reach Apiary over HTTPS, or over a private network. Apiary believes the scheme it reports.
+- Check it with Try a request on the same page, then with a route's allowlist.
+
+Swarm's ingress network sends no such header, so keep the ports in `mode: host`. The admin port never uses trusted proxies.
+
 ## 9. Back up
 
 1. In the admin UI, export a backup (Backups) and store it encrypted, with restricted access, apart from the root key.
@@ -160,6 +170,7 @@ A backup can only be restored with the root key it was made with: keep each root
 - [ ] The root key is in the secret store, and the file is deleted.
 - [ ] `Apiary__Acme__DirectoryUrl` points at Let's Encrypt's production service.
 - [ ] The admin allowlist names only your admin network and loopback.
+- [ ] Trusted proxies, if any, list only your own proxies' addresses or the ranges your CDN publishes.
 - [ ] The first Administrator has two-step sign-in and stored recovery codes.
 - [ ] The admin certificate is trusted by your browsers.
 - [ ] A first backup is exported and stored apart from the root key.
