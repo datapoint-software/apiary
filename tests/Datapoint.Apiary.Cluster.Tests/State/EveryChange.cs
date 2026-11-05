@@ -73,6 +73,7 @@ public static class EveryChange
             new RouteSaved(route),
             new RouteDeleted(route.Id),
             new RedirectSaved(ARedirect(project.Id)),
+            new PathRedirectSaved(ARedirect(project.Id) with { Path = "/docs" }),
             new RedirectDeleted(AnId()),
             new UserSaved(user),
             new UserDeleted(user.Id),

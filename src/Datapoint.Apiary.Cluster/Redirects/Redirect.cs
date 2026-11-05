@@ -10,5 +10,9 @@ public sealed record Redirect(
     DateTimeOffset ChangedAt,
     string? ChangedBy)
 {
+    public const string WholeHost = "/";
+
+    public string Path { get => field ?? WholeHost; init; }
+
     public Stacks.StackSource? Stack { get; init; }
 }
