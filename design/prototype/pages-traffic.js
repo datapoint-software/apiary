@@ -144,8 +144,8 @@ const CERT_MESSAGES = {
   'certificate.keyMismatch': 'This private key doesn’t match the certificate. Check that both come from the same request.',
   'dns.unauthorized': 'The DNS provider refused Apiary’s credentials. Check that they haven’t expired or been revoked, and save new ones on the provider.',
   'dns.zoneNotFound': 'The DNS provider has no zone for this hostname. Check the provider’s domains, or the CNAME that delegates it.',
-  'dns.notPropagated': 'The TXT record was written, but the zone’s name servers didn’t show it within 2 minutes. Apiary didn’t ask Let’s Encrypt, so no attempt was used.',
-  'dns.unreachable': 'Apiary couldn’t reach the DNS provider. It tries again in 5 minutes; nothing reached Let’s Encrypt.',
+  'dns.notPropagated': 'The TXT record was written, but the zone’s name servers didn’t show it within 2 minutes. Apiary didn’t ask Let’s Encrypt to check it, so no attempt was used.',
+  'dns.unreachable': 'Apiary couldn’t reach the DNS provider. It tries again in 5 minutes; Let’s Encrypt wasn’t asked to check anything.',
   'dns.cnameMissing': 'The CNAME that delegates this hostname’s challenge is missing. Create it, then renew.',
 };
 // An automatic certificate covers the names it was requested for; an uploaded wildcard usually covers its bare domain too.

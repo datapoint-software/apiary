@@ -219,7 +219,7 @@ Agreed on 2026-11-06, for wildcards, internal hostnames, edge nodes with port 80
 - Certificates for several names, wildcards among them, requested ahead of any route, and routes naming a wildcard Apiary renews.
 - The DNS providers page, Request certificate, the Checked with column and dialog, Switch them on a wildcard, and Checked with in the route editor, as the prototype shows them.
 
-**Try it:** run BIND or PowerDNS next to Pebble with a TSIG key, add it as a provider with a challenge zone, and request `*.example.test` with `example.test`. Pebble issues one certificate for both; the renewal log shows the TXT record and how long it took to appear. Delete the TSIG key on the server and renew: it fails with `dns.unauthorized`, and nothing reaches Pebble.
+**Try it:** run BIND or PowerDNS next to Pebble with a TSIG key, add it as a provider with a challenge zone, and request `*.example.test` with `example.test`. Pebble issues one certificate for both; the renewal log shows the TXT record and how long it took to appear. Delete the TSIG key on the server and request another name: it fails with `dns.unauthorized`, and Pebble validates nothing. Apiary does create the order, since that's where the challenge token comes from, so it counts toward Let's Encrypt's new orders limit but not its failed validations limit.
 
 ## What you'll need to try it
 

@@ -160,7 +160,7 @@ describe('DnsProviderList', () => {
       expect(toasts()[0]).toMatchObject({
         tone: 'error',
         heading: 'Saved, but Office DNS failed the test',
-        text: 'Apiary couldn’t reach the DNS provider. It tries again in 5 minutes; nothing reached Let’s Encrypt.',
+        text: 'Apiary couldn’t reach the DNS provider. It tries again in 5 minutes; Let’s Encrypt wasn’t asked to check anything.',
       }),
     );
   });
