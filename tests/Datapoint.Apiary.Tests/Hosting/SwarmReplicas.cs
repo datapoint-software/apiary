@@ -60,7 +60,7 @@ internal sealed class SwarmReplicas : IAsyncDisposable
     {
         Dns.Add(LoopbackAliases.Address(replica));
         var key = rootKey ?? RootKey;
-        await File.WriteAllTextAsync(RootKeyFile(key), key.Format(), TestContext.Current.CancellationToken);
+        await WriteRootKeyAsync(key);
         var app = await ApiaryApp.StartAsync(() => Create(replica, key), readyWithin: TimeSpan.FromMinutes(2));
         _running[replica] = app;
         return app;
@@ -111,6 +111,13 @@ internal sealed class SwarmReplicas : IAsyncDisposable
     }
 
     private string RootKeyFile(RootKey key) => Path.Combine(_directory.Path, $"root-key-{key.Id}");
+
+    private async Task WriteRootKeyAsync(RootKey key)
+    {
+        var written = Path.Combine(_directory.Path, $"root-key-{Guid.NewGuid():N}.tmp");
+        await File.WriteAllTextAsync(written, key.Format(), TestContext.Current.CancellationToken);
+        File.Move(written, RootKeyFile(key), overwrite: true);
+    }
 
     private ApiaryApp Create(int replica, RootKey rootKey)
     {
