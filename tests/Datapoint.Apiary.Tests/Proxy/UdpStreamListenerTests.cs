@@ -17,7 +17,7 @@ public sealed class UdpStreamListenerTests : IAsyncLifetime
 {
     private static readonly TimeSpan s_reply = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan s_silence = TimeSpan.FromMilliseconds(500);
-    private readonly int _port = UdpEchoServer.FreePort();
+    private readonly int _port = ApiaryApp.FreePort();
     private readonly FakeTimeProvider _time = TestClock.Fake();
     private readonly UdpClient _client = new(new IPEndPoint(IPAddress.IPv6Loopback, 0));
     private readonly UdpClient _otherClient = new(new IPEndPoint(IPAddress.IPv6Loopback, 0));
@@ -127,7 +127,7 @@ public sealed class UdpStreamListenerTests : IAsyncLifetime
     [Fact]
     public async Task A_target_that_isn_t_listening_yet_doesn_t_end_the_session()
     {
-        var port = UdpEchoServer.FreePort();
+        var port = ApiaryApp.FreePort();
         var route = UdpStreamTo(_echo) with { TargetPort = port };
         Listen(route);
         await RoundTripAsync(_client, "nobody there", s_silence);

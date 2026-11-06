@@ -25,13 +25,15 @@ public static class FreePorts
         throw new InvalidOperationException($"No port from {First} to {LinuxEphemeralRangeStart - 1} is free.");
     }
 
-    private static bool IsFree(int port)
+    private static bool IsFree(int port) =>
+        IsFree(port, SocketType.Stream, ProtocolType.Tcp) && IsFree(port, SocketType.Dgram, ProtocolType.Udp);
+
+    private static bool IsFree(int port, SocketType type, ProtocolType protocol)
     {
         try
         {
-            using var listener = new TcpListener(IPAddress.IPv6Any, port);
-            listener.Server.DualMode = true;
-            listener.Start();
+            using var socket = new Socket(AddressFamily.InterNetworkV6, type, protocol) { DualMode = true };
+            socket.Bind(new IPEndPoint(IPAddress.IPv6Any, port));
             return true;
         }
         catch (SocketException)

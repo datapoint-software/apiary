@@ -86,7 +86,7 @@ public sealed class StreamTests : IAsyncLifetime
     public async Task A_udp_stream_reaches_its_target_both_ways()
     {
         await using var echo = UdpEchoServer.Start();
-        var port = UdpEchoServer.FreePort();
+        var port = ApiaryApp.FreePort();
         var route = AStream(listenPort: port) with { Protocol = StreamProtocol.Udp, TargetHost = echo.Address.ToString(), TargetPort = echo.Port };
         await _app.SeedAsync(new StreamRouteSaved(route));
         using var client = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));

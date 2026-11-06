@@ -39,13 +39,6 @@ internal sealed class UdpEchoServer : IAsyncDisposable
         return new UdpEchoServer(socket);
     }
 
-    public static int FreePort()
-    {
-        using var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp) { DualMode = true };
-        socket.Bind(new IPEndPoint(IPAddress.IPv6Any, 0));
-        return ((IPEndPoint)socket.LocalEndPoint!).Port;
-    }
-
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003", Justification = "The constructor starts _echoing on this instance.")]
     public async ValueTask DisposeAsync()
     {
