@@ -50,7 +50,7 @@ function routeRow(r) {
   return `<tr data-id="${r.id}"${canOperate() ? ' aria-selected="false"' : ''}>${canOperate() ? `<td class="ap-col-check"><input class="ap-check" type="checkbox" aria-label="Select ${label}" data-sel="${r.id}"></td>` : ''}
 <td><div class="ap-cell-main"><a class="ap-data" href="#/routes/${r.id}">${esc(r.host)}</a>${r.stack ? stackTag(r.stack.name) : ''}<span class="ap-caption ap-data">${esc(r.path)}</span>${r.gate ? `<span class="ap-caption ap-gate-tag">${icon('lock')}Needs a password</span>` : ''}</div></td>
 <td class="ap-data ap-muted">${esc(targetLabel(r))}</td><td><div class="ap-cell-main">${status(tone, text)}${upcoming}</div></td>
-<td class="ap-muted">${r.cert === 'uploaded' ? 'Uploaded' : 'Automatic'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
+<td class="ap-muted">${r.cert !== 'uploaded' ? 'Automatic' : (D.certs.find(c => c.host === r.certId) || {}).source === 'auto' ? 'Wildcard' : 'Uploaded'}</td><td class="ap-num">${r.disabled ? '–' : num(r.rpm)}</td>
 <td class="ap-muted">${ago(at)}${by ? ` by ${esc(by)}` : ''}</td><td class="ap-col-actions">${actions}</td></tr>`;
 }
 function routesTable(list, { grouped = true } = {}) {
@@ -231,7 +231,8 @@ const RM = {
   'route.redirectExists': 'This hostname redirects elsewhere. A hostname can be a route or a redirect, not both: delete the redirect first.',
   'route.pathRedirected': 'A redirect answers this path first, so the route would get no requests. Delete the redirect, or choose another path.',
   'route.canaryName': 'Use letters, digits and hyphens, such as X-Canary.',
-  'certificate.choose': 'Choose an uploaded certificate.',
+  'certificate.choose': 'Choose a certificate.',
+  'certificate.providerDoesNotCover': 'This DNS provider doesn’t prove the hostname. Choose one that does, or a file on port 80.',
   'certificate.doesNotCover': 'This certificate doesn’t cover the hostname. Choose one that does, or use an automatic certificate.',
   'route.bodySize': 'Enter a whole number from 1 MB to 100 GB.',
 };
@@ -366,8 +367,10 @@ function routeEditor(r, projectId) {
   const src = r || { host: '', path: '/', project: projectId || (D.projects.length === 1 ? D.projects[0].id : ''), targets: [{ host: '', port: 8080, weight: 100 }], cert: 'auto', timeout: 30, allow: [] };
   let targets = src.targets.map(t => ({ ...t }));
   const canary = canaryOf(src);
-  const uploaded = D.certs.filter(c => c.source === 'uploaded');
-  const certId = src.cert === 'uploaded' ? src.certId || (uploaded.find(c => certCovers(c.host, src.host)) || {}).host || '' : '';
+  const named = D.certs.filter(c => c.source === 'uploaded' || certIsWildcard(c));
+  const certId = src.cert === 'uploaded' ? src.certId || (named.find(c => certCovers(c.host, src.host)) || {}).host || '' : '';
+  const own = r && D.certs.find(c => c.source === 'auto' && c.host === r.host);
+  const challenge = own ? certChallenge(own) : 'http-01';
   const [tone, text] = r ? routeStatus(r) : [];
   const m = src.maintenance;
   const ops = canOperate();
@@ -399,9 +402,10 @@ ${rtChoice('sticky', src.sticky, 'Sticky sessions', 'Keeps each visitor on the t
 ${r ? pathRedirectsPanel(r) : ''}
 <section class="ap-panel" aria-labelledby="s3"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s3">Certificate</h2></div></div><div class="ap-panel-body ap-stack">
 <fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-sr">Certificate source</legend><div class="ap-stack" style="gap:10px">
-<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="auto"${src.cert !== 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Automatic</span><span class="ap-help">From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.</span></span></label>
-<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="uploaded"${src.cert === 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Uploaded certificate</span><span class="ap-help">For wildcards and internal certificate authorities.</span></span></label></div></fieldset>
-<div data-upl>${field({ name: 'certId', label: 'Uploaded certificate', control: select('certId', [['', 'Choose a certificate'], ...uploaded.map(c => [c.host, `${c.host} (expires ${fmtDate(c.expires, false)})`])], certId), help: 'Upload a certificate on the Certificates page first if yours isn’t listed.' })}</div>
+<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="auto"${src.cert !== 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>Automatic</span><span class="ap-help">From Let’s Encrypt, renewed for you. Checked with a file on port 80, or a DNS record for internal hostnames and closed port 80.</span></span></label>
+<div data-challenge style="margin:-2px 0 4px 30px">${field({ name: 'challenge', label: 'Checked with', control: select('challenge', [['http-01', 'A file on port 80 (HTTP-01)'], ...D.dnsProviders.map(p => [p.id, `A DNS record through ${p.name}`])], challenge), help: '&nbsp;' })}</div>
+<label class="ap-choice"><input class="ap-radio" type="radio" name="cert" value="uploaded"${src.cert === 'uploaded' ? ' checked' : ''}><span class="ap-choice-text"><span>A certificate from the list</span><span class="ap-help">An uploaded one, or a wildcard Apiary renews with a DNS record.</span></span></label></div></fieldset>
+<div data-upl>${field({ name: 'certId', label: 'Certificate', control: select('certId', [['', 'Choose a certificate'], ...named.map(c => [c.host, c.source === 'auto' ? `${certHosts(c).join(', ')} (renewed automatically)` : `${c.host} (expires ${fmtDate(c.expires, false)})`])], certId), help: 'Upload a certificate, or request a wildcard, on the Certificates page if yours isn’t listed.' })}</div>
 </div></section>
 
 <section class="ap-panel" aria-labelledby="s4"><div class="ap-panel-head"><div><h2 class="ap-h ap-h-3" id="s4">Traffic rules</h2></div></div><div class="ap-panel-body ap-stack">
@@ -495,7 +499,13 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       dirtyCheck();
     });
     rowsEl.addEventListener('input', e => { if (/^t-(weight|host)-/.test(e.target.name)) { drawSplit(); drawCanary(); } });
-    const showUpl = () => { $('[data-upl]', el).hidden = f.elements.cert.value !== 'uploaded'; };
+    const showUpl = () => {
+      $('[data-upl]', el).hidden = f.elements.cert.value !== 'uploaded';
+      $('[data-challenge]', el).hidden = f.elements.cert.value !== 'auto';
+      const h = String(f.elements.host.value || '').trim().toLowerCase(), p = dnsProvider(f.elements.challenge.value), fit = h && bestProvider([h]);
+      $('#h-challenge', el).innerHTML = p && p.delegate && h && providerCovers(p, h) ? `Needs the CNAME <span class="ap-data">${esc(challengeName(h))}</span> → <span class="ap-data">${esc(h + '.' + p.delegate)}</span>.`
+        : !p && fit ? `${esc(fit.name)} proves <span class="ap-data">${esc(h)}</span>: choose it if Let’s Encrypt can’t reach this hostname on port 80.` : '';
+    };
     showUpl();
     const showSize = () => {
       $('[data-size-custom]', el).hidden = f.elements.sizeMode.value !== 'custom';
@@ -504,10 +514,10 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       paint();
     };
     showSize();
-    f.addEventListener('input', e => { if (e.target.name === 'allow') showSize(); });
+    f.addEventListener('input', e => { if (e.target.name === 'allow') showSize(); if (e.target.name === 'host') showUpl(); });
     f.addEventListener('change', e => {
       const n = e.target.name;
-      if (n === 'cert') showUpl();
+      if (n === 'cert' || n === 'challenge') showUpl();
       if (n === 'sizeMode') showSize();
       if (n === 'canarySource') drawCanary();
       if (n === 'hsts') $('[data-hsts]', el).hidden = !e.target.checked;
@@ -562,6 +572,10 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
           const s = String(val).trim();
           return !s ? RM.required : s.length > 200 ? RM.tooLong(200) : null;
         },
+        challenge: (val, all) => {
+          const p = all.cert === 'auto' && dnsProvider(val), h = String(all.host).trim().toLowerCase();
+          return p && h && !providerCovers(p, h) ? RM['certificate.providerDoesNotCover'] : null;
+        },
         certId: (val, all) => {
           if (all.cert !== 'uploaded') return null;
           if (!val) return RM['certificate.choose'];
@@ -607,7 +621,7 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
       return rules;
     }, {
       verb: 'save',
-      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : n === 'sizeMode' || n === 'sizeUnit' ? ['sizeValue'] : []),
+      links: n => (n.startsWith('t-weight-') ? ['weights'] : n === 'host' ? ['certId', 'challenge'] : n === 'path' ? ['host'] : n === 'mStart' ? ['mEnd'] : n === 'cert' ? ['certId', 'challenge'] : n === 'canarySource' ? ['canaryName', 'canaryValue'] : n === 'sizeMode' || n === 'sizeUnit' ? ['sizeValue'] : []),
       submit: async val => {
         await api();
         syncTargets();
@@ -631,8 +645,10 @@ ${many() ? `<div style="flex:1 1 100px">${withLabel(field({ name: 't-weight-' + 
         setGuard(null);
         if (isNew) {
           D.routes.push(Object.assign({ id: 'r' + Date.now().toString(36), status: 'ok', rpm: 0 }, next));
-          if (next.cert === 'auto' && !D.certs.some(c => c.host === next.host)) D.certs.push({ host: next.host, source: 'auto', issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now' });
+          if (next.cert === 'auto' && !D.certs.some(c => c.host === next.host)) D.certs.push({ host: next.host, source: 'auto', challenge: val.challenge, issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now' });
         } else Object.assign(r, next);
+        const own = next.cert === 'auto' && D.certs.find(c => c.source === 'auto' && c.host === next.host);
+        if (own) own.challenge = val.challenge;
         go('/routes');
         const fresh = next.gate && { password: newPassword ? next.gate.password : null, link: next.gate.link && next.gate.link !== oldLink ? next.gate.link : null };
         if (fresh && (fresh.password || fresh.link)) showGateAccess(next, fresh);

@@ -19,6 +19,12 @@ function seedData() {
       { range: '173.245.48.0/20', note: 'Cloudflare', last: NOW - 4 * MIN },
       { range: '2400:cb00::/32', note: 'Cloudflare', last: NOW - 3 * DAY },
     ],
+    /* Where Apiary writes DNS-01 records. Credentials are never kept in the interface; `expired` makes the Azure test fail. */
+    dnsProviders: [
+      { id: 'p1', name: 'Hetzner', type: 'hetzner', domains: ['example.com'], delegate: '', added: NOW - 40 * DAY, by: 'ana@example.com', test: { at: NOW - 40 * DAY, ok: true } },
+      { id: 'p2', name: 'Office DNS', type: 'rfc2136', domains: ['corp.example.com'], delegate: 'acme.example.net', added: NOW - 21 * DAY, by: 'ana@example.com', test: { at: NOW - 21 * DAY, ok: true } },
+      { id: 'p3', name: 'Azure, Portuguese sites', type: 'azure', domains: ['example.pt'], delegate: '', added: NOW - 90 * DAY, by: 'rui@example.com', expired: true, test: { at: NOW - 3 * HOUR, ok: false, code: 'dns.unauthorized', detail: 'AADSTS7000222: The provided client secret keys are expired.' } },
+    ],
     me: { id: 'u1', name: 'Ana Lopes', email: 'ana@example.com', role: 'Administrator', initials: 'AL' },
     projects: [
       { id: 'shop', name: 'Shop', icon: 'shopping-bag', desc: 'Storefront, checkout and their APIs.' },
@@ -41,10 +47,11 @@ function seedData() {
       { id: 'r7', host: 'grafana.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'grafana', port: 3000, weight: 100 }], protocols: ['HTTP/2', 'WebSockets'], status: 'ok', cert: 'uploaded', rpm: 410, timeout: 120, allow: ['10.0.0.0/8', '192.168.10.0/24'] },
       { id: 'r8', host: 'mqtt-admin.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'mqtt-admin-1', port: 18083, weight: 50 }, { host: 'mqtt-admin-2', port: 18083, weight: 50 }], protocols: ['HTTP/2', 'WebSockets'], status: 'warn', statusText: '1 target down', cert: 'uploaded', rpm: 130, timeout: 60, allow: ['10.0.0.0/8'] },
       { id: 'r9', host: 'wiki.internal.example.com', path: '/', project: 'internal', targets: [{ host: 'wiki', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', rpm: 100, timeout: 30, allow: ['10.0.0.0/8'], size: 100 },
+      { id: 'r15', host: 'grafana.corp.example.com', path: '/', project: 'internal', targets: [{ host: 'grafana-corp', port: 3000, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 40, timeout: 30, allow: ['10.0.0.0/8'] },
       { id: 'r14', host: 'registry.example.com', path: '/', project: 'internal', targets: [{ host: 'gitlab', port: 5005, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 60, timeout: 60, allow: [] },
       { id: 'r10', host: 'legacy.example.com', path: '/', project: 'legacy', targets: [{ host: 'legacy-shop', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'critical', statusText: 'Route down', cert: 'auto', rpm: 0, timeout: 30, allow: [] },
-      { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'auto', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
-      { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
+      { id: 'r11', host: 'www.example.com', path: '/', project: 'marketing', targets: [{ host: 'website', port: 80, weight: 100 }], protocols: ['HTTP/2', 'HTTP/3'], status: 'ok', cert: 'uploaded', certId: '*.example.com', rpm: 1650, timeout: 30, compression: true, caching: true, allow: [] },
+      { id: 'r12', host: 'blog.example.com', path: '/', project: 'marketing', targets: [{ host: 'blog', port: 2368, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'uploaded', certId: '*.example.com', rpm: 380, timeout: 30, allow: [], maintenance: { start: at(0, '22:00'), end: at(-1, '00:30'), message: 'The blog is being upgraded. Back by 00:30 UTC.' } },
       { id: 'r13', host: 'preview.example.com', path: '/', project: 'marketing', targets: [{ host: 'website-next', port: 80, weight: 100 }], protocols: ['HTTP/2'], status: 'ok', cert: 'auto', rpm: 12, timeout: 30, allow: [], changed: [NOW - 2 * DAY, 'ana@example.com'],
         /* The prototype keeps the password to check it on the visitor page; Apiary keeps only a hash. */
         gate: { password: 'harbor-maple-lantern-58', set: NOW - 2 * DAY, by: 'ana@example.com', message: 'Preview of the new website for Example Lda.', days: 7, link: { key: 'q3Lx8VbN2pT7wRfK9mZs4A', made: NOW - 2 * DAY } } },
@@ -66,6 +73,13 @@ function seedData() {
       { host: 'www.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:31'), expires: at(-70, '06:31'), status: 'ok' },
       { host: 'registry.example.com', source: 'auto', issuer: "Let's Encrypt R10", issued: at(35, '03:12'), expires: at(-55, '03:12'), status: 'ok' },
       { host: 'blog.example.com', source: 'auto', issuer: "Let's Encrypt R11", issued: at(20, '06:33'), expires: at(-70, '06:33'), status: 'ok' },
+      /* Automatic certificates are checked with HTTP-01 unless `challenge` names a DNS provider. `hosts` lists every name requested. */
+      { host: '*.example.com', hosts: ['*.example.com', 'example.com'], source: 'auto', challenge: 'p1', project: 'marketing', issuer: "Let's Encrypt R11", issued: at(10, '04:20'), expires: at(-80, '04:20'), status: 'ok', by: 'ana@example.com',
+        events: [{ at: at(10, '04:20'), kind: 'issued', detail: 'TXT record at _acme-challenge.example.com seen by every name server after 9 s', by: 'ana@example.com' }] },
+      { host: 'grafana.corp.example.com', source: 'auto', challenge: 'p2', issuer: "Let's Encrypt R10", issued: at(21, '10:02'), expires: at(-69, '10:02'), status: 'ok',
+        events: [{ at: at(21, '10:02'), kind: 'issued', detail: 'TXT record at _acme-challenge.grafana.corp.example.com seen by every name server after 4 s, through the CNAME to acme.example.net' }] },
+      { host: 'shop.example.pt', source: 'auto', challenge: 'p3', project: 'shop', issuer: '', issued: null, expires: null, status: 'warn', note: 'Renewal failed', ahead: true,
+        failure: { code: 'dns.unauthorized', detail: 'Azure DNS: AADSTS7000222: The provided client secret keys are expired.', next: at(0, '20:40') } },
     ],
     redirects: [
       { host: 'www.shop.example.com', path: '/', to: 'https://shop.example.com', code: 308, keepPath: true, project: 'shop', stack: { name: 'shop', service: 'shop_web', fields: ['from', 'to', 'code', 'keepPath'] } },
@@ -138,5 +152,5 @@ function seedData() {
 
 function emptyData() {
   const d = seedData();
-  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], trustedProxies: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
+  return Object.assign(d, { brand: null, projects: [], routes: [], streams: [], certs: [], redirects: [], stacks: [], pipelineTokens: [], trustedProxies: [], dnsProviders: [], backups: [], agents: [], sessions: d.sessions.slice(0, 1), audit: d.audit.slice(5, 6), users: d.users.slice(0, 1) });
 }

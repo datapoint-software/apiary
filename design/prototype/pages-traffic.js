@@ -142,8 +142,21 @@ document.addEventListener('click', e => {
 const CERT_MESSAGES = {
   'acme.challengeFailed': 'Let’s Encrypt couldn’t fetch the check file from this hostname on port 80. Point its DNS at your edge nodes, and let port 80 through.',
   'certificate.keyMismatch': 'This private key doesn’t match the certificate. Check that both come from the same request.',
+  'dns.unauthorized': 'The DNS provider refused Apiary’s credentials. Check that they haven’t expired or been revoked, and save new ones on the provider.',
+  'dns.zoneNotFound': 'The DNS provider has no zone for this hostname. Check the provider’s domains, or the CNAME that delegates it.',
+  'dns.notPropagated': 'The TXT record was written, but the zone’s name servers didn’t show it within 2 minutes. Apiary didn’t ask Let’s Encrypt, so no attempt was used.',
+  'dns.unreachable': 'Apiary couldn’t reach the DNS provider. It tries again in 5 minutes; nothing reached Let’s Encrypt.',
+  'dns.cnameMissing': 'The CNAME that delegates this hostname’s challenge is missing. Create it, then renew.',
 };
-const certHosts = c => (c.host.startsWith('*.') ? [c.host, c.host.slice(2)] : [c.host]);
+// An automatic certificate covers the names it was requested for; an uploaded wildcard usually covers its bare domain too.
+const certHosts = c => c.hosts || (c.source === 'uploaded' && c.host.startsWith('*.') ? [c.host, c.host.slice(2)] : [c.host]);
+const certIsWildcard = c => c.source === 'auto' && certHosts(c).some(n => n.startsWith('*.'));
+// How Let's Encrypt checks an automatic certificate: 'http-01', or the id of the DNS provider that writes its TXT record.
+const certChallenge = c => (c.source === 'auto' ? c.challenge || 'http-01' : null);
+const certChallengeText = c => {
+  const ch = certChallenge(c);
+  return !ch ? '–' : ch === 'http-01' ? 'HTTP-01' : `DNS-01 · ${esc((dnsProvider(ch) || { name: 'deleted provider' }).name)}`;
+};
 const certFailing = c => c.source === 'auto' && c.note === 'Renewal failed';
 function certStatus(c) {
   if (!c.expires) return certFailing(c) ? 'failing' : 'pending';
@@ -167,23 +180,28 @@ function certEvents(c) {
   if (c.source === 'uploaded') return (c.events = [{ at: c.issued, kind: 'uploaded', by: c.by || 'ana@example.com' }]);
   return (c.events = [...(f ? [{ at: NOW - 40 * MIN, kind: 'failed', code: f.code, detail: f.detail }, { at: NOW - 6 * HOUR - 40 * MIN, kind: 'failed', code: f.code, detail: f.detail }] : []), { at: c.issued, kind: c.note === 'Renewed today' ? 'renewed' : 'issued' }]);
 }
-const certRoutes = c => D.routes.filter(r => (c.host.startsWith('*.') ? r.host.endsWith(c.host.slice(1)) && r.host.split('.').length === c.host.split('.').length : r.host === c.host));
+// A route uses its own automatic certificate, or names another one: an uploaded one, or a wildcard Apiary renews.
+const certRoutes = c => D.routes.filter(r => (r.cert === 'uploaded' ? (r.certId ? r.certId === c.host : c.source === 'uploaded' && certCovers(c.host, r.host)) : c.source === 'auto' && !certIsWildcard(c) && r.host === c.host));
 
 route('/certificates', () => {
   const sorted = [...D.certs].sort((a, b) => (a.expires || Infinity) - (b.expires || Infinity));
-  const admin = D.me.role === 'Administrator';
+  const admin = D.me.role === 'Administrator', ops = canOperate();
   const heading = c => ({ expired: `The certificate for ${esc(c.host)} expired`, expiring: `The certificate for ${esc(c.host)} expires in ${certDays(c)} days` }[certStatus(c)] || `Apiary can’t get a certificate for ${esc(c.host)}`);
-  const upload = `<button class="ap-btn ap-btn-primary" type="button" data-upload data-write>${icon('upload')}Upload certificate</button>`;
+  const request = ops ? `<button class="ap-btn ap-btn-primary" type="button" data-request data-write>${icon('plus')}Request certificate</button>` : '';
+  const upload = ops ? `<button class="ap-btn" type="button" data-upload data-write>${icon('upload')}Upload certificate</button>` : '';
+  const failing = failingProviders();
   return {
     title: 'Certificates',
-    html: `${pageHead({ title: 'Certificates', sub: 'Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs. Using automatic certificates means accepting Let’s Encrypt’s <a href="https://letsencrypt.org/repository/">Subscriber Agreement</a>, which Apiary accepts for you.', actions: upload })}
+    html: `${pageHead({ title: 'Certificates', sub: 'Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Each is checked with a file on port 80 (HTTP-01) or a DNS record (DNS-01), which also gets wildcards and internal hostnames. Upload your own for internal CAs. Using automatic certificates means accepting Let’s Encrypt’s <a href="https://letsencrypt.org/repository/">Subscriber Agreement</a>, which Apiary accepts for you.', actions: `<a class="ap-btn" href="#/dns-providers">${icon('globe')}DNS providers</a>${upload}${request}` })}
+${failing.length ? banner('critical', failing.length === 1 ? `${esc(failing[0].name)} is failing` : `${failing.length} DNS providers are failing`, 'Certificates checked through it can’t renew.', '<a href="#/dns-providers">See DNS providers</a>') : ''}
 ${sorted.filter(certAttention).map(c => banner(certStatus(c) === 'expired' ? 'critical' : 'warn', heading(c), certStatus(c) === 'failing' ? esc(CERT_MESSAGES[certFailure(c).code]) : c.source === 'uploaded' ? 'Upload a new one before it expires. Apiary doesn’t renew uploaded certificates.' : '', `<a href="#/certificates/${encodeURIComponent(c.host)}">See details</a>`)).join('')}
-<section class="ap-panel">${D.certs.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Certificates, soonest to expire first</caption><thead><tr><th scope="col">Hostname</th><th scope="col">Source</th><th scope="col">Issuer</th><th scope="col" aria-sort="ascending">Expires</th><th scope="col">Status</th><th scope="col" class="ap-num">Routes</th></tr></thead><tbody>
-${sorted.map(c => `<tr><td><div class="ap-cell-main"><a class="ap-data" href="#/certificates/${encodeURIComponent(c.host)}">${esc(c.host)}</a>${certHosts(c).length > 1 ? `<span class="ap-caption">and ${certHosts(c).length - 1} more</span>` : ''}</div></td><td class="ap-muted">${certSource(c)}</td><td class="ap-muted">${esc(c.issuer || '–')}</td><td><span class="ap-data">${c.expires ? fmtDate(c.expires, false) : '–'}</span></td><td>${status(certStatusTone(c), certStatusText(c))}</td><td class="ap-num">${certRoutes(c).length}</td></tr>`).join('')}
-</tbody></table></div>` : emptyState('No certificates yet', 'Add a route and Apiary gets its certificate for you. Upload your own for a wildcard or internal hostname.', upload)}</section>
+<section class="ap-panel">${D.certs.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">Certificates, soonest to expire first</caption><thead><tr><th scope="col">Hostname</th><th scope="col">Source</th><th scope="col">Checked with</th><th scope="col">Issuer</th><th scope="col" aria-sort="ascending">Expires</th><th scope="col">Status</th><th scope="col" class="ap-num">Routes</th></tr></thead><tbody>
+${sorted.map(c => `<tr><td><div class="ap-cell-main"><a class="ap-data" href="#/certificates/${encodeURIComponent(c.host)}">${esc(c.host)}</a>${certHosts(c).length > 1 ? `<span class="ap-caption">and ${esc(certHosts(c).slice(1).join(', '))}</span>` : ''}</div></td><td class="ap-muted">${certSource(c)}</td><td class="ap-muted">${certChallengeText(c)}</td><td class="ap-muted">${esc(c.issuer || '–')}</td><td><span class="ap-data">${c.expires ? fmtDate(c.expires, false) : '–'}</span></td><td>${status(certStatusTone(c), certStatusText(c))}</td><td class="ap-num">${certRoutes(c).length || (c.ahead ? '<span class="ap-caption">Ready ahead</span>' : 0)}</td></tr>`).join('')}
+</tbody></table></div>` : emptyState('No certificates yet', 'Add a route and Apiary gets its certificate for you. Request one with a DNS record for a wildcard or an internal hostname.', request)}</section>
 ${admin ? `<div style="margin-top:var(--space-5)">${adminCertPanel()}</div>` : ''}`,
     mount(el) {
       $$('[data-upload]', el).forEach(b => b.addEventListener('click', () => uploadDialog()));
+      $$('[data-request]', el).forEach(b => b.addEventListener('click', () => requestDialog()));
       if (admin) mountAdminCert(el);
     },
   };
@@ -220,17 +238,19 @@ route('/certificates/:host', host => {
   if (!c) return notFound();
   const rs = certRoutes(c), st = certStatus(c), f = certFailure(c), events = certEvents(c);
   const project = trafficProject(c.project || (c.source === 'auto' && rs[0] ? rs[0].project : ''));
-  const renewal = c.source === 'uploaded' ? 'Manual: upload a new one before it expires' : c.expires ? `From ${fmtDate(c.expires - (c.expires - c.issued) / 3, false)}, retrying until it works` : 'As soon as Let’s Encrypt can reach the hostname';
+  const ch = certChallenge(c), via = ch && ch !== 'http-01' ? dnsProvider(ch) : null;
+  const renewal = c.source === 'uploaded' ? 'Manual: upload a new one before it expires' : c.expires ? `From ${fmtDate(c.expires - (c.expires - c.issued) / 3, false)}, retrying until it works` : via ? 'As soon as the DNS record is in place' : 'As soon as Let’s Encrypt can reach the hostname';
+  const others = certIsWildcard(c) ? coveredHosts(certHosts(c)) : [];
   const names = { issued: 'Issued', renewed: 'Renewed', uploaded: 'Uploaded', replaced: 'Replaced', failed: 'Failed' };
   const meta = e => [e.code ? CERT_MESSAGES[e.code] : '', e.detail || '', e.by ? 'By ' + e.by : ''].filter(Boolean).join(' · ');
   return {
     title: c.host,
     html: `${pageHead({ crumbs: [['Certificates', '#/certificates']], title: c.host, sub: status(certStatusTone(c), certStatusText(c)) + ` &nbsp;·&nbsp; ${certSource(c)}`, actions: c.source === 'auto' ? `<button class="ap-btn ap-btn-primary" type="button" data-renew data-write>${icon('refresh-cw')}Renew now</button>` : `<button class="ap-btn" type="button" data-replace data-write>${icon('upload')}Replace…</button>` })}
-${f ? banner('critical', c.expires ? 'Renewal is failing' : 'Apiary can’t get this certificate yet', `${esc(CERT_MESSAGES[f.code])}<span class="ap-code" style="display:block;margin-top:6px">${esc(f.detail)}</span><span style="display:block;margin-top:6px">Apiary tries again at ${fmtDate(f.next)} UTC. Fix the cause, then renew now.</span>`) : st === 'pending' ? banner('info', 'Requesting the certificate', 'Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.') : ''}
+${f ? banner('critical', c.expires ? 'Renewal is failing' : 'Apiary can’t get this certificate yet', `${esc(CERT_MESSAGES[f.code])}<span class="ap-code" style="display:block;margin-top:6px">${esc(f.detail)}</span><span style="display:block;margin-top:6px">Apiary tries again at ${fmtDate(f.next)} UTC. Fix the cause, then renew now.</span>`) : st === 'pending' ? banner('info', 'Requesting the certificate', via ? `Apiary writes a TXT record through ${esc(via.name)} and waits until every name server shows it, then asks Let’s Encrypt.` : 'Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.') : ''}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:20px;align-items:start">
 <section class="ap-panel" aria-labelledby="cd-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="cd-t">Details</h2></div><div class="ap-panel-body">
-<dl class="ap-kv"><dt>Covers</dt><dd class="ap-data">${esc(certHosts(c).join(', '))}</dd><dt>Issuer</dt><dd>${esc(c.issuer || '–')}</dd>${c.expires ? `<dt>Valid</dt><dd><span class="ap-data">${fmtDate(c.issued)}</span> to <span class="ap-data">${fmtDate(c.expires)}</span> UTC</dd>` : ''}<dt>Renewal</dt><dd>${renewal}</dd>${c.expires ? '<dt>Chain</dt><dd>2 certificates</dd>' : ''}${project ? `<dt>Project</dt><dd>${esc(project)}</dd>` : ''}
-<dt>Used by</dt><dd>${rs.length ? rs.map(r => `<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`).join('<br>') : 'No routes'}</dd></dl></div>
+<dl class="ap-kv"><dt>Covers</dt><dd class="ap-data">${esc(certHosts(c).join(', '))}</dd>${ch ? `<dt>Checked with</dt><dd>${certChallengeText(c)}${canOperate() ? ` <button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-change-ch data-write style="margin-left:6px">Change</button>` : ''}${via && via.delegate ? `<span class="ap-caption" style="display:block">Through CNAMEs into ${esc(via.delegate)}</span>` : ''}</dd>` : ''}<dt>Issuer</dt><dd>${esc(c.issuer || '–')}</dd>${c.expires ? `<dt>Valid</dt><dd><span class="ap-data">${fmtDate(c.issued)}</span> to <span class="ap-data">${fmtDate(c.expires)}</span> UTC</dd>` : ''}<dt>Renewal</dt><dd>${renewal}</dd>${c.expires ? '<dt>Chain</dt><dd>2 certificates</dd>' : ''}${project ? `<dt>Project</dt><dd>${esc(project)}</dd>` : ''}
+<dt>Used by</dt><dd>${rs.length ? rs.map(r => `<a class="ap-data" href="#/routes/${r.id}">${esc(routeLabel(r))}</a>`).join('<br>') : c.ahead ? 'No routes yet. It’s ready for when a route chooses it.' : 'No routes'}${others.length && canOperate() ? `<span class="ap-caption" style="display:block;margin-top:4px">${plural(others.length, 'other hostname')} it covers ${others.length === 1 ? 'uses its' : 'use their'} own. <button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-switch-hosts data-write>Switch them</button></span>` : ''}</dd></dl></div>
 <div class="ap-panel-foot ap-row" style="justify-content:space-between"><span class="ap-caption">Private keys never leave the cluster, and are encrypted with the root key.</span><button class="ap-btn ap-btn-sm ap-btn-ghost" type="button" data-del data-write style="color:var(--critical)"${rs.length ? ' disabled title="Routes use it. Change their certificate first."' : ''}>Delete…</button></div></section>
 <section class="ap-panel" aria-labelledby="cl-t"><div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="cl-t">${c.source === 'auto' ? 'Renewal log' : 'History'}</h2></div><div class="ap-panel-body" style="padding-block:4px">
 ${events.length ? `<ol class="ap-timeline">${events.map(e => `<li class="ap-event${e.kind === 'failed' ? ' ap-event-denied' : ''}"><span class="ap-dot" aria-hidden="true"></span><div><div>${names[e.kind]}</div><div class="ap-event-meta">${esc(meta(e))}</div></div><time>${fmtDate(e.at)}</time></li>`).join('')}</ol>` : '<p class="ap-muted" style="margin:12px 0">Nothing yet.</p>'}</div></section></div>`,
@@ -252,10 +272,368 @@ ${events.length ? `<ol class="ap-timeline">${events.map(e => `<li class="ap-even
       });
       const rep = $('[data-replace]', el);
       if (rep) rep.addEventListener('click', () => uploadDialog(c));
+      const chg = $('[data-change-ch]', el);
+      if (chg) chg.addEventListener('click', () => challengeDialog(c));
+      const sw = $('[data-switch-hosts]', el);
+      if (sw) sw.addEventListener('click', () => switchHostsDialog(c));
       $('[data-del]', el).addEventListener('click', () => confirmDialog({ title: `Delete the certificate for ${esc(c.host)}?`, text: 'No route uses it. Its private key is deleted from every replica.', confirm: 'Delete certificate', busy: 'Deleting…', onConfirm: async () => { await api(); D.certs.splice(D.certs.indexOf(c), 1); go('/certificates'); toast('Certificate deleted.'); } }));
     },
   };
 });
+
+/* DNS providers: where Apiary writes the TXT records that prove a hostname (ACME DNS-01), for wildcards, internal
+   hostnames, closed port 80 and certificates before DNS cutover. Administrators add them; Operators choose one per
+   certificate. Credentials are write-only: once saved, the interface never shows them again. */
+const DNS_TYPES = {
+  rfc2136: {
+    label: 'Own DNS server (RFC 2136)', short: 'RFC 2136',
+    help: 'BIND, PowerDNS, Knot or Windows DNS, updated with TSIG-signed dynamic updates. Allow the key to change only TXT records under _acme-challenge.',
+    fields: [
+      ['server', 'Server', 'text', 'ns1.example.com or 10.0.0.53', 'The primary server that accepts updates. Edge nodes must reach it on port 53, TCP and UDP.'],
+      ['port', 'Port', 'number', '53', ''],
+      ['keyName', 'TSIG key name', 'text', 'apiary-acme', ''],
+      ['algorithm', 'Algorithm', 'select', '', ''],
+      ['secret', 'TSIG secret', 'password', 'Base64, as tsig-keygen prints it', ''],
+    ],
+  },
+  hetzner: {
+    label: 'Hetzner DNS', short: 'Hetzner',
+    help: 'An API token from the Hetzner console. Hetzner tokens reach every zone in the project, so a separate challenge zone is the safer choice.',
+    fields: [['token', 'API token', 'password', '', '']],
+  },
+  cloudflare: {
+    label: 'Cloudflare', short: 'Cloudflare',
+    help: 'Create an API token with the Zone › DNS › Edit permission, for these zones only.',
+    fields: [['token', 'API token', 'password', '', '']],
+  },
+  azure: {
+    label: 'Azure DNS', short: 'Azure DNS',
+    help: 'A service principal with the DNS Zone Contributor role on these zones only.',
+    fields: [
+      ['tenant', 'Tenant ID', 'text', '00000000-0000-0000-0000-000000000000', ''],
+      ['clientId', 'Client ID', 'text', '00000000-0000-0000-0000-000000000000', ''],
+      ['clientSecret', 'Client secret', 'password', '', 'Client secrets expire. Apiary warns when renewals start failing, not before.'],
+      ['subscription', 'Subscription ID', 'text', '00000000-0000-0000-0000-000000000000', ''],
+      ['resourceGroup', 'Resource group', 'text', 'dns', ''],
+    ],
+  },
+  route53: {
+    label: 'Amazon Route 53', short: 'Route 53',
+    help: 'An IAM user whose policy allows ChangeResourceRecordSets on these hosted zones only, limited to TXT records under _acme-challenge.',
+    fields: [
+      ['accessKey', 'Access key ID', 'text', 'AKIA…', ''],
+      ['secretKey', 'Secret access key', 'password', '', ''],
+    ],
+  },
+};
+const dnsProvider = id => D.dnsProviders.find(p => p.id === id);
+const dnsProviderLabel = p => (p.name === DNS_TYPES[p.type].short ? p.name : `${p.name} (${DNS_TYPES[p.type].short})`);
+const bareName = n => n.replace(/^\*\./, '');
+const providerCovers = (p, name) => p.domains.some(d => bareName(name) === d || bareName(name).endsWith('.' + d));
+const providersFor = names => D.dnsProviders.filter(p => names.length && names.every(n => providerCovers(p, n)));
+// Domains can nest (example.com at Hetzner, corp.example.com on the office server): the narrowest one is suggested.
+const providerMatch = (p, names) => Math.min(...names.map(n => Math.max(...p.domains.filter(d => bareName(n) === d || bareName(n).endsWith('.' + d)).map(d => d.length))));
+const bestProvider = names => providersFor(names).sort((a, b) => providerMatch(b, names) - providerMatch(a, names))[0];
+const challengeName = n => '_acme-challenge.' + bareName(n);
+const challengeCnames = (p, names) => (p && p.delegate ? [...new Set(names.map(bareName))].map(h => [challengeName(h), `${h}.${p.delegate}`]) : []);
+const cnameTable = rows => `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">CNAME records to create</caption><thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Points to</th></tr></thead><tbody>
+${rows.map(([n, t]) => `<tr><td class="ap-data">${esc(n)}</td><td><span class="ap-tag">CNAME</span></td><td class="ap-data">${esc(t)}</td></tr>`).join('')}</tbody></table></div>`;
+const providerTestText = p => !p.test ? status('info', 'Not tested yet')
+  : p.test.ok ? `${status('ok', 'Works')}<span class="ap-caption" style="display:block">Tested ${fmtDate(p.test.at)} UTC</span>`
+  : `${status('critical', 'Failing')}<span class="ap-caption" style="display:block">Since ${fmtDate(p.test.at)} UTC</span>`;
+const testRecord = p => '_apiary-test.' + (p.delegate || p.domains[0]);
+const failingProviders = () => D.dnsProviders.filter(p => p.test && !p.test.ok);
+const nameLines = v => String(v || '').split(/[\n,]/).map(x => x.trim().toLowerCase()).filter(Boolean);
+
+/* Routes a wildcard covers, by hostname: a certificate is chosen per hostname (SNI), so a hostname's routes switch together. */
+const coveredHosts = names => Object.values(D.routes.filter(r => names.some(n => certCovers(n, r.host)) && !(r.cert === 'uploaded' && names.includes(r.certId)))
+  .reduce((m, r) => ((m[r.host] ??= { host: r.host, routes: [] }).routes.push(r), m), {}));
+const hostChoices = (names, intro) => {
+  const hs = coveredHosts(names);
+  return hs.length ? `<fieldset class="ap-field" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:4px">Hostnames it covers</legend><p class="ap-help" style="margin:0 0 8px">${intro}</p><div class="ap-stack" style="gap:8px">${hs.map(h => `<label class="ap-choice"><input class="ap-check" type="checkbox" name="sw" value="${esc(h.host)}"><span class="ap-choice-text"><span class="ap-data">${esc(h.host)}</span><span class="ap-help">${plural(h.routes.length, 'route')}, now on ${h.routes[0].cert === 'uploaded' ? `<span class="ap-data">${esc(h.routes[0].certId || 'an uploaded certificate')}</span>` : 'its own automatic certificate'}</span></span></label>`).join('')}</div></fieldset>` : '';
+};
+const switchHosts = (f, certHost) => {
+  const hosts = $$('[name="sw"]:checked', f).map(c => c.value);
+  D.routes.filter(r => hosts.includes(r.host)).forEach(r => { r.cert = 'uploaded'; r.certId = certHost; });
+  return hosts;
+};
+
+/* Test: writes a TXT record, waits until every name server shows it, then removes it. It never calls Let's Encrypt. */
+async function testDnsProvider(p, btn) {
+  try { await run(btn, 'Testing…', () => api('write', Proto.state.network === 'slow' ? 4000 : 1600)); }
+  catch (err) { return toast(err.detail, { tone: 'error', title: err.title }); }
+  if (p.expired) {
+    p.test = { at: NOW, ok: false, code: 'dns.unauthorized', detail: p.test.detail };
+    refresh();
+    return toast(CERT_MESSAGES['dns.unauthorized'], { tone: 'error', title: `${p.name} failed the test` });
+  }
+  p.test = { at: NOW, ok: true };
+  refresh();
+  toast(`Wrote a TXT record at ${testRecord(p)}, saw it on every name server, and removed it.`, { title: `${p.name} works` });
+}
+
+function deleteDnsProvider(p) {
+  const using = D.certs.filter(c => certChallenge(c) === p.id);
+  if (using.length) return toast(`${using.map(c => c.host).join(', ')} ${using.length === 1 ? 'is' : 'are'} checked through it. Change how ${using.length === 1 ? 'it’s' : 'they’re'} checked first.`, { tone: 'error', title: `${p.name} is in use` });
+  confirmDialog({
+    title: `Delete ${esc(p.name)}?`,
+    text: 'Its credentials are deleted from every replica. Revoke them at the provider too: backups taken before now still contain them.',
+    confirm: 'Delete provider', busy: 'Deleting…',
+    onConfirm: async () => { await api(); D.dnsProviders.splice(D.dnsProviders.indexOf(p), 1); refresh(); toast('Revoke its credentials at the provider.', { title: `${p.name} deleted` }); },
+  });
+}
+
+/* Add or edit a provider. Saving runs the test, so a provider that's listed has worked at least once. */
+function dnsProviderDialog(p) {
+  const editing = !!p;
+  const src = p || { name: '', type: 'rfc2136', domains: [], delegate: '' };
+  const typeFields = Object.entries(DNS_TYPES).map(([k, t]) => `<div class="ap-stack" data-type-fields="${k}" style="gap:16px"${k === src.type ? '' : ' hidden'}>
+<p class="ap-help" style="margin:0">${esc(t.help)}</p>
+${t.fields.map(([n, label, type, ph, help]) => {
+    const name = `${k}-${n}`;
+    if (type === 'select') return field({ name, label, control: select(name, ['hmac-sha256', 'hmac-sha512'], 'hmac-sha256') });
+    const secret = type === 'password';
+    return field({
+      name, label, type: secret ? 'password' : 'text', data: !secret, value: n === 'port' ? '53' : '',
+      placeholder: secret && editing ? 'Saved. Enter a new value to replace it.' : ph, optional: secret && editing,
+      attrs: `autocomplete="off" spellcheck="false" autocapitalize="none"${type === 'number' ? ' inputmode="numeric"' : ''}`,
+      help: secret ? (help ? help + ' ' : '') + 'Stored encrypted, and never shown again.' : help,
+    });
+  }).join('')}</div>`).join('');
+  const d = dialog({
+    title: editing ? `Edit ${esc(p.name)}` : 'Add DNS provider', backdrop: false, size: 'lg',
+    body: `<form class="ap-form" id="dp-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'name', label: 'Name', value: src.name, placeholder: 'Office DNS', attrs: 'autocomplete="off"', help: 'Shown to Operators when they choose how a certificate is checked.' })}
+${field({ name: 'type', label: 'Provider', control: select('type', Object.entries(DNS_TYPES).map(([k, t]) => [k, t.label]), src.type) })}
+${field({ name: 'domains', label: 'Domains it proves', control: textarea('domains', src.domains.join('\n'), 'rows="2" spellcheck="false" autocapitalize="none" placeholder="example.com"'), help: 'One per line. Covers the domain and every hostname under it, such as shop.example.com. Where another provider has a narrower domain, that one is suggested.' })}
+<fieldset class="ap-field" data-field="where" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:8px">Where the challenge records go</legend><div class="ap-stack" style="gap:10px">
+<label class="ap-choice"><input class="ap-radio" type="radio" name="where" value="delegate"${src.delegate || !editing ? ' checked' : ''}><span class="ap-choice-text"><span>In a separate challenge zone <span class="ap-tag">Recommended</span></span><span class="ap-help">You add a CNAME once per hostname, pointing its <span class="ap-data">_acme-challenge</span> name into a zone used only for this. If these credentials leak, they can’t touch your other records.</span></span></label>
+<label class="ap-choice"><input class="ap-radio" type="radio" name="where" value="direct"${editing && !src.delegate ? ' checked' : ''}><span class="ap-choice-text"><span>In the domain’s own zone</span><span class="ap-help">No CNAMEs needed, but the credentials can usually change any record there, including mail and website records.</span></span></label></div></fieldset>
+<div data-delegate>${field({ name: 'delegate', label: 'Challenge zone', value: src.delegate, data: true, placeholder: 'acme.example.net', attrs: 'autocomplete="off" spellcheck="false" autocapitalize="none"', help: 'A zone this provider serves, used only for challenge records.' })}<div data-cname style="margin-top:12px"></div></div>
+${typeFields}
+</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="dp-form" data-busy="Saving and testing…" data-write>${editing ? 'Save and test' : 'Add and test'}</button>`,
+  });
+  applyWriteLock(d.el);
+  const f = $('#dp-form', d.el);
+  const rules = () => {
+    const type = f.elements.type.value;
+    const r = {
+      name: v => {
+        const x = String(v || '').trim();
+        if (!x) return 'Enter a name, such as Office DNS.';
+        if (x.length > 60) return 'Use at most 60 characters.';
+        return D.dnsProviders.some(o => o !== p && o.name.toLowerCase() === x.toLowerCase()) ? 'Another provider has this name. Choose another.' : null;
+      },
+      domains: v => {
+        const list = nameLines(v);
+        if (!list.length) return 'Enter at least one domain, such as example.com.';
+        if (list.length > 20) return 'Enter at most 20 domains.';
+        for (const dm of list) {
+          const m = V.hostname(dm, { wildcard: false });
+          if (m) return m === "Wildcards aren't allowed here." ? 'Enter the domain without *.: it covers every hostname under it.' : `${dm}: ${m}`;
+          const other = D.dnsProviders.find(o => o !== p && o.domains.includes(dm));
+          if (other) return `${other.name} already proves ${dm}. Edit that provider, or enter a narrower domain.`;
+        }
+        return null;
+      },
+      delegate: (v, all) => {
+        if (all.where !== 'delegate') return null;
+        if (V.hostname(v, { wildcard: false })) return 'Enter the challenge zone, such as acme.example.net.';
+        return nameLines(all.domains).includes(String(v).trim().toLowerCase()) ? 'Use a zone other than the domains it proves, so the credentials can’t reach them.' : null;
+      },
+    };
+    DNS_TYPES[type].fields.forEach(([n, label, kind]) => {
+      if (kind === 'select') return;
+      r[`${type}-${n}`] = v => {
+        const x = String(v || '').trim();
+        if (!x) return kind === 'password' && editing ? null : `Enter the ${label.charAt(0).toLowerCase() + label.slice(1)}.`;
+        if (n === 'port') return V.port(x);
+        return n === 'secret' && !/^[A-Za-z0-9+/]+={0,2}$/.test(x) ? 'Enter the secret in Base64, as tsig-keygen prints it.' : null;
+      };
+    });
+    return r;
+  };
+  const v = form(f, rules, {
+    verb: 'save it',
+    links: { domains: ['delegate'], where: ['delegate'] },
+    submit: async val => {
+      await api('write', Proto.state.network === 'slow' ? 4000 : 1600);
+      const t = DNS_TYPES[val.type];
+      const next = { name: val.name.trim(), type: val.type, domains: nameLines(val.domains), delegate: val.where === 'delegate' ? val.delegate.trim().toLowerCase() : '', test: { at: NOW, ok: true } };
+      const newSecret = t.fields.some(([n, , kind]) => kind === 'password' && String(val[`${val.type}-${n}`] || '').trim());
+      const saved = p ? Object.assign(p, next, newSecret ? { expired: false } : {}) : Object.assign(next, { id: 'p' + Date.now().toString(36), added: NOW, by: D.me.email });
+      if (!p) D.dnsProviders.push(saved);
+      if (saved.expired) saved.test = { at: NOW, ok: false, code: 'dns.unauthorized', detail: p.test.detail };
+      d.close();
+      refresh();
+      if (saved.expired) return toast(CERT_MESSAGES['dns.unauthorized'], { tone: 'error', title: `Saved, but ${saved.name} failed the test` });
+      toast(`A test record at ${testRecord(saved)} showed up on every name server.${saved.delegate ? ' Certificates list the CNAMEs to create when you request them.' : ''}`, { title: editing ? 'Provider saved' : 'Provider added' });
+    },
+  });
+  const sync = () => {
+    const val = v.values();
+    $$('[data-type-fields]', f).forEach(g => { g.hidden = g.dataset.typeFields !== val.type; });
+    $('[data-delegate]', f).hidden = val.where !== 'delegate';
+    const zone = String(val.delegate || '').trim().toLowerCase(), dm = nameLines(val.domains)[0];
+    $('[data-cname]', f).innerHTML = zone && dm && !V.hostname(zone, { wildcard: false })
+      ? `<p class="ap-help" style="margin:0 0 8px">For a hostname such as <span class="ap-data">shop.${esc(dm)}</span>, you’ll create:</p>${cnameTable([[challengeName('shop.' + dm), `shop.${dm}.${zone}`]])}<p class="ap-help" style="margin:8px 0 0">Apiary lists the exact records when you request a certificate.</p>` : '';
+    paint();
+  };
+  f.addEventListener('input', sync);
+  f.addEventListener('change', sync);
+  sync();
+}
+
+route('/dns-providers', () => {
+  const admin = isAdmin();
+  const add = admin ? `<button class="ap-btn ap-btn-primary" type="button" data-add data-write>${icon('plus')}Add DNS provider</button>` : '';
+  const list = D.dnsProviders;
+  return {
+    title: 'DNS providers',
+    html: `${pageHead({ crumbs: [['Certificates', '#/certificates']], title: 'DNS providers', sub: 'Where Apiary writes the TXT records that prove a hostname is yours. Needed for wildcards, internal hostnames and edge nodes without port 80. Only Administrators add or change them.', actions: list.length ? add : '' })}
+${failingProviders().map(p => banner('critical', `${esc(p.name)} is failing`, `${esc(CERT_MESSAGES[p.test.code])}<span class="ap-code" style="display:block;margin-top:6px">${esc(p.test.detail)}</span>`, admin ? `<button class="ap-btn ap-btn-sm" type="button" data-edit="${list.indexOf(p)}" data-write>Save new credentials</button>` : 'Ask an Administrator to save new credentials.')).join('')}
+<section class="ap-panel">${list.length ? `<div class="ap-table-wrap"><table class="ap-table"><caption class="ap-sr">DNS providers</caption><thead><tr><th scope="col">Name</th><th scope="col">Provider</th><th scope="col">Domains</th><th scope="col">Records go in</th><th scope="col">Last test</th><th scope="col" class="ap-num">Certificates</th>${admin ? '<th scope="col" class="ap-col-actions"><span class="ap-sr">Actions</span></th>' : ''}</tr></thead><tbody>
+${list.map((p, i) => `<tr><td><div class="ap-cell-main"><strong>${esc(p.name)}</strong><span class="ap-caption">Added by ${esc(p.by)}</span></div></td><td class="ap-muted">${esc(DNS_TYPES[p.type].short)}</td><td class="ap-data">${p.domains.map(esc).join('<br>')}</td>
+<td>${p.delegate ? `<span class="ap-data">${esc(p.delegate)}</span> <span class="ap-caption">Delegated</span>` : '<span class="ap-muted">The domain’s own zone</span>'}</td><td>${providerTestText(p)}</td><td class="ap-num">${D.certs.filter(c => certChallenge(c) === p.id).length}</td>
+${admin ? `<td class="ap-col-actions"><div class="ap-row" style="gap:4px;justify-content:flex-end;flex-wrap:nowrap"><button class="ap-btn ap-btn-sm" type="button" data-test="${i}" data-write>Test</button><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Edit ${esc(p.name)}" data-edit="${i}" data-write>${icon('pencil')}</button><button class="ap-btn ap-btn-sm ap-btn-ghost ap-btn-icon" type="button" aria-label="Delete ${esc(p.name)}" data-del="${i}" data-write>${icon('trash-2')}</button></div></td>` : ''}</tr>`).join('')}
+</tbody></table></div>` : emptyState('No DNS providers yet', admin ? 'Add one to get wildcards, and certificates for hostnames Let’s Encrypt can’t reach on port 80.' : 'An Administrator adds them. Until then, certificates are checked with a file on port 80.', add)}</section>
+<section class="ap-panel" aria-labelledby="dz-t" style="margin-top:var(--space-5)"><div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="dz-t">Why a separate challenge zone</h2></div><div class="ap-panel-body ap-stack" style="gap:10px">
+<p style="margin:0">Most providers’ credentials can change every record in a zone. Anyone who gets them could redirect your website or mail. With delegation, each hostname’s <span class="ap-data">_acme-challenge</span> name is a CNAME into a zone used only for challenges, so these credentials only ever reach that zone.</p>
+<p style="margin:0">It’s also how internal hostnames get certificates: Let’s Encrypt must find the record on the public internet, so a zone that only exists inside your network needs its challenge names delegated to a public one.</p></div></section>`,
+    mount(el) {
+      $$('[data-add]', el).forEach(b => b.addEventListener('click', () => dnsProviderDialog(null)));
+      $$('[data-test]', el).forEach(b => b.addEventListener('click', () => testDnsProvider(list[+b.dataset.test], b)));
+      $$('[data-edit]', el).forEach(b => b.addEventListener('click', () => dnsProviderDialog(list[+b.dataset.edit])));
+      $$('[data-del]', el).forEach(b => b.addEventListener('click', () => deleteDnsProvider(list[+b.dataset.del])));
+    },
+  };
+});
+
+/* Request a certificate ahead of any route: wildcards, internal hostnames, or before DNS cutover. Wildcards need DNS-01. */
+function requestDialog() {
+  const providerOptions = names => {
+    const list = providersFor(names);
+    return [['', list.length ? 'Choose a provider' : 'No provider proves these names'], ...list.map(p => [p.id, dnsProviderLabel(p)])];
+  };
+  const d = dialog({
+    title: 'Request certificate', backdrop: false, size: 'lg',
+    body: `<form class="ap-form" id="rq-form" novalidate style="gap:16px"><div data-summary></div>
+${field({ name: 'names', label: 'Hostnames', control: textarea('names', '', 'rows="2" spellcheck="false" autocapitalize="none" placeholder="*.example.com\nexample.com"'), help: 'One per line, up to 10. A wildcard such as *.example.com covers one level, a.example.com but not a.b.example.com or example.com itself, so add both.' })}
+<fieldset class="ap-field" data-field="challenge" style="border:0;margin:0;padding:0"><legend class="ap-label" style="margin-bottom:8px">How Let’s Encrypt checks it’s yours</legend><div class="ap-stack" style="gap:10px">
+<label class="ap-choice"><input class="ap-radio" type="radio" name="challenge" value="dns" checked><span class="ap-choice-text"><span>A DNS record (DNS-01)</span><span class="ap-help">Works for wildcards, internal hostnames, closed port 80, and before the hostname points at Apiary.</span></span></label>
+<label class="ap-choice"><input class="ap-radio" type="radio" name="challenge" value="http"><span class="ap-choice-text"><span>A file on port 80 (HTTP-01)</span><span class="ap-help">Needs the hostname’s DNS to point at your edge nodes, and port 80 open. No wildcards.</span></span></label></div><span class="ap-error" id="e-challenge" hidden></span></fieldset>
+<div data-dns>${field({ name: 'provider', label: 'DNS provider', control: select('provider', providerOptions([]), ''), help: isAdmin() ? 'Add providers on the <a href="#/dns-providers">DNS providers</a> page.' : 'Only Administrators can add providers.' })}<div data-records style="margin-top:12px"></div></div>
+<div data-hosts></div>
+${field({ name: 'project', label: 'Project', help: 'Only for grouping.', control: select('project', D.projects.map(p => [p.id, p.name]), (D.projects[0] || {}).id) })}
+</form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="rq-form" data-busy="Requesting…" data-write>Request certificate</button>`,
+  });
+  applyWriteLock(d.el);
+  const f = $('#rq-form', d.el);
+  const v = form(f, {
+    names: val => {
+      const list = nameLines(val);
+      if (!list.length) return 'Enter a hostname, such as *.example.com.';
+      if (list.length > 10) return 'Enter at most 10 hostnames.';
+      for (const n of list) {
+        const m = V.hostname(n);
+        if (m) return `${n}: ${m}`;
+        if (n.indexOf('*') > 0 || n.split('*').length > 2) return `${n}: a wildcard can only be the first part, as in *.example.com.`;
+      }
+      const dup = D.certs.find(c => c.source === 'auto' && certHosts(c).join() === list.join());
+      return dup ? `Apiary already has a certificate for these names. Open ${dup.host} to change how it’s checked.` : null;
+    },
+    challenge: (val, all) => (val === 'http' && nameLines(all.names).some(n => n.startsWith('*.')) ? 'Let’s Encrypt issues wildcards only with a DNS record. Choose DNS-01.' : null),
+    provider: (val, all) => {
+      const list = nameLines(all.names);
+      if (all.challenge !== 'dns' || !list.length) return null;
+      if (!providersFor(list).length) return isAdmin() ? 'No provider proves every one of these names. Add one, or request them separately.' : 'No provider proves every one of these names. Ask an Administrator to add one.';
+      return !val ? 'Choose a DNS provider.' : null;
+    },
+  }, {
+    verb: 'request it',
+    links: { names: ['challenge', 'provider'], challenge: ['provider'] },
+    submit: async val => {
+      await api('write', Proto.state.network === 'slow' ? 5000 : 2400);
+      const list = nameLines(val.names), p = val.challenge === 'dns' ? dnsProvider(val.provider) : null, host = list[0];
+      const cert = {
+        host, hosts: list.length > 1 ? list : undefined, source: 'auto', challenge: p ? p.id : 'http-01', project: val.project, issuer: "Let's Encrypt R11", issued: NOW, expires: NOW + 90 * DAY, status: 'ok', note: 'Issued just now', by: D.me.email,
+        ahead: !D.routes.some(r => list.some(n => certCovers(n, r.host))),
+        events: [{ at: NOW, kind: 'issued', detail: p ? `TXT record at ${challengeName(host)} seen by every name server after 8 s` : 'File on port 80 fetched from every replica asked', by: D.me.email }],
+      };
+      D.certs.push(cert);
+      const hosts = switchHosts(f, host);
+      d.close();
+      refresh();
+      toast(`Valid until ${fmtDate(cert.expires, false)}.${hosts.length ? ` ${plural(hosts.length, 'hostname')} use${hosts.length === 1 ? 's' : ''} it now.` : cert.ahead ? ' No route uses it yet: it’s ready when one does.' : ''}`, { title: `Got a certificate for ${host}` });
+    },
+  });
+  let last = null;
+  const sync = () => {
+    const val = v.values(), list = nameLines(val.names);
+    $('[data-dns]', f).hidden = val.challenge !== 'dns';
+    if (list.join() !== last) {
+      last = list.join();
+      const sel = f.elements.provider, keep = sel.value, opts = providerOptions(list);
+      sel.innerHTML = opts.map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join('');
+      sel.value = keep && opts.some(o => o[0] === keep) ? keep : (bestProvider(list) || {}).id || '';
+      $('[data-hosts]', f).innerHTML = list.some(n => n.startsWith('*.')) ? hostChoices(list, 'Choose the ones that should use the wildcard once it’s issued. The others keep their own certificate.') : '';
+    }
+    const p = dnsProvider(f.elements.provider.value), rows = val.challenge === 'dns' ? challengeCnames(p, list) : [];
+    $('[data-records]', f).innerHTML = rows.length ? `${banner('info', 'Create these records first', `${esc(p.name)} writes challenges in <span class="ap-data">${esc(p.delegate)}</span>. Apiary checks the CNAMEs before asking Let’s Encrypt, so a missing one doesn’t use an attempt.`)}<div style="margin-top:8px">${cnameTable(rows)}</div>` : '';
+    paint();
+  };
+  f.addEventListener('input', sync);
+  f.addEventListener('change', sync);
+  sync();
+}
+
+/* Change how an automatic certificate is checked, from its next renewal */
+function challengeDialog(c) {
+  const names = certHosts(c), list = providersFor(names), cur = certChallenge(c);
+  const d = dialog({
+    title: `How ${esc(c.host)} is checked`, backdrop: false,
+    body: `<form class="ap-form" id="ch-form" novalidate style="gap:16px"><fieldset class="ap-field" data-field="ch" style="border:0;margin:0;padding:0"><legend class="ap-sr">How it’s checked</legend><div class="ap-stack" style="gap:10px">
+${certIsWildcard(c) ? '' : `<label class="ap-choice"><input class="ap-radio" type="radio" name="ch" value="http-01"${cur === 'http-01' ? ' checked' : ''}><span class="ap-choice-text"><span>A file on port 80 (HTTP-01)</span><span class="ap-help">Needs the hostname to point at your edge nodes, with port 80 open.</span></span></label>`}
+${list.map(p => `<label class="ap-choice"><input class="ap-radio" type="radio" name="ch" value="${p.id}"${cur === p.id ? ' checked' : ''}><span class="ap-choice-text"><span>A DNS record through ${esc(p.name)}</span><span class="ap-help">${p.delegate ? `Needs the CNAME <span class="ap-data">${esc(challengeName(names[0]))}</span> → <span class="ap-data">${esc(bareName(names[0]) + '.' + p.delegate)}</span>` : 'Writes in the domain’s own zone'}</span></span></label>`).join('')}
+</div><span class="ap-error" id="e-ch" hidden></span></fieldset>${list.length ? '' : `<p class="ap-help" style="margin:0">No DNS provider proves ${esc(c.host)}. ${isAdmin() ? 'Add one on the DNS providers page first.' : 'Ask an Administrator to add one.'}</p>`}
+<p class="ap-help" style="margin:0">Used from the next renewal. To try it now, save, then Renew now: the certificate in use stays until a new one is issued.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="ch-form" data-busy="Saving…" data-write>Save</button>`,
+  });
+  applyWriteLock(d.el);
+  form($('#ch-form', d.el), { ch: val => (!val ? 'Choose how it’s checked.' : null) }, {
+    submit: async val => {
+      await api();
+      c.challenge = val.ch;
+      d.close();
+      refresh();
+      toast(`From the next renewal, Let’s Encrypt checks it with ${val.ch === 'http-01' ? 'a file on port 80' : 'a DNS record through ' + dnsProvider(val.ch).name}.`, { title: `Changed how ${c.host} is checked` });
+    },
+  });
+}
+
+/* Switch more hostnames to a wildcard Apiary renews */
+function switchHostsDialog(c) {
+  const d = dialog({
+    title: `Use ${esc(c.host)} for more hostnames`, backdrop: false,
+    body: `<form class="ap-form" id="sw-form" novalidate style="gap:16px">${hostChoices(certHosts(c), 'Every route on a chosen hostname starts using the wildcard on every replica at once. Their own certificates are kept for 30 days, then deleted.')}<p class="ap-error" data-none hidden>${icon('circle-alert')}Choose at least one hostname.</p></form>`,
+    foot: `<button class="ap-btn ap-btn-ghost" type="button" data-close>Cancel</button><button class="ap-btn ap-btn-primary" type="submit" form="sw-form" data-write>Switch</button>`,
+  });
+  applyWriteLock(d.el);
+  const f = $('#sw-form', d.el);
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const none = !$$('[name="sw"]:checked', f).length;
+    $('[data-none]', f).hidden = !none;
+    if (none) return;
+    try { await run(e.submitter, 'Switching…', () => api()); } catch (err) { return toast(err.detail, { tone: 'error', title: err.title }); }
+    const hosts = switchHosts(f, c.host);
+    d.close();
+    refresh();
+    toast(`${plural(hosts.length, 'hostname')} use${hosts.length === 1 ? 's' : ''} ${c.host} now.`, { title: 'Switched' });
+  });
+}
 
 /* Upload: paste PEM text, or fill it from a file; checked here, then by the server, then confirmed */
 function uploadDialog(replacing) {
