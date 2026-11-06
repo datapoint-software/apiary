@@ -13,7 +13,7 @@ public static class CertificateUsage
         [.. state.Routes.Values
             .Where(r => certificate.Source == CertificateSource.Uploaded
                 ? r.CertificateId == certificate.Id
-                : r.CertificateId is null && r.Host == certificate.Name)
+                : r.CertificateId == certificate.Id || (r.CertificateId is null && r.Host == certificate.Name))
             .OrderBy(r => r.Host, StringComparer.Ordinal)
             .ThenBy(r => r.Path, StringComparer.Ordinal)];
 

@@ -72,13 +72,13 @@ public static class RouteRules
         validator.AddPasswordRules(cluster, existingId);
         validator.RuleFor(r => r.CertificateId).Cascade(CascadeMode.Stop)
             .Must(id => cluster.Current.Certificates.ContainsKey(id!.Value)).WithErrorCode(ErrorCodes.CertificateNotFound)
-            .Must(id => cluster.Current.Certificates[id!.Value].Source == CertificateSource.Uploaded).WithErrorCode(ErrorCodes.CertificateNotUploaded)
+            .Must(id => IsNameable(cluster.Current.Certificates[id!.Value])).WithErrorCode(ErrorCodes.CertificateNotUploaded)
             .When(r => r.CertificateId is not null);
         validator.RuleFor(r => r)
             .Must(r => Covers(cluster.Current, r))
             .WithErrorCode(ErrorCodes.CertificateDoesNotCover)
             .OverridePropertyName(nameof(IRouteFields.CertificateId))
-            .When(r => r.CertificateId is { } id && cluster.Current.Certificates.TryGetValue(id, out var c) && c.Source == CertificateSource.Uploaded);
+            .When(r => r.CertificateId is { } id && cluster.Current.Certificates.TryGetValue(id, out var c) && IsNameable(c));
         validator.RuleFor(r => r)
             .Must(r => !IsDuplicate(cluster.Current, r.Host, r.Path, existingId(r)))
             .WithErrorCode(ErrorCodes.RouteDuplicate)
@@ -113,8 +113,10 @@ public static class RouteRules
     private static bool IsLinkKey(string key) =>
         key.Length <= MaximumLinkKey && key.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_') && Base64Url.TryDecode(key) is { Length: >= MinimumLinkKeyBytes };
 
+    private static bool IsNameable(Certificate certificate) => certificate.Source == CertificateSource.Uploaded || certificate.Requested;
+
     private static bool Covers(ApiaryState state, IRouteFields fields) =>
-        state.Certificates[fields.CertificateId!.Value].Material?.Covers(RouteNormalization.Host(fields.Host)) == true;
+        Certificates.UseCertificateValidator.Covers(state.Certificates[fields.CertificateId!.Value], RouteNormalization.Host(fields.Host));
 
     public static bool IsDuplicate(ApiaryState state, string host, string path, Guid? existingId)
     {

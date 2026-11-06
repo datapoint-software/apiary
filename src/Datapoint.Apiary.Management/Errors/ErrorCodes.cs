@@ -162,6 +162,19 @@ public static class ErrorCodes
     public const string TrustedProxyNotFound = "trustedProxy.notFound";
     public const string TrustedProxyDuplicate = "trustedProxy.duplicate";
     public const string TrustedProxyEverything = "trustedProxy.everything";
+    public const string DnsProviderNotFound = "dnsProvider.notFound";
+    public const string DnsProviderNameTaken = "dnsProvider.nameTaken";
+    public const string DnsProviderDomainTaken = "dnsProvider.domainTaken";
+    public const string DnsProviderDomainsTooMany = "dnsProvider.domainsTooMany";
+    public const string DnsProviderChallengeZoneOverlaps = "dnsProvider.challengeZoneOverlaps";
+    public const string DnsProviderSecretInvalid = "dnsProvider.secretInvalid";
+    public const string DnsProviderInUse = "dnsProvider.inUse";
+    public const string CertificateProviderDoesNotCover = "certificate.providerDoesNotCover";
+    public const string CertificateWildcardNeedsDns = "certificate.wildcardNeedsDns";
+    public const string CertificateExists = "certificate.exists";
+    public const string CertificateNamesTooMany = "certificate.namesTooMany";
+    public const string CertificateNameInvalid = "certificate.nameInvalid";
+    public const string CertificateHostWithoutRoute = "certificate.hostWithoutRoute";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -191,5 +204,8 @@ public static class ErrorCodes
         StackNotFound, StackExists, StackNameInvalid, StackDuplicate, StackRemovesEverything, StackTooMany, StackCommitInvalid, StackPipelineUrlInvalid,
         PipelineTokenNotFound, PipelineTokenNameTaken, PipelineTokenInvalid,
         TrustedProxyNotFound, TrustedProxyDuplicate, TrustedProxyEverything,
+        DnsProviderNotFound, DnsProviderNameTaken, DnsProviderDomainTaken, DnsProviderDomainsTooMany, DnsProviderChallengeZoneOverlaps,
+        DnsProviderSecretInvalid, DnsProviderInUse,
+        CertificateProviderDoesNotCover, CertificateWildcardNeedsDns, CertificateExists, CertificateNamesTooMany, CertificateNameInvalid, CertificateHostWithoutRoute,
     ];
 }

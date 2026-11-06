@@ -18,7 +18,9 @@ public sealed record CertificateSummary(
     string? FailureCode,
     DateTimeOffset? NextAttemptAt,
     int RouteCount,
-    DateTimeOffset? UnusedSince)
+    DateTimeOffset? UnusedSince,
+    Guid? DnsProviderId,
+    bool Requested)
 {
     public static CertificateSummary From(ApiaryState state, Certificate certificate, DateTimeOffset now)
     {
@@ -27,7 +29,7 @@ public sealed record CertificateSummary(
             certificate.Id,
             certificate.Source,
             certificate.Name,
-            material?.Hosts ?? [certificate.Name],
+            material?.Hosts ?? certificate.Names,
             certificate.ProjectId,
             material?.Issuer,
             material?.NotBefore,
@@ -37,7 +39,9 @@ public sealed record CertificateSummary(
             LastFailure(certificate),
             certificate.FailedAttempts > 0 || material is null ? certificate.NextAttemptAt : null,
             CertificateUsage.Routes(state, certificate).Count,
-            certificate.UnusedSince);
+            certificate.UnusedSince,
+            certificate.DnsProviderId,
+            certificate.Requested);
     }
 
     private static DateTimeOffset? RenewalStart(Certificate certificate) =>

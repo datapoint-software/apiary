@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Datapoint.Apiary.Certificates.Dns;
+using Datapoint.Apiary.Certificates.DnsProviders;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Stacks;
@@ -18,6 +20,7 @@ using Datapoint.Mediator;
 using Datapoint.Mediator.Authorization;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using static Datapoint.Apiary.Testing.Builders.StateBuilders;
 
@@ -46,6 +49,11 @@ public sealed class ManagementHost : IDisposable
         services.AddMetrics();
         services.AddSingleton<ClusterMetrics>();
         services.AddSingleton(new StreamPortPolicy(reservedPorts ?? new HashSet<int>()));
+        services.AddSingleton(new DnsChallengeWriter(
+            DnsProviders.Clients(),
+            new DnsLookup(new DnsClient(Time), Options.Create(new DnsOptions())),
+            new DnsPropagation(new DnsLookup(new DnsClient(Time), Options.Create(new DnsOptions())), Time),
+            Time));
         services.AddApiaryManagement();
         services.AddMediator(o => o
             .AddHandlersFromAssemblyContaining<StateTransaction>()
@@ -56,6 +64,8 @@ public sealed class ManagementHost : IDisposable
     }
 
     public FakeTimeProvider Time { get; } = TestClock.Fake();
+
+    public FakeDnsProviders DnsProviders { get; } = new();
 
     public FakeClusterState Cluster { get; } = new();
 
