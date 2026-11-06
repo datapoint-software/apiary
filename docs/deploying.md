@@ -24,6 +24,8 @@ Set these rules in a firewall outside the hosts (e.g. a cloud security group), n
 | 2377, 7946, 4789 | TCP, TCP and UDP, UDP | Swarm nodes only | Swarm's own traffic ([Docker's list](https://docs.docker.com/engine/swarm/swarm-tutorial/#open-protocols-and-ports-between-the-hosts)) |
 | Stream route range, e.g. 10000-10099 | TCP and UDP | As each route needs | Only if you'll use TCP or UDP routes |
 
+With DNS challenges, the edge nodes also need to reach the DNS provider: its API over HTTPS, or TCP and UDP port 53 on your own DNS server for RFC 2136, and DNS queries to the zone's authoritative name servers, to check that a record is visible before Let's Encrypt is asked.
+
 Apiary's Raft and cluster ports (9444 and 9445) travel over the overlay network between replicas and aren't published. Raft listens only on the replica's own overlay address, which Apiary finds through Swarm's DNS; the cluster port listens on every interface, since it opens before that address is known. `Apiary__ClusterBindAddress` puts both on one address, and makes connections to other replicas leave from it. Swarm assigns overlay addresses itself, so you'll rarely need it.
 
 ## 2. Mark the edge nodes (manager)

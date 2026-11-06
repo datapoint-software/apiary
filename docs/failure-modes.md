@@ -88,8 +88,12 @@ The network splits the replicas into two groups that can't reach each other:
 
 - The side with a majority of voters keeps a leader and keeps writing.
 - The other side keeps proxying, but doesn't see changes made meanwhile: new routes and renewed certificates only reach it once the network heals.
-- A Let's Encrypt validation that reaches the minority side can fail, because it can't ask the leader for a token it doesn't have. The renewal is retried later.
+- An HTTP-01 validation that reaches the minority side can fail, because it can't ask the leader for a token it doesn't have. The renewal is retried later. DNS-01 doesn't depend on which replica Let's Encrypt reaches: it reads the record from DNS.
 - When the network heals, the minority side catches up.
+
+## A DNS provider fails
+
+If a DNS provider is down or refuses Apiary's credentials, for example because a client secret expired, renewals through it fail with `dns.unreachable` or `dns.unauthorized` and are retried like any other. Certificates in use keep working: they renew with a third of their lifetime left, about 30 days, so there is time to save new credentials. The DNS providers page and the Certificates page say which provider is failing.
 
 ## Single-instance modes
 

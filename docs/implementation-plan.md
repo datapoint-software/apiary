@@ -209,6 +209,18 @@ Agreed on 2026-11-05, for moving part of a site without changing its service. No
 
 **Try it:** with the local stack and the `whoami.localhost` route, add a redirect from `whoami.localhost` at `/old` to `/new`. `curl -i http://whoami.localhost/old/page?a=1` answers 308 with `Location: /new/page?a=1`, and `curl -i http://whoami.localhost/older` still reaches whoami. Try adding a route at `/old/api`: it's refused.
 
+## 21. DNS challenges
+
+Agreed on 2026-11-06, for wildcards, internal hostnames, edge nodes with port 80 closed, and certificates before DNS cutover. Not tied to 1.0. See [architecture.md](architecture.md#certificates).
+
+- DNS providers in the replicated state, with encrypted credentials, for Administrators over the API, and not over MCP. New state changes and a `challenge` on automatic certificates, so it needs `[StateSchema(n)]`.
+- `IDnsProvider`, starting with RFC 2136 and a separate challenge zone, then Hetzner and Cloudflare. Azure DNS and Route 53 come after, when someone needs them.
+- DNS-01 in the ACME client and the issuer: the TXT record, the propagation check against the zone's authoritative name servers, the CNAME check for delegated zones, cleanup of records left by a replica that stopped, and the codes `dns.unauthorized`, `dns.zoneNotFound`, `dns.notPropagated`, `dns.unreachable` (retried like `acme.unreachable`) and `dns.cnameMissing`.
+- Certificates for several names, wildcards among them, requested ahead of any route, and routes naming a wildcard Apiary renews.
+- The DNS providers page, Request certificate, the Checked with column and dialog, Switch them on a wildcard, and Checked with in the route editor, as the prototype shows them.
+
+**Try it:** run BIND or PowerDNS next to Pebble with a TSIG key, add it as a provider with a challenge zone, and request `*.example.test` with `example.test`. Pebble issues one certificate for both; the renewal log shows the TXT record and how long it took to appear. Delete the TSIG key on the server and renew: it fails with `dns.unauthorized`, and nothing reaches Pebble.
+
 ## What you'll need to try it
 
 - **Milestones 0 to 2:** Docker on your machine.
