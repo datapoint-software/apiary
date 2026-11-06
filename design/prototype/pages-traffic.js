@@ -298,7 +298,7 @@ const DNS_TYPES = {
   },
   hetzner: {
     label: 'Hetzner DNS', short: 'Hetzner',
-    help: 'An API token from the Hetzner console. Hetzner tokens reach every zone in the project, so a separate challenge zone is the safer choice.',
+    help: 'An API token with read and write access, from a project in the Hetzner Cloud console. It reaches every zone in that project, so a separate challenge zone is the safer choice.',
     fields: [['token', 'API token', 'password', '', '']],
   },
   cloudflare: {
