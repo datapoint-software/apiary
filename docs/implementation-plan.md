@@ -214,7 +214,7 @@ Agreed on 2026-11-05, for moving part of a site without changing its service. No
 Agreed on 2026-11-06, for wildcards, internal hostnames, edge nodes with port 80 closed, and certificates before DNS cutover. Not tied to 1.0. See [architecture.md](architecture.md#certificates).
 
 - DNS providers in the replicated state, with encrypted credentials, for Administrators over the API, and not over MCP. New state changes and a `challenge` on automatic certificates, so it needs `[StateSchema(n)]`.
-- `IDnsProvider`, starting with RFC 2136 and a separate challenge zone, then Hetzner, through the Hetzner Cloud API, and Cloudflare. Azure DNS and Route 53 come after, when someone needs them.
+- `IDnsProviderClient` for RFC 2136, Hetzner (through the Hetzner Cloud API), Cloudflare, Azure DNS and Route 53, with a separate challenge zone, all built at once (decided on 2026-11-06).
 - DNS-01 in the ACME client and the issuer: the TXT record, the propagation check against the zone's authoritative name servers, the CNAME check for delegated zones, cleanup of records left by a replica that stopped, and the codes `dns.unauthorized`, `dns.zoneNotFound`, `dns.notPropagated`, `dns.unreachable` (retried like `acme.unreachable`) and `dns.cnameMissing`.
 - Certificates for several names, wildcards among them, requested ahead of any route, and routes naming a wildcard Apiary renews.
 - The DNS providers page, Request certificate, the Checked with column and dialog, Switch them on a wildcard, and Checked with in the route editor, as the prototype shows them.
