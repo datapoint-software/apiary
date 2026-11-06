@@ -3,6 +3,7 @@ using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.DnsProviders;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Redirects;
@@ -53,6 +54,12 @@ public static class StateBuilders
 
     public static Certificate ACertificate(string name = "shop.example.com") =>
         new(AnId(), CertificateSource.Automatic, name, null, null, [], null, 0, null, s_now, "ana@example.com");
+
+    public static DnsProvider ADnsProvider(string domain = "example.com", DnsProviderKind kind = DnsProviderKind.Rfc2136) =>
+        new(AnId(), "Office DNS", kind, [domain], null,
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["server"] = "10.0.0.53", ["keyName"] = "apiary-acme", ["algorithm"] = "hmac-sha256" },
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["secret"] = "c2VjcmV0LWZvci10ZXN0cy0zMi1ieXRlcy1sb25nLi4=" },
+            null, s_now, "ana@example.com");
 
     public static CertificateMaterial SomeMaterial(params string[] hosts) =>
         new("chain-pem", "key-pem", hosts, "CN=Test CA", s_now.AddDays(-1), s_now.AddDays(89), "A1B2C3D4", 2);

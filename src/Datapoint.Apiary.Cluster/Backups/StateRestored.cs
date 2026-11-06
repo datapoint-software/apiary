@@ -19,6 +19,7 @@ public sealed record StateRestored(ApiaryState Restored) : IStateChange
         Stacks = Restored.Stacks,
         PipelineTokens = Restored.PipelineTokens,
         TrustedProxies = Restored.TrustedProxies,
+        DnsProviders = Restored.DnsProviders,
         Users = Restored.Users,
         Certificates = Restored.Certificates,
         AcmeAccounts = Restored.AcmeAccounts,

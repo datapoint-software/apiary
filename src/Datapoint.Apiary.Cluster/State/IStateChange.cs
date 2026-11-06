@@ -5,6 +5,7 @@ using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.DnsProviders;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Redirects;
@@ -67,6 +68,12 @@ namespace Datapoint.Apiary.Cluster.State;
 [JsonDerivedType(typeof(Stacks.PipelineTokenUsed), "pipeline-token.used")]
 [JsonDerivedType(typeof(Proxies.TrustedProxySaved), "trusted-proxy.saved")]
 [JsonDerivedType(typeof(Proxies.TrustedProxyRemoved), "trusted-proxy.removed")]
+[JsonDerivedType(typeof(DnsProviderSaved), "dns-provider.saved")]
+[JsonDerivedType(typeof(DnsProviderRemoved), "dns-provider.removed")]
+[JsonDerivedType(typeof(DnsChallengeRecordsAdded), "dns-challenge-records.added")]
+[JsonDerivedType(typeof(DnsChallengeRecordsRemoved), "dns-challenge-records.removed")]
+[JsonDerivedType(typeof(Certificates.CertificateRequested), "certificate.requested")]
+[JsonDerivedType(typeof(Certificates.CertificateChallengeChanged), "certificate.challenge-changed")]
 [JsonDerivedType(typeof(PathRedirectSaved), "path-redirect.saved")]
 public interface IStateChange
 {

@@ -11,9 +11,14 @@ public sealed record Certificate(
     int FailedAttempts,
     DateTimeOffset? UnusedSince,
     DateTimeOffset AddedAt,
-    string? AddedBy)
+    string? AddedBy,
+    Guid? DnsProviderId = null,
+    IReadOnlyList<string>? AlternativeNames = null,
+    bool Requested = false)
 {
     public const int HistoryLimit = 50;
+
+    public IReadOnlyList<string> Names => [Name, .. AlternativeNames ?? []];
 
     public Certificate WithEvent(CertificateEvent change) =>
         this with { History = [change, .. History.Take(HistoryLimit - 1)] };

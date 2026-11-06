@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Brands;
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.DnsProviders;
 using Datapoint.Apiary.Cluster.Join;
 using Datapoint.Apiary.Cluster.Keys;
 using Datapoint.Apiary.Cluster.Locks;
@@ -120,6 +121,12 @@ public static class EveryChange
             new StackRemoved("shop"),
             new TrustedProxySaved(new TrustedProxy(AnId(), "10.20.30.0/24", "Load balancer")),
             new TrustedProxyRemoved(AnId()),
+            new DnsProviderSaved(ADnsProvider()),
+            new DnsProviderRemoved(AnId()),
+            new DnsChallengeRecordsAdded([new DnsChallengeRecord("_acme-challenge.shop.example.com", "value", "example.com", AnId(), TestClock.Now)]),
+            new DnsChallengeRecordsRemoved(["_acme-challenge.shop.example.com value"]),
+            new CertificateRequested(ACertificate("*.example.com") with { AlternativeNames = ["example.com"], DnsProviderId = AnId(), Requested = true }),
+            new CertificateChallengeChanged(AnId(), AnId()),
         ];
     }
 }

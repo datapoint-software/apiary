@@ -4,6 +4,7 @@ using Datapoint.Apiary.Cluster.Agents;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Backups;
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.DnsProviders;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.Projects;
 using Datapoint.Apiary.Cluster.Redirects;
@@ -26,6 +27,8 @@ public sealed record ApiaryState
     private readonly ImmutableDictionary<string, Stacks.StackRecord>? _stacks;
     private readonly ImmutableDictionary<Guid, Stacks.PipelineToken>? _pipelineTokens;
     private readonly ImmutableDictionary<Guid, Proxies.TrustedProxy>? _trustedProxies;
+    private readonly ImmutableDictionary<Guid, DnsProvider>? _dnsProviders;
+    private readonly ImmutableDictionary<string, DnsChallengeRecord>? _dnsChallengeRecords;
 
     public static ApiaryState Empty { get; } = new();
 
@@ -63,6 +66,18 @@ public sealed record ApiaryState
     {
         get => _trustedProxies ?? ImmutableDictionary<Guid, Proxies.TrustedProxy>.Empty;
         init => _trustedProxies = value;
+    }
+
+    public ImmutableDictionary<Guid, DnsProvider> DnsProviders
+    {
+        get => _dnsProviders ?? ImmutableDictionary<Guid, DnsProvider>.Empty;
+        init => _dnsProviders = value;
+    }
+
+    public ImmutableDictionary<string, DnsChallengeRecord> DnsChallengeRecords
+    {
+        get => _dnsChallengeRecords ?? ImmutableDictionary<string, DnsChallengeRecord>.Empty;
+        init => _dnsChallengeRecords = value;
     }
 
     public ImmutableDictionary<Guid, User> Users { get; init; } = ImmutableDictionary<Guid, User>.Empty;
