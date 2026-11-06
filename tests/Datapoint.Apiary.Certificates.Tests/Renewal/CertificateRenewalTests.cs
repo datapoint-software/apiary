@@ -17,13 +17,16 @@ public sealed class CertificateRenewalTests : IAsyncDisposable
     private readonly FakeTimeProvider _time = TestClock.Fake();
     private readonly FakeClusterState _cluster = new();
     private readonly FakeAcme _acme;
+    private readonly FakeDnsServer _dnsServer = new FakeDnsServer().Zone("example.com");
+    private readonly TestDns _dns;
     private readonly CertificateRenewal _renewal;
 
     public CertificateRenewalTests()
     {
         _acme = new FakeAcme(_time);
-        var issuer = new CertificateIssuer(_cluster, _acme, Options.Create(new AcmeOptions()), _time, NullLogger<CertificateIssuer>.Instance);
-        _renewal = new CertificateRenewal(_cluster, issuer, _time, NullLogger<CertificateRenewal>.Instance);
+        _dns = new TestDns(_dnsServer, _cluster, _time);
+        var issuer = new CertificateIssuer(_cluster, _acme, _dns.Writer, _dns.Cleanup, Options.Create(new AcmeOptions()), _time, NullLogger<CertificateIssuer>.Instance);
+        _renewal = new CertificateRenewal(_cluster, issuer, _dns.Cleanup, _time, NullLogger<CertificateRenewal>.Instance);
     }
 
     public async ValueTask DisposeAsync()
@@ -32,6 +35,7 @@ public sealed class CertificateRenewalTests : IAsyncDisposable
         _renewal.Dispose();
         _acme.Dispose();
         _cluster.Dispose();
+        await _dnsServer.DisposeAsync();
     }
 
     [Fact]

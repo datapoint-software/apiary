@@ -14,24 +14,28 @@ using static Datapoint.Apiary.Testing.Builders.StateBuilders;
 
 namespace Datapoint.Apiary.Certificates.Tests.Renewal;
 
-public sealed class CertificateIssuerTests : IDisposable
+public sealed class CertificateIssuerTests : IAsyncDisposable
 {
     private const string Host = "shop.example.com";
     private readonly FakeTimeProvider _time = TestClock.Fake();
     private readonly FakeClusterState _cluster = new();
     private readonly FakeAcme _acme;
+    private readonly FakeDnsServer _dnsServer = new FakeDnsServer().Zone("example.com");
+    private readonly TestDns _dns;
     private readonly CertificateIssuer _issuer;
 
     public CertificateIssuerTests()
     {
         _acme = new FakeAcme(_time);
-        _issuer = new CertificateIssuer(_cluster, _acme, Options.Create(new AcmeOptions()), _time, NullLogger<CertificateIssuer>.Instance);
+        _dns = new TestDns(_dnsServer, _cluster, _time);
+        _issuer = new CertificateIssuer(_cluster, _acme, _dns.Writer, _dns.Cleanup, Options.Create(new AcmeOptions()), _time, NullLogger<CertificateIssuer>.Instance);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _acme.Dispose();
         _cluster.Dispose();
+        await _dnsServer.DisposeAsync();
     }
 
     [Fact]
@@ -103,7 +107,7 @@ public sealed class CertificateIssuerTests : IDisposable
 
         await IssueAsync();
 
-        Assert.Equal((Host, "token-1.thumbprint"), (during?.Host, during?.KeyAuthorization));
+        Assert.Equal((Host, "token-1-0.thumbprint"), (during?.Host, during?.KeyAuthorization));
         Assert.Empty(_cluster.Current.AcmeChallenges);
     }
 

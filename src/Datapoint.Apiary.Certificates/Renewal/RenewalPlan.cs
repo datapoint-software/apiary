@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Certificates.Acme;
+using Datapoint.Apiary.Certificates.Dns;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.State;
 
@@ -15,6 +16,9 @@ public static class RenewalPlan
             .Where(host => !IsLocal(host))
             .ToHashSet(StringComparer.Ordinal);
 
+    public static IReadOnlySet<string> RequestedNames(ApiaryState state) =>
+        state.Certificates.Values.Where(c => c.Source == CertificateSource.Automatic && c.Requested).Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+
     public static Certificate? Automatic(ApiaryState state, string host) =>
         state.Certificates.Values.FirstOrDefault(c => c.Source == CertificateSource.Automatic && c.Name == host);
 
@@ -22,9 +26,9 @@ public static class RenewalPlan
         material.NotAfter - ((material.NotAfter - material.NotBefore) / 3);
 
     public static IReadOnlyList<string> Due(ApiaryState state, DateTimeOffset now) =>
-        [.. WantedHosts(state).Where(host => IsDue(Automatic(state, host), now)).Order(StringComparer.Ordinal)];
+        [.. WantedHosts(state).Union(RequestedNames(state), StringComparer.Ordinal).Where(host => IsDue(Automatic(state, host), now)).Order(StringComparer.Ordinal)];
 
-    public static TimeSpan RetryAfter(int failedAttempts, string code) => code == AcmeErrors.Unreachable ? s_unreachableRetry : failedAttempts switch
+    public static TimeSpan RetryAfter(int failedAttempts, string code) => code is AcmeErrors.Unreachable or DnsErrors.Unreachable ? s_unreachableRetry : failedAttempts switch
     {
         <= 1 => TimeSpan.FromMinutes(5),
         2 => TimeSpan.FromMinutes(15),
@@ -33,7 +37,8 @@ public static class RenewalPlan
     };
 
     public static bool LastFailureReachedAcme(Certificate certificate) =>
-        certificate.History.FirstOrDefault(e => e.Kind == CertificateEventKind.Failed)?.Code is not AcmeErrors.Unreachable;
+        certificate.History.FirstOrDefault(e => e.Kind == CertificateEventKind.Failed)?.Code is not { } code
+        || (code != AcmeErrors.Unreachable && !code.StartsWith("dns.", StringComparison.Ordinal));
 
     private static bool IsLocal(string host) =>
         host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase);

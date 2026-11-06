@@ -3,9 +3,12 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Datapoint.Apiary.Certificates.Acme;
 using Datapoint.Apiary.Certificates.Bundles;
+using Datapoint.Apiary.Certificates.Dns;
+using Datapoint.Apiary.Certificates.DnsProviders;
 using Datapoint.Apiary.Cluster.Acme;
 using Datapoint.Apiary.Cluster.Audit;
 using Datapoint.Apiary.Cluster.Certificates;
+using Datapoint.Apiary.Cluster.DnsProviders;
 using Datapoint.Apiary.Cluster.Locks;
 using Datapoint.Apiary.Cluster.State;
 using Microsoft.Extensions.Logging;
@@ -16,13 +19,15 @@ namespace Datapoint.Apiary.Certificates.Renewal;
 public sealed partial class CertificateIssuer(
     IClusterState cluster,
     IAcmeClient acme,
+    DnsChallengeWriter dns,
+    DnsChallengeCleanup cleanup,
     IOptions<AcmeOptions> options,
     TimeProvider time,
     ILogger<CertificateIssuer> logger)
 {
     public const string SystemActor = "System";
+    public static readonly TimeSpan ChallengeLifetime = TimeSpan.FromHours(1);
     private static readonly TimeSpan s_lockLifetime = TimeSpan.FromMinutes(10);
-    private static readonly TimeSpan s_challengeLifetime = TimeSpan.FromHours(1);
     private readonly string _holder = $"{Environment.MachineName}/{Guid.NewGuid():N}";
     private readonly ConcurrentDictionary<string, bool> _issuing = new(StringComparer.OrdinalIgnoreCase);
 
@@ -62,41 +67,95 @@ public sealed partial class CertificateIssuer(
             return null;
         }
 
-        IReadOnlyList<string> tokens = [];
+        var published = new Published();
         try
         {
-            var account = await AccountAsync(cancellationToken);
-            var order = await acme.OrderAsync(account, host, cancellationToken);
-            tokens = [.. order.Challenges.Select(c => c.Token)];
-            var expires = time.GetUtcNow() + s_challengeLifetime;
-            await AppendAsync([new AcmeChallengesAdded([.. order.Challenges.Select(c => new AcmeChallenge(c.Token, c.KeyAuthorization, c.Host, expires))])], cancellationToken);
-            using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-            var chainPem = await acme.CompleteAsync(account, order, SigningRequest(host, key), cancellationToken);
-            var bundle = CertificateBundle.Check(chainPem, key.ExportPkcs8PrivateKeyPem(), time.GetUtcNow(), requireCompleteChain: false);
-            if (bundle.Material is null)
-            {
-                throw new AcmeException(AcmeErrors.Rejected, $"The issued certificate can't be used ({bundle.Problem}).");
-            }
-
-            return await SucceededAsync(certificate, bundle.Material, user, action, lockName, tokens, cancellationToken);
+            var material = await ObtainAsync(certificate, published, cancellationToken);
+            return await SucceededAsync(certificate, material, new Outcome(user, action, lockName, published), cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            var failure = exception as AcmeException ?? new AcmeException(AcmeErrors.Rejected, exception.Message);
-            LogFailed(exception, host, failure.Code, failure.Detail);
-            return await FailedAsync(certificate, failure, user, action, lockName, tokens, cancellationToken);
+            var (code, detail) = Failure(exception);
+            LogFailed(exception, host, code, detail);
+            return await FailedAsync(certificate, code, detail, new Outcome(user, action, lockName, published), cancellationToken);
         }
     }
+
+    private async Task<CertificateMaterial> ObtainAsync(Certificate certificate, Published published, CancellationToken cancellationToken)
+    {
+        var account = await AccountAsync(cancellationToken);
+        var provider = ProviderOf(certificate);
+        var order = await acme.OrderAsync(account, certificate.Names, provider is null ? AcmeChallengeType.Http01 : AcmeChallengeType.Dns01, cancellationToken);
+        if (provider is null)
+        {
+            await PublishTokensAsync(order, published, cancellationToken);
+        }
+        else
+        {
+            await PublishRecordsAsync(provider, order, published, cancellationToken);
+        }
+
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var chainPem = await acme.CompleteAsync(account, order, SigningRequest(certificate.Names, key), cancellationToken);
+        var bundle = CertificateBundle.Check(chainPem, key.ExportPkcs8PrivateKeyPem(), time.GetUtcNow(), requireCompleteChain: false);
+        return bundle.Material ?? throw new AcmeException(AcmeErrors.Rejected, $"The issued certificate can't be used ({bundle.Problem}).");
+    }
+
+    private DnsProvider? ProviderOf(Certificate certificate) => certificate.DnsProviderId is { } id
+        ? cluster.Current.DnsProviders.GetValueOrDefault(id) ?? throw new DnsException(DnsErrors.ZoneNotFound, "The certificate's DNS provider was removed.")
+        : null;
+
+    private async Task PublishTokensAsync(AcmeOrder order, Published published, CancellationToken cancellationToken)
+    {
+        published.Tokens.AddRange(order.Challenges.Select(c => c.Token));
+        var expires = time.GetUtcNow() + ChallengeLifetime;
+        await AppendAsync([new AcmeChallengesAdded([.. order.Challenges.Select(c => new AcmeChallenge(c.Token, c.KeyAuthorization, c.Host, expires))])], cancellationToken);
+    }
+
+    private async Task PublishRecordsAsync(DnsProvider provider, AcmeOrder order, Published published, CancellationToken cancellationToken)
+    {
+        var records = order.Challenges.Select(c => (Target: DnsChallengeWriter.Target(provider, c.Host), Value: DnsNames.ChallengeValue(c.KeyAuthorization))).ToList();
+        foreach (var target in records.Select(r => r.Target).DistinctBy(t => t.RecordName, StringComparer.OrdinalIgnoreCase))
+        {
+            await dns.CheckDelegationAsync(target, cancellationToken);
+        }
+
+        var expires = time.GetUtcNow() + ChallengeLifetime;
+        foreach (var (target, value) in records)
+        {
+            var record = new DnsChallengeRecord(target.RecordName, value, target.Zone, provider.Id, expires);
+            await AppendAsync([new DnsChallengeRecordsAdded([record])], cancellationToken);
+            published.Records.Add(record);
+            await dns.AddAsync(provider, target, value, cancellationToken);
+        }
+
+        foreach (var (target, value) in records)
+        {
+            var waited = await dns.WaitAsync(target, value, cancellationToken);
+            LogPropagated(target.RecordName, waited);
+        }
+    }
+
+    private static (string Code, string? Detail) Failure(Exception exception) => exception switch
+    {
+        AcmeException acmeFailure => (acmeFailure.Code, acmeFailure.Detail),
+        DnsException dnsFailure => (dnsFailure.Code, dnsFailure.Detail),
+        _ => (AcmeErrors.Rejected, exception.Message),
+    };
 
     private bool IsHeldByOther(string lockName, DateTimeOffset now) =>
         cluster.Current.Locks.TryGetValue(lockName, out var held) && held.Holder != _holder && held.ExpiresAt > now;
 
-    private static byte[] SigningRequest(string host, ECDsa key)
+    private static byte[] SigningRequest(IReadOnlyList<string> names, ECDsa key)
     {
-        var request = new CertificateRequest("CN=" + host, key, HashAlgorithmName.SHA256);
-        var names = new SubjectAlternativeNameBuilder();
-        names.AddDnsName(host);
-        request.CertificateExtensions.Add(names.Build());
+        var request = new CertificateRequest("CN=" + names[0], key, HashAlgorithmName.SHA256);
+        var alternativeNames = new SubjectAlternativeNameBuilder();
+        foreach (var name in names)
+        {
+            alternativeNames.AddDnsName(name);
+        }
+
+        request.CertificateExtensions.Add(alternativeNames.Build());
         return request.CreateSigningRequest();
     }
 
@@ -114,35 +173,51 @@ public sealed partial class CertificateIssuer(
         return account;
     }
 
-    private async Task<IssueResult> SucceededAsync(
-        Certificate certificate, CertificateMaterial material, string? user, string action, string lockName, IReadOnlyList<string> tokens, CancellationToken cancellationToken)
+    private async Task<IssueResult> SucceededAsync(Certificate certificate, CertificateMaterial material, Outcome outcome, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
         var kind = certificate.Material is null ? CertificateEventKind.Issued : CertificateEventKind.Renewed;
-        var saved = Current(certificate).WithEvent(new CertificateEvent(now, kind, null, $"{material.Issuer}, valid until {material.NotAfter:yyyy-MM-dd}", user ?? SystemActor)) with
+        var saved = Current(certificate).WithEvent(new CertificateEvent(now, kind, null, $"{material.Issuer}, valid until {material.NotAfter:yyyy-MM-dd}", outcome.User ?? SystemActor)) with
         {
             Material = material,
             NextAttemptAt = null,
             FailedAttempts = 0,
         };
-        await AppendAsync([new CertificateSaved(saved), new AcmeChallengesRemoved(tokens), new LockReleased(lockName, _holder), Audit(now, user, action, saved, AuditOutcome.Succeeded)], cancellationToken);
+        await FinishAsync(saved, outcome, AuditOutcome.Succeeded, cancellationToken);
         LogIssued(saved.Name, material.NotAfter);
         return new IssueResult(saved, null, null);
     }
 
-    private async Task<IssueResult> FailedAsync(
-        Certificate certificate, AcmeException exception, string? user, string action, string lockName, IReadOnlyList<string> tokens, CancellationToken cancellationToken)
+    private async Task<IssueResult> FailedAsync(Certificate certificate, string code, string? detail, Outcome outcome, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
         var current = Current(certificate);
         var attempts = current.FailedAttempts + 1;
-        var saved = current.WithEvent(new CertificateEvent(now, CertificateEventKind.Failed, exception.Code, exception.Detail, user ?? SystemActor)) with
+        var saved = current.WithEvent(new CertificateEvent(now, CertificateEventKind.Failed, code, detail, outcome.User ?? SystemActor)) with
         {
             FailedAttempts = attempts,
-            NextAttemptAt = now + RenewalPlan.RetryAfter(attempts, exception.Code),
+            NextAttemptAt = now + RenewalPlan.RetryAfter(attempts, code),
         };
-        await AppendAsync([new CertificateSaved(saved), new AcmeChallengesRemoved(tokens), new LockReleased(lockName, _holder), Audit(now, user, action, saved, AuditOutcome.Failed)], cancellationToken);
-        return new IssueResult(saved, exception.Code, exception.Detail);
+        await FinishAsync(saved, outcome, AuditOutcome.Failed, cancellationToken);
+        return new IssueResult(saved, code, detail);
+    }
+
+    private async Task FinishAsync(Certificate saved, Outcome outcome, AuditOutcome result, CancellationToken cancellationToken)
+    {
+        var removedRecords = await cleanup.RemoveAsync(outcome.Published.Records, cancellationToken);
+        List<IStateChange> changes =
+        [
+            new CertificateSaved(saved),
+            new AcmeChallengesRemoved(outcome.Published.Tokens),
+            new LockReleased(outcome.LockName, _holder),
+            Audit(time.GetUtcNow(), outcome.User, outcome.Action, saved, result),
+        ];
+        if (removedRecords.Count > 0)
+        {
+            changes.Add(new DnsChallengeRecordsRemoved(removedRecords));
+        }
+
+        await AppendAsync(changes, cancellationToken);
     }
 
     private Certificate Current(Certificate certificate) => cluster.Current.Certificates.GetValueOrDefault(certificate.Id) ?? certificate;
@@ -165,6 +240,18 @@ public sealed partial class CertificateIssuer(
     [LoggerMessage(Level = LogLevel.Information, Message = "Got a certificate for {Host}, valid until {NotAfter:u}")]
     private partial void LogIssued(string host, DateTimeOffset notAfter);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Every name server showed the TXT record at {Name} after {Waited}")]
+    private partial void LogPropagated(string name, TimeSpan waited);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't get a certificate for {Host}: {Code} {Detail}")]
     private partial void LogFailed(Exception exception, string host, string code, string? detail);
+
+    private sealed class Published
+    {
+        public List<string> Tokens { get; } = [];
+
+        public List<DnsChallengeRecord> Records { get; } = [];
+    }
+
+    private sealed record Outcome(string? User, string Action, string LockName, Published Published);
 }

@@ -47,7 +47,7 @@ public sealed class AcmeClientTests : IDisposable
     {
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
 
-        var order = await _client.OrderAsync(account, "shop.example.com", Ct);
+        var order = await _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct);
 
         var challenge = order.Challenges.Single();
         Assert.Equal(("shop.example.com", "token-1"), (challenge.Host, challenge.Token));
@@ -55,10 +55,20 @@ public sealed class AcmeClientTests : IDisposable
     }
 
     [Fact]
+    public async Task An_order_can_ask_for_the_DNS_01_challenge()
+    {
+        var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
+
+        var order = await _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Dns01, Ct);
+
+        Assert.Equal("dns", order.Challenges.Single().Token);
+    }
+
+    [Fact]
     public async Task Completing_an_order_returns_the_signed_chain()
     {
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
-        var order = await _client.OrderAsync(account, "shop.example.com", Ct);
+        var order = await _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct);
 
         var chain = await _client.CompleteAsync(account, order, SigningRequest("shop.example.com"), Ct);
 
@@ -72,7 +82,7 @@ public sealed class AcmeClientTests : IDisposable
     {
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
 
-        await _client.OrderAsync(account, "shop.example.com", Ct);
+        await _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct);
 
         Assert.Single(_server.Requests, r => r == "GET /directory");
     }
@@ -103,7 +113,7 @@ public sealed class AcmeClientTests : IDisposable
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
         _server.OrderProblem = "rateLimited";
 
-        var exception = await Assert.ThrowsAsync<AcmeException>(() => _client.OrderAsync(account, "shop.example.com", Ct));
+        var exception = await Assert.ThrowsAsync<AcmeException>(() => _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct));
 
         Assert.Equal((AcmeErrors.RateLimited, "Too many certificates already issued"), (exception.Code, exception.Detail));
     }
@@ -116,7 +126,7 @@ public sealed class AcmeClientTests : IDisposable
     public async Task A_failed_challenge_says_why(string problem)
     {
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
-        var order = await _client.OrderAsync(account, "shop.example.com", Ct);
+        var order = await _client.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct);
         _server.AuthorizationStatus = "invalid";
         _server.AuthorizationProblem = problem;
 
@@ -141,7 +151,7 @@ public sealed class AcmeClientTests : IDisposable
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
         var other = new AcmeClient(_http, _time);
 
-        var order = await other.OrderAsync(account, "shop.example.com", Ct);
+        var order = await other.OrderAsync(account, ["shop.example.com"], AcmeChallengeType.Http01, Ct);
 
         Assert.Single(order.Challenges);
     }
@@ -152,7 +162,7 @@ public sealed class AcmeClientTests : IDisposable
         var account = await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct);
         var forged = account with { KeyPem = (await _client.CreateAccountAsync(FakeAcmeServer.DirectoryUrl, null, Ct)).KeyPem };
 
-        await Assert.ThrowsAsync<AcmeException>(() => _client.OrderAsync(forged, "shop.example.com", Ct));
+        await Assert.ThrowsAsync<AcmeException>(() => _client.OrderAsync(forged, ["shop.example.com"], AcmeChallengeType.Http01, Ct));
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

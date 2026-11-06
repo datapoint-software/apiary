@@ -23,12 +23,13 @@ public sealed class AcmeClient(HttpClient http, TimeProvider time) : IAcmeClient
             return new AcmeAccount(directoryUrl, key.ExportPkcs8PrivateKeyPem(), location.ToString(), time.GetUtcNow());
         });
 
-    public Task<AcmeOrder> OrderAsync(AcmeAccount account, string host, CancellationToken cancellationToken) =>
+    public Task<AcmeOrder> OrderAsync(AcmeAccount account, IReadOnlyList<string> names, AcmeChallengeType challenge, CancellationToken cancellationToken) =>
         GuardAsync(async () =>
         {
             using var key = Key(account);
             var session = await SessionAsync(account, key, cancellationToken);
-            var request = new AcmeNewOrder([new AcmeIdentifier("dns", host)]);
+            var type = TypeName(challenge);
+            var request = new AcmeNewOrder([.. names.Select(n => new AcmeIdentifier("dns", n))]);
             using var response = await session.PostAsync(session.Directory.NewOrder, request, AcmeJsonContext.Default.AcmeNewOrder, cancellationToken);
             var order = await AcmeSession.ReadAsync(response, AcmeJsonContext.Default.AcmeOrderResource, cancellationToken);
             var orderUrl = response.Headers.Location ?? throw new AcmeException(AcmeErrors.Rejected, "The ACME server gave no order URL.");
@@ -42,9 +43,9 @@ public sealed class AcmeClient(HttpClient http, TimeProvider time) : IAcmeClient
                     continue;
                 }
 
-                var challenge = authorization.Challenges.FirstOrDefault(c => c.Type == "http-01" && c.Token is not null)
-                    ?? throw new AcmeException(AcmeErrors.Rejected, "The ACME server offered no HTTP-01 challenge.");
-                challenges.Add(new AcmePendingChallenge(authorization.Identifier.Value, challenge.Token!, challenge.Token + "." + thumbprint, challenge.Url, authorizationUrl));
+                var offered = authorization.Challenges.FirstOrDefault(c => c.Type == type && c.Token is not null)
+                    ?? throw new AcmeException(AcmeErrors.Rejected, $"The ACME server offered no {type} challenge.");
+                challenges.Add(new AcmePendingChallenge(authorization.Identifier.Value, offered.Token!, offered.Token + "." + thumbprint, offered.Url, authorizationUrl));
             }
 
             return new AcmeOrder(orderUrl, order.Finalize, challenges);
@@ -72,6 +73,8 @@ public sealed class AcmeClient(HttpClient http, TimeProvider time) : IAcmeClient
             var certificateUrl = await WaitForCertificateAsync(session, order.OrderUrl, cancellationToken);
             return await session.FetchTextAsync(certificateUrl, PemChain, cancellationToken);
         });
+
+    private static string TypeName(AcmeChallengeType challenge) => challenge == AcmeChallengeType.Dns01 ? "dns-01" : "http-01";
 
     private static ECDsa Key(AcmeAccount account)
     {
@@ -136,7 +139,7 @@ public sealed class AcmeClient(HttpClient http, TimeProvider time) : IAcmeClient
                     await Task.Delay(s_pollInterval, time, cancellationToken);
                     break;
                 default:
-                    var failed = authorization.Challenges.FirstOrDefault(c => c.Type == "http-01");
+                    var failed = authorization.Challenges.FirstOrDefault(c => c.Error is not null);
                     throw AcmeSession.ProblemException(failed?.Error, AcmeErrors.ChallengeFailed);
             }
         }

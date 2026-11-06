@@ -25,12 +25,18 @@ public sealed class FakeAcme(FakeTimeProvider time) : IAcmeClient, IDisposable
         return Task.FromResult(new AcmeAccount(directoryUrl, "account-key", "https://acme.test/account/" + AccountsCreated, time.GetUtcNow()));
     }
 
-    public Task<AcmeOrder> OrderAsync(AcmeAccount account, string host, CancellationToken cancellationToken)
+    public AcmeChallengeType? LastChallenge { get; private set; }
+
+    public Task<AcmeOrder> OrderAsync(AcmeAccount account, IReadOnlyList<string> names, AcmeChallengeType challenge, CancellationToken cancellationToken)
     {
-        Ordered.Add(host);
-        var challenge = new AcmePendingChallenge(host, "token-" + Ordered.Count, "token-" + Ordered.Count + ".thumbprint", new Uri("https://acme.test/chall"), new Uri("https://acme.test/authz"));
-        return Task.FromResult(new AcmeOrder(new Uri("https://acme.test/order"), new Uri("https://acme.test/finalize"), [challenge]));
+        Ordered.Add(string.Join(",", names));
+        LastChallenge = challenge;
+        var challenges = names.Select((name, i) => Pending(name.StartsWith("*.", StringComparison.Ordinal) ? name[2..] : name, $"token-{Ordered.Count}-{i}")).ToList();
+        return Task.FromResult(new AcmeOrder(new Uri("https://acme.test/order"), new Uri("https://acme.test/finalize"), challenges));
     }
+
+    private static AcmePendingChallenge Pending(string host, string token) =>
+        new(host, token, token + ".thumbprint", new Uri("https://acme.test/chall"), new Uri("https://acme.test/authz"));
 
     public async Task<string> CompleteAsync(AcmeAccount account, AcmeOrder order, byte[] csr, CancellationToken cancellationToken)
     {

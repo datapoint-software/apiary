@@ -1,4 +1,5 @@
 using Datapoint.Apiary.Certificates.Acme;
+using Datapoint.Apiary.Certificates.Dns;
 using Datapoint.Apiary.Certificates.Renewal;
 using Datapoint.Apiary.Cluster.Certificates;
 using Datapoint.Apiary.Cluster.Redirects;
@@ -96,6 +97,28 @@ public sealed class RenewalPlanTests
     public void An_unreachable_ACME_server_is_retried_every_5_minutes()
     {
         Assert.Equal(TimeSpan.FromMinutes(5), RenewalPlan.RetryAfter(10, AcmeErrors.Unreachable));
+    }
+
+    [Fact]
+    public void An_unreachable_DNS_provider_is_retried_soon()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(5), RenewalPlan.RetryAfter(10, DnsErrors.Unreachable));
+    }
+
+    [Fact]
+    public void A_DNS_failure_never_reaches_ACME_s_limits()
+    {
+        var certificate = ACertificate().WithEvent(AnEvent(CertificateEventKind.Failed) with { Code = DnsErrors.NotPropagated });
+
+        Assert.False(RenewalPlan.LastFailureReachedAcme(certificate));
+    }
+
+    [Fact]
+    public void A_requested_certificate_is_due_without_a_route()
+    {
+        var state = WithCertificate(ACertificate("*.example.com") with { Requested = true });
+
+        Assert.Equal(["*.example.com"], RenewalPlan.Due(state, TestClock.Now));
     }
 
     [Fact]

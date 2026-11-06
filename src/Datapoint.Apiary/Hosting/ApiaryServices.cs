@@ -37,7 +37,7 @@ public static class ApiaryServices
         services.AddSingleton<RootKeyLoader>();
         services.AddSingleton(provider => provider.GetRequiredService<RootKeyLoader>().Load());
         services.AddApiaryCluster(section);
-        services.AddApiaryCertificates(section.GetSection("Acme"));
+        services.AddApiaryCertificates(section.GetSection("Acme"), section.GetSection("Dns"));
         services.AddHostedService<StartupTasks>();
         services.AddSingleton<AdminCertificates>();
         services.AddHostedService<AdminCertificateKeeper>();
