@@ -21,7 +21,12 @@ public static class CertificatesServiceCollectionExtensions
         services.AddSingleton<DnsClient>();
         services.AddSingleton<DnsLookup>();
         services.AddSingleton<DnsPropagation>();
+        services.AddSingleton(_ => new DnsProviderHttp(new HttpClient(new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(5) }) { Timeout = s_acmeTimeout }));
         services.AddSingleton<IDnsProviderClient, Rfc2136DnsProvider>();
+        services.AddSingleton<IDnsProviderClient, HetznerDnsProvider>();
+        services.AddSingleton<IDnsProviderClient, CloudflareDnsProvider>();
+        services.AddSingleton<IDnsProviderClient, AzureDnsProvider>();
+        services.AddSingleton<IDnsProviderClient, Route53DnsProvider>();
         services.AddSingleton<DnsChallengeWriter>();
         services.AddSingleton<DnsChallengeCleanup>();
         services.AddSingleton<IAcmeClient>(provider =>
