@@ -9,6 +9,7 @@ import { nextRequest } from '../testing/backend';
 import {
   aCertificate,
   aCluster,
+  aDnsProvider,
   aMember,
   aProject,
   aSignedInUser,
@@ -42,6 +43,7 @@ const quiet: Answers = {
   '/api/certificates/list': [],
   '/api/stacks/list': [],
   '/api/trusted-proxies/list': [],
+  '/api/dns-providers/list': [],
   '/api/cluster/status': aCluster(),
 };
 
@@ -119,6 +121,7 @@ describe('Shell', () => {
       'Stacks',
       'Stream routes',
       'Certificates',
+      'DNS providers',
       'Redirects',
       'Visitor pages',
       'Users',
@@ -193,6 +196,20 @@ describe('Shell', () => {
     });
 
     expect(textOf(fixture)).toContain('Trusted proxies, 1');
+  });
+
+  it('counts the DNS providers', async () => {
+    const { fixture } = await render({ answers: { '/api/dns-providers/list': [aDnsProvider()] } });
+
+    expect(textOf(fixture)).toContain('DNS providers, 1');
+  });
+
+  it('flags a DNS provider whose last test failed', async () => {
+    const { fixture } = await render({
+      answers: { '/api/dns-providers/list': [aDnsProvider({ lastTest: { at: '2026-11-04T10:00:00Z', succeeded: false, code: 'dns.unauthorized' } })] },
+    });
+
+    expect(textOf(fixture)).toContain('DNS providers, needs attention');
   });
 
   it('flags a trusted proxy with no request for a day', async () => {

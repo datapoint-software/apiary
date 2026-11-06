@@ -1,9 +1,20 @@
 <ap-page-head [heading]="'Certificates' | t">
-  <span pageSub>{{ 'Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Upload your own for wildcards and internal CAs. Using automatic certificates means accepting Let’s Encrypt’s' | t }} <a href="https://letsencrypt.org/repository/">{{ 'Subscriber Agreement' | t }}</a>{{ ', which Apiary accepts for you.' | t }}</span>
+  <span pageSub>{{ 'Automatic certificates come from Let’s Encrypt and renew when a third of their lifetime is left. Each is checked with a file on port 80 (HTTP-01) or a DNS record (DNS-01), which also gets wildcards and internal hostnames. Upload your own for internal CAs. Using automatic certificates means accepting Let’s Encrypt’s' | t }} <a href="https://letsencrypt.org/repository/">{{ 'Subscriber Agreement' | t }}</a>{{ ', which Apiary accepts for you.' | t }}</span>
+  <a pageActions apButton routerLink="/dns-providers"><ap-icon [icon]="icons.providers" />{{ 'DNS providers' | t }}</a>
   @if (auth.canOperate()) {
-    <button apWrite pageActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />{{ 'Upload certificate' | t }}</button>
+    <button apWrite pageActions apButton type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />{{ 'Upload certificate' | t }}</button>
+  }
+  @if (auth.canOperate()) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="requestCertificate()"><ap-icon [icon]="icons.request" />{{ 'Request certificate' | t }}</button>
   }
 </ap-page-head>
+
+@if (failingProviders().length) {
+  <ap-banner tone="critical" [heading]="failingHeading()">
+    {{ 'Certificates checked through it can’t renew.' | t }}
+    <a bannerActions routerLink="/dns-providers">{{ 'See DNS providers' | t }}</a>
+  </ap-banner>
+}
 
 @for (certificate of attention(); track certificate.id) {
   <ap-banner [tone]="certificate.status === 'expired' ? 'critical' : 'warn'" [heading]="attentionHeading(certificate)">
@@ -21,9 +32,9 @@
     <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
   } @else if (certificates.value().length === 0) {
     <ap-empty-state [heading]="'No certificates yet' | t">
-      {{ 'Add a route and Apiary gets its certificate for you. Upload your own for a wildcard or internal hostname.' | t }}
+      {{ 'Add a route and Apiary gets its certificate for you. Request one with a DNS record for a wildcard or an internal hostname.' | t }}
       @if (auth.canOperate()) {
-        <button apWrite emptyActions apButton="primary" type="button" (click)="upload()"><ap-icon [icon]="icons.upload" />{{ 'Upload certificate' | t }}</button>
+        <button apWrite emptyActions apButton="primary" type="button" (click)="requestCertificate()"><ap-icon [icon]="icons.request" />{{ 'Request certificate' | t }}</button>
       }
     </ap-empty-state>
   } @else {
@@ -34,6 +45,7 @@
           <tr>
             <th scope="col">{{ 'Hostname' | t }}</th>
             <th scope="col">{{ 'Source' | t }}</th>
+            <th scope="col">{{ 'Checked with' | t }}</th>
             <th scope="col">{{ 'Issuer' | t }}</th>
             <th scope="col" aria-sort="ascending">{{ 'Expires' | t }}</th>
             <th scope="col">{{ 'Status' | t }}</th>
@@ -52,10 +64,11 @@
                 </div>
               </td>
               <td class="ap-muted">{{ sourceName(certificate) | t }}</td>
+              <td class="ap-muted">{{ checkedWith(certificate) }}</td>
               <td class="ap-muted">{{ certificate.issuer ?? '–' }}</td>
               <td><span class="ap-data">{{ expires(certificate) }}</span></td>
               <td><ap-status [tone]="statusTone(certificate)">{{ statusText(certificate) }}</ap-status></td>
-              <td class="ap-num">{{ certificate.routeCount }}</td>
+              <td class="ap-num">{{ routes(certificate) }}</td>
             </tr>
           }
         </tbody>

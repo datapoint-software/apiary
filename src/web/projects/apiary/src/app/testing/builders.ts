@@ -4,6 +4,7 @@ import {
   CertificateDetails,
   CertificateSummary,
   ClusterView,
+  DnsProviderView,
   MemberView,
   PipelineTokenView,
   ProjectView,
@@ -149,6 +150,7 @@ export function aCertificate(overrides: Partial<CertificateSummary> = {}): Certi
     hosts: ['shop.example.com'],
     status: 'ok',
     routeCount: 1,
+    requested: false,
     ...overrides,
   };
 }
@@ -236,6 +238,20 @@ export function aTrustedProxy(overrides: Partial<TrustedProxyView> = {}): Truste
     note: 'Load balancer',
     public: false,
     lastRequestAt: '2026-11-04T11:59:00Z',
+    ...overrides,
+  };
+}
+
+export function aDnsProvider(overrides: Partial<DnsProviderView> = {}): DnsProviderView {
+  return {
+    id: 'provider-1',
+    name: 'Office DNS',
+    kind: 'rfc2136',
+    domains: ['example.com'],
+    lastTest: { at: '2026-11-04T10:00:00Z', succeeded: true },
+    certificateCount: 0,
+    changedAt: '2026-11-01T10:00:00Z',
+    changedBy: 'ana@example.com',
     ...overrides,
   };
 }

@@ -19,7 +19,10 @@ import {
   problemErrors,
 } from '@datapoint/apiary-ui';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, RouteDefaultsView, RouteView, TrustedProxyView } from '../api/models';
+import { CertificateSummary, DnsProviderView, ProjectView, RouteDefaultsView, RouteView, TrustedProxyView } from '../api/models';
+import { ChallengeField } from './challenge-field';
+import { bestProvider, challengeName, httpChallenge, providerCovers } from '../dns-providers/dns-names';
+import { namedCertificates, savedChallenge } from './route-challenge';
 import { PathRedirectsSection } from '../redirects/path-redirects-section';
 import { timeAgo } from '../api/time-ago';
 import { HasUnsavedChanges } from '../shell/has-unsaved-changes';
@@ -43,7 +46,7 @@ import { StackTag } from '../stacks/stack-tag';
 
 @Component({
   selector: 'ap-route-editor',
-  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, PathRedirectsSection, StackBanner, StackTag, RouterLink, TranslatePipe],
+  imports: [WriteLock, PageHead, Field, Form, ErrorSummary, FormField, Button, Banner, Status, RouteDangerZone, AccessSection, MaintenanceSection, RequestSizeSection, TargetsSection, PathRedirectsSection, StackBanner, StackTag, RouterLink, TranslatePipe, ChallengeField],
   templateUrl: './route-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -61,10 +64,8 @@ export class RouteEditor implements HasUnsavedChanges {
 
   protected readonly isNew = computed(() => !this.id());
   protected readonly projects = httpResource<ProjectView[]>(() => this.api.query('projects.list'), { defaultValue: [] });
-  protected readonly uploaded = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), {
-    defaultValue: [],
-    parse: (value) => (value as CertificateSummary[]).filter((c) => c.source === 'uploaded'),
-  });
+  private readonly certificates = httpResource<CertificateSummary[]>(() => this.api.query('certificates.list'), { defaultValue: [] });
+  protected readonly providers = httpResource<DnsProviderView[]>(() => this.api.query('dns-providers.list'), { defaultValue: [] });
   protected readonly existing = httpResource<RouteView>(() => {
     const id = this.id();
     return id ? this.api.query('routes.get', { id }) : undefined;
@@ -83,7 +84,30 @@ export class RouteEditor implements HasUnsavedChanges {
   });
 
   protected readonly model = signal<RouteModel>(emptyRoute(''));
-  protected readonly route = form(this.model, routeRules(() => this.id(), () => this.current()?.stack?.fields ?? []));
+  protected readonly route = form(
+    this.model,
+    routeRules(
+      () => this.id(),
+      () => this.current()?.stack?.fields ?? [],
+      () => this.providers.value(),
+    ),
+  );
+  private readonly loadedChallenge = computed(() => savedChallenge(this.certificates.value(), this.current()?.host ?? ''));
+  protected readonly certificateOptions = computed(() =>
+    namedCertificates(this.certificates.value(), this.model().host, this.model().certificateId).map((c) => ({ id: c.id, label: this.certificateLabel(c) })),
+  );
+  protected readonly challengeHelp = computed(() => {
+    const host = this.model().host.trim().toLowerCase();
+    const provider = this.providers.value().find((p) => p.id === this.model().challenge);
+    if (!host) {
+      return '';
+    }
+    if (provider?.challengeZone && providerCovers(provider, host)) {
+      return this.i18n.t('Needs the CNAME {name} → {target}.', { name: challengeName(host), target: `${host}.${provider.challengeZone}` });
+    }
+    const fit = provider ? undefined : bestProvider(this.providers.value(), [host]);
+    return fit ? this.i18n.t('{provider} proves {host}: choose it if Let’s Encrypt can’t reach this hostname on port 80.', { provider: fit.name, host }) : '';
+  });
   protected readonly loadError = computed(() => {
     const error = this.existing.error();
     return error ? this.messages.describe('route.notFound') : '';
@@ -112,7 +136,13 @@ export class RouteEditor implements HasUnsavedChanges {
     effect(() => {
       const route = this.current();
       if (route && !untracked(() => this.route().dirty())) {
-        this.model.set(routeModel(route, untracked(() => this.defaultMegabytes())));
+        this.model.set({ ...routeModel(route, untracked(() => this.defaultMegabytes())), challenge: untracked(() => this.loadedChallenge()) });
+      }
+    });
+    effect(() => {
+      const challenge = this.loadedChallenge();
+      if (!untracked(() => this.route().dirty())) {
+        this.model.update((m) => ({ ...m, challenge }));
       }
     });
     effect(() => {
@@ -160,11 +190,28 @@ export class RouteEditor implements HasUnsavedChanges {
     await this.router.navigate(['/routes']);
   }
 
+  private certificateLabel(certificate: CertificateSummary): string {
+    const hosts = certificate.hosts.join(', ');
+    return certificate.source === 'uploaded'
+      ? this.i18n.t('{hosts} (expires {date})', { hosts, date: certificate.notAfter?.slice(0, 10) ?? '' })
+      : this.i18n.t('{hosts} (renewed automatically)', { hosts });
+  }
+
+  private async applyChallenge(value: RouteModel, before: string): Promise<void> {
+    const host = value.host.trim().toLowerCase();
+    if (value.certificate !== 'automatic' || value.challenge === before) {
+      return;
+    }
+    await this.api.send('certificates.set-challenge', { name: host, dnsProviderId: value.challenge === httpChallenge ? null : value.challenge });
+  }
+
   private async persist(): Promise<RouteAccessData | undefined> {
     const value = this.model();
     const secrets = passwordSecrets(value.password, !!this.current()?.password?.linkMadeAt);
     const body = routeRequest(value, secrets);
     const id = this.id();
+    const challengeBefore = savedChallenge(this.certificates.value(), body.host);
+    await this.applyChallenge(value, challengeBefore);
     await (id ? this.api.send('routes.update', { id, ...body }) : this.api.send('routes.create', body));
     return routeAccess(body.host, body.path, secrets, value.password.enabled && value.password.link);
   }

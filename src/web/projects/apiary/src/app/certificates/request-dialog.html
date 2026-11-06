@@ -1,0 +1,69 @@
+<form class="ap-dialog ap-dialog-lg" role="dialog" aria-labelledby="request-title" [apForm]="request" #requestForm="apForm" (submit)="submit(requestForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="request-title">{{ 'Request certificate' | t }}</h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary verb="request it" />
+    <ap-field
+      [label]="'Hostnames' | t"
+      [field]="request.names"
+      [help]="'One per line, up to 10. A wildcard such as *.example.com covers one level, a.example.com but not a.b.example.com or example.com itself, so add both.' | t"
+    >
+      <textarea class="ap-textarea ap-data" rows="2" [placeholder]="placeholder" spellcheck="false" autocapitalize="none" [formField]="request.names" cdkFocusInitial></textarea>
+    </ap-field>
+    <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+      <legend class="ap-label" style="margin-bottom: 8px">{{ 'How Let’s Encrypt checks it’s yours' | t }}</legend>
+      <div class="ap-stack" style="gap: 10px">
+        <label class="ap-choice">
+          <input class="ap-radio" type="radio" value="dns" [formField]="request.challenge" />
+          <span class="ap-choice-text">
+            <span>{{ 'A DNS record (DNS-01)' | t }}</span>
+            <span class="ap-help">{{ 'Works for wildcards, internal hostnames, closed port 80, and before the hostname points at Apiary.' | t }}</span>
+          </span>
+        </label>
+        <label class="ap-choice">
+          <input class="ap-radio" type="radio" value="http" [formField]="request.challenge" />
+          <span class="ap-choice-text">
+            <span>{{ 'A file on port 80 (HTTP-01)' | t }}</span>
+            <span class="ap-help">{{ 'Needs the hostname’s DNS to point at your edge nodes, and port 80 open. No wildcards.' | t }}</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+    @if (model().challenge === 'dns') {
+      <ap-field [label]="'DNS provider' | t" [field]="request.dnsProviderId">
+        <select class="ap-select" [formField]="request.dnsProviderId">
+          @for (option of options(); track option.id) {
+            <option [value]="option.id">{{ option.label }}</option>
+          }
+        </select>
+        @if (data.canAdminister) {
+          <span apFieldHelp>{{ 'Add providers on the' | t }} <a routerLink="/dns-providers" (click)="dialog.close()">{{ 'DNS providers' | t }}</a> {{ 'page.' | t }}</span>
+        } @else {
+          <span apFieldHelp>{{ 'Only Administrators can add providers.' | t }}</span>
+        }
+      </ap-field>
+      @if (delegatedProvider(); as provider) {
+        <div>
+          <ap-banner tone="info" [heading]="'Create these records first' | t">
+            {{ '{name} writes challenges in' | t: { name: provider.name } }} <span class="ap-data">{{ provider.challengeZone }}</span>{{ '. Apiary checks the CNAMEs before asking Let’s Encrypt, so a missing one doesn’t use an attempt.' | t }}
+          </ap-banner>
+          <div style="margin-top: 8px"><ap-cname-table [records]="records()" /></div>
+        </div>
+      }
+    }
+    <ap-field [label]="'Project' | t" [field]="request.projectId" [help]="'Only for grouping. Routes in any project can use it.' | t">
+      <select class="ap-select" [formField]="request.projectId">
+        @for (project of projects.value(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select>
+    </ap-field>
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="request().submitting()">
+      {{ (request().submitting() ? 'Requesting…' : 'Request certificate') | t }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,47 @@
+<form class="ap-dialog" role="dialog" aria-labelledby="challenge-title" [apForm]="challenge" #challengeForm="apForm" (submit)="save(challengeForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="challenge-title">{{ 'How {name} is checked' | t: { name: certificate.name } }}</h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary verb="save it" />
+    <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+      <legend class="ap-sr">{{ 'How it’s checked' | t }}</legend>
+      <div class="ap-stack" style="gap: 10px">
+        @if (offersHttp) {
+          <label class="ap-choice">
+            <input class="ap-radio" type="radio" [value]="httpChallenge" [formField]="challenge.dnsProviderId" />
+            <span class="ap-choice-text">
+              <span>{{ 'A file on port 80 (HTTP-01)' | t }}</span>
+              <span class="ap-help">{{ 'Needs the hostname to point at your edge nodes, with port 80 open.' | t }}</span>
+            </span>
+          </label>
+        }
+        @for (choice of choices; track choice.provider.id) {
+          <label class="ap-choice">
+            <input class="ap-radio" type="radio" [value]="choice.provider.id" [formField]="challenge.dnsProviderId" />
+            <span class="ap-choice-text">
+              <span>{{ 'A DNS record through {name}' | t: { name: choice.provider.name } }}</span>
+              @if (choice.provider.challengeZone) {
+                <span class="ap-help">{{ 'Needs the CNAME' | t }} <span class="ap-data">{{ choice.record }}</span> → <span class="ap-data">{{ choice.target }}</span></span>
+              } @else {
+                <span class="ap-help">{{ 'Writes in the domain’s own zone' | t }}</span>
+              }
+            </span>
+          </label>
+        }
+      </div>
+    </fieldset>
+    @if (choices.length === 0) {
+      <p class="ap-help" style="margin: 0">{{ 'No DNS provider proves {name}.' | t: { name: certificate.name } }} {{ noProvider() }}</p>
+    }
+    <p class="ap-help" style="margin: 0">
+      {{ 'Used from the next renewal. To try it now, save, then Renew now: the certificate in use stays until a new one is issued.' | t }}
+    </p>
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="challenge().submitting()">
+      {{ (challenge().submitting() ? 'Saving…' : 'Save') | t }}
+    </button>
+  </div>
+</form>

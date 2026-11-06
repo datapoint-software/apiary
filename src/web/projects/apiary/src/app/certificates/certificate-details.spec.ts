@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Confirmer, Toaster, provideErrorMessages } from '@datapoint/apiary-ui';
-import { CertificateDetails as Details, Role } from '../api/models';
+import { CertificateSummary, CertificateDetails as Details, DnsProviderView, Role, RouteView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { appMessages } from '../errors/app-messages';
 import { AcceptingConfirmer } from '../testing/accepting-confirmer';
@@ -30,10 +30,17 @@ interface Rendered {
   readonly dialog: ClosingDialog;
 }
 
+interface Around {
+  readonly providers?: DnsProviderView[];
+  readonly routes?: RouteView[];
+  readonly certificates?: CertificateSummary[];
+}
+
 async function render(
   details: Details,
   role: Role = 'operator',
   confirmer: AcceptingConfirmer | RefusingConfirmer = new AcceptingConfirmer(),
+  { providers = [], routes = [], certificates = [] }: Around = {},
 ): Promise<Rendered> {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(now);
@@ -55,6 +62,9 @@ async function render(
   fixture.detectChanges();
   backend.expectOne('/api/certificates/get').flush(details);
   backend.expectOne('/api/projects/list').flush([aProject({ id: 'project-1', name: 'Shop' })]);
+  backend.expectOne('/api/dns-providers/list').flush(providers);
+  backend.expectOne('/api/routes/list').flush(routes);
+  backend.expectOne('/api/certificates/list').flush(certificates);
   await answerClusterStatus(backend);
   await settle(fixture);
   return { fixture, backend, dialog };
@@ -126,6 +136,9 @@ describe('CertificateDetails', () => {
       .expectOne('/api/certificates/get')
       .flush(aProblem(404, 'certificate.notFound'), { status: 404, statusText: 'Not Found' });
     backend.expectOne('/api/projects/list').flush([]);
+    backend.expectOne('/api/dns-providers/list').flush([]);
+    backend.expectOne('/api/routes/list').flush([]);
+    backend.expectOne('/api/certificates/list').flush([]);
     await settle(fixture);
 
     expect(textOf(fixture)).toContain('This certificate doesn’t exist');

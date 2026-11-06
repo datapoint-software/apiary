@@ -1,0 +1,76 @@
+<form class="ap-dialog ap-dialog-lg" role="dialog" aria-labelledby="dns-provider-title" [apForm]="provider" #providerForm="apForm" (submit)="save(providerForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="dns-provider-title">
+      @if (existing) {
+        {{ 'Edit {name}' | t: { name: existing.name } }}
+      } @else {
+        {{ 'Add DNS provider' | t }}
+      }
+    </h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary verb="save it" />
+    <ap-field [label]="'Name' | t" [field]="provider.name" [help]="'Shown to Operators when they choose how a certificate is checked.' | t">
+      <input class="ap-input" [formField]="provider.name" placeholder="Office DNS" autocomplete="off" cdkFocusInitial />
+    </ap-field>
+    <ap-field [label]="'Provider' | t" [field]="provider.kind">
+      <select class="ap-select" [formField]="provider.kind">
+        @for (kind of kinds; track kind.kind) {
+          <option [value]="kind.kind">{{ kind.label | t }}</option>
+        }
+      </select>
+    </ap-field>
+    <ap-field
+      [label]="'Domains it proves' | t"
+      [field]="provider.domains"
+      [help]="'One per line. Covers the domain and every hostname under it, such as shop.example.com. Where another provider has a narrower domain, that one is suggested.' | t"
+    >
+      <textarea class="ap-textarea ap-data" rows="2" placeholder="example.com" spellcheck="false" autocapitalize="none" [formField]="provider.domains"></textarea>
+    </ap-field>
+    <fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+      <legend class="ap-label" style="margin-bottom: 8px">{{ 'Where the challenge records go' | t }}</legend>
+      <div class="ap-stack" style="gap: 10px">
+        <label class="ap-choice">
+          <input class="ap-radio" type="radio" value="delegate" [formField]="provider.where" />
+          <span class="ap-choice-text">
+            <span>{{ 'In a separate challenge zone' | t }} <span class="ap-tag">{{ 'Recommended' | t }}</span></span>
+            <span class="ap-help"
+              >{{ 'You add a CNAME once per hostname, pointing its' | t }} <span class="ap-data">_acme-challenge</span>
+              {{ 'name into a zone used only for this. If these credentials leak, they can’t touch your other records.' | t }}</span
+            >
+          </span>
+        </label>
+        <label class="ap-choice">
+          <input class="ap-radio" type="radio" value="direct" [formField]="provider.where" />
+          <span class="ap-choice-text">
+            <span>{{ 'In the domain’s own zone' | t }}</span>
+            <span class="ap-help">{{ 'No CNAMEs needed, but the credentials can usually change any record there, including mail and website records.' | t }}</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+    @if (model().where === 'delegate') {
+      <ap-field [label]="'Challenge zone' | t" [field]="provider.challengeZone" [help]="'A zone this provider serves, used only for challenge records.' | t">
+        <input class="ap-input ap-data" [formField]="provider.challengeZone" placeholder="acme.example.net" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+      @if (example().length) {
+        <div>
+          <p class="ap-help" style="margin: 0 0 8px">{{ 'For a hostname such as' | t }} <span class="ap-data">{{ exampleHost() }}</span>{{ ', you’ll create:' | t }}</p>
+          <ap-cname-table [records]="example()" />
+          <p class="ap-help" style="margin: 8px 0 0">{{ 'Apiary lists the exact records when you request a certificate.' | t }}</p>
+        </div>
+      }
+    }
+    <ap-dns-provider-fields [provider]="provider" [kind]="model().kind" [secretKept]="secretKept()" />
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="provider().submitting()">
+      @if (provider().submitting()) {
+        {{ 'Saving and testing…' | t }}
+      } @else {
+        {{ (existing ? 'Save and test' : 'Add and test') | t }}
+      }
+    </button>
+  </div>
+</form>

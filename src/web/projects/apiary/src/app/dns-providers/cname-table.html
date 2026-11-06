@@ -1,0 +1,21 @@
+<div class="ap-table-wrap">
+  <table class="ap-table">
+    <caption class="ap-sr">{{ 'CNAME records to create' | t }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{{ 'Name' | t }}</th>
+        <th scope="col">{{ 'Type' | t }}</th>
+        <th scope="col">{{ 'Points to' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (record of records(); track record.name) {
+        <tr>
+          <td class="ap-data">{{ record.name }}</td>
+          <td><span class="ap-tag">CNAME</span></td>
+          <td class="ap-data">{{ record.target }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

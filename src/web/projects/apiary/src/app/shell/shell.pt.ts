@@ -12,6 +12,7 @@ export const shellPortuguese: TextCatalog = {
   'All routes': 'Todas as rotas',
   'Stream routes': 'Rotas TCP e UDP',
   Certificates: 'Certificados',
+  'DNS providers': 'Fornecedores de DNS',
   Redirects: 'Redirecionamentos',
   'Visitor pages': 'Páginas para visitantes',
   Access: 'Acesso',

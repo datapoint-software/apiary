@@ -1,0 +1,13 @@
+@if (shown()) {
+  <div style="margin: -2px 0 4px 30px">
+    <ap-field [label]="'Checked with' | t" [field]="challenge()">
+      <select class="ap-select" [formField]="challenge()">
+        <option [value]="httpChallenge">{{ 'A file on port 80 (HTTP-01)' | t }}</option>
+        @for (provider of providers(); track provider.id) {
+          <option [value]="provider.id">{{ 'A DNS record through {name}' | t: { name: provider.name } }}</option>
+        }
+      </select>
+      <span apFieldHelp>{{ help() }}</span>
+    </ap-field>
+  </div>
+}

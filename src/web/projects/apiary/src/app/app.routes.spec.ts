@@ -16,6 +16,7 @@ import { BackupPage } from './backups/backup-page';
 import { CertificateDetails } from './certificates/certificate-details';
 import { CertificateList } from './certificates/certificate-list';
 import { ReplicaList } from './cluster/replica-list';
+import { DnsProviderList } from './dns-providers/dns-provider-list';
 import { RootKeyPage } from './keys/root-key-page';
 import { Overview } from './overview/overview';
 import { ProjectList } from './projects/project-list';
@@ -81,6 +82,7 @@ describe('app routes', () => {
     ['routes/new', RouteEditor],
     ['routes/:id', RouteEditor],
     ['certificates', CertificateList],
+    ['dns-providers', DnsProviderList],
     ['streams', StreamList],
     ['redirects', RedirectList],
     ['visitor-pages', VisitorPages],

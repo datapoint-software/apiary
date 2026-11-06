@@ -11,11 +11,11 @@ function setUp() {
 }
 
 describe('appConfig', () => {
-  it('registers a Portuguese catalog for each of the 19 features', () => {
+  it('registers a Portuguese catalog for each of the 20 features', () => {
     setUp();
 
     expect(TestBed.inject(TRANSLATIONS).map(({ language }) => language)).toEqual(
-      new Array(19).fill('pt-PT'),
+      new Array(20).fill('pt-PT'),
     );
   });
 

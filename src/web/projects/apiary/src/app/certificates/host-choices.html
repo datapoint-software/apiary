@@ -1,0 +1,15 @@
+<fieldset class="ap-field" style="border: 0; margin: 0; padding: 0">
+  <legend class="ap-label" style="margin-bottom: 4px">{{ 'Hostnames it covers' | t }}</legend>
+  <p class="ap-help" style="margin: 0 0 8px">{{ intro() }}</p>
+  <div class="ap-stack" style="gap: 8px">
+    @for (host of hosts(); track host.host; let index = $index) {
+      <label class="ap-choice">
+        <input class="ap-check" type="checkbox" [formField]="chosen()[index]" />
+        <span class="ap-choice-text">
+          <span class="ap-data">{{ host.host }}</span>
+          <span class="ap-help">{{ usage(host) }} <span class="ap-data">{{ host.currentName }}</span></span>
+        </span>
+      </label>
+    }
+  </div>
+</fieldset>

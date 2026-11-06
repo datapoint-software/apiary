@@ -30,12 +30,23 @@
     </ap-banner>
   } @else if (c.status === 'pending') {
     <ap-banner tone="info" [heading]="'Requesting the certificate' | t">
-      {{ 'Let’s Encrypt checks the hostname by fetching a file from it on port 80, so its DNS must point at your edge nodes. Until then, the route answers over HTTP only.' | t }}
+      {{ pendingText() }}
     </ap-banner>
   }
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; align-items: start">
-    <ap-certificate-facts [details]="value" [project]="project()" [canDelete]="auth.canOperate()" (delete)="delete()" />
+    <ap-certificate-facts
+      [details]="value"
+      [project]="project()"
+      [canDelete]="auth.canOperate()"
+      [canChange]="auth.canOperate()"
+      [checkedWith]="checkedWith()"
+      [challengeZone]="provider()?.challengeZone"
+      [otherHosts]="otherHosts().length"
+      (delete)="delete()"
+      (changeChallenge)="changeChallenge()"
+      (switchHosts)="switchHosts()"
+    />
     <ap-certificate-history [events]="value.history" [heading]="c.source === 'automatic' ? 'Renewal log' : 'History'" />
   </div>
 } @else {

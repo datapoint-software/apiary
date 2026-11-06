@@ -19,6 +19,7 @@ import {
   PanelsTopLeft,
   DoorOpen,
   FolderOpen,
+  Globe,
   Hexagon,
   KeyRound,
   Layers,
@@ -36,7 +37,8 @@ import {
 import { needsAttention } from '../certificates/certificate-status';
 import { reloadEvery } from '../api/reload-every';
 import { Api } from '../api/api';
-import { CertificateSummary, ProjectView, StackView, TrustedProxyView } from '../api/models';
+import { CertificateSummary, DnsProviderView, ProjectView, StackView, TrustedProxyView } from '../api/models';
+import { isFailing } from '../dns-providers/dns-names';
 import { Auth } from '../auth/auth';
 import { ClusterStatus } from '../cluster/cluster-status';
 import { isQuiet } from '../proxies/proxy-activity';
@@ -121,6 +123,7 @@ export class Shell {
   );
   private readonly stacks = httpResource<StackView[]>(() => this.api.query('stacks.list'), { defaultValue: [] });
   private readonly proxies = httpResource<TrustedProxyView[]>(() => this.api.query('trusted-proxies.list'), { defaultValue: [] });
+  private readonly dnsProviders = httpResource<DnsProviderView[]>(() => this.api.query('dns-providers.list'), { defaultValue: [] });
 
   protected readonly groups = computed<readonly NavGroup[]>(() => {
     const t = (text: string) => this.i18n.t(text);
@@ -152,6 +155,13 @@ export class Shell {
             label: t('Certificates'),
             link: '/certificates',
             warn: this.certificates.value().some(needsAttention),
+          },
+          {
+            icon: Globe,
+            label: t('DNS providers'),
+            link: '/dns-providers',
+            count: this.dnsProviders.value().length || undefined,
+            warn: this.dnsProviders.value().some(isFailing),
           },
           { icon: CornerUpRight, label: t('Redirects'), link: '/redirects' },
           { icon: PanelsTopLeft, label: t('Visitor pages'), link: '/visitor-pages' },

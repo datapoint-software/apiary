@@ -1,0 +1,76 @@
+@let p = provider();
+@switch (kind()) {
+  @case ('rfc2136') {
+    <p class="ap-help" style="margin: 0">{{ 'BIND, PowerDNS, Knot or Windows DNS, updated with TSIG-signed dynamic updates. Allow the key to change only TXT records under _acme-challenge.' | t }}</p>
+    <div class="ap-grid-2" style="grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)">
+      <ap-field [label]="'Server' | t" [field]="p.server" [help]="'The primary server that accepts updates. Edge nodes must reach it on port 53, TCP and UDP.' | t">
+        <input class="ap-input ap-data" [formField]="p.server" placeholder="ns1.example.com or 10.0.0.53" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+      <ap-field [label]="'Port' | t" [field]="p.port">
+        <input class="ap-input ap-data" type="number" inputmode="numeric" [formField]="p.port" autocomplete="off" />
+      </ap-field>
+    </div>
+    <div class="ap-grid-2">
+      <ap-field [label]="'TSIG key name' | t" [field]="p.keyName">
+        <input class="ap-input ap-data" [formField]="p.keyName" placeholder="apiary-acme" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+      <ap-field [label]="'Algorithm' | t" [field]="p.algorithm">
+        <select class="ap-select" [formField]="p.algorithm">
+          <option value="hmac-sha256">hmac-sha256</option>
+          <option value="hmac-sha512">hmac-sha512</option>
+        </select>
+      </ap-field>
+    </div>
+    <ap-field [label]="'TSIG secret' | t" [field]="p.secret" [optional]="secretKept()" [help]="'Stored encrypted, and never shown again.' | t">
+      <input class="ap-input ap-data" type="password" [formField]="p.secret" [placeholder]="secretPlaceholder()" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+  }
+  @case ('hetzner') {
+    <p class="ap-help" style="margin: 0">{{ 'An API token with read and write access, from a project in the Hetzner Cloud console. It reaches every zone in that project, so a separate challenge zone is the safer choice.' | t }}</p>
+    <ap-field [label]="'API token' | t" [field]="p.token" [optional]="secretKept()" [help]="'Stored encrypted, and never shown again.' | t">
+      <input class="ap-input ap-data" type="password" [formField]="p.token" [placeholder]="placeholder()" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+  }
+  @case ('cloudflare') {
+    <p class="ap-help" style="margin: 0">{{ 'Create an API token with the Zone › DNS › Edit permission, for these zones only.' | t }}</p>
+    <ap-field [label]="'API token' | t" [field]="p.token" [optional]="secretKept()" [help]="'Stored encrypted, and never shown again.' | t">
+      <input class="ap-input ap-data" type="password" [formField]="p.token" [placeholder]="placeholder()" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+  }
+  @case ('azure') {
+    <p class="ap-help" style="margin: 0">{{ 'A service principal with the DNS Zone Contributor role on these zones only.' | t }}</p>
+    <div class="ap-grid-2">
+      <ap-field [label]="'Tenant ID' | t" [field]="p.tenant">
+        <input class="ap-input ap-data" [formField]="p.tenant" [placeholder]="guid" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+      <ap-field [label]="'Client ID' | t" [field]="p.clientId">
+        <input class="ap-input ap-data" [formField]="p.clientId" [placeholder]="guid" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+    </div>
+    <ap-field
+      [label]="'Client secret' | t"
+      [field]="p.clientSecret"
+      [optional]="secretKept()"
+      [help]="'Client secrets expire. Apiary warns when renewals start failing, not before. Stored encrypted, and never shown again.' | t"
+    >
+      <input class="ap-input ap-data" type="password" [formField]="p.clientSecret" [placeholder]="placeholder()" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+    <div class="ap-grid-2">
+      <ap-field [label]="'Subscription ID' | t" [field]="p.subscription">
+        <input class="ap-input ap-data" [formField]="p.subscription" [placeholder]="guid" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+      <ap-field [label]="'Resource group' | t" [field]="p.resourceGroup">
+        <input class="ap-input ap-data" [formField]="p.resourceGroup" placeholder="dns" autocomplete="off" spellcheck="false" autocapitalize="none" />
+      </ap-field>
+    </div>
+  }
+  @case ('route53') {
+    <p class="ap-help" style="margin: 0">{{ 'An IAM user whose policy allows ChangeResourceRecordSets on these hosted zones only, limited to TXT records under _acme-challenge.' | t }}</p>
+    <ap-field [label]="'Access key ID' | t" [field]="p.accessKey">
+      <input class="ap-input ap-data" [formField]="p.accessKey" placeholder="AKIA…" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+    <ap-field [label]="'Secret access key' | t" [field]="p.secretKey" [optional]="secretKept()" [help]="'Stored encrypted, and never shown again.' | t">
+      <input class="ap-input ap-data" type="password" [formField]="p.secretKey" [placeholder]="placeholder()" autocomplete="off" spellcheck="false" autocapitalize="none" />
+    </ap-field>
+  }
+}

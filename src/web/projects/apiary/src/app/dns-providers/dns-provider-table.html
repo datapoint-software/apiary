@@ -1,0 +1,63 @@
+<div class="ap-table-wrap">
+  <table class="ap-table">
+    <caption class="ap-sr">{{ 'DNS providers' | t }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{{ 'Name' | t }}</th>
+        <th scope="col">{{ 'Provider' | t }}</th>
+        <th scope="col">{{ 'Domains' | t }}</th>
+        <th scope="col">{{ 'Records go in' | t }}</th>
+        <th scope="col">{{ 'Last test' | t }}</th>
+        <th scope="col" class="ap-num">{{ 'Certificates' | t }}</th>
+        @if (canChange()) {
+          <th scope="col" class="ap-col-actions"><span class="ap-sr">{{ 'Actions' | t }}</span></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.provider.id) {
+        @let p = row.provider;
+        <tr>
+          <td>
+            <div class="ap-cell-main">
+              <strong>{{ p.name }}</strong><span class="ap-caption">{{ row.changed }}</span>
+            </div>
+          </td>
+          <td class="ap-muted">{{ row.kind | t }}</td>
+          <td class="ap-data">
+            @for (domain of p.domains; track domain) {
+              {{ domain }}<br />
+            }
+          </td>
+          <td>
+            @if (p.challengeZone) {
+              <span class="ap-data">{{ p.challengeZone }}</span> <span class="ap-caption" style="margin-left: 4px">{{ 'Delegated' | t }}</span>
+            } @else {
+              <span class="ap-muted">{{ 'The domain’s own zone' | t }}</span>
+            }
+          </td>
+          <td>
+            <ap-status [tone]="row.testTone">{{ row.testText }}</ap-status>
+            <span class="ap-caption" style="display: block">{{ row.testCaption }}</span>
+          </td>
+          <td class="ap-num">{{ p.certificateCount }}</td>
+          @if (canChange()) {
+            <td class="ap-col-actions">
+              <div class="ap-row" style="gap: 4px; justify-content: flex-end; flex-wrap: nowrap">
+                <button apWrite apButton size="small" type="button" [attr.aria-label]="'Test {name}' | t: { name: p.name }" [disabled]="testing() === p.id" (click)="test.emit(p)">
+                  {{ (testing() === p.id ? 'Testing…' : 'Test') | t }}
+                </button>
+                <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Edit {name}' | t: { name: p.name }" (click)="edit.emit(p)">
+                  <ap-icon [icon]="icons.edit" />
+                </button>
+                <button apWrite apButton="ghost" size="small" [iconOnly]="true" type="button" [attr.aria-label]="'Delete {name}' | t: { name: p.name }" (click)="remove.emit(p)">
+                  <ap-icon [icon]="icons.delete" />
+                </button>
+              </div>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

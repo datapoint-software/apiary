@@ -1,10 +1,22 @@
 import { applyEach, applyWhen, disabled, hidden, required, schema, validate } from '@angular/forms/signals';
 import { dayMs, hostname, ipRanges, parseUtc, port, target, utcDateTime, wholeNumber } from '@datapoint/apiary-ui';
+import { DnsProviderView } from '../api/models';
 import { serverCheck } from '../api/server-check';
+import { providerCovers } from '../dns-providers/dns-names';
 import { RouteModel } from './route-model';
 import { requestSize } from './request-size';
 
-export const routeRules = (id: () => string | undefined, stackFields: () => readonly string[] = () => []) => schema<RouteModel>((route) => {
+function challengeError(challenge: string, host: string, providers: readonly DnsProviderView[]): string | null {
+  const provider = providers.find((p) => p.id === challenge);
+  const hostname = host.trim();
+  return provider && hostname && !providerCovers(provider, hostname) ? 'certificate.providerDoesNotCover' : null;
+}
+
+export const routeRules = (
+  id: () => string | undefined,
+  stackFields: () => readonly string[] = () => [],
+  providers: () => readonly DnsProviderView[] = () => [],
+) => schema<RouteModel>((route) => {
   const setByStack = (field: string) => () => stackFields().includes(field);
   disabled(route.host, setByStack('host'));
   disabled(route.path, setByStack('path'));
@@ -87,6 +99,11 @@ export const routeRules = (id: () => string | undefined, stackFields: () => read
     return password.length > 128 ? { kind: 'tooLong', params: { max: 128 } } : undefined;
   });
   validate(route.password.message, ({ value }) => (value().length > 120 ? { kind: 'tooLong', params: { max: 120 } } : undefined));
+  hidden(route.challenge, ({ valueOf }) => valueOf(route.certificate) !== 'automatic');
+  validate(route.challenge, ({ value, valueOf }) => {
+    const kind = challengeError(value(), valueOf(route.host), providers());
+    return kind ? { kind } : undefined;
+  });
   applyWhen(route, ({ value }) => value().certificate === 'uploaded', (uploaded) => {
     required(uploaded.certificateId, { error: { kind: 'certificate.choose' } });
   });

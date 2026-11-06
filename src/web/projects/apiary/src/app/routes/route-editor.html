@@ -96,24 +96,25 @@
               <input class="ap-radio" type="radio" value="automatic" [formField]="route.certificate" />
               <span class="ap-choice-text">
                 <span>{{ 'Automatic' | t }}</span>
-                <span class="ap-help">{{ 'From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.' | t }}</span>
+                <span class="ap-help">{{ 'From Let’s Encrypt, renewed for you. Checked with a file on port 80, or a DNS record for internal hostnames and closed port 80.' | t }}</span>
               </span>
             </label>
+            <ap-challenge-field [challenge]="route.challenge" [providers]="providers.value()" [help]="challengeHelp()" [shown]="model().certificate === 'automatic'" />
             <label class="ap-choice">
               <input class="ap-radio" type="radio" value="uploaded" [formField]="route.certificate" />
               <span class="ap-choice-text">
-                <span>{{ 'Uploaded certificate' | t }}</span>
-                <span class="ap-help">{{ 'For wildcards and internal certificate authorities.' | t }}</span>
+                <span>{{ 'A certificate from the list' | t }}</span>
+                <span class="ap-help">{{ 'An uploaded one, or a wildcard Apiary renews with a DNS record.' | t }}</span>
               </span>
             </label>
           </div>
         </fieldset>
         @if (model().certificate === 'uploaded') {
-          <ap-field [label]="'Uploaded certificate' | t" [field]="route.certificateId" [help]="'Upload a certificate on the Certificates page first if yours isn’t listed.' | t">
+          <ap-field [label]="'Certificate' | t" [field]="route.certificateId" [help]="'Upload a certificate, or request a wildcard, on the Certificates page if yours isn’t listed.' | t">
             <select class="ap-select" [formField]="route.certificateId">
               <option value="">{{ 'Choose a certificate' | t }}</option>
-              @for (certificate of uploaded.value(); track certificate.id) {
-                <option [value]="certificate.id">{{ '{hosts} (expires {date})' | t: { hosts: certificate.hosts.join(', '), date: certificate.notAfter?.slice(0, 10) ?? '' } }}</option>
+              @for (option of certificateOptions(); track option.id) {
+                <option [value]="option.id">{{ option.label }}</option>
               }
             </select>
           </ap-field>

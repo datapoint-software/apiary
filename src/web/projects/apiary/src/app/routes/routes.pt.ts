@@ -125,12 +125,19 @@ export const routesPortuguese: TextCatalog = {
   'Most routes use /.': 'A maioria das rotas usa /.',
   'Only for grouping: it doesn’t change who can edit the route.': 'Serve só para agrupar: não muda quem pode editar a rota.',
   'Certificate source': 'Origem do certificado',
-  'From Let’s Encrypt, renewed for you. Needs the hostname to reach this cluster on port 80.':
-    'Do Let’s Encrypt, renovado por si. O nome do anfitrião tem de chegar a este cluster na porta 80.',
-  'Uploaded certificate': 'Certificado carregado',
-  'For wildcards and internal certificate authorities.': 'Para domínios com caráter universal e autoridades de certificação internas.',
-  'Upload a certificate on the Certificates page first if yours isn’t listed.':
-    'Se o seu não estiver na lista, carregue primeiro um certificado na página Certificados.',
+  'From Let’s Encrypt, renewed for you. Checked with a file on port 80, or a DNS record for internal hostnames and closed port 80.':
+    'Do Let’s Encrypt, renovado por si. Verificado com um ficheiro na porta 80, ou com um registo DNS para nomes de anfitrião internos e com a porta 80 fechada.',
+  'Checked with': 'Verificado com',
+  'A file on port 80 (HTTP-01)': 'Um ficheiro na porta 80 (HTTP-01)',
+  'A DNS record through {name}': 'Um registo DNS através de {name}',
+  'Needs the CNAME {name} → {target}.': 'Precisa do CNAME {name} → {target}.',
+  '{provider} proves {host}: choose it if Let’s Encrypt can’t reach this hostname on port 80.':
+    '{provider} comprova {host}: escolha-o se o Let’s Encrypt não conseguir alcançar este nome de anfitrião na porta 80.',
+  'A certificate from the list': 'Um certificado da lista',
+  'An uploaded one, or a wildcard Apiary renews with a DNS record.': 'Um carregado, ou um de caráter universal que o Apiary renova com um registo DNS.',
+  'Upload a certificate, or request a wildcard, on the Certificates page if yours isn’t listed.':
+    'Se o seu não estiver na lista, carregue um certificado, ou peça um de caráter universal, na página Certificados.',
+  '{hosts} (renewed automatically)': '{hosts} (renovado automaticamente)',
   'Choose a certificate': 'Escolha um certificado',
   '{hosts} (expires {date})': '{hosts} (expira a {date})',
   'Traffic rules': 'Regras de tráfego',

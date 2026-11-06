@@ -73,7 +73,7 @@ export const appMessagesPortuguese: MessageCatalog = {
     'Foi renovado no último dia, ou a última tentativa falhou e o Apiary tenta novamente mais tarde por si. Renovar com demasiada frequência bloqueia o nome de anfitrião no Let’s Encrypt durante uma semana.',
   'certificate.chainRequired': () => 'Cole o certificado e a respetiva cadeia, ou escolha o ficheiro.',
   'certificate.keyRequired': () => 'Cole a chave privada, ou escolha o ficheiro.',
-  'certificate.choose': () => 'Escolha um certificado carregado.',
+  'certificate.choose': () => 'Escolha um certificado.',
   'acme.unreachable': () => 'O Apiary não conseguiu contactar o Let’s Encrypt. Verifique se os nós de entrada conseguem fazer ligações HTTPS de saída.',
   'acme.challengeFailed': () =>
     'O Let’s Encrypt não conseguiu obter o ficheiro de verificação deste nome de anfitrião na porta 80. Aponte o DNS para os seus nós de entrada e deixe passar a porta 80.',
@@ -173,5 +173,10 @@ export const appMessagesPortuguese: MessageCatalog = {
   'certificate.namesTooMany': () => 'Introduza no máximo 10 nomes de anfitrião.',
   'certificate.nameInvalid': () => 'Introduza nomes de anfitrião como shop.example.com. O caráter universal só pode ser a primeira parte, como em *.example.com.',
   'certificate.hostWithoutRoute': () => 'Já nenhuma rota usa este nome de anfitrião. Recarregue a página.',
+  'certificate.chooseChallenge': () => 'Escolha como é verificado.',
+  'certificate.chooseHost': () => 'Escolha pelo menos um nome de anfitrião.',
+  'certificate.chooseProvider': () => 'Escolha um fornecedor de DNS.',
+  'certificate.noProvider': () => 'Nenhum fornecedor comprova todos estes nomes. Adicione um, ou peça-os em separado.',
+  'certificate.noProviderAsk': () => 'Nenhum fornecedor comprova todos estes nomes. Peça a um Administrador que adicione um.',
   'auth.invalidToken': () => 'Este token de pipeline não é válido: pode ter expirado ou sido revogado. Peça um novo a um Administrador.',
 };

@@ -236,6 +236,8 @@ export interface CertificateSummary {
   readonly nextAttemptAt?: string;
   readonly routeCount: number;
   readonly unusedSince?: string;
+  readonly dnsProviderId?: string;
+  readonly requested: boolean;
 }
 
 export interface CertificateEvent {
@@ -502,4 +504,37 @@ export interface TrustedProxyView {
   readonly note: string | null;
   readonly public: boolean;
   readonly lastRequestAt: string | null;
+}
+
+export type DnsProviderKind = 'rfc2136' | 'hetzner' | 'cloudflare' | 'azure' | 'route53';
+
+export interface DnsProviderTestView {
+  readonly at: string;
+  readonly succeeded: boolean;
+  readonly code?: string;
+  readonly detail?: string;
+}
+
+export interface DnsProviderView {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: DnsProviderKind;
+  readonly domains: readonly string[];
+  readonly challengeZone?: string;
+  readonly lastTest?: DnsProviderTestView;
+  readonly certificateCount: number;
+  readonly changedAt: string;
+  readonly changedBy?: string;
+}
+
+export interface DnsProviderDetails {
+  readonly provider: DnsProviderView;
+  readonly settings: Readonly<Record<string, string>>;
+  readonly secretsSet: readonly string[];
+  readonly certificates: readonly string[];
+}
+
+export interface DnsProviderSaveResult {
+  readonly id: string;
+  readonly test: DnsProviderTestView;
 }

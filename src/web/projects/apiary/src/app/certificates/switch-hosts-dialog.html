@@ -1,0 +1,19 @@
+<form class="ap-dialog" role="dialog" aria-labelledby="switch-title" [apForm]="choices" #switchForm="apForm" (submit)="save(switchForm)">
+  <div class="ap-dialog-head">
+    <h2 class="ap-h ap-h-2" id="switch-title">{{ 'Use {name} for more hostnames' | t: { name: data.certificate.name } }}</h2>
+  </div>
+  <div class="ap-dialog-body ap-form" style="gap: 16px">
+    <ap-error-summary verb="switch them" />
+    <ap-host-choices
+      [hosts]="data.hosts"
+      [chosen]="choices.chosen"
+      [intro]="'Every route on a chosen hostname starts using the wildcard on every replica at once. Their own certificates are kept for 30 days, then deleted.' | t"
+    />
+  </div>
+  <div class="ap-dialog-foot">
+    <button apButton="ghost" type="button" (click)="dialog.close()">{{ 'Cancel' | t }}</button>
+    <button apButton="primary" type="submit" [disabled]="choices().submitting()">
+      {{ (choices().submitting() ? 'Switching…' : 'Switch') | t }}
+    </button>
+  </div>
+</form>

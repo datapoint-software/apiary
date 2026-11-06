@@ -1,0 +1,53 @@
+<ap-page-head [heading]="'DNS providers' | t" [crumbs]="crumbs()">
+  <span pageSub>{{
+    'Where Apiary writes the TXT records that prove a hostname is yours. Needed for wildcards, internal hostnames and edge nodes without port 80. Only Administrators add or change them.'
+      | t
+  }}</span>
+  @if (auth.canAdminister() && rows().length > 0) {
+    <button apWrite pageActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="addIcon" />{{ 'Add DNS provider' | t }}</button>
+  }
+</ap-page-head>
+
+@for (provider of failing(); track provider.id) {
+  <ap-banner tone="critical" [heading]="'{name} is failing' | t: { name: provider.name }">
+    {{ describe(provider.lastTest?.code) }}
+    @if (provider.lastTest?.detail) {
+      <span class="ap-code" style="display: block; margin-top: 6px">{{ provider.lastTest?.detail }}</span>
+    }
+    @if (auth.canAdminister()) {
+      <button apWrite bannerActions apButton size="small" type="button" (click)="edit(provider)">{{ 'Save new credentials' | t }}</button>
+    } @else {
+      <span bannerActions>{{ 'Ask an Administrator to save new credentials.' | t }}</span>
+    }
+  </ap-banner>
+}
+
+<section class="ap-panel" aria-labelledby="dns-providers-title">
+  <h2 class="ap-sr" id="dns-providers-title">{{ 'DNS providers' | t }}</h2>
+  @if (isLoading()) {
+    <div style="padding: 24px" aria-busy="true" [attr.aria-label]="'Loading' | t"><span class="ap-skel" style="width: 60%; height: 14px"></span></div>
+  } @else if (rows().length === 0) {
+    <ap-empty-state [heading]="'No DNS providers yet' | t">
+      {{ emptyText() }}
+      @if (auth.canAdminister()) {
+        <button apWrite emptyActions apButton="primary" type="button" (click)="edit(null)"><ap-icon [icon]="addIcon" />{{ 'Add DNS provider' | t }}</button>
+      }
+    </ap-empty-state>
+  } @else {
+    <ap-dns-provider-table [rows]="rows()" [canChange]="auth.canAdminister()" [testing]="testing()" (test)="test($event)" (edit)="edit($event)" (remove)="remove($event)" />
+  }
+</section>
+
+<section class="ap-panel" aria-labelledby="challenge-zone-title" style="margin-top: var(--space-5)">
+  <div class="ap-panel-head"><h2 class="ap-h ap-h-3" id="challenge-zone-title">{{ 'Why a separate challenge zone' | t }}</h2></div>
+  <div class="ap-panel-body ap-stack" style="gap: 10px">
+    <p style="margin: 0">
+      {{ 'Most providers’ credentials can change every record in a zone. Anyone who gets them could redirect your website or mail. With delegation, each hostname’s' | t }}
+      <span class="ap-data">_acme-challenge</span>
+      {{ 'name is a CNAME into a zone used only for challenges, so these credentials only ever reach that zone.' | t }}
+    </p>
+    <p style="margin: 0">
+      {{ 'It’s also how internal hostnames get certificates: Let’s Encrypt must find the record on the public internet, so a zone that only exists inside your network needs its challenge names delegated to a public one.' | t }}
+    </p>
+  </div>
+</section>

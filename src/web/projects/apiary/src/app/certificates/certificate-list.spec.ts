@@ -4,14 +4,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideErrorMessages } from '@datapoint/apiary-ui';
-import { CertificateSummary, Role } from '../api/models';
+import { CertificateSummary, DnsProviderView, Role } from '../api/models';
 import { Auth } from '../auth/auth';
 import { appMessages } from '../errors/app-messages';
 import { answerClusterStatus } from '../testing/backend';
-import { aCertificate, aSignedInUser } from '../testing/builders';
+import { aCertificate, aDnsProvider, aSignedInUser } from '../testing/builders';
 import { ClosingDialog } from '../testing/closing-dialog';
 import { byRole, cellsOfRow, queryByRole, settle, textOf } from '../testing/dom';
 import { CertificateList } from './certificate-list';
+import { RequestDialog } from './request-dialog';
 import { UploadDialog } from './upload-dialog';
 
 const now = new Date('2026-11-04T12:00:00Z');
@@ -20,6 +21,7 @@ async function render(
   certificates: CertificateSummary[],
   role: Role = 'operator',
   dialog = new ClosingDialog(),
+  providers: DnsProviderView[] = [],
 ) {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(now);
@@ -37,6 +39,7 @@ async function render(
   const backend = TestBed.inject(HttpTestingController);
   fixture.detectChanges();
   backend.expectOne('/api/certificates/list').flush(certificates);
+  backend.expectOne('/api/dns-providers/list').flush(providers);
   backend.match('/api/admin-certificate/get').forEach((request) => request.flush(null));
   await answerClusterStatus(backend);
   await settle(fixture);
@@ -46,7 +49,7 @@ async function render(
 afterEach(() => vi.useRealTimers());
 
 describe('CertificateList', () => {
-  it('shows each certificate’s hostname, source, issuer, expiry, status and routes', async () => {
+  it('shows each certificate’s hostname, source, check, issuer, expiry, status and routes', async () => {
     const { fixture } = await render([
       aCertificate({
         name: 'shop.example.com',
@@ -59,6 +62,7 @@ describe('CertificateList', () => {
     expect(cellsOfRow(fixture, 'shop.example.com')).toEqual([
       'shop.example.com',
       'Automatic',
+      'HTTP-01',
       'R11',
       '2026-12-04',
       '30 days left',
@@ -82,8 +86,9 @@ describe('CertificateList', () => {
       aCertificate({ name: 'new.example.com', status: 'pending', source: 'uploaded' }),
     ]);
 
-    expect(cellsOfRow(fixture, 'new.example.com').slice(1, 5)).toEqual([
+    expect(cellsOfRow(fixture, 'new.example.com').slice(1, 6)).toEqual([
       'Uploaded',
+      '–',
       '–',
       '–',
       'Requesting from Let’s Encrypt',
@@ -104,7 +109,7 @@ describe('CertificateList', () => {
   ])('describes the status of a certificate that needs attention', async (certificate, status) => {
     const { fixture } = await render([certificate]);
 
-    expect(cellsOfRow(fixture, certificate.name)[4]).toBe(status);
+    expect(cellsOfRow(fixture, certificate.name)[5]).toBe(status);
   });
 
   it('warns about an expired certificate', async () => {
@@ -163,14 +168,46 @@ describe('CertificateList', () => {
     expect(byRole(fixture, 'heading', 'No certificates yet')).toBeTruthy();
   });
 
-  it('offers an operator to upload the first certificate', async () => {
+  it('offers an operator to request the first certificate', async () => {
     const { fixture } = await render([]);
 
     expect(
       [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].filter(
-        (button) => button.textContent?.trim() === 'Upload certificate',
+        (button) => button.textContent?.trim() === 'Request certificate',
       ),
     ).toHaveLength(2);
+  });
+
+  it('says which DNS provider checks a certificate', async () => {
+    const { fixture } = await render([aCertificate({ name: 'wiki.corp.example.com', dnsProviderId: 'provider-1' })], 'operator', new ClosingDialog(), [
+      aDnsProvider({ id: 'provider-1', name: 'Office DNS' }),
+    ]);
+
+    expect(cellsOfRow(fixture, 'wiki.corp.example.com')[2]).toBe('DNS-01 · Office DNS');
+  });
+
+  it('says a requested certificate no route uses yet is ready ahead', async () => {
+    const { fixture } = await render([aCertificate({ name: '*.example.com', requested: true, routeCount: 0 })]);
+
+    expect(cellsOfRow(fixture, '*.example.com')[6]).toBe('Ready ahead');
+  });
+
+  it('warns that certificates checked through a failing DNS provider can’t renew', async () => {
+    const { fixture } = await render([], 'operator', new ClosingDialog(), [
+      aDnsProvider({ name: 'Office DNS', lastTest: { at: '2026-11-04T10:00:00Z', succeeded: false, code: 'dns.unauthorized' } }),
+    ]);
+
+    expect(textOf(fixture)).toContain('Office DNS is failing Certificates checked through it can’t renew. See DNS providers');
+  });
+
+  it('requests a certificate with the DNS providers, then opens it', async () => {
+    const office = aDnsProvider();
+    const { fixture, dialog } = await render([], 'administrator', new ClosingDialog('certificate-9'), [office]);
+
+    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Request certificate')?.click();
+
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/certificates/certificate-9'));
+    expect(dialog.opened[0]).toEqual({ component: RequestDialog, data: { providers: [office], canAdminister: true } });
   });
 
   it('offers a viewer no way to upload a certificate', async () => {

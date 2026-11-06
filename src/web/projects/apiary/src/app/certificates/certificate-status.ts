@@ -1,5 +1,6 @@
 import { I18n, Tone } from '@datapoint/apiary-ui';
-import { CertificateStatus, CertificateSummary } from '../api/models';
+import { CertificateStatus, CertificateSummary, DnsProviderView } from '../api/models';
+import { isWildcard } from '../dns-providers/dns-names';
 
 const day = 86_400_000;
 
@@ -41,4 +42,19 @@ export function sourceName(certificate: CertificateSummary): string {
 
 export function needsAttention(certificate: CertificateSummary): boolean {
   return certificate.status !== 'ok' && certificate.status !== 'pending';
+}
+
+export function isRenewedWildcard(certificate: CertificateSummary): boolean {
+  return certificate.source === 'automatic' && certificate.hosts.some(isWildcard);
+}
+
+export function checkedWith(certificate: CertificateSummary, providers: readonly DnsProviderView[], i18n: I18n): string {
+  if (certificate.source !== 'automatic') {
+    return '–';
+  }
+  if (!certificate.dnsProviderId) {
+    return 'HTTP-01';
+  }
+  const provider = providers.find((p) => p.id === certificate.dnsProviderId);
+  return provider ? i18n.t('DNS-01 · {name}', { name: provider.name }) : 'DNS-01';
 }

@@ -3,12 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Toaster, provideErrorMessages } from '@datapoint/apiary-ui';
-import { ProjectView, RouteView, TrustedProxyView } from '../api/models';
+import { CertificateSummary, DnsProviderView, ProjectView, RouteView, TrustedProxyView } from '../api/models';
 import { Auth } from '../auth/auth';
 import { appMessages } from '../errors/app-messages';
 import { nextRequest } from '../testing/backend';
-import { aCluster, aProblem, aProject, aRoute, aSignedInUser, aTrustedProxy } from '../testing/builders';
-import { byLabel, byRole, errorOf, settle, textOf, type } from '../testing/dom';
+import { aCertificate, aCluster, aDnsProvider, aProblem, aProject, aRoute, aSignedInUser, aTrustedProxy } from '../testing/builders';
+import { byLabel, byRole, choose, errorOf, settle, textOf, type } from '../testing/dom';
 import { ClosingDialog } from '../testing/closing-dialog';
 import { RouteAccessDialog } from './route-access-dialog';
 import { Dialog } from '@angular/cdk/dialog';
@@ -24,6 +24,8 @@ async function render(
   projects: ProjectView[] = [aProject()],
   existing?: RouteView,
   trustedProxies: TrustedProxyView[] = [],
+  certificates: CertificateSummary[] = [],
+  providers: DnsProviderView[] = [],
 ): Promise<Rendered> {
   TestBed.configureTestingModule({
     providers: [
@@ -41,7 +43,8 @@ async function render(
   const backend = TestBed.inject(HttpTestingController);
   fixture.detectChanges();
   backend.expectOne('/api/projects/list').flush(projects);
-  backend.expectOne('/api/certificates/list').flush([]);
+  backend.expectOne('/api/certificates/list').flush(certificates);
+  backend.expectOne('/api/dns-providers/list').flush(providers);
   backend.expectOne('/api/routes/defaults').flush({ requestMegabytes: 30 });
   backend.match('/api/routes/get').forEach((request) => request.flush(existing ?? null));
   backend.match('/api/cluster/status').forEach((request) => request.flush(aCluster()));
@@ -55,6 +58,11 @@ async function render(
 
 async function fillIn({ fixture }: Rendered, label: string, value: string): Promise<void> {
   type(byLabel(fixture, label), value);
+  await settle(fixture);
+}
+
+async function chooseSource({ fixture }: Rendered, source: string): Promise<void> {
+  (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(`input[type="radio"][value="${source}"]`)?.click();
   await settle(fixture);
 }
 
@@ -214,6 +222,7 @@ describe('RouteEditor', () => {
     fixture.detectChanges();
     backend.expectOne('/api/projects/list').flush([aProject()]);
     backend.expectOne('/api/certificates/list').flush([]);
+    backend.expectOne('/api/dns-providers/list').flush([]);
     backend.expectOne('/api/routes/defaults').flush({ requestMegabytes: 30 });
     backend
       .expectOne('/api/routes/get')
@@ -232,17 +241,96 @@ describe('RouteEditor', () => {
     expect(textOf(editor.fixture)).toContain('You can view this route');
   });
 
-  it('lists the uploaded certificates to choose from', async () => {
-    const editor = await render();
+  it('lists the uploaded certificates and the requested wildcards that cover the hostname', async () => {
+    const editor = await render([aProject()], undefined, [], [
+      aCertificate({ id: 'wildcard', name: '*.example.com', hosts: ['*.example.com', 'example.com'], requested: true }),
+      aCertificate({ id: 'uploaded', source: 'uploaded', name: 'intranet.corp', hosts: ['intranet.corp'], notAfter: '2027-01-31T00:00:00Z' }),
+      aCertificate({ id: 'other', name: '*.example.net', hosts: ['*.example.net'], requested: true }),
+    ]);
+    await fillIn(editor, 'Hostname', 'shop.example.com');
 
-    (editor.fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLInputElement>('input[type="radio"][value="uploaded"]')
-      ?.click();
+    await chooseSource(editor, 'uploaded');
+
+    expect([...byLabel<HTMLSelectElement>(editor.fixture, 'Certificate').options].map((o) => o.text)).toEqual([
+      'Choose a certificate',
+      '*.example.com, example.com (renewed automatically)',
+      'intranet.corp (expires 2027-01-31)',
+    ]);
+  });
+
+  it('offers the DNS providers to check an automatic certificate with', async () => {
+    const editor = await render([aProject()], undefined, [], [], [aDnsProvider({ name: 'Office DNS' })]);
+
+    expect([...byLabel<HTMLSelectElement>(editor.fixture, 'Checked with').options].map((o) => o.text)).toEqual([
+      'A file on port 80 (HTTP-01)',
+      'A DNS record through Office DNS',
+    ]);
+  });
+
+  it('suggests the DNS provider that proves the hostname', async () => {
+    const editor = await render([aProject()], undefined, [], [], [aDnsProvider({ name: 'Office DNS', domains: ['corp.example.com'] })]);
+
+    await fillIn(editor, 'Hostname', 'intranet.corp.example.com');
+
+    expect(textOf(editor.fixture)).toContain('Office DNS proves intranet.corp.example.com: choose it if Let’s Encrypt can’t reach this hostname on port 80.');
+  });
+
+  it('says which CNAME a delegated provider needs', async () => {
+    const editor = await render([aProject()], undefined, [], [], [aDnsProvider({ id: 'provider-1', challengeZone: 'acme.example.net' })]);
+    await fillIn(editor, 'Hostname', 'shop.example.com');
+
+    choose(byLabel<HTMLSelectElement>(editor.fixture, 'Checked with'), 'provider-1');
     await settle(editor.fixture);
 
-    expect(byLabel<HTMLSelectElement>(editor.fixture, 'Uploaded certificate').options[0].text).toBe(
-      'Choose a certificate',
-    );
+    expect(textOf(editor.fixture)).toContain('Needs the CNAME _acme-challenge.shop.example.com → shop.example.com.acme.example.net.');
+  });
+
+  it('refuses a DNS provider that doesn’t prove the hostname', async () => {
+    const editor = await render([aProject()], undefined, [], [], [aDnsProvider({ id: 'provider-1', domains: ['example.net'] })]);
+    await fillIn(editor, 'Hostname', 'shop.example.com');
+    await fillIn(editor, 'Service or host', 'shop-v1');
+    choose(byLabel<HTMLSelectElement>(editor.fixture, 'Checked with'), 'provider-1');
+
+    await submit(editor, 'Create route');
+
+    editor.backend.expectNone('/api/routes/create');
+    expect(errorOf(editor.fixture, 'Checked with')).toBe('This DNS provider doesn’t prove the hostname. Choose one that does, or a file on port 80.');
+  });
+
+  it('sets how a new route’s certificate is checked before creating the route, so it’s never tried over HTTP-01', async () => {
+    const editor = await render([aProject()], undefined, [], [], [aDnsProvider({ id: 'provider-1' })]);
+    await fillIn(editor, 'Hostname', 'Shop.example.com');
+    await fillIn(editor, 'Service or host', 'shop-v1');
+    choose(byLabel<HTMLSelectElement>(editor.fixture, 'Checked with'), 'provider-1');
+
+    await submit(editor, 'Create route');
+    const request = await nextRequest(editor.backend, '/api/certificates/set-challenge');
+
+    expect(request.request.body).toEqual({ name: 'shop.example.com', dnsProviderId: 'provider-1' });
+    editor.backend.expectNone('/api/routes/create');
+  });
+
+  it('starts from how the route’s own certificate is checked, and leaves it alone when unchanged', async () => {
+    const route = aRoute({ id: 'route-1', host: 'shop.example.com' });
+    const editor = await render([aProject()], route, [], [aCertificate({ name: 'shop.example.com', dnsProviderId: 'provider-1' })], [aDnsProvider({ id: 'provider-1' })]);
+
+    expect(byLabel<HTMLSelectElement>(editor.fixture, 'Checked with').value).toBe('provider-1');
+    await submit(editor, 'Save route');
+    (await nextRequest(editor.backend, '/api/routes/update')).flush({});
+
+    await vi.waitFor(() => expect(TestBed.inject(Toaster).toasts()[0]?.text).toBe('shop.example.com saved. It applies on every replica now.'));
+    editor.backend.expectNone('/api/certificates/set-challenge');
+  });
+
+  it('goes back to a file on port 80 when the DNS provider is no longer chosen', async () => {
+    const route = aRoute({ id: 'route-1', host: 'shop.example.com' });
+    const editor = await render([aProject()], route, [], [aCertificate({ name: 'shop.example.com', dnsProviderId: 'provider-1' })], [aDnsProvider({ id: 'provider-1' })]);
+    choose(byLabel<HTMLSelectElement>(editor.fixture, 'Checked with'), 'http-01');
+
+    await submit(editor, 'Save route');
+    const request = await nextRequest(editor.backend, '/api/certificates/set-challenge');
+
+    expect(request.request.body).toEqual({ name: 'shop.example.com', dnsProviderId: null });
   });
 
   it('shows the password once a route that asks for one is created', async () => {

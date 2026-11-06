@@ -56,6 +56,11 @@ export const routes: Routes = [
         loadComponent: () => import('./certificates/certificate-list').then((m) => m.CertificateList),
       },
       {
+        path: 'dns-providers',
+        title: 'DNS providers · Apiary',
+        loadComponent: () => import('./dns-providers/dns-provider-list').then((m) => m.DnsProviderList),
+      },
+      {
         path: 'streams',
         title: 'Stream routes · Apiary',
         loadComponent: () => import('./streams/stream-list').then((m) => m.StreamList),

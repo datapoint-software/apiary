@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Button, I18n, TranslatePipe } from '@datapoint/apiary-ui';
+import { WriteLock } from '../cluster/write-lock';
 import { CertificateDetails } from '../api/models';
 import { utcDateTime } from '../api/time-ago';
 import { dateRangeWords } from './date-range';
 
 @Component({
   selector: 'ap-certificate-facts',
-  imports: [Button, RouterLink, TranslatePipe],
+  imports: [WriteLock, Button, RouterLink, TranslatePipe],
   template: `
     @let c = details().certificate;
     <section class="ap-panel" aria-labelledby="details-title">
@@ -16,6 +17,18 @@ import { dateRangeWords } from './date-range';
         <dl class="ap-kv">
           <dt>{{ 'Covers' | t }}</dt>
           <dd class="ap-data">{{ c.hosts.join(', ') }}</dd>
+          @if (c.source === 'automatic') {
+            <dt>{{ 'Checked with' | t }}</dt>
+            <dd>
+              {{ checkedWith() }}
+              @if (canChange()) {
+                <button apWrite apButton="ghost" size="small" type="button" style="margin-left: 6px" (click)="changeChallenge.emit()">{{ 'Change' | t }}</button>
+              }
+              @if (challengeZone(); as zone) {
+                <span class="ap-caption" style="display: block">{{ 'Through CNAMEs into {zone}' | t: { zone } }}</span>
+              }
+            </dd>
+          }
           <dt>{{ 'Issuer' | t }}</dt>
           <dd>{{ c.issuer ?? '–' }}</dd>
           @if (c.notBefore && c.notAfter) {
@@ -38,6 +51,11 @@ import { dateRangeWords } from './date-range';
               <a class="ap-data" [routerLink]="['/routes', route.id]">{{ route.host }}{{ route.path === '/' ? '' : route.path }}</a><br />
             } @empty {
               {{ unused() }}
+            }
+            @if (otherHosts() > 0 && canChange()) {
+              <span class="ap-caption" style="display: block; margin-top: 4px"
+                >{{ others() }} <button apWrite apButton="ghost" size="small" type="button" (click)="switchHosts.emit()">{{ 'Switch them' | t }}</button></span
+              >
             }
           </dd>
         </dl>
@@ -66,7 +84,13 @@ export class CertificateFacts {
   readonly details = input.required<CertificateDetails>();
   readonly project = input<string>();
   readonly canDelete = input(false);
+  readonly checkedWith = input('');
+  readonly challengeZone = input<string>();
+  readonly canChange = input(false);
+  readonly otherHosts = input(0);
   readonly delete = output();
+  readonly changeChallenge = output();
+  readonly switchHosts = output();
   private readonly i18n = inject(I18n);
   protected readonly utcDateTime = utcDateTime;
   protected readonly range = computed(() => dateRangeWords(this.i18n));
@@ -76,9 +100,10 @@ export class CertificateFacts {
     if (c.source === 'uploaded') {
       return this.i18n.t('Manual: upload a new one before it expires');
     }
-    return c.renewsFrom
-      ? this.i18n.t('From {date}, retrying until it works', { date: c.renewsFrom.slice(0, 10) })
-      : this.i18n.t('As soon as Let’s Encrypt can reach the hostname');
+    if (c.renewsFrom) {
+      return this.i18n.t('From {date}, retrying until it works', { date: c.renewsFrom.slice(0, 10) });
+    }
+    return c.dnsProviderId ? this.i18n.t('As soon as the DNS record is in place') : this.i18n.t('As soon as Let’s Encrypt can reach the hostname');
   });
 
   protected readonly chain = computed(() => {
@@ -90,7 +115,14 @@ export class CertificateFacts {
   });
 
   protected readonly unused = computed(() => {
-    const since = this.details().certificate.unusedSince;
-    return since ? this.i18n.t('No routes since {date}. Apiary deletes it 30 days later.', { date: since.slice(0, 10) }) : this.i18n.t('No routes');
+    const c = this.details().certificate;
+    if (c.unusedSince) {
+      return this.i18n.t('No routes since {date}. Apiary deletes it 30 days later.', { date: c.unusedSince.slice(0, 10) });
+    }
+    return c.requested ? this.i18n.t('No routes yet. It’s ready for when a route chooses it.') : this.i18n.t('No routes');
   });
+
+  protected readonly others = computed(() =>
+    this.i18n.plural(this.otherHosts(), '{count} other hostname it covers uses its own.', '{count} other hostnames it covers use their own.'),
+  );
 }

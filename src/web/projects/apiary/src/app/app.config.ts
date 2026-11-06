@@ -16,6 +16,7 @@ import { auditPortuguese } from './audit/audit.pt';
 import { authPortuguese } from './auth/auth.pt';
 import { backupsPortuguese } from './backups/backups.pt';
 import { certificatesPortuguese } from './certificates/certificates.pt';
+import { dnsProvidersPortuguese } from './dns-providers/dns-providers.pt';
 import { clusterPortuguese } from './cluster/cluster.pt';
 import { keysPortuguese } from './keys/keys.pt';
 import { overviewPortuguese } from './overview/overview.pt';
@@ -44,6 +45,7 @@ export const appConfig: ApplicationConfig = {
     provideTranslations('pt-PT', backupsPortuguese),
     provideTranslations('pt-PT', certificatesPortuguese),
     provideTranslations('pt-PT', clusterPortuguese),
+    provideTranslations('pt-PT', dnsProvidersPortuguese),
     provideTranslations('pt-PT', keysPortuguese),
     provideTranslations('pt-PT', overviewPortuguese),
     provideTranslations('pt-PT', projectsPortuguese),

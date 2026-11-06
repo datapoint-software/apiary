@@ -40,6 +40,7 @@ export interface RouteModel {
   timeoutSeconds: number | null;
   certificate: 'automatic' | 'uploaded';
   certificateId: string;
+  challenge: string;
   allowedAddresses: string;
   rateLimited: boolean;
   rateLimit: number | null;
@@ -71,7 +72,7 @@ function noMaintenance(): MaintenanceModel {
 }
 
 export function emptyRoute(projectId: string, defaultMegabytes = 30): RouteModel {
-  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', allowedAddresses: '', rateLimited: false, rateLimit: 600, requestSize: 'default', requestCustom: sizeModel(defaultMegabytes), maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false, password: passwordModel(undefined) };
+  return { projectId, host: '', path: '/', targets: [{ host: '', port: 8080, weight: 100 }], timeoutSeconds: 30, certificate: 'automatic', certificateId: '', challenge: 'http-01', allowedAddresses: '', rateLimited: false, rateLimit: 600, requestSize: 'default', requestCustom: sizeModel(defaultMegabytes), maintenance: noMaintenance(), canary: noCanary(), sticky: false, compression: false, caching: false, strictTransport: false, strictTransportSubdomains: false, password: passwordModel(undefined) };
 }
 
 export function routeModel(route: RouteView, defaultMegabytes = 30): RouteModel {
@@ -83,6 +84,7 @@ export function routeModel(route: RouteView, defaultMegabytes = 30): RouteModel 
     timeoutSeconds: route.timeoutSeconds,
     certificate: route.certificateId ? 'uploaded' : 'automatic',
     certificateId: route.certificateId ?? '',
+    challenge: 'http-01',
     allowedAddresses: route.allowedAddresses.join('\n'),
     rateLimited: route.rateLimit !== undefined,
     rateLimit: route.rateLimit ?? 600,
