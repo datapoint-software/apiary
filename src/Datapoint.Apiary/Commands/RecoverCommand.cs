@@ -33,6 +33,12 @@ public static class RecoverCommand
 
         var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(s_planJson))!;
         Describe(plan);
+        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        {
+            await Console.Error.WriteLineAsync($"\nThe replica on {writable.Node} is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.");
+            return 1;
+        }
+
         if (!plan.Needed)
         {
             await Console.Error.WriteLineAsync("\nThe cluster has a majority (or this replica isn't in a Swarm), so there's nothing to recover.");

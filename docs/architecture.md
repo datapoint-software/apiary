@@ -212,12 +212,13 @@ Every change is a Datapoint.Mediator command, applied through a transaction beha
 
 If most voters are lost for good, writes can never resume. A forced recovery makes a surviving replica the only voter of a new cluster, like Swarm's `docker swarm init --force-new-cluster`. The survivor may lack the last few changes, which only a majority had. That is mostly harmless (a route to redo, a certificate renewed again), except for removed users, downgraded roles and revoked tokens: losing one of those gives back access that was taken away. The safeguards are built around that:
 
-1. **Never automatic.** An Administrator starts it from the recovery wizard on the Replicas page, which the UI offers only while the cluster has no majority, and confirms it with their password and authenticator code. It isn't offered to agents. The same recovery stays available as a one-time command inside a surviving container (`docker exec <container> apiary recover --force`), for when no Administrator can sign in. Neither is a configuration setting, so it can't be left on by mistake and repeated on every restart.
+1. **Never automatic.** An Administrator starts it from the recovery wizard on the Replicas page, which the UI offers only while the cluster has no majority, and confirms it with their password and authenticator code. It isn't offered to agents. The same recovery stays available as a one-time command inside a surviving container (`docker exec <container> apiary recover --force`), for when no Administrator can sign in. A replica that restarted after the majority was lost never becomes ready, so its admin interface answers nothing but this command, which works on it all the same. Neither is a configuration setting, so it can't be left on by mistake and repeated on every restart.
 2. **The most up-to-date survivor.** If several replicas survive, the command shows how far behind each one is and recovers from the most recent.
-3. **What may be lost is shown first.** The command shows the time of the survivor's last change and asks for confirmation.
-4. **All sign-ins and tokens are revoked.** Every session and OAuth token is invalidated, so nobody keeps access through a lost revocation without signing in again. The command also lists users and roles for review.
-5. **Old replicas are kept out.** The recovered cluster gets a new identity. A lost replica that comes back with its old state is refused, and must start empty and rejoin.
-6. **It's audited.** The recovery is the first audit entry of the new cluster.
+3. **Only without a majority anywhere.** A replica cut off from others that still have a majority refuses, because recovering it would replace their cluster. It should be restarted so it rejoins them instead.
+4. **What may be lost is shown first.** The command shows the time of the survivor's last change and asks for confirmation.
+5. **All sign-ins and tokens are revoked.** Every session and OAuth token is invalidated, so nobody keeps access through a lost revocation without signing in again. The command also lists users and roles for review.
+6. **Old replicas are kept out.** The recovered cluster gets a new identity. A lost replica that comes back with its old state is refused, and must start empty and rejoin.
+7. **It's audited.** The recovery is the first audit entry of the new cluster.
 
 ## Cluster trust
 

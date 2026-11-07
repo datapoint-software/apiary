@@ -66,6 +66,18 @@ public sealed class RecoverCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task A_survivor_in_a_cluster_with_a_majority_stops_the_recovery()
+    {
+        await using var api = await OperatorAsync(ARecoveryPlan(index: 10) with { Needed = false, Survivors = [ASurvivor(index: 10, writable: true)] });
+        using var shell = new OperatorShell(api.Port, _data.Path);
+
+        var exit = await RecoverCommand.RunAsync(["--force", "--yes"]);
+
+        Assert.Equal((1, 0), (exit, api.Starts));
+        Assert.Contains("The replica on node-b is in a cluster that has a majority", shell.Error);
+    }
+
+    [Fact]
     public async Task A_survivor_with_more_changes_stops_the_recovery()
     {
         await using var api = await OperatorAsync(ARecoveryPlan(index: 10) with { Survivors = [ASurvivor(index: 12)] });

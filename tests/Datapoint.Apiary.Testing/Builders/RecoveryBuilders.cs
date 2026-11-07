@@ -14,5 +14,5 @@ public static class RecoveryBuilders
             Unreachable: ["node-b", "node-c"],
             Users: [new RecoveryUser("Ana", "ana@example.com", "Administrator", "Active")]);
 
-    public static Survivor ASurvivor(long index, string node = "node-b", string address = "10.0.0.2") => new(node, address, index);
+    public static Survivor ASurvivor(long index, string node = "node-b", string address = "10.0.0.2", bool writable = false) => new(node, address, index, writable);
 }

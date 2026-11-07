@@ -5,6 +5,7 @@ export const appMessagesPortuguese: MessageCatalog = {
   'cluster.recoveryNotNeeded': () => 'A maioria dos votantes está novamente contactável, por isso o cluster não precisa de ser recuperado.',
   'cluster.notMostRecent': () => 'Outra réplica contactável tem mais alterações. Recupere a partir dessa.',
   'cluster.otherReplica': () => 'Este pedido chegou a uma réplica diferente da que verificou, por isso nada mudou. Feche isto e comece novamente.',
+  'cluster.majorityElsewhere': () => 'Outra réplica está num cluster com maioria, por isso esta só está separada dele. Reinicie esta réplica para que volte a juntar-se, em vez de a recuperar.',
   'recovery.nodeRequired': () => 'Escreva o nome da réplica para confirmar.',
   'recovery.nodeMismatch': () => 'Esse não é o nome desta réplica. Escreva-o exatamente como é mostrado.',
   'project.notFound': () => 'Escolha um projeto.',

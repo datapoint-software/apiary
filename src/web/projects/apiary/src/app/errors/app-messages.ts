@@ -5,6 +5,7 @@ export const appMessages: MessageCatalog = {
   'cluster.recoveryNotNeeded': () => 'A majority of voters can be reached again, so the cluster doesn’t need recovering.',
   'cluster.notMostRecent': () => 'Another reachable replica has more changes. Recover from that one instead.',
   'cluster.otherReplica': () => 'This request reached a different replica from the one you checked, so nothing changed. Close this and start again.',
+  'cluster.majorityElsewhere': () => 'Another replica is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.',
   'recovery.nodeRequired': () => 'Type the replica’s name to confirm.',
   'recovery.nodeMismatch': () => 'That isn’t this replica’s name. Type it exactly as shown.',
   'project.notFound': () => 'Choose a project.',

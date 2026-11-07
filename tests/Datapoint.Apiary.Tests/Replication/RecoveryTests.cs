@@ -65,6 +65,20 @@ public sealed class RecoveryTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_replica_that_restarted_after_the_majority_was_lost_can_recover()
+    {
+        await LoseMajorityAsync();
+        await _swarm.StopReplicaAsync(_survivor);
+
+        var restarted = _swarm.Launch(_survivor);
+        Assert.True(await Eventually.TrueAsync(() => restarted.State.ClusterCa is not null && restarted.Cluster.Address is not null, s_restart));
+
+        var plan = await restarted.Cluster.PlanRecoveryAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal((true, false), (plan.Needed, restarted.Cluster.IsReady));
+    }
+
+    [Fact]
     public async Task Recovering_makes_the_last_replica_the_only_member_of_a_new_cluster()
     {
         var before = _swarm[_survivor].State.ClusterId;

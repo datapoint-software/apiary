@@ -21,6 +21,7 @@ public static partial class McpErrorDescriptions
         ["cluster.recoveryNotNeeded"] = "A majority of voters can be reached, so the cluster doesn't need recovering.",
         ["cluster.notMostRecent"] = "Another reachable replica has more changes. Recover from that one instead.",
         ["cluster.otherReplica"] = "The request reached a different replica from the one that was checked. Check again from the replica that answers.",
+        ["cluster.majorityElsewhere"] = "Another replica is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.",
         ["required"] = "This field is required.",
         ["tooLong"] = "Use at most {max} characters.",
         ["range"] = "Use a number from {min} to {max}.",

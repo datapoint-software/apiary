@@ -5,6 +5,7 @@ public sealed class RecoveryRefusedException : Exception
     public const string NotNeeded = "cluster.recoveryNotNeeded";
     public const string NotMostRecent = "cluster.notMostRecent";
     public const string OtherReplica = "cluster.otherReplica";
+    public const string MajorityElsewhere = "cluster.majorityElsewhere";
 
     public RecoveryRefusedException()
     {

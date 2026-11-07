@@ -28,7 +28,7 @@ public sealed partial class RaftClusterState
             {
                 if (await FetchViewAsync(peer, cancellationToken) is { } view && view.Members.FirstOrDefault(m => m.Local) is { } member)
                 {
-                    survivors.Add(new Survivor(member.Node, member.Address, view.Index));
+                    survivors.Add(new Survivor(member.Node, member.Address, view.Index, view.Writable));
                 }
             }
         }
@@ -38,7 +38,8 @@ public sealed partial class RaftClusterState
             .Select(u => new RecoveryUser(u.Name, u.Email, u.Role.ToString(), u.Status.ToString()))
             .ToList();
         var unreachable = (await DescribeAsync(cancellationToken)).Members.Where(m => !m.Reachable).Select(m => m.Node ?? m.Address).ToList();
-        return new RecoveryPlan(discovery.IsSwarm && IsReady && !IsWritable, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users);
+        var needed = RecoveryPlan.IsNeeded(discovery.IsSwarm, state.ClusterCa is not null, IsWritable, survivors);
+        return new RecoveryPlan(needed, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users);
     }
 
     public async Task RequestRecoveryAsync(string? node, string? requestedBy, string? address, CancellationToken cancellationToken)
@@ -52,6 +53,14 @@ public sealed partial class RaftClusterState
         }
 
         var plan = await PlanRecoveryAsync(cancellationToken);
+        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        {
+            throw new RecoveryRefusedException($"The replica on {writable.Node} at {writable.Address} is in a cluster that has a majority. Restart this replica so it rejoins that cluster instead.")
+            {
+                Code = RecoveryRefusedException.MajorityElsewhere,
+            };
+        }
+
         if (!plan.Needed)
         {
             throw new RecoveryRefusedException("The cluster has a majority, or this replica isn't running in Swarm, so there's nothing to recover.")
