@@ -41,7 +41,7 @@ public static class RecoverCommand
 
         if (!plan.Needed)
         {
-            await Console.Error.WriteLineAsync("\nThe cluster has a majority (or this replica isn't in a Swarm), so there's nothing to recover.");
+            await Console.Error.WriteLineAsync("\nThis replica can write, or isn't in a Swarm, or hasn't joined a cluster yet, so there's nothing to recover.");
             return 1;
         }
 

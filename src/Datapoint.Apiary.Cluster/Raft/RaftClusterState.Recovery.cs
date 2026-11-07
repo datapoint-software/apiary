@@ -63,7 +63,7 @@ public sealed partial class RaftClusterState
 
         if (!plan.Needed)
         {
-            throw new RecoveryRefusedException("The cluster has a majority, or this replica isn't running in Swarm, so there's nothing to recover.")
+            throw new RecoveryRefusedException("This replica can write, or isn't running in Swarm, or hasn't joined a cluster yet, so there's nothing to recover.")
             {
                 Code = RecoveryRefusedException.NotNeeded,
             };

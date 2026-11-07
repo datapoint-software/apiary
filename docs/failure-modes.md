@@ -56,7 +56,7 @@ Add the node's address to DNS once the replica is healthy.
 
 ## Rolling update
 
-Replicas are replaced one at a time (`parallelism: 1`, `order: stop-first`). Each one leaves cleanly as in a scale-down, and Swarm only moves on once its replacement has caught up and reports healthy. If the leader is replaced, writes pause briefly during the election. If a new replica never becomes healthy, Swarm rolls the update back.
+Replicas are replaced one at a time (`parallelism: 1`, `order: stop-first`). Each one leaves cleanly as in a scale-down. In Swarm a replica reports healthy while it joins, so that the others can find it, so Swarm may move on before the replacement has caught up. To keep the majority, a stopping replica waits up to 15 seconds for the others to be ready before it leaves (see [review notes](review-notes.md)). If the leader is replaced, writes pause briefly during the election. If a new replica stops reporting healthy, Swarm rolls the update back.
 
 With 3 replicas, one is always missing during an update, so the cluster tolerates no other failure until the update finishes.
 
@@ -80,6 +80,7 @@ E.g. 2 of 3 voters are down:
 - The remaining replicas keep proxying with the last known routes and certificates.
 - Writes stop: no route or user changes, no renewals, and no audit entries, so changes are refused rather than made unrecorded.
 - When enough voters return, writes resume on their own.
+- In Swarm, a replica that returns gets a new address, which the others' member lists don't have yet. A replica that isn't ready restarts to pick up the new addresses. If writes still don't resume a few minutes after every replica is back, restart the whole service so every replica updates its member list.
 - If they are lost for good, writes never resume on their own. Either restore the last backup into a new cluster, or run a [forced recovery](architecture.md#forced-recovery) on the most up-to-date survivor, which may lose its last few changes and signs everyone out. Then add replicas back as in a [scale-up](#scaling-up).
 
 ## Network partition

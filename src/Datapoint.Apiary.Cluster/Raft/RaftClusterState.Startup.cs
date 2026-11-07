@@ -389,7 +389,7 @@ public sealed partial class RaftClusterState
     [LoggerMessage(Level = LogLevel.Information, Message = "Loaded the state at index {Index}")]
     private partial void LogLoaded(long index);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Joined the cluster through {Peer}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Got this replica's certificate and keys from {Peer}; it takes part in the cluster once a leader admits it")]
     private partial void LogJoined(string peer);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "No cluster found, so this replica creates one")]
