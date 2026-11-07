@@ -80,8 +80,11 @@ public sealed partial class RaftClusterState
                 RewriteAddresses();
             }
 
-            await StartRaftAsync(_bootstrapping, recovering, cancellationToken);
+            var membersLoaded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var starting = StartRaftAsync(_bootstrapping, recovering, membersLoaded, cancellationToken);
+            await Task.WhenAny(starting, membersLoaded.Task);
             var monitoring = MonitorAsync(cancellationToken);
+            await starting;
             if (recovering)
             {
                 await FinishRecoveryAsync(cancellationToken);
@@ -301,14 +304,17 @@ public sealed partial class RaftClusterState
         LogAddressesRewritten(moved.Count);
     }
 
-    private async Task StartRaftAsync(bool bootstrap, bool recovering, CancellationToken cancellationToken)
+    // The monitor starts once the member list is loaded, not once the replica is admitted: a replica
+    // that can't reach a leader waits in the announcer forever, and only the monitor notices that its
+    // peers moved or that it was superseded.
+    private async Task StartRaftAsync(bool bootstrap, bool recovering, TaskCompletionSource membersLoaded, CancellationToken cancellationToken)
     {
         var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(options.Value.BindAddress ?? (discovery.IsSwarm ? Address!.Address : IPAddress.Loopback), options.Value.RaftPort))
         {
             PublicEndPoint = Address!,
             ConfigurationStorage = new MemberAddressBook(MembersFile),
             ColdStart = bootstrap,
-            Announcer = discovery.IsSwarm && !recovering ? AnnounceAsync : null,
+            Announcer = discovery.IsSwarm && !recovering ? AnnounceOnceLoadedAsync : null,
             LoggerFactory = loggers,
             RequestTimeout = s_raftRequestTimeout,
             ConnectTimeout = s_raftConnectTimeout,
@@ -322,6 +328,13 @@ public sealed partial class RaftClusterState
         _raft = new RaftCluster(configuration) { AuditTrail = _log! };
         _raft.LeaderChanged += (_, _) => NotifyChanged();
         await _raft.StartAsync(cancellationToken);
+        membersLoaded.TrySetResult();
+
+        Task AnnounceOnceLoadedAsync(EndPoint address, IReadOnlyDictionary<string, string> metadata, CancellationToken token)
+        {
+            membersLoaded.TrySetResult();
+            return AnnounceAsync(address, metadata, token);
+        }
     }
 
     private async Task BecomeReadyAsync(bool bootstrap, CancellationToken cancellationToken)

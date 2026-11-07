@@ -453,10 +453,13 @@ public sealed partial class RaftClusterState
 
     private bool IsRemoved(ClusterView? view)
     {
+        // A replica that was never a member, still waiting to be admitted, isn't removed.
         var own = Address?.ToString();
         return view is not null
+            && Identity is { } identity
+            && Current.Replicas.ContainsKey(identity.Id)
             && view.Members.Any(m => m.Role is MemberRole.Leader)
-            && view.Members.All(m => m.Address != own && m.Id != Identity?.Id);
+            && view.Members.All(m => m.Address != own && m.Id != identity.Id);
     }
 
     private Replica? Moved(ClusterView? view)
