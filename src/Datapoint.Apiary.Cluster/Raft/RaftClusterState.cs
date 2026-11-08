@@ -144,15 +144,23 @@ public sealed partial class RaftClusterState(
     public ClusterView Describe()
     {
         var state = Current;
-        var members = _raft?.Members.Select(m =>
-        {
-            var address = m.EndPoint.ToString() ?? "";
-            var replica = state.Replicas.Values.FirstOrDefault(r => r.Address == address);
-            var role = m.IsLeader ? MemberRole.Leader : MemberRole.Voter;
-            return new MemberView(replica?.Id, replica?.Node, address, role, !m.IsRemote || m.Status is ClusterMemberStatus.Available, !m.IsRemote, replica?.JoinedAt, MissingSince(address));
-        }).ToList() ?? [];
+        var members = _raft?.Members.Select(m => ViewOf(m, state)).ToList() ?? [];
         return new ClusterView(options.Value.Mode.ToString(), IsReady, IsWritable, state.Index, Identity?.Id, members, Membership, Pending);
     }
+
+    private MemberView ViewOf(RaftClusterMember m, ApiaryState state)
+    {
+        var address = m.EndPoint.ToString() ?? "";
+        var replica = ReplicaOf(m, address, state);
+        var role = m.IsLeader ? MemberRole.Leader : MemberRole.Voter;
+        return new MemberView(replica?.Id, replica?.Node ?? (m.IsRemote ? null : NodeName), address, role, !m.IsRemote || m.Status is ClusterMemberStatus.Available, !m.IsRemote, replica?.JoinedAt, MissingSince(address));
+    }
+
+    // This replica knows itself by ID: its address in the state is stale after it restarted in Swarm.
+    private Replica? ReplicaOf(RaftClusterMember m, string address, ApiaryState state) =>
+        !m.IsRemote && Identity is { } identity
+            ? state.Replicas.GetValueOrDefault(identity.Id)
+            : state.Replicas.Values.FirstOrDefault(r => r.Address == address);
 
     public async Task<AcmeChallenge?> FindChallengeAsync(string token, CancellationToken cancellationToken)
     {

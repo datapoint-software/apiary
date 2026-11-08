@@ -33,21 +33,9 @@ public static class RecoverCommand
 
         var plan = (await planResponse.Content.ReadFromJsonAsync<RecoveryPlan>(s_planJson))!;
         Describe(plan);
-        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        if (Refusal(plan) is { } refusal)
         {
-            await Console.Error.WriteLineAsync($"\nThe replica on {writable.Node} is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.");
-            return 1;
-        }
-
-        if (!plan.Needed)
-        {
-            await Console.Error.WriteLineAsync("\nThis replica can write, or isn't in a Swarm, or hasn't joined a cluster yet, so there's nothing to recover.");
-            return 1;
-        }
-
-        if (plan.Survivors.FirstOrDefault(s => s.Index > plan.Index) is { } ahead)
-        {
-            await Console.Error.WriteLineAsync($"\nThe replica on {ahead.Node} has more changes. Run this command in that replica's container instead.");
+            await Console.Error.WriteLineAsync("\n" + refusal);
             return 1;
         }
 
@@ -77,13 +65,30 @@ public static class RecoverCommand
         return 0;
     }
 
+    private static string? Refusal(RecoveryPlan plan)
+    {
+        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        {
+            return $"The replica on {writable.Node ?? writable.Address} is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.";
+        }
+
+        if (!plan.Needed)
+        {
+            return "This replica can write, or isn't in a Swarm, or hasn't joined a cluster yet, so there's nothing to recover.";
+        }
+
+        return plan.Survivors.FirstOrDefault(s => s.Index > plan.Index) is { } ahead
+            ? $"The replica on {ahead.Node ?? ahead.Address} has more changes. Run this command in that replica's container instead."
+            : null;
+    }
+
     private static void Describe(RecoveryPlan plan)
     {
         var lastChange = plan.LastChangeAt is { } at ? at.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture) : "unknown";
         Console.WriteLine($"This replica ({plan.Node}) has the state up to index {plan.Index}; its last change was at {lastChange}.");
         foreach (var survivor in plan.Survivors)
         {
-            Console.WriteLine($"  Also reachable: {survivor.Node} at {survivor.Address}, index {survivor.Index}.");
+            Console.WriteLine($"  Also reachable: {survivor.Node ?? "an unnamed node"} at {survivor.Address}, index {survivor.Index}.");
         }
 
         Console.WriteLine("\nUsers and roles in this state:");
