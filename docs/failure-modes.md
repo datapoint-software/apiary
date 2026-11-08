@@ -80,7 +80,7 @@ E.g. 2 of 3 voters are down:
 - The remaining replicas keep proxying with the last known routes and certificates.
 - Writes stop: no route or user changes, no renewals, and no audit entries, so changes are refused rather than made unrecorded.
 - When enough voters return, writes resume on their own.
-- In Swarm, a replica that returns gets a new address, which the others' member lists don't have yet. A replica that isn't ready restarts to pick up the new addresses. If writes still don't resume a few minutes after every replica is back, restart the whole service so every replica updates its member list.
+- In Swarm, a replica that returns gets a new address, which the others' member lists don't have yet. Each replica swaps the new addresses into its member list on its own, about a minute after it notices. If writes still don't resume a few minutes after every replica is back, restart the whole service so every replica updates its member list.
 - If they are lost for good, writes never resume on their own. Either restore the last backup into a new cluster, or run a [forced recovery](architecture.md#forced-recovery) on the most up-to-date survivor, which may lose its last few changes and signs everyone out. Then add replicas back as in a [scale-up](#scaling-up).
 
 ## Network partition

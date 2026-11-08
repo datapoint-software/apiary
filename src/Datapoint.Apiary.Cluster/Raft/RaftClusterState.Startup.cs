@@ -22,6 +22,7 @@ public sealed partial class RaftClusterState
     private static readonly TimeSpan s_raftShutdownTimeout = TimeSpan.FromSeconds(1);
     private readonly Dictionary<Guid, IPEndPoint> _peerAddresses = [];
     private ClusterCa? _bootstrapCa;
+    private LiveMemberList? _memberList;
 
     private string StateDirectory => Path.Combine(DataDirectory, "state");
 
@@ -312,7 +313,7 @@ public sealed partial class RaftClusterState
         var configuration = new RaftCluster.TcpConfiguration(new IPEndPoint(options.Value.BindAddress ?? (discovery.IsSwarm ? Address!.Address : IPAddress.Loopback), options.Value.RaftPort))
         {
             PublicEndPoint = Address!,
-            ConfigurationStorage = new MemberAddressBook(MembersFile),
+            ConfigurationStorage = _memberList = new LiveMemberList(MembersFile),
             ColdStart = bootstrap,
             Announcer = discovery.IsSwarm && !recovering ? AnnounceOnceLoadedAsync : null,
             LoggerFactory = loggers,

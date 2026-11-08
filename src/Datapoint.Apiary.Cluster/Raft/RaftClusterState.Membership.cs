@@ -419,6 +419,7 @@ public sealed partial class RaftClusterState
             return;
         }
 
+        var moved = new List<Replica>();
         foreach (var peer in await discovery.PeersAsync(Address!.Address, cancellationToken))
         {
             var view = await FetchViewAsync(peer, cancellationToken);
@@ -429,26 +430,81 @@ public sealed partial class RaftClusterState
                 return;
             }
 
-            if (Moved(view) is { } moved)
+            if (Moved(view) is { } replica)
             {
-                NoteMoved(moved, now);
-                return;
+                moved.Add(replica);
             }
         }
-    }
 
-    private void NoteMoved(Replica moved, DateTimeOffset now)
-    {
-        var node = moved.Node ?? moved.Id.ToString();
-        if (!IsReady)
+        var moves = await PairWithFormerAddressesAsync(moved, cancellationToken);
+        if (moves.Count == 0)
         {
-            LogRestartingForMovedPeer(node, moved.Address);
-            lifetime.StopApplication();
             return;
         }
 
-        LogPeerMoved(node, moved.Address);
+        await MoveMembersAsync(moves, cancellationToken);
         _stuckSince = now;
+    }
+
+    // Restarting would learn the new addresses too, but it gives this replica a new address of its own,
+    // so the others' lists go stale and they restart in turn, without end.
+    private async Task MoveMembersAsync(Dictionary<IPEndPoint, Replica> moves, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        AddressHistory.Load(HistoryFile).With(moves.Values.Select(r => new KnownAddress(r.Address, r.Id, now))).Save(HistoryFile);
+        await _memberList!.ReplaceAsync(moves.ToDictionary(m => m.Key, m => IPEndPoint.Parse(m.Value.Address)), cancellationToken);
+        foreach (var moved in moves.Values)
+        {
+            LogPeerMoved(moved.Node ?? moved.Id.ToString(), moved.Address);
+        }
+    }
+
+    // A moved peer replaces its own former address when this replica knows which one that was. Otherwise
+    // it replaces an address no running task has: the list may have learned it from a leader, without
+    // knowing whose it was. The number of members stays the same either way, so the voters are the
+    // running replicas even when it can't tell which old address belonged to which.
+    private async Task<Dictionary<IPEndPoint, Replica>> PairWithFormerAddressesAsync(List<Replica> moved, CancellationToken cancellationToken)
+    {
+        var moves = new Dictionary<IPEndPoint, Replica>();
+        var unmatched = new List<Replica>();
+        foreach (var replica in moved)
+        {
+            if (FormerAddressOf(replica.Id) is { } former)
+            {
+                moves[former] = replica;
+            }
+            else
+            {
+                unmatched.Add(replica);
+            }
+        }
+
+        if (unmatched.Count == 0)
+        {
+            return moves;
+        }
+
+        var running = await discovery.ResolveAsync(cancellationToken);
+        var gone = _raft!.Members
+            .Where(m => m.IsRemote)
+            .Select(m => (IPEndPoint)m.EndPoint)
+            .Where(e => !running.Contains(e.Address) && !moves.ContainsKey(e));
+        foreach (var (former, replica) in gone.Zip(unmatched))
+        {
+            moves[former] = replica;
+        }
+
+        return moves;
+    }
+
+    private IPEndPoint? FormerAddressOf(Guid replicaId)
+    {
+        var history = AddressHistory.Load(HistoryFile);
+        var known = Current.Replicas.GetValueOrDefault(replicaId)?.Address;
+        return _raft!.Members
+            .Where(m => m.IsRemote)
+            .Select(m => (IPEndPoint)m.EndPoint)
+            .FirstOrDefault(e => e.ToString() == known || history.ReplicaAt(e.ToString()) == replicaId);
     }
 
     private bool IsRemoved(ClusterView? view)
@@ -542,11 +598,8 @@ public sealed partial class RaftClusterState
     [LoggerMessage(Level = LogLevel.Warning, Message = "Couldn't check for missing replicas")]
     private partial void LogMonitorFailed(Exception exception);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "No leader for a while, and the replica on {Node} now runs at {Address}, which this replica's member list doesn't have. If replicas restarted while the cluster had no majority, restart the whole service so every replica updates its member list")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "No leader for a while, and the replica on {Node} now runs at {Address}, which this replica's member list didn't have. Updated the list to reach it there")]
     private partial void LogPeerMoved(string node, string address);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Still not ready, and the replica on {Node} now runs at {Address}, which this replica's member list doesn't have. Restarting to learn the replicas' new addresses")]
-    private partial void LogRestartingForMovedPeer(string node, string address);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Removed the replica at {Address}, missing from Swarm for longer than the timeout")]
     private partial void LogRemovedMissing(string address);
