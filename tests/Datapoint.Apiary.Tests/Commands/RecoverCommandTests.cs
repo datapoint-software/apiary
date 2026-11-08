@@ -78,6 +78,18 @@ public sealed class RecoverCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task A_replica_that_can_write_has_nothing_to_recover_even_beside_others_that_can()
+    {
+        await using var api = await OperatorAsync(ARecoveryPlan(index: 10) with { Needed = false, Writable = true, Survivors = [ASurvivor(index: 10, writable: true)] });
+        using var shell = new OperatorShell(api.Port, _data.Path);
+
+        var exit = await RecoverCommand.RunAsync(["--force", "--yes"]);
+
+        Assert.Equal((1, 0), (exit, api.Starts));
+        Assert.Contains("nothing to recover", shell.Error);
+    }
+
+    [Fact]
     public async Task A_survivor_with_more_changes_stops_the_recovery()
     {
         await using var api = await OperatorAsync(ARecoveryPlan(index: 10) with { Survivors = [ASurvivor(index: 12)] });

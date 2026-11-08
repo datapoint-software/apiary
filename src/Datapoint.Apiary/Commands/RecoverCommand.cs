@@ -67,7 +67,7 @@ public static class RecoverCommand
 
     private static string? Refusal(RecoveryPlan plan)
     {
-        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        if (plan.MajorityElsewhere is { } writable)
         {
             return $"The replica on {writable.Node ?? writable.Address} is in a cluster that has a majority, so this one is only cut off from it. Restart this replica so it rejoins, instead of recovering.";
         }

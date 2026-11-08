@@ -39,7 +39,7 @@ public sealed partial class RaftClusterState
             .ToList();
         var unreachable = (await DescribeAsync(cancellationToken)).Members.Where(m => !m.Reachable).Select(m => m.Node ?? m.Address).ToList();
         var needed = RecoveryPlan.IsNeeded(discovery.IsSwarm, state.ClusterCa is not null, IsWritable, survivors);
-        return new RecoveryPlan(needed, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users);
+        return new RecoveryPlan(needed, NodeName, state.Index, state.Audit.LastOrDefault()?.At, survivors, unreachable, users, IsWritable);
     }
 
     public async Task RequestRecoveryAsync(string? node, string? requestedBy, string? address, CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ public sealed partial class RaftClusterState
         }
 
         var plan = await PlanRecoveryAsync(cancellationToken);
-        if (plan.Survivors.FirstOrDefault(s => s.Writable) is { } writable)
+        if (plan.MajorityElsewhere is { } writable)
         {
             throw new RecoveryRefusedException($"The replica on {writable.Node} at {writable.Address} is in a cluster that has a majority. Restart this replica so it rejoins that cluster instead.")
             {
