@@ -2,6 +2,10 @@
 # digest, Dependabot opens one pull request that updates them all, and CI
 # builds and tests the image before anyone merges it. Version changes (a new
 # .NET or Node major or minor) stay manual, as they need code changes too.
+#
+# Commit messages and pull request titles follow Conventional Commits: the
+# prefix is the type and `include: scope` adds the `deps` scope, so they read
+# `build(deps): bump ...` and `ci(deps): bump ...`.
 version: 2
 updates:
   - package-ecosystem: docker
@@ -29,6 +33,7 @@ updates:
       day: monday
     commit-message:
       prefix: ci
+      include: scope
     groups:
       actions:
         patterns: ["*"]
