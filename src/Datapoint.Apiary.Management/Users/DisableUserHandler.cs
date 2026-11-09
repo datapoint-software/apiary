@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class DisableUserHandler(StateTransaction transaction, Sessions sessions, CurrentUser current) : ICommandHandler<DisableUser>
 {
-    public ValueTask HandleAsync(DisableUser command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DisableUser command, CancellationToken cancellationToken = default)
     {
         var user = UserGuards.Find(transaction.State, command.Id);
         if (user.Status is not UserStatus.Active)

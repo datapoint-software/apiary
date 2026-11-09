@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Audit;
 
 public sealed class AuthorizationAuditor(AuditLog audit) : IAuthorizationObserver
 {
-    public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
+    public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default)
     {
         if (authorization.Outcome is not AuthorizationOutcome.Denied)
         {
@@ -15,6 +15,6 @@ public sealed class AuthorizationAuditor(AuditLog audit) : IAuthorizationObserve
         }
 
         var action = StateTransactionBehavior.ActionName(authorization.Action.GetType());
-        await audit.RecordAsync(action, AuditOutcome.Denied, authorization.Principal?.FindFirstValue(ClaimTypes.Name), [], ct);
+        await audit.RecordAsync(action, AuditOutcome.Denied, authorization.Principal?.FindFirstValue(ClaimTypes.Name), [], cancellationToken);
     }
 }

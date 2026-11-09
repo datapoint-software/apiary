@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.AdminAccess;
 public sealed class UploadAdminCertificateHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<UploadAdminCertificate, AdminCertificateView>
 {
-    public ValueTask<AdminCertificateView> HandleAsync(UploadAdminCertificate command, CancellationToken ct = default)
+    public ValueTask<AdminCertificateView> HandleAsync(UploadAdminCertificate command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var material = CertificateBundle.Check(command.ChainPem, command.KeyPem, now).Material!;

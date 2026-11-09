@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class ChangeRoleHandler(StateTransaction transaction) : ICommandHandler<ChangeRole>
 {
-    public ValueTask HandleAsync(ChangeRole command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ChangeRole command, CancellationToken cancellationToken = default)
     {
         var user = UserGuards.Find(transaction.State, command.Id);
         UserGuards.NotManagedBySso(user);

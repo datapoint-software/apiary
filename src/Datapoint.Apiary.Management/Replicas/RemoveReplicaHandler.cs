@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Replicas;
 
 public sealed class RemoveReplicaHandler(RaftClusterState cluster, StateTransaction transaction, TimeProvider time) : ICommandHandler<RemoveReplica>
 {
-    public async ValueTask HandleAsync(RemoveReplica command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(RemoveReplica command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Replicas.TryGetValue(command.Id, out var replica))
         {
@@ -20,7 +20,7 @@ public sealed class RemoveReplicaHandler(RaftClusterState cluster, StateTransact
             throw ActionFailedException.Conflict(ErrorCodes.ReplicaReachable);
         }
 
-        await cluster.RemoveReplicaAsync(replica, ct);
+        await cluster.RemoveReplicaAsync(replica, cancellationToken);
         transaction.Record(new ReplicaRemoved(replica.Id, time.GetUtcNow()));
         transaction.Affects(replica.Id);
     }

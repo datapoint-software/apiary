@@ -17,7 +17,7 @@ public sealed class SignInHandler(
     AuditLog audit,
     IRequestOrigin origin) : IQueryHandler<SignIn, SignInStep>
 {
-    public async ValueTask<SignInStep> HandleAsync(SignIn query, CancellationToken ct = default)
+    public async ValueTask<SignInStep> HandleAsync(SignIn query, CancellationToken cancellationToken = default)
     {
         var email = Emails.Normalize(query.Email);
         var key = string.Concat(email, "|", origin.Address);
@@ -28,7 +28,7 @@ public sealed class SignInHandler(
         {
             if (throttle.Failed(key) == SignInThrottle.AuditedFailures)
             {
-                await audit.RecordAsync("auth.sign-in", AuditOutcome.Failed, email, user is null ? [] : [user.Id.ToString()], ct);
+                await audit.RecordAsync("auth.sign-in", AuditOutcome.Failed, email, user is null ? [] : [user.Id.ToString()], cancellationToken);
             }
 
             throw ActionFailedException.Invalid(ErrorCodes.SignInFailed);

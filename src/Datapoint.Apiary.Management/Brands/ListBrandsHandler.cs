@@ -5,7 +5,7 @@ namespace Datapoint.Apiary.Management.Brands;
 
 public sealed class ListBrandsHandler(IClusterState cluster) : IQueryHandler<ListBrands, BrandsView>
 {
-    public ValueTask<BrandsView> HandleAsync(ListBrands query, CancellationToken ct = default)
+    public ValueTask<BrandsView> HandleAsync(ListBrands query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var projects = state.Projects.Values

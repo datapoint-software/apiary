@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Proxies;
 
 public sealed class UpdateTrustedProxyHandler(StateTransaction transaction) : ICommandHandler<UpdateTrustedProxy>
 {
-    public ValueTask HandleAsync(UpdateTrustedProxy command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateTrustedProxy command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.TrustedProxies.TryGetValue(command.Id, out var proxy))
         {

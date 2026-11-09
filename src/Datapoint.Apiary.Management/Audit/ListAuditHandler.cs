@@ -9,7 +9,7 @@ public sealed class ListAuditHandler(IClusterState cluster) : IQueryHandler<List
 {
     private const int MaximumEntries = 500;
 
-    public ValueTask<IReadOnlyList<AuditEntry>> HandleAsync(ListAudit query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<AuditEntry>> HandleAsync(ListAudit query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var userId = string.IsNullOrEmpty(query.User) ? null : UserLookup.ByEmail(state, query.User)?.Id;

@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class PurgeRouteCachesHandler(StateTransaction transaction, TimeProvider time) : ICommandHandler<PurgeRouteCaches>
 {
-    public ValueTask HandleAsync(PurgeRouteCaches command, CancellationToken ct = default)
+    public ValueTask HandleAsync(PurgeRouteCaches command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         foreach (var id in command.Ids.Distinct())

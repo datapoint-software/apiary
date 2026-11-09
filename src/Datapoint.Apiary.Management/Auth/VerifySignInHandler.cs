@@ -18,7 +18,7 @@ public sealed class VerifySignInHandler(
     IRequestOrigin origin,
     TimeProvider time) : ICommandHandler<VerifySignIn, SignInResult>
 {
-    public async ValueTask<SignInResult> HandleAsync(VerifySignIn command, CancellationToken ct = default)
+    public async ValueTask<SignInResult> HandleAsync(VerifySignIn command, CancellationToken cancellationToken = default)
     {
         var challenge = challenges.Read(command.Challenge, ChallengePurpose.SignIn, ChallengePurpose.Enroll);
         if (challenge.UserId is not { } userId
@@ -37,7 +37,7 @@ public sealed class VerifySignInHandler(
         {
             if (throttle.Failed(key) == SignInThrottle.AuditedFailures)
             {
-                await audit.RecordAsync("auth.verify", AuditOutcome.Failed, user.Email, [user.Id.ToString()], ct);
+                await audit.RecordAsync("auth.verify", AuditOutcome.Failed, user.Email, [user.Id.ToString()], cancellationToken);
             }
 
             throw FieldErrors.For(nameof(VerifySignIn.Code), ErrorCodes.CodeInvalid);

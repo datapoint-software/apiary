@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Agents;
 public sealed class ListAgentsHandler(IClusterState cluster, CurrentUser current, TimeProvider time)
     : IQueryHandler<ListAgents, IReadOnlyList<AgentView>>
 {
-    public ValueTask<IReadOnlyList<AgentView>> HandleAsync(ListAgents query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<AgentView>> HandleAsync(ListAgents query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var user = current.Require(state);

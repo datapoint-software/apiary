@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class RenewInviteHandler(StateTransaction transaction, Invitations invitations) : ICommandHandler<RenewInvite, InviteLink>
 {
-    public ValueTask<InviteLink> HandleAsync(RenewInvite command, CancellationToken ct = default)
+    public ValueTask<InviteLink> HandleAsync(RenewInvite command, CancellationToken cancellationToken = default)
     {
         var user = UserGuards.Find(transaction.State, command.Id);
         return user.Status is UserStatus.Invited

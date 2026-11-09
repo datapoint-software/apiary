@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class UpdateRouteDefaultsHandler(StateTransaction transaction) : ICommandHandler<UpdateRouteDefaults>
 {
-    public ValueTask HandleAsync(UpdateRouteDefaults command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateRouteDefaults command, CancellationToken cancellationToken = default)
     {
         transaction.Record(new RouteDefaultsSaved(new RouteDefaults(command.RequestMegabytes)));
         return ValueTask.CompletedTask;

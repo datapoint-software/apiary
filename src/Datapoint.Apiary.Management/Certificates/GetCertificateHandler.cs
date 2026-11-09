@@ -5,7 +5,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 
 public sealed class GetCertificateHandler(IClusterState cluster, TimeProvider time) : IQueryHandler<GetCertificate, CertificateDetails>
 {
-    public ValueTask<CertificateDetails> HandleAsync(GetCertificate query, CancellationToken ct = default)
+    public ValueTask<CertificateDetails> HandleAsync(GetCertificate query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var certificate = CertificateGuards.Find(state, query.Id);

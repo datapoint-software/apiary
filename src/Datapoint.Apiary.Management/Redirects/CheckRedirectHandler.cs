@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Redirects;
 
 public sealed class CheckRedirectHandler(IClusterState cluster) : IQueryHandler<CheckRedirect, IReadOnlyList<FieldCheck>>
 {
-    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckRedirect query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckRedirect query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var check = RedirectRules.IsWholeHost(query.Path) ? WholeHost(state, query.From) : AtPath(state, query.From, query.Path);

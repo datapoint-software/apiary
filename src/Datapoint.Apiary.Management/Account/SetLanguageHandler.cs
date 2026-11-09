@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Account;
 
 public sealed class SetLanguageHandler(StateTransaction transaction, CurrentUser current) : ICommandHandler<SetLanguage>
 {
-    public ValueTask HandleAsync(SetLanguage command, CancellationToken ct = default)
+    public ValueTask HandleAsync(SetLanguage command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         transaction.Record(new UserSaved(user with { Language = command.Language }));

@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 public sealed class ListCertificatesHandler(IClusterState cluster, TimeProvider time)
     : IQueryHandler<ListCertificates, IReadOnlyList<CertificateSummary>>
 {
-    public ValueTask<IReadOnlyList<CertificateSummary>> HandleAsync(ListCertificates query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<CertificateSummary>> HandleAsync(ListCertificates query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var now = time.GetUtcNow();

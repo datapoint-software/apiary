@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class RevokeAgentTokenHandler(StateTransaction transaction) : ICommandHandler<RevokeAgentToken, AgentRevocation>
 {
-    public ValueTask<AgentRevocation> HandleAsync(RevokeAgentToken command, CancellationToken ct = default)
+    public ValueTask<AgentRevocation> HandleAsync(RevokeAgentToken command, CancellationToken cancellationToken = default)
     {
         var hash = SecretTokens.Hash(command.Token);
         var state = transaction.State;

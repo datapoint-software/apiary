@@ -8,6 +8,6 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class CheckEmailHandler(IClusterState cluster) : IQueryHandler<CheckEmail, IReadOnlyList<FieldCheck>>
 {
-    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckEmail query, CancellationToken ct = default) =>
+    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckEmail query, CancellationToken cancellationToken = default) =>
         new(UserLookup.IsEmailTaken(cluster.Current, query.Email) ? [new FieldCheck("email", ErrorCodes.EmailTaken)] : []);
 }

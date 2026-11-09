@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Brands;
 
 public sealed class SaveBrandHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals) : ICommandHandler<SaveBrand>
 {
-    public ValueTask HandleAsync(SaveBrand command, CancellationToken ct = default)
+    public ValueTask HandleAsync(SaveBrand command, CancellationToken cancellationToken = default)
     {
         var contact = string.IsNullOrWhiteSpace(command.Contact) ? null : command.Contact.Trim();
         var brand = new VisitorBrand(

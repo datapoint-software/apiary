@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Account;
 
 public sealed class EndSessionHandler(StateTransaction transaction, CurrentUser current) : ICommandHandler<EndSession>
 {
-    public ValueTask HandleAsync(EndSession command, CancellationToken ct = default)
+    public ValueTask HandleAsync(EndSession command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Sessions.TryGetValue(command.Id, out var session) || session.UserId != current.UserId)
         {

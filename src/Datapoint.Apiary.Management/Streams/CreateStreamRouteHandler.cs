@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Streams;
 public sealed class CreateStreamRouteHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<CreateStreamRoute, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateStreamRoute command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateStreamRoute command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var empty = new StreamRoute(

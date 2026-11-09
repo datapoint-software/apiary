@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.DnsProviders;
 
 public sealed class RemoveDnsProviderHandler(StateTransaction transaction) : ICommandHandler<RemoveDnsProvider>
 {
-    public ValueTask HandleAsync(RemoveDnsProvider command, CancellationToken ct = default)
+    public ValueTask HandleAsync(RemoveDnsProvider command, CancellationToken cancellationToken = default)
     {
         var provider = DnsProviderGuards.Find(transaction.State, command.Id);
         var certificates = DnsProviderView.CertificatesUsing(transaction.State, provider.Id).Count;

@@ -5,6 +5,6 @@ namespace Datapoint.Apiary.Management.SingleSignOn;
 
 public sealed class GetSsoSettingsHandler(IClusterState cluster) : IQueryHandler<GetSsoSettings, SsoSettingsView>
 {
-    public ValueTask<SsoSettingsView> HandleAsync(GetSsoSettings query, CancellationToken ct = default) =>
+    public ValueTask<SsoSettingsView> HandleAsync(GetSsoSettings query, CancellationToken cancellationToken = default) =>
         new(SsoSettingsView.From(cluster.Current.SingleSignOn));
 }

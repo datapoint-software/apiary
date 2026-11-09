@@ -12,7 +12,7 @@ public sealed class RenewCertificateHandler(IClusterState cluster, CertificateIs
 {
     private static readonly TimeSpan s_minimumInterval = TimeSpan.FromDays(1);
 
-    public async ValueTask<RenewResult> HandleAsync(RenewCertificate command, CancellationToken ct = default)
+    public async ValueTask<RenewResult> HandleAsync(RenewCertificate command, CancellationToken cancellationToken = default)
     {
         var certificate = CertificateGuards.Find(cluster.Current, command.Id);
         if (certificate.Source != CertificateSource.Automatic)
@@ -25,7 +25,7 @@ public sealed class RenewCertificateHandler(IClusterState cluster, CertificateIs
             throw ActionFailedException.Conflict(ErrorCodes.CertificateRenewTooSoon);
         }
 
-        var result = await issuer.IssueAsync(certificate.Name, principals.Principal?.Identity?.Name, CertificateRenewal.RenewAction, ct)
+        var result = await issuer.IssueAsync(certificate.Name, principals.Principal?.Identity?.Name, CertificateRenewal.RenewAction, cancellationToken)
             ?? throw ActionFailedException.Conflict(ErrorCodes.CertificateRenewing);
         return new RenewResult(result.Succeeded, result.Certificate.Material?.NotAfter, result.FailureCode, result.FailureDetail);
     }

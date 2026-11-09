@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Routes;
 public sealed class UpdateRouteHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<UpdateRoute>
 {
-    public ValueTask HandleAsync(UpdateRoute command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateRoute command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Routes.TryGetValue(command.Id, out var existing))
         {

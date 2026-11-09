@@ -16,7 +16,7 @@ public sealed class SignInWithSsoHandler(
     AuditLog audit,
     TimeProvider time) : ICommandHandler<SignInWithSso>
 {
-    public async ValueTask HandleAsync(SignInWithSso command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(SignInWithSso command, CancellationToken cancellationToken = default)
     {
         var identity = assertions.Open(command.Assertion);
         var settings = transaction.State.SingleSignOn;
@@ -33,14 +33,14 @@ public sealed class SignInWithSsoHandler(
 
         if (SsoRoles.Map(settings, identity.Groups) is not { } role)
         {
-            await audit.RecordAsync("auth.sso", AuditOutcome.Failed, email, [], ct);
+            await audit.RecordAsync("auth.sso", AuditOutcome.Failed, email, [], cancellationToken);
             throw ActionFailedException.Forbidden(ErrorCodes.SsoNoRole);
         }
 
         var user = Find(identity, email) ?? Create(identity, email, role);
         if (user.Status is not UserStatus.Active)
         {
-            await audit.RecordAsync("auth.sso", AuditOutcome.Failed, email, [user.Id.ToString()], ct);
+            await audit.RecordAsync("auth.sso", AuditOutcome.Failed, email, [user.Id.ToString()], cancellationToken);
             throw ActionFailedException.Forbidden(ErrorCodes.SsoDisabled);
         }
 

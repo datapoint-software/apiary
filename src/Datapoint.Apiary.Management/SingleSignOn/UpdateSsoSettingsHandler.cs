@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.SingleSignOn;
 public sealed class UpdateSsoSettingsHandler(StateTransaction transaction, Sessions sessions, TimeProvider time)
     : ICommandHandler<UpdateSsoSettings>
 {
-    public ValueTask HandleAsync(UpdateSsoSettings command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateSsoSettings command, CancellationToken cancellationToken = default)
     {
         var current = transaction.State.SingleSignOn;
         var issuer = command.Issuer.Trim().TrimEnd('/');

@@ -5,9 +5,9 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class ListRoutesHandler(IClusterState cluster, IRouteTelemetry telemetry) : IQueryHandler<ListRoutes, IReadOnlyList<RouteView>>
 {
-    public async ValueTask<IReadOnlyList<RouteView>> HandleAsync(ListRoutes query, CancellationToken ct = default)
+    public async ValueTask<IReadOnlyList<RouteView>> HandleAsync(ListRoutes query, CancellationToken cancellationToken = default)
     {
-        var measured = await telemetry.ReadAsync(ct);
+        var measured = await telemetry.ReadAsync(cancellationToken);
         return [.. cluster.Current.Routes.Values
             .Where(r => query.ProjectId is null || r.ProjectId == query.ProjectId)
             .OrderBy(r => r.Host, StringComparer.Ordinal)

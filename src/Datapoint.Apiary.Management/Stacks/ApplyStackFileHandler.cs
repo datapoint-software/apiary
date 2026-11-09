@@ -12,7 +12,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 public sealed class ApplyStackFileHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<ApplyStackFile, StackPlan>
 {
-    public ValueTask<StackPlan> HandleAsync(ApplyStackFile command, CancellationToken ct = default)
+    public ValueTask<StackPlan> HandleAsync(ApplyStackFile command, CancellationToken cancellationToken = default)
     {
         var principal = principals.Principal;
         var token = principal?.FindFirstValue(ApiaryClaims.Pipeline) ?? throw ActionFailedException.Forbidden(ErrorCodes.Forbidden);

@@ -10,7 +10,7 @@ public sealed class RoleAuthorizer<TAction> : IAuthorizer<TAction>
 {
     private static readonly Role? s_required = typeof(TAction).GetCustomAttribute<RequiresRoleAttribute>()?.Role;
 
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.AllowIf(action is IStackPipelineAction pipeline ? IsPipelineFor(principal, pipeline.Stack) : s_required is { } required && HasRole(principal, required)));
 
     private static bool IsPipelineFor(ClaimsPrincipal principal, string stack) =>

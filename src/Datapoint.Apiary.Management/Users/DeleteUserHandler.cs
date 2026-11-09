@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class DeleteUserHandler(StateTransaction transaction, CurrentUser current) : ICommandHandler<DeleteUser>
 {
-    public ValueTask HandleAsync(DeleteUser command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteUser command, CancellationToken cancellationToken = default)
     {
         var user = UserGuards.Find(transaction.State, command.Id);
         UserGuards.NotSelf(current, user);

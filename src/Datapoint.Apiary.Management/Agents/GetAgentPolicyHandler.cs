@@ -6,6 +6,6 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class GetAgentPolicyHandler(IClusterState cluster) : IQueryHandler<GetAgentPolicy, AgentPolicyView>
 {
-    public ValueTask<AgentPolicyView> HandleAsync(GetAgentPolicy query, CancellationToken ct = default) =>
+    public ValueTask<AgentPolicyView> HandleAsync(GetAgentPolicy query, CancellationToken cancellationToken = default) =>
         new(new AgentPolicyView(AgentPolicy.TrustedOriginsOf(cluster.Current)));
 }

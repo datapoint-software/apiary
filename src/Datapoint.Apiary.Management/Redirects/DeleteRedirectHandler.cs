@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Redirects;
 
 public sealed class DeleteRedirectHandler(StateTransaction transaction) : ICommandHandler<DeleteRedirect>
 {
-    public ValueTask HandleAsync(DeleteRedirect command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteRedirect command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Redirects.TryGetValue(command.Id, out var redirect))
         {

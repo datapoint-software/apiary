@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Projects;
 
 public sealed class UpdateProjectHandler(StateTransaction transaction) : ICommandHandler<UpdateProject>
 {
-    public ValueTask HandleAsync(UpdateProject command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateProject command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Projects.TryGetValue(command.Id, out var existing))
         {

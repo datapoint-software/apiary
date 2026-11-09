@@ -10,7 +10,7 @@ namespace Datapoint.Apiary.Management.Account;
 public sealed class NewRecoveryCodesHandler(StateTransaction transaction, CurrentUser current, PasswordConfirmation password)
     : ICommandHandler<NewRecoveryCodes, IReadOnlyList<string>>
 {
-    public ValueTask<IReadOnlyList<string>> HandleAsync(NewRecoveryCodes command, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<string>> HandleAsync(NewRecoveryCodes command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         var twoStep = user.TwoStep ?? throw ActionFailedException.Conflict(ErrorCodes.Invalid);

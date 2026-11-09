@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Account;
 public sealed class BeginTwoStepHandler(IClusterState cluster, CurrentUser current, Challenges challenges)
     : IQueryHandler<BeginTwoStep, TwoStepEnrollment>
 {
-    public ValueTask<TwoStepEnrollment> HandleAsync(BeginTwoStep query, CancellationToken ct = default)
+    public ValueTask<TwoStepEnrollment> HandleAsync(BeginTwoStep query, CancellationToken cancellationToken = default)
     {
         var user = current.Require(cluster.Current);
         return new(challenges.Enroll(ChallengePurpose.Reenroll, user.Id, user.Email));

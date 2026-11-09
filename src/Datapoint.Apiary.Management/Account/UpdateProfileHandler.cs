@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Account;
 
 public sealed class UpdateProfileHandler(StateTransaction transaction, CurrentUser current) : ICommandHandler<UpdateProfile>
 {
-    public ValueTask HandleAsync(UpdateProfile command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateProfile command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         Users.UserGuards.NotManagedBySso(user);

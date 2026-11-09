@@ -6,6 +6,6 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class GetRouteDefaultsHandler(IClusterState cluster) : IQueryHandler<GetRouteDefaults, RouteDefaultsView>
 {
-    public ValueTask<RouteDefaultsView> HandleAsync(GetRouteDefaults query, CancellationToken ct = default) =>
+    public ValueTask<RouteDefaultsView> HandleAsync(GetRouteDefaults query, CancellationToken cancellationToken = default) =>
         new(new RouteDefaultsView(RouteDefaults.RequestMegabytesOf(cluster.Current)));
 }

@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 public sealed class CreatePipelineTokenHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<CreatePipelineToken, NewPipelineToken>
 {
-    public ValueTask<NewPipelineToken> HandleAsync(CreatePipelineToken command, CancellationToken ct = default)
+    public ValueTask<NewPipelineToken> HandleAsync(CreatePipelineToken command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Stacks.ContainsKey(command.Stack))
         {

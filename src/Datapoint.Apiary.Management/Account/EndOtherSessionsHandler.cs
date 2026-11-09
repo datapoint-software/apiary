@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Account;
 
 public sealed class EndOtherSessionsHandler(StateTransaction transaction, CurrentUser current, Sessions sessions) : ICommandHandler<EndOtherSessions>
 {
-    public ValueTask HandleAsync(EndOtherSessions command, CancellationToken ct = default)
+    public ValueTask HandleAsync(EndOtherSessions command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         sessions.EndAll(user.Id, except: current.SessionId);

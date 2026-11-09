@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Account;
 public sealed class ListSessionsHandler(IClusterState cluster, CurrentUser current, TimeProvider time)
     : IQueryHandler<ListSessions, IReadOnlyList<SessionView>>
 {
-    public ValueTask<IReadOnlyList<SessionView>> HandleAsync(ListSessions query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<SessionView>> HandleAsync(ListSessions query, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         return new([.. cluster.Current.Sessions.Values

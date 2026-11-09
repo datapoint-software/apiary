@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class DisconnectAgentHandler(StateTransaction transaction, CurrentUser current) : ICommandHandler<DisconnectAgent>
 {
-    public ValueTask HandleAsync(DisconnectAgent command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DisconnectAgent command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         if (!transaction.State.Agents.TryGetValue(command.Id, out var agent) || (agent.UserId != user.Id && user.Role is not Role.Administrator))

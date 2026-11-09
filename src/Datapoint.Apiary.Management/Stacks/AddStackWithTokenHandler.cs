@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 public sealed class AddStackWithTokenHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<AddStackWithToken, NewPipelineToken>
 {
-    public ValueTask<NewPipelineToken> HandleAsync(AddStackWithToken command, CancellationToken ct = default)
+    public ValueTask<NewPipelineToken> HandleAsync(AddStackWithToken command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var by = principals.Principal?.Identity?.Name;

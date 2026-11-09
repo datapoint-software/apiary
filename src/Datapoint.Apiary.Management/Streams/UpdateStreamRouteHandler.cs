@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Streams;
 public sealed class UpdateStreamRouteHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<UpdateStreamRoute>
 {
-    public ValueTask HandleAsync(UpdateStreamRoute command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateStreamRoute command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.StreamRoutes.TryGetValue(command.Id, out var existing))
         {

@@ -7,7 +7,7 @@ public sealed class GetBackupStatusHandler(IClusterState cluster) : IQueryHandle
 {
     private const string ExportAction = "backups.export";
 
-    public ValueTask<BackupStatus> HandleAsync(GetBackupStatus query, CancellationToken ct = default)
+    public ValueTask<BackupStatus> HandleAsync(GetBackupStatus query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var last = state.LastBackup;

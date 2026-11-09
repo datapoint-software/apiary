@@ -24,48 +24,48 @@ public sealed class StateTransactionBehavior(
     private const int MaxRememberedResult = 16 * 1024;
     private static readonly ConcurrentDictionary<Type, string> s_actionNames = new();
 
-    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
         if (!cluster.IsLeader)
         {
-            await forwarder.ForwardAsync(command, ct);
+            await forwarder.ForwardAsync(command, cancellationToken);
             return;
         }
 
-        using var write = await cluster.LockAsync(ct);
+        using var write = await cluster.LockAsync(cancellationToken);
         EnsureWritable();
-        await next(ct);
-        await CommitAsync(command, null, AuditOutcome.Succeeded, ct);
+        await next(cancellationToken);
+        await CommitAsync(command, null, AuditOutcome.Succeeded, cancellationToken);
     }
 
     public async ValueTask<TResult> HandleAsync<TResult>(
-        ICommand<TResult> command, Func<CancellationToken, ValueTask<TResult>> next, CancellationToken ct = default)
+        ICommand<TResult> command, Func<CancellationToken, ValueTask<TResult>> next, CancellationToken cancellationToken = default)
     {
         if (!cluster.IsLeader)
         {
-            return await forwarder.ForwardAsync(command, ct);
+            return await forwarder.ForwardAsync(command, cancellationToken);
         }
 
         if (command is ISelfCommitting)
         {
             EnsureWritable();
-            return await next(ct);
+            return await next(cancellationToken);
         }
 
-        using var write = await cluster.LockAsync(ct);
+        using var write = await cluster.LockAsync(cancellationToken);
         EnsureWritable();
         TResult result;
         try
         {
-            result = await next(ct);
+            result = await next(cancellationToken);
         }
         catch (ActionFailedException failed) when (failed.KeepsChanges)
         {
-            await CommitAsync(command, null, AuditOutcome.Failed, ct);
+            await CommitAsync(command, null, AuditOutcome.Failed, cancellationToken);
             throw;
         }
 
-        await CommitAsync(command, forwarded.RequestId is null || command is IConfidentialResult ? null : Remembered(forwarder.Serialize(result)), AuditOutcome.Succeeded, ct);
+        await CommitAsync(command, forwarded.RequestId is null || command is IConfidentialResult ? null : Remembered(forwarder.Serialize(result)), AuditOutcome.Succeeded, cancellationToken);
         return result;
     }
 
@@ -85,7 +85,7 @@ public sealed class StateTransactionBehavior(
         throw new ActionFailedException(ErrorCodes.NoQuorum, FailureKind.Unavailable);
     }
 
-    private async ValueTask CommitAsync(object command, string? result, AuditOutcome outcome, CancellationToken ct)
+    private async ValueTask CommitAsync(object command, string? result, AuditOutcome outcome, CancellationToken cancellationToken)
     {
         if (transaction.Changes.Count == 0)
         {
@@ -96,9 +96,9 @@ public sealed class StateTransactionBehavior(
         var entry = new StateEntry(forwarded.RequestId ?? Guid.CreateVersion7(now), now, [.. transaction.Changes, .. Audit(command, outcome, now)], result);
         try
         {
-            await cluster.AppendAsync(entry, ct);
+            await cluster.AppendAsync(entry, cancellationToken);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException || !ct.IsCancellationRequested)
+        catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             metrics.WriteFailed(exception.GetType().Name);
             throw;

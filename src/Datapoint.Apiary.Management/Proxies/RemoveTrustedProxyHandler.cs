@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Proxies;
 
 public sealed class RemoveTrustedProxyHandler(StateTransaction transaction) : ICommandHandler<RemoveTrustedProxy>
 {
-    public ValueTask HandleAsync(RemoveTrustedProxy command, CancellationToken ct = default)
+    public ValueTask HandleAsync(RemoveTrustedProxy command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.TrustedProxies.TryGetValue(command.Id, out var proxy))
         {

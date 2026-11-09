@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 public sealed class RequestCertificateHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<RequestCertificate, Guid>
 {
-    public ValueTask<Guid> HandleAsync(RequestCertificate command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(RequestCertificate command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var names = CertificateNames.Normalize(command.Names);

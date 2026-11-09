@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class GetAgentClientHandler(AgentClients clients, IClusterState cluster) : IQueryHandler<GetAgentClient, AgentClientView>
 {
-    public ValueTask<AgentClientView> HandleAsync(GetAgentClient query, CancellationToken ct = default)
+    public ValueTask<AgentClientView> HandleAsync(GetAgentClient query, CancellationToken cancellationToken = default)
     {
         var client = clients.Read(query.ClientId, query.RedirectUri, AgentPolicy.TrustedOriginsOf(cluster.Current));
         var uri = new Uri(query.RedirectUri);

@@ -10,7 +10,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 public sealed class SetCertificateChallengeHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<SetCertificateChallenge>
 {
-    public ValueTask HandleAsync(SetCertificateChallenge command, CancellationToken ct = default)
+    public ValueTask HandleAsync(SetCertificateChallenge command, CancellationToken cancellationToken = default)
     {
         var name = DnsNames.Normalize(command.Name);
         if (RenewalPlan.Automatic(transaction.State, name) is { } existing)

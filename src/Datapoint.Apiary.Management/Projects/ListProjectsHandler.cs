@@ -8,10 +8,10 @@ namespace Datapoint.Apiary.Management.Projects;
 
 public sealed class ListProjectsHandler(IClusterState cluster, IRouteTelemetry telemetry) : IQueryHandler<ListProjects, IReadOnlyList<ProjectView>>
 {
-    public async ValueTask<IReadOnlyList<ProjectView>> HandleAsync(ListProjects query, CancellationToken ct = default)
+    public async ValueTask<IReadOnlyList<ProjectView>> HandleAsync(ListProjects query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
-        var measured = await telemetry.ReadAsync(ct);
+        var measured = await telemetry.ReadAsync(cancellationToken);
         var routes = state.Routes.Values.ToLookup(r => r.ProjectId);
         var redirects = state.Redirects.Values.CountBy(r => r.ProjectId).ToDictionary();
         var certificates = state.Certificates.Values.Where(c => c.ProjectId is not null).CountBy(c => c.ProjectId!.Value).ToDictionary();

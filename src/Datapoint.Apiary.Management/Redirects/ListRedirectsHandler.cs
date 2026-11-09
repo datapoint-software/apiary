@@ -5,7 +5,7 @@ namespace Datapoint.Apiary.Management.Redirects;
 
 public sealed class ListRedirectsHandler(IClusterState cluster) : IQueryHandler<ListRedirects, IReadOnlyList<RedirectView>>
 {
-    public ValueTask<IReadOnlyList<RedirectView>> HandleAsync(ListRedirects query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<RedirectView>> HandleAsync(ListRedirects query, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<RedirectView> redirects = [.. cluster.Current.Redirects.Values
             .Where(r => query.ProjectId is null || r.ProjectId == query.ProjectId)

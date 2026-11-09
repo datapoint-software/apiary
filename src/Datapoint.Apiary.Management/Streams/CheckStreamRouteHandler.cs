@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Streams;
 
 public sealed class CheckStreamRouteHandler(IClusterState cluster, StreamPortPolicy ports) : IQueryHandler<CheckStreamRoute, IReadOnlyList<FieldCheck>>
 {
-    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckStreamRoute query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckStreamRoute query, CancellationToken cancellationToken = default)
     {
         var fields = new UpdateStreamRoute(query.Id ?? Guid.Empty, Guid.Empty, string.Empty, query.Protocol, query.ListenPort, string.Empty, 0, query.ServerNames);
         var code = ports.Reserved.Contains(query.ListenPort) ? ErrorCodes.StreamPortReserved

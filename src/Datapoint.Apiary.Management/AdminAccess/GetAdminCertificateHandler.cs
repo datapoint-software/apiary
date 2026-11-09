@@ -5,6 +5,6 @@ namespace Datapoint.Apiary.Management.AdminAccess;
 
 public sealed class GetAdminCertificateHandler(IClusterState cluster) : IQueryHandler<GetAdminCertificate, AdminCertificateView?>
 {
-    public ValueTask<AdminCertificateView?> HandleAsync(GetAdminCertificate query, CancellationToken ct = default) =>
+    public ValueTask<AdminCertificateView?> HandleAsync(GetAdminCertificate query, CancellationToken cancellationToken = default) =>
         new(cluster.Current.AdminCertificate is { } certificate ? AdminCertificateView.From(certificate) : null);
 }

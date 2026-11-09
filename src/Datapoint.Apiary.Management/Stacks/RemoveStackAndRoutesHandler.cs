@@ -10,7 +10,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 
 public sealed class RemoveStackAndRoutesHandler(StateTransaction transaction) : ICommandHandler<RemoveStackAndRoutes>
 {
-    public ValueTask HandleAsync(RemoveStackAndRoutes command, CancellationToken ct = default)
+    public ValueTask HandleAsync(RemoveStackAndRoutes command, CancellationToken cancellationToken = default)
     {
         var state = transaction.State;
         if (!state.Stacks.ContainsKey(command.Name))

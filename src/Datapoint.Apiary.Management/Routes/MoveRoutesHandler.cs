@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class MoveRoutesHandler(StateTransaction transaction) : ICommandHandler<MoveRoutes>
 {
-    public ValueTask HandleAsync(MoveRoutes command, CancellationToken ct = default)
+    public ValueTask HandleAsync(MoveRoutes command, CancellationToken cancellationToken = default)
     {
         foreach (var id in command.Ids.Distinct())
         {

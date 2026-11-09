@@ -6,10 +6,10 @@ namespace Datapoint.Apiary.Management.Proxies;
 
 public sealed class ListTrustedProxiesHandler(IClusterState cluster, IRouteTelemetry telemetry) : IQueryHandler<ListTrustedProxies, IReadOnlyList<TrustedProxyView>>
 {
-    public async ValueTask<IReadOnlyList<TrustedProxyView>> HandleAsync(ListTrustedProxies query, CancellationToken ct = default)
+    public async ValueTask<IReadOnlyList<TrustedProxyView>> HandleAsync(ListTrustedProxies query, CancellationToken cancellationToken = default)
     {
         // Replicas report each trusted proxy's latest request with their route telemetry, under the proxy's id.
-        var reports = await telemetry.ReadAsync(ct);
+        var reports = await telemetry.ReadAsync(cancellationToken);
         return [.. cluster.Current.TrustedProxies.Values.OrderBy(p => p.Id).Select(p => TrustedProxyView.Of(p, reports.TryGetValue(p.Id, out var r) ? r.LastConnectionAt : null))];
     }
 }

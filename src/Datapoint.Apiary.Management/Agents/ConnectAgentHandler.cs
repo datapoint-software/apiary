@@ -10,7 +10,7 @@ namespace Datapoint.Apiary.Management.Agents;
 public sealed class ConnectAgentHandler(StateTransaction transaction, AgentClients clients, AgentGrants grants, CurrentUser current, TimeProvider time)
     : ICommandHandler<ConnectAgent, ConnectedAgent>
 {
-    public ValueTask<ConnectedAgent> HandleAsync(ConnectAgent command, CancellationToken ct = default)
+    public ValueTask<ConnectedAgent> HandleAsync(ConnectAgent command, CancellationToken cancellationToken = default)
     {
         if (current.SessionId is null)
         {

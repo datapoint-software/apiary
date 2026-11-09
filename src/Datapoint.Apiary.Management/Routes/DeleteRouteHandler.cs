@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class DeleteRouteHandler(StateTransaction transaction) : ICommandHandler<DeleteRoute>
 {
-    public ValueTask HandleAsync(DeleteRoute command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteRoute command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.Routes.TryGetValue(command.Id, out var route))
         {

@@ -11,7 +11,7 @@ namespace Datapoint.Apiary.Management.Invites;
 public sealed class AcceptInviteHandler(StateTransaction transaction, Challenges challenges, Sessions sessions, TimeProvider time)
     : ICommandHandler<AcceptInvite, IReadOnlyList<string>>
 {
-    public ValueTask<IReadOnlyList<string>> HandleAsync(AcceptInvite command, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<string>> HandleAsync(AcceptInvite command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var user = InviteTokens.Find(transaction.State, command.Token, now);

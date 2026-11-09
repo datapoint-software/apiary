@@ -11,7 +11,7 @@ public sealed class CreateAdministratorHandler(StateTransaction transaction, Inv
 {
     private static readonly TimeSpan s_lifetime = TimeSpan.FromMinutes(15);
 
-    public ValueTask<InviteLink> HandleAsync(CreateAdministrator command, CancellationToken ct = default)
+    public ValueTask<InviteLink> HandleAsync(CreateAdministrator command, CancellationToken cancellationToken = default)
     {
         if (!current.IsLocalOperator)
         {

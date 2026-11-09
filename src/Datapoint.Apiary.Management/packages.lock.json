@@ -4,17 +4,17 @@
     "net10.0": {
       "Datapoint.Mediator.Abstractions": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.6, )",
-        "resolved": "4.0.0-beta.6",
-        "contentHash": "OSyC0y8+1v7RX1L/arW20QctFgP+imomVLhkdmgZGGyxDlJkBeOW1BGWRnHYpQDgDqcya1Qxb9Qs6Oo9Eg/3HQ=="
+        "requested": "[4.0.0-beta.8, )",
+        "resolved": "4.0.0-beta.8",
+        "contentHash": "OM4PtRRFIeltLSuKTm7eorcXgwRERh6ywAE5rspnhAtAKhfito6GiXQ2aVHgHFBCNagFT/gVHUKP0sO+QnxU1g=="
       },
       "Datapoint.Mediator.Authorization": {
         "type": "Direct",
-        "requested": "[4.0.0-beta.6, )",
-        "resolved": "4.0.0-beta.6",
-        "contentHash": "rYNKxi/CfvHo5K78MweKO7QIUXXRY5d7gqYm3/STETZM46SicTrmdoLisqqZ1NBZvbe7f+vfCuINZPLyj1Fe+g==",
+        "requested": "[4.0.0-beta.8, )",
+        "resolved": "4.0.0-beta.8",
+        "contentHash": "7Qb/9i6FZ9s7nj2NZhgMNxg8rR4JXdKXD4kz4ZGmGjsPI3gCAgJdgT+jnRJ6fcRj9/v20Yg8KFqIM1QPJnRGYw==",
         "dependencies": {
-          "Datapoint.Mediator.Abstractions": "4.0.0-beta.6"
+          "Datapoint.Mediator.Abstractions": "4.0.0-beta.8"
         }
       },
       "FluentValidation": {
@@ -123,14 +123,14 @@
       "datapoint.apiary.certificates": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Cluster": "[1.0.0-beta.4, )",
-          "Datapoint.Apiary.Security": "[1.0.0-beta.4, )"
+          "Datapoint.Apiary.Cluster": "[1.0.0-beta.5, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.5, )"
         }
       },
       "datapoint.apiary.cluster": {
         "type": "Project",
         "dependencies": {
-          "Datapoint.Apiary.Security": "[1.0.0-beta.4, )",
+          "Datapoint.Apiary.Security": "[1.0.0-beta.5, )",
           "DotNext.Net.Cluster": "[6.11.1, )"
         }
       },

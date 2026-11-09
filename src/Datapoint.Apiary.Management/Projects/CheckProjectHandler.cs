@@ -7,6 +7,6 @@ namespace Datapoint.Apiary.Management.Projects;
 
 public sealed class CheckProjectHandler(IClusterState cluster) : IQueryHandler<CheckProject, IReadOnlyList<FieldCheck>>
 {
-    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckProject query, CancellationToken ct = default) =>
+    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckProject query, CancellationToken cancellationToken = default) =>
         new(ProjectRules.IsTaken(cluster.Current, query.Name, query.Id) ? [new FieldCheck("name", ErrorCodes.ProjectNameTaken)] : []);
 }

@@ -5,6 +5,6 @@ namespace Datapoint.Apiary.Management.Stacks;
 
 public sealed class ListPipelineTokensHandler(IClusterState cluster) : IQueryHandler<ListPipelineTokens, IReadOnlyList<PipelineTokenView>>
 {
-    public ValueTask<IReadOnlyList<PipelineTokenView>> HandleAsync(ListPipelineTokens query, CancellationToken ct = default) =>
+    public ValueTask<IReadOnlyList<PipelineTokenView>> HandleAsync(ListPipelineTokens query, CancellationToken cancellationToken = default) =>
         new([.. cluster.Current.PipelineTokens.Values.OrderBy(t => t.Stack, StringComparer.Ordinal).ThenBy(t => t.CreatedAt).Select(PipelineTokenView.Of)]);
 }

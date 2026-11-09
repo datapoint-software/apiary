@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Users;
 
 public sealed class InviteUserHandler(StateTransaction transaction, Invitations invitations) : ICommandHandler<InviteUser, InviteLink>
 {
-    public ValueTask<InviteLink> HandleAsync(InviteUser command, CancellationToken ct = default)
+    public ValueTask<InviteLink> HandleAsync(InviteUser command, CancellationToken cancellationToken = default)
     {
         var email = Emails.Normalize(command.Email);
         if (UserLookup.IsEmailTaken(transaction.State, email))

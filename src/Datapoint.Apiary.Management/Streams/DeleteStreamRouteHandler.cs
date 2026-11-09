@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Streams;
 
 public sealed class DeleteStreamRouteHandler(StateTransaction transaction) : ICommandHandler<DeleteStreamRoute>
 {
-    public ValueTask HandleAsync(DeleteStreamRoute command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteStreamRoute command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.StreamRoutes.TryGetValue(command.Id, out var stream))
         {

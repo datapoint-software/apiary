@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.AdminAccess;
 public sealed class ResetAdminCertificateHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<ResetAdminCertificate, AdminCertificateView>
 {
-    public ValueTask<AdminCertificateView> HandleAsync(ResetAdminCertificate command, CancellationToken ct = default)
+    public ValueTask<AdminCertificateView> HandleAsync(ResetAdminCertificate command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var certificate = new AdminCertificate(SelfSignedCertificates.Create(now), SelfSigned: true, now, principals.Principal?.Identity?.Name);

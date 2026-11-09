@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 
 public sealed class RevokePipelineTokenHandler(StateTransaction transaction) : ICommandHandler<RevokePipelineToken>
 {
-    public ValueTask HandleAsync(RevokePipelineToken command, CancellationToken ct = default)
+    public ValueTask HandleAsync(RevokePipelineToken command, CancellationToken cancellationToken = default)
     {
         if (!transaction.State.PipelineTokens.TryGetValue(command.Id, out var token))
         {

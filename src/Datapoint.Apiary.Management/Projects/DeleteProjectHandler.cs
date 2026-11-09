@@ -11,7 +11,7 @@ namespace Datapoint.Apiary.Management.Projects;
 
 public sealed class DeleteProjectHandler(StateTransaction transaction) : ICommandHandler<DeleteProject>
 {
-    public ValueTask HandleAsync(DeleteProject command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteProject command, CancellationToken cancellationToken = default)
     {
         var state = transaction.State;
         if (!state.Projects.ContainsKey(command.Id))

@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Brands;
 
 public sealed class RemoveBrandHandler(StateTransaction transaction) : ICommandHandler<RemoveBrand>
 {
-    public ValueTask HandleAsync(RemoveBrand command, CancellationToken ct = default)
+    public ValueTask HandleAsync(RemoveBrand command, CancellationToken cancellationToken = default)
     {
         if (command.ProjectId is { } projectId && !transaction.State.Projects.ContainsKey(projectId))
         {

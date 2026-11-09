@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Auth;
 
 public sealed class GetMeHandler(IClusterState cluster, CurrentUser current) : IQueryHandler<GetMe, SignedInUser>
 {
-    public ValueTask<SignedInUser> HandleAsync(GetMe query, CancellationToken ct = default)
+    public ValueTask<SignedInUser> HandleAsync(GetMe query, CancellationToken cancellationToken = default)
     {
         var user = current.Require(cluster.Current);
         return new(new SignedInUser(

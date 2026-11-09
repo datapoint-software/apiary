@@ -9,9 +9,9 @@ namespace Datapoint.Apiary.Management.Streams;
 public sealed class StreamSwitchHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<DisableStreamRoute>, ICommandHandler<EnableStreamRoute>
 {
-    public ValueTask HandleAsync(DisableStreamRoute command, CancellationToken ct = default) => Switch(command.Id, disabled: true);
+    public ValueTask HandleAsync(DisableStreamRoute command, CancellationToken cancellationToken = default) => Switch(command.Id, disabled: true);
 
-    public ValueTask HandleAsync(EnableStreamRoute command, CancellationToken ct = default) => Switch(command.Id, disabled: false);
+    public ValueTask HandleAsync(EnableStreamRoute command, CancellationToken cancellationToken = default) => Switch(command.Id, disabled: false);
 
     private ValueTask Switch(Guid id, bool disabled)
     {

@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 
 public sealed class DeleteCertificateHandler(StateTransaction transaction) : ICommandHandler<DeleteCertificate>
 {
-    public ValueTask HandleAsync(DeleteCertificate command, CancellationToken ct = default)
+    public ValueTask HandleAsync(DeleteCertificate command, CancellationToken cancellationToken = default)
     {
         var certificate = CertificateGuards.Find(transaction.State, command.Id);
         var routes = CertificateUsage.Routes(transaction.State, certificate).Count;

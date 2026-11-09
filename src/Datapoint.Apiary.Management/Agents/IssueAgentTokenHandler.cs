@@ -10,7 +10,7 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class IssueAgentTokenHandler(StateTransaction transaction, AgentGrants grants, TimeProvider time) : ICommandHandler<IssueAgentToken, AgentTokenResult>
 {
-    public ValueTask<AgentTokenResult> HandleAsync(IssueAgentToken command, CancellationToken ct = default)
+    public ValueTask<AgentTokenResult> HandleAsync(IssueAgentToken command, CancellationToken cancellationToken = default)
     {
         transaction.Unaudited = true;
         return new(command.GrantType switch

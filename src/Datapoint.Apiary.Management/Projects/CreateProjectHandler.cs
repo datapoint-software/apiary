@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Projects;
 
 public sealed class CreateProjectHandler(StateTransaction transaction, TimeProvider time) : ICommandHandler<CreateProject, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateProject command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateProject command, CancellationToken cancellationToken = default)
     {
         var project = new Project(Guid.CreateVersion7(time.GetUtcNow()), command.Name.Trim(), command.Description.Trim(), command.Icon);
         transaction.Record(new ProjectSaved(project));

@@ -14,7 +14,7 @@ public sealed class ChangePasswordHandler(
     SignInThrottle throttle,
     IRequestOrigin origin) : ICommandHandler<ChangePassword, ChangePasswordResult>
 {
-    public ValueTask<ChangePasswordResult> HandleAsync(ChangePassword command, CancellationToken ct = default)
+    public ValueTask<ChangePasswordResult> HandleAsync(ChangePassword command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         var key = string.Concat(user.Email, "|", origin.Address);

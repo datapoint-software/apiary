@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Setup;
 public sealed class RestoreSetupHandler(StateTransaction transaction, SetupWindow window, BackupRestorer restorer)
     : ICommandHandler<RestoreSetup, RestoredBackup>
 {
-    public ValueTask<RestoredBackup> HandleAsync(RestoreSetup command, CancellationToken ct = default)
+    public ValueTask<RestoredBackup> HandleAsync(RestoreSetup command, CancellationToken cancellationToken = default)
     {
         if (!window.IsOpen(transaction.State))
         {

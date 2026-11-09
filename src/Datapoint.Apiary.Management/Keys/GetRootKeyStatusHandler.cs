@@ -5,7 +5,7 @@ namespace Datapoint.Apiary.Management.Keys;
 
 public sealed class GetRootKeyStatusHandler(RaftClusterState cluster) : IQueryHandler<GetRootKeyStatus, RootKeyStatus>
 {
-    public ValueTask<RootKeyStatus> HandleAsync(GetRootKeyStatus query, CancellationToken ct = default)
+    public ValueTask<RootKeyStatus> HandleAsync(GetRootKeyStatus query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         var current = cluster.RootKeyId;

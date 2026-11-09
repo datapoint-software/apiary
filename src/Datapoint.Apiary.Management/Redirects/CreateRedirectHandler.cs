@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Redirects;
 public sealed class CreateRedirectHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<CreateRedirect, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateRedirect command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateRedirect command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var redirect = new Redirect(

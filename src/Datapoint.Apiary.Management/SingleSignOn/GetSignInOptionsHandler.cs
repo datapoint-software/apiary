@@ -5,6 +5,6 @@ namespace Datapoint.Apiary.Management.SingleSignOn;
 
 public sealed class GetSignInOptionsHandler(IClusterState cluster) : IQueryHandler<GetSignInOptions, SignInOptions>
 {
-    public ValueTask<SignInOptions> HandleAsync(GetSignInOptions query, CancellationToken ct = default) =>
+    public ValueTask<SignInOptions> HandleAsync(GetSignInOptions query, CancellationToken cancellationToken = default) =>
         new(new SignInOptions(cluster.Current.SingleSignOn is { Enabled: true } sso ? sso.DisplayName : null));
 }

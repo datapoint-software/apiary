@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Replicas;
 
 public sealed class ApproveReplicaHandler(RaftClusterState cluster, StateTransaction transaction) : ICommandHandler<ApproveReplica>
 {
-    public ValueTask HandleAsync(ApproveReplica command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ApproveReplica command, CancellationToken cancellationToken = default)
     {
         if (cluster.Pending.All(p => p.Id != command.Id))
         {

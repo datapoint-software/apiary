@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Routes;
 public sealed class CreateRouteHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<CreateRoute, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateRoute command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateRoute command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var route = new Route(

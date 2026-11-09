@@ -6,7 +6,7 @@ namespace Datapoint.Apiary.Management.Agents;
 
 public sealed class UpdateAgentPolicyHandler(StateTransaction transaction) : ICommandHandler<UpdateAgentPolicy>
 {
-    public ValueTask HandleAsync(UpdateAgentPolicy command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UpdateAgentPolicy command, CancellationToken cancellationToken = default)
     {
         var origins = command.TrustedOrigins.Select(RedirectUris.NormalizeOrigin).OfType<string>().Distinct(StringComparer.Ordinal).ToList();
         transaction.Record(new AgentPolicySaved(new AgentPolicy(origins)));

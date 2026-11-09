@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 public sealed class UploadCertificateHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals)
     : ICommandHandler<UploadCertificate, Guid>
 {
-    public ValueTask<Guid> HandleAsync(UploadCertificate command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(UploadCertificate command, CancellationToken cancellationToken = default)
     {
         var now = time.GetUtcNow();
         var user = principals.Principal?.Identity?.Name;

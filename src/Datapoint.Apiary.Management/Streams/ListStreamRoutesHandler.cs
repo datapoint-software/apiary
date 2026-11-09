@@ -7,9 +7,9 @@ namespace Datapoint.Apiary.Management.Streams;
 public sealed class ListStreamRoutesHandler(IClusterState cluster, IRouteTelemetry telemetry)
     : IQueryHandler<ListStreamRoutes, IReadOnlyList<StreamRouteView>>
 {
-    public async ValueTask<IReadOnlyList<StreamRouteView>> HandleAsync(ListStreamRoutes query, CancellationToken ct = default)
+    public async ValueTask<IReadOnlyList<StreamRouteView>> HandleAsync(ListStreamRoutes query, CancellationToken cancellationToken = default)
     {
-        var readings = await telemetry.ReadAsync(ct);
+        var readings = await telemetry.ReadAsync(cancellationToken);
         return [.. cluster.Current.StreamRoutes.Values
             .Where(s => query.ProjectId is null || s.ProjectId == query.ProjectId)
             .OrderBy(s => s.ListenPort)

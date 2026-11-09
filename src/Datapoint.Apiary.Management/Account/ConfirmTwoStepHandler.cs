@@ -9,7 +9,7 @@ namespace Datapoint.Apiary.Management.Account;
 public sealed class ConfirmTwoStepHandler(StateTransaction transaction, CurrentUser current, Challenges challenges, PasswordConfirmation password, TimeProvider time)
     : ICommandHandler<ConfirmTwoStep>
 {
-    public ValueTask HandleAsync(ConfirmTwoStep command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ConfirmTwoStep command, CancellationToken cancellationToken = default)
     {
         var user = current.Require(transaction.State);
         var challenge = challenges.Read(command.Challenge, ChallengePurpose.Reenroll);

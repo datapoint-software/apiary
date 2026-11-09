@@ -7,7 +7,7 @@ namespace Datapoint.Apiary.Management.Stacks;
 
 public sealed class GetStackDetailsHandler(IClusterState cluster) : IQueryHandler<GetStackDetails, StackDetailsView>
 {
-    public ValueTask<StackDetailsView> HandleAsync(GetStackDetails query, CancellationToken ct = default)
+    public ValueTask<StackDetailsView> HandleAsync(GetStackDetails query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         if (!state.Stacks.TryGetValue(query.Name, out var stack))

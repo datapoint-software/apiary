@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Routes;
 
 public sealed class CheckRouteHandler(IClusterState cluster) : IQueryHandler<CheckRoute, IReadOnlyList<FieldCheck>>
 {
-    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckRoute query, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<FieldCheck>> HandleAsync(CheckRoute query, CancellationToken cancellationToken = default)
     {
         var state = cluster.Current;
         List<FieldCheck> checks = [];

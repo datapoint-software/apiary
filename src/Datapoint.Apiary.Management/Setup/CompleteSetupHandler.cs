@@ -15,7 +15,7 @@ public sealed class CompleteSetupHandler(
     Sessions sessions,
     TimeProvider time) : ICommandHandler<CompleteSetup, IReadOnlyList<string>>
 {
-    public ValueTask<IReadOnlyList<string>> HandleAsync(CompleteSetup command, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<string>> HandleAsync(CompleteSetup command, CancellationToken cancellationToken = default)
     {
         if (!window.IsOpen(transaction.State))
         {

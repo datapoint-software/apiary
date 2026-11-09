@@ -8,7 +8,7 @@ namespace Datapoint.Apiary.Management.Certificates;
 
 public sealed class UseCertificateHandler(StateTransaction transaction, TimeProvider time, IPrincipalAccessor principals) : ICommandHandler<UseCertificate>
 {
-    public ValueTask HandleAsync(UseCertificate command, CancellationToken ct = default)
+    public ValueTask HandleAsync(UseCertificate command, CancellationToken cancellationToken = default)
     {
         var hosts = command.Hosts.Select(DnsNames.Normalize).ToHashSet(StringComparer.Ordinal);
         var routes = transaction.State.Routes.Values.Where(r => hosts.Contains(r.Host)).ToList();
