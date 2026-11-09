@@ -419,114 +419,70 @@ public sealed partial class RaftClusterState
             return;
         }
 
+        var state = Current;
+        if (await FindMovedPeersAsync(state, cancellationToken) is not { } moved)
+        {
+            LogRemovedFromCluster();
+            lifetime.StopApplication();
+            return;
+        }
+
+        if (!await MoveMembersAsync(moved, state, cancellationToken))
+        {
+            return;
+        }
+
+        _stuckSince = now;
+    }
+
+    // Null when a peer's view shows a leader that no longer counts this replica.
+    private async Task<List<Replica>?> FindMovedPeersAsync(ApiaryState state, CancellationToken cancellationToken)
+    {
+        var members = _raft!.Members.Select(m => (IPEndPoint)m.EndPoint).ToList();
         var moved = new List<Replica>();
         foreach (var peer in await discovery.PeersAsync(Address!.Address, cancellationToken))
         {
             var view = await FetchViewAsync(peer, cancellationToken);
-            if (IsRemoved(view))
+            if (MovedPeers.IsRemoved(view, state, Identity?.Id, Address.ToString()))
             {
-                LogRemovedFromCluster();
-                lifetime.StopApplication();
-                return;
+                return null;
             }
 
-            if (Moved(view) is { } replica)
+            if (MovedPeers.Moved(view, state, members) is { } replica)
             {
                 moved.Add(replica);
             }
         }
 
-        var moves = await PairWithFormerAddressesAsync(moved, cancellationToken);
-        if (moves.Count == 0)
-        {
-            return;
-        }
-
-        await MoveMembersAsync(moves, cancellationToken);
-        _stuckSince = now;
+        return moved;
     }
 
     // Restarting would learn the new addresses too, but it gives this replica a new address of its own,
     // so the others' lists go stale and they restart in turn, without end.
-    private async Task MoveMembersAsync(Dictionary<IPEndPoint, Replica> moves, CancellationToken cancellationToken)
+    private async Task<bool> MoveMembersAsync(List<Replica> moved, ApiaryState state, CancellationToken cancellationToken)
     {
+        if (moved.Count == 0)
+        {
+            return false;
+        }
+
+        var peers = _raft!.Members.Where(m => m.IsRemote).Select(m => (IPEndPoint)m.EndPoint).ToList();
+        var running = await discovery.ResolveAsync(cancellationToken);
+        var moves = MovedPeers.Pair(moved, state, AddressHistory.Load(HistoryFile), peers, running);
+        if (moves.Count == 0)
+        {
+            return false;
+        }
+
         var now = time.GetUtcNow();
         AddressHistory.Load(HistoryFile).With(moves.Values.Select(r => new KnownAddress(r.Address, r.Id, now))).Save(HistoryFile);
         await _memberList!.ReplaceAsync(moves.ToDictionary(m => m.Key, m => IPEndPoint.Parse(m.Value.Address)), cancellationToken);
-        foreach (var moved in moves.Values)
+        foreach (var replica in moves.Values)
         {
-            LogPeerMoved(moved.Node ?? moved.Id.ToString(), moved.Address);
-        }
-    }
-
-    // A moved peer replaces its own former address when this replica knows which one that was. Otherwise
-    // it replaces an address no running task has: the list may have learned it from a leader, without
-    // knowing whose it was. The number of members stays the same either way, so the voters are the
-    // running replicas even when it can't tell which old address belonged to which.
-    private async Task<Dictionary<IPEndPoint, Replica>> PairWithFormerAddressesAsync(List<Replica> moved, CancellationToken cancellationToken)
-    {
-        var moves = new Dictionary<IPEndPoint, Replica>();
-        var unmatched = new List<Replica>();
-        foreach (var replica in moved)
-        {
-            if (FormerAddressOf(replica.Id) is { } former)
-            {
-                moves[former] = replica;
-            }
-            else
-            {
-                unmatched.Add(replica);
-            }
+            LogPeerMoved(replica.Node ?? replica.Id.ToString(), replica.Address);
         }
 
-        if (unmatched.Count == 0)
-        {
-            return moves;
-        }
-
-        var running = await discovery.ResolveAsync(cancellationToken);
-        var gone = _raft!.Members
-            .Where(m => m.IsRemote)
-            .Select(m => (IPEndPoint)m.EndPoint)
-            .Where(e => !running.Contains(e.Address) && !moves.ContainsKey(e));
-        foreach (var (former, replica) in gone.Zip(unmatched))
-        {
-            moves[former] = replica;
-        }
-
-        return moves;
-    }
-
-    private IPEndPoint? FormerAddressOf(Guid replicaId)
-    {
-        var history = AddressHistory.Load(HistoryFile);
-        var known = Current.Replicas.GetValueOrDefault(replicaId)?.Address;
-        return _raft!.Members
-            .Where(m => m.IsRemote)
-            .Select(m => (IPEndPoint)m.EndPoint)
-            .FirstOrDefault(e => e.ToString() == known || history.ReplicaAt(e.ToString()) == replicaId);
-    }
-
-    private bool IsRemoved(ClusterView? view)
-    {
-        // A replica that was never a member, still waiting to be admitted, isn't removed.
-        var own = Address?.ToString();
-        return view is not null
-            && Identity is { } identity
-            && Current.Replicas.ContainsKey(identity.Id)
-            && view.Members.Any(m => m.Role is MemberRole.Leader)
-            && view.Members.All(m => m.Address != own && m.Id != identity.Id);
-    }
-
-    private Replica? Moved(ClusterView? view)
-    {
-        var address = view?.Members.FirstOrDefault(m => m.Local)?.Address;
-        if (view?.ReplicaId is not { } id || address is null || !Current.Replicas.TryGetValue(id, out var known))
-        {
-            return null;
-        }
-
-        return IPEndPoint.TryParse(address, out var endPoint) && !IsMember(endPoint) ? known with { Address = address } : null;
+        return true;
     }
 
     private async Task RemoveMissingMemberAsync(IPEndPoint member, CancellationToken cancellationToken)
